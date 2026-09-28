@@ -6,7 +6,7 @@ Conception d'une plateforme permettant aux usagers de donner leur avis sur un é
 
 | Dossier | Contenu |
 |---|---|
-| [`docs/`](docs/) | [Architecture de la base de données](docs/architecture-base-de-donnees.md) |
+| [`docs/`](docs/) | [Architecture technique](docs/architecture-technique.md) (Next.js en SSR, API REST sous `/webapi/`) et [architecture de la base de données](docs/architecture-base-de-donnees.md) |
 | [`maquettes/`](maquettes/) | Maquettes UX des parcours (variante A retenue, variantes B, C, D pour mémoire) |
 
 ## Parcours retenu (variante A)
