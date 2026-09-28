@@ -1,0 +1,489 @@
+# Architecture de la base de données
+Plateforme nationale de satisfaction des usagers des services publics (Sénégal)
+
+Version de travail, construite en parallèle des maquettes (variante A).
+Hypothèse technique : PostgreSQL, avec les extensions `pg_trgm` (recherche approchée) et `unaccent` (recherche sans accents).
+
+## Convention de nommage
+
+- Tout ce qui est dans la base est **en anglais** : tables, colonnes, valeurs d'énumération, codes.
+- Noms en `snake_case`, tables au singulier (`establishment`, pas `establishments`).
+- Clés étrangères : `<table>_id` (`establishment_id`).
+- Dates : suffixe `_at` (`created_at`), booléens : préfixe `is_` (`is_active`).
+- Les textes affichés à l'usager (libellés, questions) ne sont pas dans les colonnes de code : ils passent par la table `translation`.
+- Ce document reste rédigé en français ; seuls les identifiants sont en anglais.
+
+---
+
+## 1. Principes
+
+1. **L'établissement est au centre.** Un avis porte toujours sur un établissement. Le service est une information complémentaire.
+2. **Anonymat.** Aucune donnée personnelle n'est stockée : pas de nom, de téléphone, d'adresse IP ni d'identifiant d'appareil durable.
+3. **Enregistrement immédiat.** Chaque réponse est enregistrée dès qu'elle est donnée. Un avis abandonné juste après la question essentielle reste exploitable.
+4. **Jamais d'impasse.** Un usager peut saisir un établissement absent du référentiel. Celui-ci est créé avec le statut `pending_review`.
+5. **Questionnaires versionnés.** On ne modifie jamais une question déjà utilisée : on crée une nouvelle version. Les anciens avis restent lisibles.
+6. **Multilingue.** Tous les textes affichés à l'usager ont une traduction par langue.
+
+---
+
+## 2. Vue d'ensemble
+
+```mermaid
+erDiagram
+    REGION ||--o{ DEPARTMENT : contains
+    DEPARTMENT ||--o{ MUNICIPALITY : contains
+    MUNICIPALITY ||--o{ ESTABLISHMENT : locates
+    SECTOR ||--o{ ESTABLISHMENT_TYPE : groups
+    SECTOR ||--o{ SERVICE : groups
+    ESTABLISHMENT_TYPE ||--o{ ESTABLISHMENT : classifies
+    ESTABLISHMENT ||--o{ ESTABLISHMENT_SERVICE : offers
+    SERVICE ||--o{ ESTABLISHMENT_SERVICE : "offered by"
+    ESTABLISHMENT ||--o{ QR_CODE : displays
+    SERVICE |o--o{ QR_CODE : "narrows (optional)"
+    SERVICE |o--o{ QUESTIONNAIRE : "detailed by type"
+    QUESTIONNAIRE ||--o{ QUESTION : contains
+    QUESTION ||--o{ ANSWER_OPTION : offers
+    ESTABLISHMENT ||--o{ FEEDBACK : receives
+    QR_CODE |o--o{ FEEDBACK : "origin (optional)"
+    FEEDBACK ||--o{ ANSWER : contains
+    QUESTION ||--o{ ANSWER : "answered by"
+    ANSWER_OPTION |o--o{ ANSWER : "choice (optional)"
+    FEEDBACK ||--o| COMMENT : "may have"
+    FEEDBACK ||--o{ FEEDBACK_TOPIC : "tagged with"
+    TOPIC ||--o{ FEEDBACK_TOPIC : "chosen in"
+    TOPIC ||--o{ TOPIC_SECTOR : "shown for"
+    SECTOR ||--o{ TOPIC_SECTOR : "shows"
+```
+
+Les tables se répartissent en quatre blocs :
+
+| Bloc | Tables | Rôle |
+|---|---|---|
+| Référentiel | region, department, municipality, sector, establishment_type, establishment, service, establishment_service, qr_code | Ce que l'usager cherche et évalue |
+| Questionnaires | questionnaire, question, answer_option, topic, topic_sector, translation | Ce qu'on demande à l'usager |
+| Collecte | feedback, answer, comment, feedback_topic | Ce que l'usager répond |
+| Exploitation | monthly_stats (vue), search_log, moderation_action | Résultats publiés, amélioration du référentiel |
+
+---
+
+## 3. Référentiel
+
+### region, department, municipality
+Découpage administratif (région, département, commune), chargé une fois et mis à jour rarement.
+
+| Colonne | Type | Note |
+|---|---|---|
+| id | smallint / int | clé |
+| code | text | code officiel |
+| name | text | |
+| region_id / department_id | fk | parent |
+
+### Classement : secteur, type, établissement
+
+Trois niveaux, du plus général au plus précis :
+
+| Niveau | Table | Question | Exemples |
+|---|---|---|---|
+| Secteur | `sector` | Dans quel domaine ? | Santé, Éducation, Administration |
+| Type d'établissement | `establishment_type` | Quel genre de lieu ? | Hôpital, poste de santé, lycée, mairie, centre d'état civil |
+| Établissement | `establishment` | Quel lieu précis ? | Hôpital Le Dantec, Mairie de Grand-Yoff |
+
+Le caractère **public ou privé** n'est ni un secteur ni un type : un hôpital ou une école peuvent être publics ou privés. C'est donc une propriété de chaque établissement (`establishment.ownership`).
+
+### sector
+Domaine général. Partagé par les types d'établissement et par les services.
+
+| Colonne | Type | Note |
+|---|---|---|
+| id | smallint | |
+| code | text unique | `HEALTH`, `EDUCATION`, `ADMINISTRATION`, `JUSTICE`, `SECURITY`, `TAX`, `UTILITIES`, `PUBLIC_TRANSPORT`, `SOCIAL`… |
+| fallback_questionnaire_id | fk questionnaire | questionnaire utilisé quand on connaît le secteur mais pas le service (sinon GENERIC) |
+
+Le libellé affiché passe par `translation`.
+
+### establishment_type
+Genre de lieu : mairie, centre d'état civil, hôpital, poste de santé, école primaire, lycée, commissariat, etc.
+
+| Colonne | Type | Note |
+|---|---|---|
+| id | int | |
+| code | text unique | `TOWN_HALL`, `CIVIL_REGISTRY_CENTER`, `HOSPITAL`, `HEALTH_POST`, `PRIMARY_SCHOOL`… |
+| sector_id | fk sector | |
+
+Le libellé affiché passe par `translation`.
+
+À quoi sert le type :
+1. **Comparer ce qui est comparable.** Les statistiques et les classements publiés comparent un hôpital à d'autres hôpitaux, pas à un poste de santé.
+2. **Afficher un repère dans la recherche.** Sous le nom de l'établissement, on affiche son type (« Poste de santé ») pour lever les ambiguïtés entre lieux aux noms proches.
+3. **Choisir un questionnaire de repli.** Pour un établissement saisi par un usager avec un type mais sans service connu, on utilise un questionnaire adapté au secteur du type plutôt que le questionnaire générique.
+4. **Préremplir les services.** À la création d'un établissement dans le référentiel, on peut proposer les services habituels de son type (une mairie propose l'état civil).
+5. **Écran 0c.** Le champ facultatif « Type » que remplit l'usager correspond à `establishment_type`.
+
+### establishment
+| Colonne | Type | Note |
+|---|---|---|
+| id | uuid | |
+| name | text | nom officiel affiché |
+| aliases | text[] | autres noms de l'établissement (voir plus bas) |
+| search_text | text | nom + alias, en minuscules et sans accents, rempli automatiquement (index trigramme) |
+| type_id | fk establishment_type | nullable si saisi par un usager |
+| ownership | enum | `public`, `private`, `community` (établissements communautaires, confessionnels…) |
+| municipality_id | fk municipality | nullable si saisi par un usager |
+| address | text | facultatif |
+| status | enum | `active`, `pending_review`, `rejected`, `merged`, `closed` |
+| closed_at | timestamptz | date de fermeture (status = closed) |
+| source | enum | `registry`, `user` |
+| raw_input | text | texte tapé par l'usager (source = user) |
+| municipality_input | text | commune tapée librement par l'usager |
+| merged_into_id | fk establishment | si c'était un doublon d'un établissement existant |
+| created_at, updated_at | timestamptz | |
+
+Un établissement saisi par un usager (écran 0c) est créé avec `status = pending_review` et `source = user`. L'avis y est rattaché tout de suite. Après vérification, l'établissement est soit validé (`active`), soit rattaché à un existant (`merged`, et ses avis suivent), soit rejeté (`rejected`).
+
+Un établissement qui ferme ses portes passe en `closed` et on renseigne `closed_at`. On ne le supprime jamais :
+- ses avis passés restent dans la base et dans les statistiques des mois où il était ouvert ;
+- il n'est plus proposé dans la recherche ;
+- ses QR codes sont désactivés (`is_active = false`). Un QR code encore affiché mène à un message « Cet établissement est fermé » au lieu du formulaire.
+
+Résumé des statuts :
+
+| status | Proposé dans la recherche | Accepte de nouveaux avis | Avis conservés |
+|---|---|---|---|
+| `active` | oui | oui | oui |
+| `pending_review` | non | oui (celui qui l'a créé) | oui |
+| `rejected` | non | non | oui, mis de côté |
+| `merged` | non (on propose celui qui le remplace) | non | oui, rattachés au remplaçant |
+| `closed` | non | non | oui |
+
+### Alias (colonne `establishment.aliases`)
+Autres noms sous lesquels les gens connaissent **un établissement précis**. Le nom officiel ne suffit pas : l'usager tape le nom qu'il utilise au quotidien.
+
+Exemples :
+
+| name (nom officiel) | aliases |
+|---|---|
+| Centre hospitalier universitaire Aristide Le Dantec | {Le Dantec, hôpital Le Dantec} |
+| Hôpital Principal de Dakar | {Principal, hôpital militaire} |
+| Centre d'état civil de Grand-Yoff | {mairie de Grand-Yoff, état civil Grand-Yoff} |
+
+- Un établissement peut avoir autant d'alias que nécessaire : chaque alias est un élément de la liste.
+- Un alias désigne toujours **un seul** établissement.
+- `search_text` est recalculé automatiquement (trigger ou colonne générée) à chaque modification de `name` ou `aliases`. C'est le seul champ utilisé pour chercher un établissement par son nom.
+
+**D'où viennent les alias :** de l'import du référentiel officiel (sigles, noms courts) et de la saisie par les agents dans l'outil d'administration. Quand un agent fusionne un établissement saisi par un usager (`merged`), il peut ajouter à la main le texte tapé par l'usager (`raw_input`) aux alias de l'établissement retenu.
+
+Si plus tard on veut que la plateforme propose des alias automatiquement à partir des recherches, il faudra une table dédiée (avec la source et le statut de validation de chaque alias).
+
+### service
+Catalogue national des services : état civil (extrait de naissance, mariage…), consultations, inscription scolaire, etc.
+
+| Colonne | Type | Note |
+|---|---|---|
+| id | int | |
+| code | text unique | `CIVIL_REGISTRY_BIRTH` |
+| sector_id | fk sector | domaine du service |
+| detailed_questionnaire_id | fk questionnaire | questionnaire propre à ce type de service |
+| synonyms | text[] | mots que l'usager peut taper pour désigner ce service (voir plus bas) |
+| search_text | text | libellé français + synonymes, en minuscules et sans accents, rempli automatiquement (index trigramme) |
+
+### Synonymes (colonne `service.synonyms`)
+Mots que l'usager peut taper pour désigner **un type de service**, et non un lieu. Un synonyme mène donc à **plusieurs** établissements : tous ceux qui proposent ce service.
+
+Exemples :
+
+| code | synonyms |
+|---|---|
+| CIVIL_REGISTRY_BIRTH | {état civil, extrait de naissance, acte de naissance, déclaration de naissance} |
+| CIVIL_REGISTRY_MARRIAGE | {mariage, acte de mariage} |
+| HEALTH_CONSULTATION | {consultation, médecin, dispensaire} |
+
+- Les synonymes peuvent être en français ou en langues nationales, mélangés dans la même liste : la recherche porte sur tous, quelle que soit la langue.
+- Ce sont des données, pas des identifiants : ils ne suivent pas la règle « tout en anglais ».
+- `search_text` est recalculé automatiquement à chaque modification du libellé ou des synonymes, comme pour les établissements.
+
+Quand l'usager tape « extrait de naissance », la recherche reconnaît le service CIVIL_REGISTRY_BIRTH, puis renvoie les établissements qui le proposent (via `establishment_service`). C'est dans ce cas que l'écran 0a affiche l'encadré « Précisez l'établissement ».
+
+**Différence avec les alias :** un alias est un autre nom d'**un** établissement (« Le Dantec » → un seul hôpital). Un synonyme est un autre nom d'**un service** (« extrait de naissance » → toutes les mairies et centres d'état civil).
+
+### establishment_service
+Quels services chaque établissement propose (relation plusieurs à plusieurs).
+
+| Colonne | Type |
+|---|---|
+| establishment_id | fk |
+| service_id | fk |
+
+### qr_code
+Un QR code par guichet ou par établissement.
+
+| Colonne | Type | Note |
+|---|---|---|
+| id | uuid | |
+| code | text unique | court, contenu dans l'URL du QR |
+| establishment_id | fk | obligatoire |
+| service_id | fk | facultatif : un QR peut viser un guichet précis |
+| location_label | text | « Guichet 2 », « Hall d'entrée » |
+| is_active | boolean | |
+
+---
+
+## 4. Recherche d'établissement (écrans 0 et 0a)
+
+La recherche porte sur l'établissement. En arrière-plan, le texte tapé est comparé à trois sources :
+
+1. **Nom et alias de l'établissement** (`establishment.search_text`) : correspondance approchée (trigrammes, avec `word_similarity` pour ne pas pénaliser les textes longs), sans accents.
+2. **Libellés et synonymes de service** (`service.search_text`) : si le texte correspond à un service (« état civil »), on renvoie les établissements qui proposent ce service, via `establishment_service`.
+3. **Commune** (`municipality.name`) : si le texte contient un nom de commune (« état civil Grand-Yoff »), on classe d'abord les établissements de cette commune.
+
+La réponse de l'API indique au front si le texte ressemble à un service (`match_type = service`). C'est ce qui déclenche l'encadré « Précisez l'établissement » dans l'écran 0a.
+
+Seuls les établissements au statut `active` sont proposés. Ceux en `pending_review` ne le sont pas, pour éviter de diffuser des doublons ou des erreurs, et ceux en `closed` non plus.
+
+Index à prévoir :
+- `gin (search_text gin_trgm_ops)` sur establishment ;
+- `gin (search_text gin_trgm_ops)` sur service.
+
+---
+
+## 5. Questionnaires
+
+### questionnaire
+| Colonne | Type | Note |
+|---|---|---|
+| id | int | |
+| code | text | `ESSENTIAL`, `CIVIL_REGISTRY`, `GENERIC`… |
+| version | int | |
+| status | enum | `draft`, `published`, `archived` |
+| published_at | timestamptz | |
+
+Trois sortes de questionnaires :
+- **ESSENTIAL** : une seule question, posée à tout le monde et dans tous les secteurs : `OVERALL_SATISFACTION`. Elle est suivie d'un texte libre facultatif dont le libellé dépend de la réponse (voir `answer_option` et `comment`).
+- **Détaillé par service** : relié au service via `service.detailed_questionnaire_id`. C'est là que se trouve `GOAL_ACHIEVED` (« Avez-vous obtenu ce que vous étiez venu(e) chercher ? ») pour les secteurs où la question a du sens (administration, état civil…). Elle n'est pas posée dans un restaurant ou un hôtel.
+- **GENERIC** : utilisé quand le service est inconnu (établissement saisi par l'usager sans type).
+
+### question
+| Colonne | Type | Note |
+|---|---|---|
+| id | int | |
+| questionnaire_id | fk | |
+| code | text | `OVERALL_SATISFACTION`, `GOAL_ACHIEVED`, `WAIT_TIME`… |
+| type | enum | `scale_5`, `yes_partial_no`, `single_choice`, `text` |
+| position | smallint | ordre d'affichage |
+| is_required | boolean | |
+
+### answer_option
+| Colonne | Type | Note |
+|---|---|---|
+| id | int | |
+| question_id | fk | |
+| code | text | `VERY_SATISFIED`, `YES`, `UNDER_15_MIN`… |
+| value | smallint | pour les calculs (1 à 5, etc.) |
+| position | smallint | |
+
+Chaque option de `OVERALL_SATISFACTION` a aussi un **libellé de relance**, affiché au-dessus du texte libre (stocké dans `translation` avec `field = follow_up_prompt`) :
+
+| Option | Libellé de relance |
+|---|---|
+| `VERY_SATISFIED`, `SATISFIED` | Qu'est-ce qui vous a plu ? |
+| `NEUTRAL` | Qu'est-ce qui aurait pu être mieux ? |
+| `DISSATISFIED`, `VERY_DISSATISFIED` | Que s'est-il passé ? |
+
+### topic
+Thèmes que l'usager peut toucher après la question essentielle (écran 2b), plusieurs choix possibles. Le titre au-dessus des thèmes suit la réponse : « Ce qui vous a plu » si l'usager est satisfait, « Ce qui n'a pas été » sinon.
+
+| Colonne | Type | Note |
+|---|---|---|
+| id | smallint | |
+| code | text unique | voir la liste ci-dessous |
+| position | smallint | ordre d'affichage |
+| is_active | boolean | |
+
+| code | Libellé (dans `translation`) |
+|---|---|
+| `STAFF` | Accueil et personnel |
+| `WAIT_TIME` | Attente |
+| `PRICE` | Prix |
+| `CLEANLINESS` | Propreté |
+| `ACCESSIBILITY` | Accessibilité (accès, handicap, horaires) |
+| `INFORMATION` | Information |
+| `SAFETY` | Sécurité |
+| `SERVICE_QUALITY` | Qualité du service |
+| `OTHER` | Autre |
+
+### topic_sector
+Facultatif : quels thèmes afficher selon le secteur (par exemple, pas de « Prix » pour un service gratuit). Sans ligne pour un secteur, tous les thèmes actifs sont affichés.
+
+| Colonne | Type |
+|---|---|
+| topic_id | fk |
+| sector_id | fk |
+
+### translation
+Table unique pour tous les textes traduisibles (libellés de questions, d'options, de services, de types d'établissement).
+
+| Colonne | Type |
+|---|---|
+| target_table | text (`question`, `answer_option`, `topic`, `service`, `sector`, `establishment_type`…) |
+| target_id | int |
+| field | text (`label` par défaut, `follow_up_prompt` pour les libellés de relance) |
+| language | text (`fr`, `wo`, `ff`, `srr`…) |
+| text | text |
+
+Clé unique `(target_table, target_id, field, language)`.
+
+---
+
+## 6. Collecte
+
+### feedback
+Un avis : le passage d'un usager, de la première réponse à la fin.
+
+| Colonne | Type | Note |
+|---|---|---|
+| id | uuid | **généré par le téléphone**, pour que l'envoi hors connexion ne crée pas de doublon |
+| establishment_id | fk | obligatoire |
+| service_id | fk | motif de la visite, facultatif |
+| qr_code_id | fk | si l'usager est arrivé par QR code |
+| channel | enum | `qr`, `search`, `link` |
+| language | text | langue choisie |
+| step | enum | `essential`, `detailed`, `completed` |
+| detailed_questionnaire_id | fk | version utilisée pour la partie détaillée |
+| visit_period | enum | `today`, `under_week`, `under_month`, `over_month` : réponse à « Quand êtes-vous venu(e) ? ». Vaut `today` automatiquement pour une arrivée par QR code |
+| visit_month | date | mois de la visite, calculé à l'enregistrement à partir de `visit_period` et `started_at` (ex. 2026-03-01). Ne change plus ensuite |
+| started_at | timestamptz | arrondi à l'heure pour limiter la réidentification |
+| completed_at | timestamptz | |
+
+**Date de visite.** On ne demande pas de date précise (plus simple pour l'usager, et moins de risque de le reconnaître). Exemple : un avis donné le 10 mars avec « il y a moins d'une semaine » donne `visit_month = 2026-03-01`. Cette valeur est fixée une fois pour toutes : dans six mois, l'avis comptera toujours pour mars. Les avis `over_month` sont conservés mais n'entrent pas dans les notes publiées.
+
+### answer
+Une ligne par question répondue. Écrite dès que l'usager répond (écran 3 : enregistrement immédiat).
+
+| Colonne | Type | Note |
+|---|---|---|
+| feedback_id | fk | |
+| question_id | fk | |
+| option_id | fk answer_option | pour les questions à choix |
+| text_value | text | pour les questions ouvertes |
+| answered_at | timestamptz | |
+
+Clé unique `(feedback_id, question_id)`. Si l'usager change de réponse ou si le téléphone renvoie la même réponse, on met à jour la ligne au lieu d'en créer une nouvelle.
+
+### comment
+Le texte libre demandé juste après la question essentielle (écran 2b). Il remplace le commentaire de fin de parcours, qui est supprimé. Séparé des réponses parce qu'il passe par la modération.
+
+| Colonne | Type | Note |
+|---|---|---|
+| feedback_id | fk unique | un commentaire par avis |
+| prompt_option_id | fk answer_option | option choisie à la question essentielle : indique quel libellé a été affiché (« Qu'est-ce qui vous a plu ? », « Que s'est-il passé ? »…) |
+| text | text | 500 caractères au plus |
+| status | enum | `pending`, `published`, `hidden` |
+| hidden_reason | text | ex. donnée personnelle, injure |
+
+### feedback_topic
+Thèmes touchés par l'usager, une ligne par thème. Le sens (positif ou négatif) n'est pas stocké : on le déduit de la réponse à `OVERALL_SATISFACTION`.
+
+| Colonne | Type | Note |
+|---|---|---|
+| feedback_id | fk | |
+| topic_id | fk | |
+| other_text | text | seulement pour le thème `OTHER` : le thème précisé par l'usager en quelques mots (« Parking »), 50 caractères au plus |
+
+Clé unique `(feedback_id, topic_id)`.
+
+`other_text` sert à repérer les thèmes qui manquent dans la liste : si « Parking » revient souvent, on l'ajoute comme thème. Il n'est jamais publié et passe par la même modération que les commentaires, car il pourrait contenir un nom.
+
+---
+
+## 7. Exploitation
+
+### monthly_stats (vue matérialisée)
+Recalculée chaque nuit. C'est la source des résultats publiés.
+
+| Colonne | Note |
+|---|---|
+| establishment_id, service_id, month | `month` = `feedback.visit_month` |
+| feedback_count | nombre d'avis |
+| avg_satisfaction | à partir de OVERALL_SATISFACTION |
+| goal_achieved_rate | à partir de GOAL_ACHIEVED, seulement pour les secteurs où la question est posée |
+| indicateurs détaillés | temps d'attente, accueil, etc. |
+
+Seuls les avis dont `visit_period` n'est pas `over_month` sont comptés.
+
+Règle de publication : ne rien publier sous un seuil d'avis (par exemple 10 par mois et par établissement), pour protéger l'anonymat et éviter les notes non représentatives.
+
+### search_log (facultatif)
+Pour améliorer le référentiel : terme tapé (`query`), nombre de résultats (`result_count`), établissement choisi (`selected_establishment_id`) ou saisi (`created_establishment_id`), date (`searched_at`). Aucune donnée d'identification. Utile pour repérer les établissements manquants et les synonymes à ajouter.
+
+### moderation_action
+Historique des actions des agents : validation ou fusion d'un établissement saisi par un usager, masquage d'un commentaire.
+
+| Colonne | Type |
+|---|---|
+| id | uuid |
+| agent_id | fk agent |
+| action | enum (`approve_establishment`, `merge_establishment`, `reject_establishment`, `close_establishment`, `hide_comment`…) |
+| target_table, target_id | |
+| reason | text |
+| performed_at | timestamptz |
+
+---
+
+## 8. Lien avec les écrans
+
+| Écran | Lecture | Écriture |
+|---|---|---|
+| 0. Accueil | | |
+| 0a. Autocomplétion | establishment, service, establishment_service, municipality | search_log |
+| 0b. Aucun résultat | establishment (approché) | search_log |
+| 0c. Non répertorié | establishment_type, municipality | establishment (`pending_review`) |
+| QR code scanné | qr_code, establishment | |
+| 1. Établissement identifié | establishment, establishment_service | feedback (création, dont `visit_period` et `visit_month`) |
+| 2. Question essentielle | questionnaire ESSENTIAL | answer |
+| 2b. Thèmes et texte libre | topic, topic_sector, translation (libellés de relance) | feedback_topic, comment |
+| 3 à 5. Enregistrement, confirmation, choix | | feedback.step |
+| 6. Questionnaire détaillé | service → questionnaire (ou GENERIC) | answer |
+| 7. Remerciement | | feedback.completed_at |
+
+---
+
+## 9. Questions ouvertes
+
+1. **Découpage territorial :** faut-il descendre jusqu'au village ou au quartier, ou s'arrêter à la commune ?
+2. **Géolocalisation des établissements :** faut-il des coordonnées GPS (et PostGIS) pour une recherche « près de moi » plus tard ?
+3. **Seuil de publication :** quel nombre minimum d'avis avant de publier une note ?
+4. **Durée de conservation :** combien de temps garde-t-on les réponses brutes et les commentaires ?
+5. **Langues :** quelles langues au lancement, et qui fournit les traductions ?
+6. **Hébergement :** la loi sénégalaise sur les données personnelles (loi 2008-12, CDP) impose-t-elle un hébergement dans le pays ?
+
+---
+
+## 10. Évolutions futures
+
+Pas au lancement. Notées ici pour que le modèle actuel ne les empêche pas.
+
+### Photo facultative
+- **Quand :** proposée seulement si l'usager a choisi `CLEANLINESS` (Propreté) ou `SAFETY` (Sécurité) dans « Ce qui n'a pas été ». Jamais obligatoire : un avis sans photo compte autant qu'un avis avec photo.
+- **Avertissement affiché :** « Ne photographiez ni personnes ni documents. »
+- **Traitement automatique à l'envoi :** suppression des métadonnées (position GPS, appareil, heure exacte), compression, floutage des visages.
+- **Diffusion :** jamais publiée, visible uniquement par les agents.
+- **Idéalement** rattachée à un futur parcours « signalement » (voir plus bas) plutôt qu'à l'avis de satisfaction.
+
+Table à ajouter :
+
+#### feedback_attachment
+| Colonne | Type | Note |
+|---|---|---|
+| id | uuid | |
+| feedback_id | fk | |
+| storage_key | text | emplacement du fichier (stockage objet, pas dans la base) |
+| mime_type | text | |
+| size_bytes | int | |
+| status | enum | `pending`, `approved`, `rejected` |
+| rejected_reason | text | ex. visage, document personnel |
+| uploaded_at | timestamptz | |
+
+### Parcours « signalement »
+Pour les problèmes qui appellent une action (hygiène, sécurité, paiement non prévu) : un parcours distinct de l'avis, avec un suivi par les agents. À concevoir.
+
+### Alias proposés automatiquement
+Si l'on veut que la plateforme apprenne des recherches des usagers, remplacer la colonne `establishment.aliases` par une table dédiée, avec la source (`registry`, `agent`, `usage`) et le statut de validation de chaque alias.
