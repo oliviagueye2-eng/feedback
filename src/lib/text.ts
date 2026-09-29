@@ -17,12 +17,19 @@ export function normalizeForSearch(input: string): string {
     .trim();
 }
 
-/** Words ignored by the search. Must match search_terms() in migration 0007. */
+/** Words ignored by the search. Must match search_terms() (migrations 0007, 0009). */
 export const SEARCH_STOP_WORDS: readonly string[] = ["senegal"];
 
-/** What the search compares: normalized text without the stop words. */
+/** Expressions searched as another one (normalized). Must match search_terms() (migration 0009). */
+export const SEARCH_EQUIVALENTS: readonly (readonly [string, string])[] = [["hotel de ville", "mairie"]];
+
+/** What the search compares: normalized text, equivalents replaced, without the stop words. */
 export function toSearchTerms(input: string): string {
-  return normalizeForSearch(input)
+  let text = ` ${normalizeForSearch(input)} `;
+  for (const [from, to] of SEARCH_EQUIVALENTS) {
+    text = text.split(` ${from} `).join(` ${to} `);
+  }
+  return text
     .split(" ")
     .filter((word) => word && !SEARCH_STOP_WORDS.includes(word))
     .join(" ");

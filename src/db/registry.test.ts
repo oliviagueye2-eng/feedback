@@ -54,6 +54,18 @@ describe("first establishments of the registry", () => {
     expect(senelec).toMatchObject({ name: "Senelec", sectorLabel: "Électricité" });
   });
 
+  it("searches « hôtel de ville » as « mairie »", async () => {
+    expect((await names("hotel de ville medina"))[0]).toBe("Mairie de la Médina");
+    expect(await names("hôtel de ville")).toHaveLength(6);
+  });
+
+  it("with a municipality, the other words must match too", async () => {
+    const found = await names("mairie grand yoff");
+    expect(found[0]).toBe("Mairie de Grand Yoff");
+    expect(found).not.toContain("Hôpital Général Idrissa Pouye");
+    expect((await names("hopital grand yoff"))[0]).toBe("Hôpital Général Idrissa Pouye");
+  });
+
   it("proposes nothing below 3 letters", async () => {
     expect(await names("se")).toEqual([]);
   });

@@ -83,7 +83,8 @@ const toDetail = (row: DetailRow): EstablishmentDetail => ({
  * grand yoff"), then those whose displayed name matches by start of words
  * (before a match on an alias only), then start-of-word matches before typo
  * matches, then closeness, then an organisation "in general" before its
- * agencies, then the name. The service is looked up without the municipality.
+ * agencies, then the name. Names and services are matched on the words other
+ * than the municipality, which only serves to order.
  */
 export async function searchActiveEstablishments(
   terms: string,
@@ -111,19 +112,22 @@ export async function searchActiveEstablishments(
      words AS (
        SELECT DISTINCT word FROM input, regexp_split_to_table(input.q, ' ') AS word WHERE word <> ''
      ),
+     -- Words typed, without the municipality (the whole text when it is only a municipality).
      service_words AS (
        SELECT DISTINCT word FROM without_municipality w, regexp_split_to_table(w.q, ' ') AS word WHERE word <> ''
      ),
-     -- tier 2: every word typed starts a word; tier 1: close enough (typos).
+     -- The words other than the municipality must match: "mairie grand yoff"
+     -- lists town halls (Grand Yoff first), not everything in Grand Yoff.
+     -- tier 2: every word starts a word; tier 1: close enough (typos).
      by_name AS (
        SELECT e.id,
-              CASE WHEN NOT EXISTS (SELECT 1 FROM words WHERE e.search_text !~ ('(^| )' || word))
+              CASE WHEN NOT EXISTS (SELECT 1 FROM service_words WHERE e.search_text !~ ('(^| )' || word))
                    THEN 2 ELSE 1 END AS tier,
-              word_similarity(input.q, e.search_text) AS score
-       FROM establishment e, input
+              word_similarity(w.q, e.search_text) AS score
+       FROM establishment e, without_municipality w, input
        WHERE e.status = 'active'
-         AND (NOT EXISTS (SELECT 1 FROM words WHERE e.search_text !~ ('(^| )' || word))
-              OR (input.fuzzy AND input.q <% e.search_text))
+         AND (NOT EXISTS (SELECT 1 FROM service_words WHERE e.search_text !~ ('(^| )' || word))
+              OR (input.fuzzy AND w.q <% e.search_text))
      ),
      services AS (
        SELECT s.id,

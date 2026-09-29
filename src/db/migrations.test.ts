@@ -83,8 +83,11 @@ describe("search", () => {
     ).toBe("etat civil extrait de naissance");
   });
 
-  it("drops the stop words exactly like src/lib/text.ts", async () => {
-    for (const sample of ["Orange Sénégal", "Institution de prévoyance retraite du Sénégal", "Sénégal", "Sen'Eau"]) {
+  it("drops stop words and replaces equivalents exactly like src/lib/text.ts", async () => {
+    for (const sample of [
+      "Orange Sénégal", "Institution de prévoyance retraite du Sénégal", "Sénégal", "Sen'Eau",
+      "Hôtel de Ville de Dakar", "hotel de ville", "Hôtel-de-Ville du Sénégal",
+    ]) {
       const row = await one<{ t: string }>("SELECT search_terms($1) AS t", [sample]);
       expect(row?.t).toBe(toSearchTerms(sample));
     }
