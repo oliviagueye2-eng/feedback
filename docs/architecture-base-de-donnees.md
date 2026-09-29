@@ -132,6 +132,8 @@ Le libellé affiché passe par `translation`.
 | aliases | text[] | autres noms de l'établissement (voir plus bas) |
 | search_text | text | nom + alias, en minuscules et sans accents, rempli automatiquement (index trigramme) |
 | type_id | fk establishment_type | nullable si saisi par un usager |
+| organization_id | fk organization | organisme auquel appartient l'établissement (une agence Senelec pointe vers Senelec) ; vide pour un établissement indépendant |
+| scope | enum | `site` (lieu physique, par défaut) ou `general` (l'organisme « en général », sans lieu : voir `organization`) |
 | sector_id | fk sector | secteur quand le type est inconnu : choisi par l'usager à l'écran 0c (facultatif). Si les deux existent, le secteur du type prime |
 | ownership | enum | `public`, `private`, `community` (établissements communautaires, confessionnels…) |
 | municipality_id | fk municipality | nullable si saisi par un usager |
@@ -232,6 +234,26 @@ Un QR code par guichet ou par établissement.
 | is_active | boolean | |
 
 ---
+
+### organization
+Organisme qui a plusieurs établissements : Senelec, Sen'Eau, La Poste, opérateurs téléphoniques, caisses sociales, impôts… (migration 0005).
+
+| Colonne | Type | Note |
+|---|---|---|
+| id | smallint | |
+| code | text unique | `SENELEC`… |
+| name | text | Senelec |
+| sector_id | fk sector | |
+
+Un organisme s'évalue de deux façons :
+- **dans une de ses agences** : un établissement ordinaire (`scope = site`) rattaché à l'organisme ;
+- **« en général »** (coupures, factures, service client, application…) : un établissement particulier de l'organisme, `scope = general`, sans adresse ni commune. Un seul par organisme, jamais de QR code (règles vérifiées par la base).
+
+Chaque avis reste ainsi rattaché à un établissement. Dans la recherche, à score égal, l'organisme « en général » passe avant ses agences ; une commune tapée fait passer l'agence de cette commune en tête.
+
+**Note globale d'un organisme** (décision du 2026-09-29) : tous les avis de tous ses établissements regroupés (« en général » et agences), avec le détail par établissement.
+
+**Écran 1** pour un établissement « en général » : « Quand est-ce arrivé ? » au lieu de « Quand êtes-vous venu(e) ? » (mêmes réponses, même calcul du mois) ; le motif devient « Sur quoi porte votre avis ? ».
 
 ## 4. Recherche d'établissement (écrans 0 et 0a)
 

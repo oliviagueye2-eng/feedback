@@ -31,7 +31,11 @@ export interface EstablishmentSummary {
   typeCode: string | null;
   /** French label of the sector, shown under the name in search results. */
   sectorLabel: string | null;
+  /** "general": an organisation rated as a whole (Senelec in general), not one of its places. */
+  scope: EstablishmentScope;
 }
+
+export type EstablishmentScope = "site" | "general";
 
 export interface EstablishmentSearchResult {
   /** "service" when the query looks like a service ("état civil"): the UI then shows the "Précisez l'établissement" hint. */

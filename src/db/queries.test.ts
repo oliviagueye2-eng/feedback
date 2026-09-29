@@ -94,6 +94,7 @@ describe("search", () => {
       municipalityName: "Fann-Point E-Amitié",
       typeCode: "HOSPITAL",
       sectorLabel: "Santé",
+      scope: "site",
     });
   });
 

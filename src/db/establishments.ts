@@ -2,7 +2,12 @@
  * Data access for the registry (establishment, service, municipality, qr_code).
  */
 import { invalidInput } from "../domain/errors";
-import type { EstablishmentSearchResult, EstablishmentSummary, Sector } from "../domain/types";
+import type {
+  EstablishmentScope,
+  EstablishmentSearchResult,
+  EstablishmentSummary,
+  Sector,
+} from "../domain/types";
 import { query } from "./client";
 
 export interface EstablishmentDetail extends EstablishmentSummary {
@@ -27,6 +32,7 @@ interface SummaryRow {
   municipality_name: string | null;
   type_code: string | null;
   sector_label: string | null;
+  scope: EstablishmentScope;
 }
 
 interface DetailRow extends SummaryRow {
@@ -39,6 +45,7 @@ const toSummary = (row: SummaryRow): EstablishmentSummary => ({
   municipalityName: row.municipality_name,
   typeCode: row.type_code,
   sectorLabel: row.sector_label,
+  scope: row.scope,
 });
 
 /**
@@ -47,7 +54,7 @@ const toSummary = (row: SummaryRow): EstablishmentSummary => ({
  */
 const SUMMARY_COLUMNS = `e.id, e.name,
   coalesce(m.name, e.municipality_input) AS municipality_name, et.code AS type_code,
-  sl.text AS sector_label`;
+  sl.text AS sector_label, e.scope`;
 
 const SUMMARY_JOINS = `
   LEFT JOIN municipality m ON m.id = e.municipality_id
@@ -70,6 +77,7 @@ const toDetail = (row: DetailRow): EstablishmentDetail => ({
  * default), so a short or misspelt query still finds a long name. When the
  * query contains a municipality name ("etat civil grand yoff"), establishments
  * of that municipality come first, and the service is looked up without it.
+ * Between equal matches, an organisation "in general" comes before its agencies.
  */
 export async function searchActiveEstablishments(
   normalizedQuery: string,
@@ -118,6 +126,7 @@ export async function searchActiveEstablishments(
      ${SUMMARY_JOINS}
      ORDER BY coalesce(e.municipality_id IN (SELECT id FROM municipality_in_query), false) DESC,
               scored.score DESC,
+              e.scope = 'general' DESC,
               e.name
      LIMIT $2`,
     [normalizedQuery, limit],
