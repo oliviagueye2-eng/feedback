@@ -28,6 +28,14 @@ body {
   color: var(--ink);
   background: #fff;
   line-height: 1.45;
+  /* Keeps the footer at the bottom of the screen on short pages. */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex-grow: 1;
 }
 
 a {
@@ -65,11 +73,14 @@ a:hover {
 }
 
 .site-header {
+  border-bottom: 1px solid var(--line);
+}
+
+.site-header-inner {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--line);
+  min-height: 58px;
 }
 
 .crest {
@@ -83,6 +94,11 @@ a:hover {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.crest svg {
+  width: 18px;
+  height: 18px;
 }
 
 .site-name {
@@ -101,6 +117,137 @@ a:hover {
   font-size: 16px;
 }
 
+/* Phones: the mobile mock-up has no navigation links. */
+.site-nav {
+  display: none;
+}
+
+.site-nav a {
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 16px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.site-nav a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.site-footer {
+  background: var(--ink);
+  color: #fff;
+  padding: 22px 0 26px;
+}
+
+.site-footer-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.site-footer-state {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.flag-small {
+  height: 4px;
+  width: 60px;
+  margin-bottom: 12px;
+}
+
+.site-footer-state strong {
+  font-size: 16px;
+}
+
+.site-footer-state em,
+.site-footer p {
+  color: #cfe0d5;
+}
+
+.site-footer-state em {
+  font-size: 15px;
+}
+
+.site-footer p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+@media (min-width: 900px) {
+  .flag {
+    height: 6px;
+  }
+
+  .site-header-inner {
+    gap: 14px;
+    height: 84px;
+  }
+
+  .crest {
+    width: 46px;
+    height: 46px;
+  }
+
+  .crest svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .site-name small {
+    font-size: 14px;
+  }
+
+  .site-name strong {
+    font-size: 20px;
+  }
+
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .site-footer {
+    padding: 44px 0 48px;
+  }
+
+  .site-footer-inner {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 56px;
+    align-items: start;
+  }
+
+  .site-footer-state {
+    gap: 12px;
+  }
+
+  .flag-small {
+    height: 4px;
+    width: 72px;
+    margin-bottom: 0;
+  }
+
+  .site-footer-state strong {
+    font-size: 18px;
+  }
+
+  .site-footer-state em,
+  .site-footer p {
+    font-size: 16px;
+  }
+
+  .site-footer p {
+    line-height: 1.55;
+  }
+}
+
 .btn {
   font: inherit;
   font-size: 18px;
@@ -114,7 +261,7 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 16px;
+  padding: 0 20px;
   text-decoration: none;
   cursor: pointer;
 }
@@ -142,7 +289,8 @@ a:hover {
 
 .container {
   width: 100%;
-  max-width: 1200px;
+  /* 1200px of content, as in the desktop mock-up. */
+  max-width: 1236px;
   margin: 0 auto;
   padding: 0 18px;
 }

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { SiteFooter } from "../_components/SiteFooter";
 import { SiteHeader } from "../_components/SiteHeader";
 import styles from "./home.module.css";
 
@@ -10,35 +10,96 @@ export default function HomePage() {
       <main>
         <section className={styles.hero}>
           <div className={`container ${styles.heroInner}`}>
-            <div className={styles.ticket}>
-              <div className={styles.ticketMain}>
-                <span className={styles.watermark} aria-hidden="true" />
-                <div className={`muted ${styles.ticketHead}`}>
-                  <span>Ticket usager</span>
-                  <strong>N° 047</strong>
-                </div>
-                <h1 className={styles.title}>C&apos;est votre tour.</h1>
-                <p className={styles.lead}>
-                  Vous sortez d&apos;une mairie, d&apos;un hôpital, d&apos;une école&nbsp;?
-                  Dites-nous comment ça s&apos;est passé.
-                </p>
+            {/* Tickets 045 and 046 stick out behind: the user's own ticket is next. */}
+            <div className={styles.queue}>
+              <div className={`${styles.behind} ${styles.behind1}`} aria-hidden="true">
+                N° 045
               </div>
-              <div className={styles.perforation} aria-hidden="true" />
-              <div className={styles.stub}>
-                <Link href="/avis" className="btn">
-                  Donner mon avis
-                </Link>
-                <p className="muted">Anonyme et gratuit, environ 1 minute.</p>
+              <div className={`${styles.behind} ${styles.behind2}`} aria-hidden="true">
+                N° 046
+              </div>
+              <div className={styles.ticketWrap}>
+                <div className={styles.ticket}>
+                  <div className={styles.ticketMain}>
+                    <span className={styles.watermark} aria-hidden="true" />
+                    <div className={`muted ${styles.ticketHead}`}>
+                      <span>Ticket usager</span>
+                      <strong>N° 047</strong>
+                    </div>
+                    <h1 className={styles.title}>C&apos;est votre tour.</h1>
+                    <p className={styles.lead}>
+                      Vous sortez d&apos;une mairie, d&apos;un hôpital, d&apos;une école&nbsp;?
+                      Dites-nous comment ça s&apos;est passé.
+                    </p>
+                  </div>
+                  <div className={styles.perforation} aria-hidden="true" />
+                  {/* On a computer the search sits in the stub; on a phone only the button shows. */}
+                  <form method="get" action="/avis" className={styles.stub}>
+                    <label htmlFor="home-search" className={styles.searchLabel}>
+                      Dans quel établissement êtes-vous allé(e)&nbsp;?
+                    </label>
+                    <div className={styles.searchField}>
+                      <input
+                        id="home-search"
+                        name="q"
+                        type="search"
+                        className="field"
+                        placeholder="Ex. : mairie de Grand-Yoff"
+                      />
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.4"
+                        strokeLinecap="round"
+                        aria-hidden="true"
+                      >
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="M20 20l-3.5-3.5" />
+                      </svg>
+                    </div>
+                    <button type="submit" className="btn">
+                      Donner mon avis
+                    </button>
+                    <p className="muted">Anonyme et gratuit, environ 1 minute.</p>
+                  </form>
+                </div>
               </div>
             </div>
-            <p className={styles.qr}>
-              Encore au guichet&nbsp;? Scannez le QR code affiché : l&apos;établissement
-              sera déjà rempli.
-            </p>
+
+            <div className={styles.qr}>
+              <svg
+                className={styles.qrIcon}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4M20 17v3" />
+              </svg>
+              <p className={styles.qrPhone}>
+                Encore au guichet&nbsp;? <strong>Scannez le QR code affiché</strong>,
+                l&apos;établissement sera déjà rempli.
+              </p>
+              <div className={styles.qrDesktop}>
+                <p className={styles.qrTitle}>Encore au guichet&nbsp;?</p>
+                <p className="muted">
+                  Scannez avec votre téléphone le QR code affiché. L&apos;établissement sera
+                  déjà rempli.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section className={`container ${styles.steps}`}>
+        <section id="comment-ca-marche" className={`container ${styles.steps}`}>
           <h2>Comment ça marche</h2>
           <ol>
             <li>Trouvez l&apos;établissement où vous êtes allé(e).</li>
@@ -47,6 +108,7 @@ export default function HomePage() {
           </ol>
         </section>
       </main>
+      <SiteFooter />
     </>
   );
 }

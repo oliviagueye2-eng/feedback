@@ -1,15 +1,55 @@
-/* Home page: queue ticket on a light background, tricolour watermark
-   in the top-left corner. Vertical ticket on phones, horizontal from 900px. */
+/* Home page: queue ticket on a light background, tickets 045 and 046 sticking
+   out behind, tricolour watermark in the top-left corner (variant A, 2b).
+   Vertical ticket on phones, horizontal from 900px. */
 
 .hero {
   background: var(--hero);
-  padding: 28px 0 26px;
+  padding: 24px 0 26px;
 }
 
 .heroInner {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
+}
+
+/* ---- Queue of tickets ---- */
+
+.queue {
+  position: relative;
+  padding-top: 44px;
+}
+
+.behind {
+  position: absolute;
+  height: 120px;
+  border-radius: 6px;
+  padding: 3px 16px;
+  display: flex;
+  justify-content: flex-end;
+  font-size: 13px;
+}
+
+.behind1 {
+  left: 20px;
+  right: 20px;
+  top: 0;
+  background: #f8faf9;
+  border: 1px solid #d5ded8;
+  color: #8a9a90;
+}
+
+.behind2 {
+  left: 10px;
+  right: 10px;
+  top: 22px;
+  background: #fbfcfb;
+  border: 1px solid #c9d6ce;
+  color: #6b7f73;
+}
+
+.ticketWrap {
+  position: relative;
 }
 
 .ticket {
@@ -77,9 +117,10 @@
   font-size: 18px;
 }
 
-/* Tear line: dashed line plus two notches. Each notch is a circle painted in
-   the page colour, with the ticket's border colour, clipped to its inner half
-   so the ticket outline stays continuous around the notch. */
+/* Tear line on phones: dashed line plus two side notches. Each notch is a
+   circle painted in the hero colour with the ticket's border colour, clipped
+   to its inner half so the outline stays continuous. Nothing lies behind the
+   notches on phones, so painting them is enough. */
 .perforation {
   position: relative;
   height: 24px;
@@ -109,11 +150,42 @@
   clip-path: inset(0 50% 0 0);
 }
 
+/* ---- Stub ---- */
+
 .stub {
+  margin: 0;
   padding: 18px 20px 20px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+/* Phones: the button leads to the search page, as in the mobile mock-up. */
+.searchLabel,
+.searchField {
+  display: none;
+}
+
+.searchLabel {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.searchField {
+  position: relative;
+}
+
+.searchField input {
+  font-size: 16px;
+  padding-left: 42px;
+}
+
+.searchField svg {
+  position: absolute;
+  left: 13px;
+  top: 16px;
+  color: var(--green);
 }
 
 .stub p {
@@ -122,10 +194,49 @@
   text-align: center;
 }
 
+/* ---- QR code ---- */
+
 .qr {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--green);
+}
+
+.qrIcon {
+  width: 40px;
+  height: 40px;
+  stroke-width: 1.6;
+  flex-shrink: 0;
+}
+
+.qrPhone {
   margin: 0;
   font-size: 16px;
+  line-height: 1.4;
+  color: var(--ink);
 }
+
+.qrPhone strong {
+  color: var(--green);
+}
+
+.qrDesktop {
+  display: none;
+}
+
+.qrDesktop p {
+  margin: 0;
+}
+
+.qrTitle {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+/* ---- How it works ---- */
 
 .steps {
   padding-top: 30px;
@@ -133,8 +244,9 @@
 }
 
 .steps h2 {
-  margin: 0 0 16px;
+  margin: 0 0 18px;
   font-size: 24px;
+  line-height: 1.2;
 }
 
 .steps ol {
@@ -151,6 +263,7 @@
   padding: 14px 0;
   border-top: 1px solid var(--line);
   font-size: 17px;
+  line-height: 1.4;
 }
 
 .steps li:last-child {
@@ -169,7 +282,7 @@
 
 @media (min-width: 900px) {
   .hero {
-    padding: 56px 0 60px;
+    padding: 52px 0 60px;
   }
 
   .heroInner {
@@ -178,15 +291,70 @@
     gap: 56px;
   }
 
+  .queue {
+    width: 860px;
+    flex-shrink: 0;
+  }
+
+  .behind {
+    width: 820px;
+    height: 250px;
+    border-radius: 8px;
+    /* Number just under the top edge, so the next ticket does not hide it. */
+    padding: 1px 40px;
+    font-size: 15px;
+  }
+
+  .behind1 {
+    left: 40px;
+  }
+
+  .behind2 {
+    left: 20px;
+  }
+
+  .ticketWrap {
+    width: 820px;
+  }
+
+  /* Real notches: the tickets behind show through them. The centre is 315px
+     from the right edge (1px border + 300px stub + half the 28px tear line). */
   .ticket {
     flex-direction: row;
-    width: 820px;
-    flex-shrink: 0;
+    border-radius: 8px;
+    mask:
+      radial-gradient(circle at calc(100% - 315px) 0, transparent 14px, #000 14.5px),
+      radial-gradient(circle at calc(100% - 315px) 100%, transparent 14px, #000 14.5px);
+    mask-composite: intersect;
+  }
+
+  /* The notches' outline, drawn outside the masked ticket. */
+  .ticketWrap::before,
+  .ticketWrap::after {
+    content: "";
+    position: absolute;
+    right: 301px;
+    width: 28px;
+    height: 14px;
+    border: 1px solid #9aafa2;
+    pointer-events: none;
+  }
+
+  .ticketWrap::before {
+    top: 0;
+    border-top: 0;
+    border-radius: 0 0 14px 14px;
+  }
+
+  .ticketWrap::after {
+    bottom: 0;
+    border-bottom: 0;
+    border-radius: 14px 14px 0 0;
   }
 
   .ticketMain {
     flex-grow: 1;
-    border-radius: 6px 0 0 6px;
+    border-radius: 8px 0 0 8px;
     padding: 30px 40px 40px;
     gap: 18px;
   }
@@ -196,13 +364,24 @@
     height: 170px;
   }
 
+  .ticketHead {
+    font-size: 15px;
+  }
+
+  .ticketHead strong {
+    font-size: 17px;
+  }
+
   .title {
     font-size: 76px;
     line-height: 1;
+    letter-spacing: -0.015em;
   }
 
   .lead {
     font-size: 20px;
+    line-height: 1.5;
+    max-width: 30em;
   }
 
   .perforation {
@@ -215,37 +394,56 @@
 
   .perforation::before,
   .perforation::after {
-    left: 2px;
-    right: auto;
-  }
-
-  .perforation::before {
-    top: -12.5px;
-    clip-path: inset(50% 0 0 0);
-  }
-
-  .perforation::after {
-    top: auto;
-    bottom: -12.5px;
-    clip-path: inset(0 0 50% 0);
+    display: none;
   }
 
   .stub {
     width: 300px;
     flex-shrink: 0;
     justify-content: flex-end;
-    padding: 30px;
+    gap: 12px;
+    padding: 30px 30px 32px;
+  }
+
+  .searchLabel,
+  .searchField {
+    display: block;
   }
 
   .qr {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .qrIcon {
+    width: 64px;
+    height: 64px;
+    stroke-width: 1.4;
+  }
+
+  .qrPhone {
+    display: none;
+  }
+
+  .qrDesktop {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .qrDesktop .muted {
     font-size: 18px;
+    line-height: 1.5;
   }
 
   .steps {
-    padding-top: 64px;
+    padding-top: 72px;
+    padding-bottom: 64px;
   }
 
   .steps h2 {
+    margin-bottom: 28px;
     font-size: 34px;
   }
 
@@ -258,12 +456,24 @@
   .steps li,
   .steps li:last-child {
     flex-direction: column;
+    gap: 12px;
     border: 0;
     padding: 24px 32px 8px 0;
+    font-size: 19px;
+    line-height: 1.45;
   }
 
   .steps li + li {
     border-left: 1px solid var(--line);
     padding-left: 32px;
+  }
+
+  .steps li:last-child {
+    padding-right: 0;
+  }
+
+  .steps li::before {
+    font-size: 44px;
+    width: auto;
   }
 }
