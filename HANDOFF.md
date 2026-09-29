@@ -21,7 +21,7 @@ Le dépôt `oliviagueye2-eng/allo-pro-sn` est un **autre projet**, sans rapport 
 - Elle écrit en **français** ; répondre en français, simplement, sans jargon (expliquer avec un exemple concret quand elle dit « je n'ai pas compris »).
 - **Tout ce qui est dans la base et le code est en anglais** (tables, colonnes, enums, codes) ; la documentation et l'interface sont en français.
 - **Ne pas ajouter de fonctionnalités non demandées** : un micro et des boutons « Écouter » ajoutés de ma propre initiative ont été refusés puis retirés. Proposer, puis attendre son accord.
-- Design : elle veut un rendu **institutionnel et original, qui ne « fasse pas IA »**. Elle a fourni un skill « frontend-design » (résumé plus bas) à respecter.
+- Design : elle veut un rendu **institutionnel et original, qui ne « fasse pas IA »**. Le skill **frontend-design** est installé dans ses Compétences : le charger (outil Skill) avant tout travail d'interface. Résumé plus bas au cas où il manquerait.
 - Elle valide pas à pas : présenter des options courtes avec une recommandation, puis appliquer.
 - Commits directement sur `main` (dépôt créé vide par elle ; aucune branche imposée). Terminer les messages de commit par les lignes `Co-Authored-By` / `Claude-Session` demandées par l'environnement.
 
@@ -113,6 +113,16 @@ Le dépôt `oliviagueye2-eng/allo-pro-sn` est un **autre projet**, sans rapport 
 
 ---
 
+## Skills disponibles dans les sessions cloud
+
+Vérifié le 2026-09-29 (outils `ListSkills` / `ListPlugins` et dossier `~/.claude/skills/synced/`) :
+- **Arrivent dans la session** : les skills d'Anthropic (pdf, docx, xlsx, pptx, docs, skill-creator, deep-research…) et les skills **importés par l'utilisatrice elle-même** dans Compétences (« Les vôtres »), comme **frontend-design**, même ajoutés en cours de session.
+- **N'arrivent pas** : les 38 skills « Depuis les marketplaces que vous avez ajoutées » (Mattpocock skills : handoff, grill-me, teach… ; Andrej Karpathy skills) et les **plugins** (`ListPlugins` vide, dossier `~/.claude/plugins/synced/` vide), y compris **claude-handoff** (Anthropic Directory, activé). Les plugins ne sont peut-être chargés qu'au démarrage : **à vérifier en début de nouvelle session** (lister skills et plugins, le lui dire).
+- Contournement expliqué et validé pour frontend-design : télécharger le skill (bouton ⤓), puis Compétences → **+ Ajouter** → importer le `.zip`.
+- claude-handoff dépend de Claude Code CLI et Python 3 (hooks) : conçu pour un usage local, peu utile ici. Pour une passation, elle demande « fais un handoff » → mettre à jour ce fichier.
+
+---
+
 ## Commandes utiles
 
 ```bash
@@ -125,6 +135,6 @@ npm run build
 npm run db:migrate     # DATABASE_URL / DATABASE_URL_UNPOOLED
 ```
 
-## Rappel du skill « frontend-design » (fourni par l'utilisatrice)
+## Rappel du skill « frontend-design » (installé dans ses Compétences)
 
 Ancrer le design dans le sujet ; une typographie choisie (pas les polices par défaut) ; un seul élément marquant, le reste sobre ; la structure visuelle doit porter de l'information (numérotation seulement pour une vraie séquence). Éviter : fond crème `#F4F1EA` avec accent terracotta, kit de cartes identiques avec ombre douce, dégradés décoratifs, libellés en MAJUSCULES espacées, textes « A · B · C », « → » dans les boutons, police monospace pour les petits libellés, mot unique mis en valeur dans un titre. Textes : du point de vue de l'usager, boutons qui disent ce qui se passe, même mot tout au long du parcours. Qualité minimale : focus visible, contraste, cibles tactiles ≥ 44 px.
