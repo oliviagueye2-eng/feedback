@@ -48,6 +48,8 @@ Le jour où l'API doit devenir un serveur séparé, on déplace `src/domain` et 
 | Méthode et route | Rôle | Écran |
 |---|---|---|
 | `GET /webapi/qr/{code}` | Établissement (et service éventuel) lié à un QR code | QR scanné |
+
+L'adresse imprimée dans les QR codes est la page `/e/{code}`, qui s'appuie sur la même logique métier.
 | `GET /webapi/establishments?q=etat+civil` | Autocomplétion. La réponse indique `match_type` (`establishment` ou `service`) pour afficher l'encadré « Précisez l'établissement » | 0a |
 | `POST /webapi/establishments` | Établissement saisi par l'usager (statut `pending_review`) | 0c |
 | `GET /webapi/establishments/{id}` | Détail d'un établissement et services proposés | 1 |

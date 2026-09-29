@@ -1,0 +1,269 @@
+/* Home page: queue ticket on a light background, tricolour watermark
+   in the top-left corner. Vertical ticket on phones, horizontal from 900px. */
+
+.hero {
+  background: var(--hero);
+  padding: 28px 0 26px;
+}
+
+.heroInner {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ticket {
+  background: #fff;
+  border: 1px solid #9aafa2;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ticketMain {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px 6px 0 0;
+  padding: 16px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ticketMain > :not(.watermark) {
+  position: relative;
+}
+
+.watermark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 120px;
+  height: 120px;
+  opacity: 0.22;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    var(--flag-green) 0 16%,
+    transparent 16% 22%,
+    var(--flag-yellow) 22% 38%,
+    transparent 38% 44%,
+    var(--flag-red) 44% 60%,
+    transparent 60%
+  );
+}
+
+.ticketHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 14px;
+}
+
+.ticketHead strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.title {
+  margin: 0;
+  font-size: 44px;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+}
+
+.lead {
+  margin: 0;
+  font-size: 18px;
+}
+
+/* Tear line: dashed line plus two notches. Each notch is a circle painted in
+   the page colour, with the ticket's border colour, clipped to its inner half
+   so the ticket outline stays continuous around the notch. */
+.perforation {
+  position: relative;
+  height: 24px;
+  background: repeating-linear-gradient(90deg, #9aafa2 0 6px, transparent 6px 12px)
+    center / calc(100% - 36px) 2px no-repeat;
+}
+
+.perforation::before,
+.perforation::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--hero);
+  border: 1px solid #9aafa2;
+}
+
+.perforation::before {
+  left: -12.5px;
+  clip-path: inset(0 0 0 50%);
+}
+
+.perforation::after {
+  right: -12.5px;
+  clip-path: inset(0 50% 0 0);
+}
+
+.stub {
+  padding: 18px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stub p {
+  margin: 0;
+  font-size: 14px;
+  text-align: center;
+}
+
+.qr {
+  margin: 0;
+  font-size: 16px;
+}
+
+.steps {
+  padding-top: 30px;
+  padding-bottom: 40px;
+}
+
+.steps h2 {
+  margin: 0 0 16px;
+  font-size: 24px;
+}
+
+.steps ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.steps li {
+  counter-increment: step;
+  display: flex;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  font-size: 17px;
+}
+
+.steps li:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.steps li::before {
+  content: counter(step);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--green);
+  width: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+@media (min-width: 900px) {
+  .hero {
+    padding: 56px 0 60px;
+  }
+
+  .heroInner {
+    flex-direction: row;
+    align-items: center;
+    gap: 56px;
+  }
+
+  .ticket {
+    flex-direction: row;
+    width: 820px;
+    flex-shrink: 0;
+  }
+
+  .ticketMain {
+    flex-grow: 1;
+    border-radius: 6px 0 0 6px;
+    padding: 30px 40px 40px;
+    gap: 18px;
+  }
+
+  .watermark {
+    width: 170px;
+    height: 170px;
+  }
+
+  .title {
+    font-size: 76px;
+    line-height: 1;
+  }
+
+  .lead {
+    font-size: 20px;
+  }
+
+  .perforation {
+    height: auto;
+    width: 28px;
+    flex-shrink: 0;
+    background: repeating-linear-gradient(180deg, #9aafa2 0 6px, transparent 6px 12px)
+      center / 2px calc(100% - 44px) no-repeat;
+  }
+
+  .perforation::before,
+  .perforation::after {
+    left: 2px;
+    right: auto;
+  }
+
+  .perforation::before {
+    top: -12.5px;
+    clip-path: inset(50% 0 0 0);
+  }
+
+  .perforation::after {
+    top: auto;
+    bottom: -12.5px;
+    clip-path: inset(0 0 50% 0);
+  }
+
+  .stub {
+    width: 300px;
+    flex-shrink: 0;
+    justify-content: flex-end;
+    padding: 30px;
+  }
+
+  .qr {
+    font-size: 18px;
+  }
+
+  .steps {
+    padding-top: 64px;
+  }
+
+  .steps h2 {
+    font-size: 34px;
+  }
+
+  .steps ol {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid var(--line);
+  }
+
+  .steps li,
+  .steps li:last-child {
+    flex-direction: column;
+    border: 0;
+    padding: 24px 32px 8px 0;
+  }
+
+  .steps li + li {
+    border-left: 1px solid var(--line);
+    padding-left: 32px;
+  }
+}

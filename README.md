@@ -9,6 +9,37 @@ Conception d'une plateforme permettant aux usagers de donner leur avis sur un é
 | [`docs/`](docs/) | [Architecture technique](docs/architecture-technique.md) (Next.js en SSR, API REST sous `/webapi/`) et [architecture de la base de données](docs/architecture-base-de-donnees.md) |
 | [`maquettes/`](maquettes/) | Maquettes UX des parcours (variante A retenue, variantes B, C, D pour mémoire) |
 
+## Démarrer
+
+Prérequis : Node.js 22.
+
+```bash
+npm install
+cp .env.example .env.local   # renseigner DATABASE_URL
+npm run dev                  # http://localhost:3000
+```
+
+| Commande | Rôle |
+|---|---|
+| `npm run dev` | Serveur de développement |
+| `npm run build` | Build de production |
+| `npm run lint` | Vérification du code, dont la règle qui interdit à `src/` de dépendre de Next.js |
+| `npm run typecheck` | Vérification des types |
+| `npm test` | Tests unitaires (Vitest) |
+
+### Organisation du code
+
+| Dossier | Contenu |
+|---|---|
+| `app/(public)/` | Pages usagers : accueil (`/`), recherche (`/avis`), arrivée par QR code (`/e/{code}`) |
+| `app/(admin)/` | Back-office des agents (`/admin`), à construire |
+| `app/webapi/` | Routes de l'API REST, minces : elles appellent `src/domain` |
+| `src/domain/` | Logique métier, indépendante de Next.js |
+| `src/db/` | Accès à PostgreSQL, **à écrire** : chaque fonction répond pour l'instant « non implémenté » (HTTP 501) |
+| `src/lib/` | Utilitaires partagés (normalisation du texte, validation) |
+
+Voir [l'architecture technique](docs/architecture-technique.md) pour les règles de cette organisation.
+
 ## Parcours retenu (variante A)
 
 ```
