@@ -30,6 +30,8 @@ export async function upsertFeedback(
     input.visitPeriod === undefined || input.visitPeriod === null
       ? defaultVisitPeriod(channel)
       : requireOneOf(input, "visitPeriod", VISIT_PERIODS);
+  // Screen 1 asks "Quand êtes-vous venu(e) ?" to everyone who did not scan a QR code.
+  if (visitPeriod === null) throw invalidInput("visitPeriod is required unless channel is qr");
 
   // started_at is rounded to the hour to limit re-identification.
   const startedAt = new Date(now);

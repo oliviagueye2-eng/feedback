@@ -11,7 +11,7 @@ import type {
 import { query } from "./client";
 
 export interface EstablishmentDetail extends EstablishmentSummary {
-  services: { id: number; code: string }[];
+  services: { id: number; code: string; label: string | null }[];
 }
 
 export interface NewUserEstablishment {
@@ -36,7 +36,7 @@ interface SummaryRow {
 }
 
 interface DetailRow extends SummaryRow {
-  services: { id: number; code: string }[];
+  services: { id: number; code: string; label: string | null }[];
 }
 
 const toSummary = (row: SummaryRow): EstablishmentSummary => ({
@@ -223,8 +223,11 @@ export async function listSectors(): Promise<Sector[]> {
 
 const DETAIL_COLUMNS = `
   ${SUMMARY_COLUMNS},
-  coalesce((SELECT json_agg(json_build_object('id', s.id, 'code', s.code) ORDER BY s.code)
+  coalesce((SELECT json_agg(json_build_object('id', s.id, 'code', s.code, 'label', st.text)
+                           ORDER BY coalesce(st.text, s.code))
             FROM establishment_service es JOIN service s ON s.id = es.service_id
+            LEFT JOIN translation st ON st.target_table = 'service' AND st.target_id = s.id
+              AND st.field = 'label' AND st.language = 'fr'
             WHERE es.establishment_id = e.id), '[]') AS services`;
 
 const DETAIL_JOINS = SUMMARY_JOINS;

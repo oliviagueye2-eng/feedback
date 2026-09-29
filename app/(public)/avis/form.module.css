@@ -1,4 +1,4 @@
-/* Screens 0c (establishment not in the list) and 1 (establishment identified). */
+/* Screen 0c: establishment not in the list. */
 
 .page {
   background: var(--page);
@@ -101,56 +101,4 @@
   background: #fdecea;
   color: #7a1a14;
   font-size: 15px;
-}
-
-.title {
-  margin: 0;
-  font-size: 28px;
-  line-height: 1.15;
-}
-
-.identified {
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.identified > div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 15px;
-}
-
-.identified strong {
-  font-size: 18px;
-}
-
-.identified a {
-  margin-top: 8px;
-  font-weight: 700;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-}
-
-.check {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--green);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.check svg {
-  width: 16px;
-  height: 16px;
 }

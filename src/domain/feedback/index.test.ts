@@ -40,6 +40,13 @@ describe("upsertFeedback", () => {
     expect(db.upsertFeedback).not.toHaveBeenCalled();
   });
 
+  it("requires the visit period when the user did not scan a QR code", async () => {
+    await expect(
+      upsertFeedback(FEEDBACK_ID, { channel: "search", establishmentId: ESTABLISHMENT_ID, language: "fr" }),
+    ).rejects.toMatchObject({ code: "INVALID_INPUT" });
+    expect(db.upsertFeedback).not.toHaveBeenCalled();
+  });
+
   it("rejects an unknown visit period", async () => {
     await expect(
       upsertFeedback(FEEDBACK_ID, {

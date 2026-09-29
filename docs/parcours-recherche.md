@@ -10,7 +10,7 @@ Comportement validé le 2026-09-29. Les textes affichés seront revus dans une p
 | 0a. Résultats | `/avis` (mode recherche) | Liste d'établissements ; « Je ne trouve pas mon établissement » toujours en dernier |
 | 0b. Aucun résultat | `/avis` (mode recherche) | « Aucun résultat exact », suggestions « Vouliez-vous dire », bouton « Continuer avec « … » » |
 | 0c. Non répertorié | `/avis/nouveau?nom=…` | Nom (obligatoire, prérempli), secteur (facultatif), commune ou village (facultatif), « Utiliser cet établissement » |
-| 1. Établissement identifié | `/avis/{id}` | Première version : l'établissement évalué. Motif et « Quand êtes-vous venu(e) ? » à venir |
+| 1. Établissement identifié | `/avis/{id}` (recherche), `/e/{code}` (QR code) | Établissement évalué, motif, « Quand êtes-vous venu(e) ? » (voir plus bas) |
 
 ## Recherche
 
@@ -50,6 +50,15 @@ Sur ordinateur, pas de mode plein écran : les résultats s'affichent sous le ch
 - Seul le nom est obligatoire (2 à 200 caractères).
 - L'établissement est créé « à vérifier » (`pending_review`) ; l'avis est accepté tout de suite. Il n'apparaît dans la recherche qu'après vérification par un agent, qui fusionne les doublons.
 - La commune tapée s'affiche à la place de la commune officielle tant qu'un agent ne l'a pas rattachée.
+
+## Écran 1
+
+- Carte « Vous évaluez » : nom, commune et secteur (« En général » pour un organisme), lien « Ce n'est pas le bon établissement / organisme ? » selon le type.
+- **Motif de votre visite** (« Sur quoi porte votre avis ? » pour un organisme) : la liste des services de l'établissement, plus « Autre démarche ». **Facultatif.** Pas affiché si l'établissement n'a aucun service.
+- **Quand êtes-vous venu(e) ?** (« Quand est-ce arrivé ? » pour un organisme) : 4 réponses en tuiles, **obligatoire**, aucune présélectionnée.
+- **QR code** : ni motif (le service du guichet est connu et affiché) ni date (visite du jour). QR code inconnu ou désactivé : « Ce QR code n'est plus actif » et lien vers la recherche.
+- « Donner mon avis » enregistre la visite (identifiant d'avis créé à l'affichage de la page : un double envoi met à jour le même avis) puis ouvre `/donner/{id}` (écrans 2 à 7, à construire).
+- Fonctionne sans JavaScript.
 
 ## Décisions
 
