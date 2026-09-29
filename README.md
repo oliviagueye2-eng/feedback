@@ -37,6 +37,16 @@ npm run dev                  # http://localhost:3000
 
 **À faire plus tard :** ajouter `CRON_SECRET` dans Vercel. Sans lui, le site fonctionne, mais la tâche de nuit est refusée (401) et les résultats publiés ne sont jamais recalculés. À faire avant d'avoir de vrais avis.
 
+#### Données de démonstration
+
+[`src/db/seeds/demo.sql`](src/db/seeds/demo.sql) ajoute 19 établissements réels (hôpitaux, mairies, universités, DAF, AIBD) pour essayer la recherche en ligne. **Ce n'est pas un référentiel officiel.** Ce fichier n'est pas une migration : il ne s'applique pas tout seul.
+
+1. Attendre que la migration `0003` soit appliquée (premier déploiement de production qui la contient).
+2. Dans la console Neon, ouvrir *SQL Editor*, coller le contenu de `demo.sql` et cliquer sur *Run*. Le relancer ne crée pas de doublons.
+3. Pour les retirer plus tard : même chose avec [`demo-remove.sql`](src/db/seeds/demo-remove.sql).
+
+En local : `psql "$DATABASE_URL" -f src/db/seeds/demo.sql`.
+
 Configuration dans [`vercel.json`](vercel.json) : région `fra1` (Francfort, la même que la base), et recalcul des résultats publiés chaque nuit à 2 h UTC (`/webapi/internal/refresh-stats`, protégé par `CRON_SECRET`).
 
 ### Organisation du code
