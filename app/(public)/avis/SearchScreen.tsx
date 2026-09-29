@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import type { EstablishmentSearchResult } from "@/src/domain/types";
 import { SearchResults, newEstablishmentHref } from "./SearchResults";
@@ -9,6 +9,8 @@ import styles from "./search.module.css";
 const MIN_LENGTH = 3;
 const DEBOUNCE_MS = 250;
 const MOVE_MS = 450;
+
+const noSubscription = () => () => {};
 
 const prefersReducedMotion = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -37,6 +39,10 @@ export function SearchScreen({
     initialQuery && initialQuery.trim().length < MIN_LENGTH ? "too-short" : initialResult ? "done" : "idle",
   );
   const [active, setActive] = useState(false);
+  // True once JavaScript runs: the phone then drops the "Rechercher" button,
+  // useless there since touching the field opens the search. Without
+  // JavaScript the button stays: it is what sends the search.
+  const enhanced = useSyncExternalStore(noSubscription, () => true, () => false);
   const input = useRef<HTMLInputElement>(null);
   const field = useRef<HTMLDivElement>(null);
   const request = useRef<AbortController | null>(null);
@@ -137,7 +143,7 @@ export function SearchScreen({
       method="get"
       action="/avis"
       role="search"
-      className={`${styles.search} ${active ? styles.active : ""}`}
+      className={`${styles.search} ${active ? styles.active : ""} ${enhanced ? styles.enhanced : ""}`}
       onSubmit={onSubmit}
     >
       <div className={styles.flag} aria-hidden="true">

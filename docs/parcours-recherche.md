@@ -6,7 +6,7 @@ Comportement validé le 2026-09-29. Les textes affichés seront revus dans une p
 
 | Écran | Adresse | Contenu |
 |---|---|---|
-| 0. Recherche | `/avis` | Titre, champ « Dans quel établissement êtes-vous allé(e) ? », aide, bouton « Rechercher » ; en bas, rappel du QR code |
+| 0. Recherche | `/avis` | Titre, champ « Dans quel établissement êtes-vous allé(e) ? », aide, bouton « Rechercher » (pas sur téléphone une fois le JavaScript chargé : toucher le champ suffit) ; en bas, rappel du QR code |
 | 0a. Résultats | `/avis` (mode recherche) | Liste d'établissements ; « Je ne trouve pas mon établissement » toujours en dernier |
 | 0b. Aucun résultat | `/avis` (mode recherche) | « Aucun résultat exact », suggestions « Vouliez-vous dire », bouton « Continuer avec « … » » |
 | 0c. Non répertorié | `/avis/nouveau?nom=…` | Nom (obligatoire, prérempli), secteur (facultatif), commune ou village (facultatif), « Utiliser cet établissement » |
