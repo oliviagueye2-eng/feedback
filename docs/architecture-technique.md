@@ -74,7 +74,20 @@ Format commun pour toutes les routes :
 
 Codes HTTP : `400` données invalides, `404` introuvable, `409` conflit (par exemple un avis déjà terminé), `429` trop de requêtes.
 
-## 4. Points ouverts
+## 4. Hébergement
+
+| Étape | Hébergement | Pourquoi |
+|---|---|---|
+| Prototype | **Vercel** (application) et **Neon** (PostgreSQL), région **Francfort** | Mise en ligne immédiate, offres gratuites suffisantes pour un prototype |
+| Pilote, production | Hébergement souverain au Sénégal ou cloud européen, application en conteneur Docker | Localisation des données, maîtrise des journaux et des coûts |
+
+Le code n'utilise aucun service propre à Vercel : il reste portable.
+
+- **Connexions :** l'application utilise `DATABASE_URL` (poolée) ; les migrations utilisent `DATABASE_URL_UNPOOLED` (directe), car leur verrou ne passe pas par un pooler.
+- **Tâche de nuit :** `GET /webapi/internal/refresh-stats` recalcule `monthly_stats`. Elle exige l'en-tête `Authorization: Bearer <CRON_SECRET>`, que Vercel Cron envoie automatiquement.
+- **Migrations :** appliquées au build des déploiements de production uniquement.
+
+## 5. Points ouverts
 
 1. **Versionnement :** faut-il préfixer dès maintenant par une version (`/webapi/v1/...`) ? Cela facilite les évolutions quand d'autres canaux (WhatsApp, application) utiliseront l'API.
 2. **Protection contre les abus :** limite du nombre d'avis par appareil et par établissement, sans stocker d'identifiant personnel.

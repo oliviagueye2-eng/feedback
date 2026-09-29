@@ -1,18 +1,35 @@
 // Applies src/db/migrations/*.sql in name order, each in its own transaction.
 // Applied files are recorded in schema_migration and never run twice.
-// Usage: npm run db:migrate (reads DATABASE_URL, from .env.local if present).
+// Usage: npm run db:migrate (reads .env.local if present).
+//
+// Uses DATABASE_URL_UNPOOLED when set: the advisory lock below needs a direct
+// connection and does not work through a transaction pooler (Neon, Supabase).
+//
+// On Vercel, migrations run during the build of production deployments only:
+// preview deployments share the same database and must not migrate it.
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import pg from "pg";
 
 const dir = path.join(import.meta.dirname, "..", "src", "db", "migrations");
 
-if (!process.env.DATABASE_URL) {
-  console.error("DATABASE_URL is not set (see .env.example)");
+if (process.env.VERCEL && process.env.VERCEL_ENV !== "production") {
+  console.log(`Skipping migrations on a ${process.env.VERCEL_ENV} deployment.`);
+  process.exit(0);
+}
+
+const connectionString = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
+if (!connectionString) {
+  if (process.env.VERCEL) {
+    // First deployments may happen before the database is connected.
+    console.warn("No database configured on this deployment: skipping migrations.");
+    process.exit(0);
+  }
+  console.error("DATABASE_URL (or DATABASE_URL_UNPOOLED) is not set (see .env.example)");
   process.exit(1);
 }
 
-const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+const client = new pg.Client({ connectionString });
 await client.connect();
 
 try {

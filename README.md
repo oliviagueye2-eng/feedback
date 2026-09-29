@@ -28,6 +28,15 @@ npm run dev                  # http://localhost:3000
 | `npm test` | Tests (Vitest), dont l'application des migrations sur une base PostgreSQL en mémoire (PGlite) |
 | `npm run db:migrate` | Applique les migrations de `src/db/migrations/` à la base `DATABASE_URL` |
 
+### Mise en ligne (prototype) : Vercel et Neon
+
+1. **Base de données.** Dans Vercel, onglet *Storage*, ajouter **Neon** (ou créer un projet sur neon.tech) en région **Frankfurt (eu-central-1)**. Neon fournit `DATABASE_URL` (connexion poolée, pour l'application) et `DATABASE_URL_UNPOOLED` (connexion directe, pour les migrations).
+2. **Projet Vercel.** *Add New… > Project*, importer le dépôt `feedback`. Si le dépôt n'apparaît pas, autoriser l'application GitHub de Vercel à y accéder.
+3. **Variables d'environnement** (*Settings > Environment Variables*) : `DATABASE_URL` et `DATABASE_URL_UNPOOLED` (ajoutées automatiquement par l'intégration Neon), et `CRON_SECRET` (générer avec `openssl rand -hex 32`).
+4. **Déployer.** Chaque `git push` sur `main` déploie en production. Les migrations s'appliquent pendant le build de production seulement (`npm run vercel-build`) ; les aperçus de branche ne touchent pas à la base.
+
+Configuration dans [`vercel.json`](vercel.json) : région `fra1` (Francfort, la même que la base), et recalcul des résultats publiés chaque nuit à 2 h UTC (`/webapi/internal/refresh-stats`, protégé par `CRON_SECRET`).
+
 ### Organisation du code
 
 | Dossier | Contenu |
