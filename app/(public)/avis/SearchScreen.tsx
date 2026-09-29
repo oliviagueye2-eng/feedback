@@ -8,7 +8,7 @@ import styles from "./search.module.css";
 
 const MIN_LENGTH = 3;
 const DEBOUNCE_MS = 250;
-const MOVE_MS = 240;
+const MOVE_MS = 450;
 
 const prefersReducedMotion = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -55,7 +55,7 @@ export function SearchScreen({
     if (Math.abs(delta) < 1) return;
     el.animate([{ transform: `translateY(${delta}px)` }, { transform: "none" }], {
       duration: MOVE_MS,
-      easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+      easing: "cubic-bezier(0.4, 0, 0.2, 1)",
     });
   }
 

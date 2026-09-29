@@ -29,7 +29,7 @@ Comportement validé le 2026-09-29. Les textes affichés seront revus dans une p
 ## Comportement sur téléphone
 
 - En touchant le champ, la page passe en **mode recherche** : bandeau tricolore, flèche retour, champ en haut, résultats dessous, clavier ouvert.
-- **Transition** : le champ glisse jusqu'en haut (0,24 s), la page s'efface en fondu, puis la flèche retour et les résultats apparaissent ; mouvement inverse au retour. Pas d'animation si le téléphone demande de réduire les animations.
+- **Transition** : le champ glisse jusqu'en haut (0,45 s, jugé trop rapide à 0,24 s), la page s'efface en fondu, puis la flèche retour et les résultats apparaissent ; mouvement inverse au retour. Pas d'animation si le téléphone demande de réduire les animations.
 - **Flèche retour** ou **bouton retour du téléphone** : on revient à l'écran 0, le texte tapé est conservé.
 - **Croix** : le champ et la liste se vident, le clavier reste ouvert.
 - Touche « Rechercher » du clavier : affiche la liste, n'ouvre pas le premier résultat.
