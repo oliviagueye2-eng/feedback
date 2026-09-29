@@ -23,7 +23,7 @@ beforeAll(async () => {
   useTestDatabase(db);
   organizationId = (await db.query<{ id: number }>(
     `INSERT INTO organization (code, name, sector_id)
-     SELECT 'TEST_LIGHT', 'Lumière Test', id FROM sector WHERE code = 'UTILITIES' RETURNING id`,
+     SELECT 'TEST_LIGHT', 'Lumière Test', id FROM sector WHERE code = 'ELECTRICITY' RETURNING id`,
   )).rows[0]!.id;
   generalId = await insertEstablishment(`('Lumière Test', ${organizationId}, 'general', NULL)`);
   agencyId = await insertEstablishment(

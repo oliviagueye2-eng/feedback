@@ -174,15 +174,15 @@ describe("establishment", () => {
     });
   });
 
-  it("lists the eighteen sectors in alphabetical order, accents ignored", async () => {
+  it("lists the nineteen sectors in alphabetical order, accents ignored", async () => {
     const sectors = await listSectors();
-    expect(sectors).toHaveLength(18);
+    expect(sectors).toHaveLength(19);
     expect(sectors.slice(0, 3).map((s) => s.label)).toEqual([
       "Administration et état civil",
       "Banques et assurances",
       "Commerce",
     ]);
-    // "Eau et électricité" < "Éducation" < "Emploi…": the accent does not push it to the end.
+    // "Eau" < "Éducation" < "Électricité": the accent does not push them to the end.
     expect(sectors.findIndex((s) => s.label === "Éducation")).toBe(5);
   });
 });

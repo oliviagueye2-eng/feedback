@@ -20,7 +20,11 @@ export default async function EstablishmentPage({ params }: PageProps<"/avis/[id
     if (error instanceof DomainError && error.code === "NOT_FOUND") notFound();
     throw error;
   }
-  const details = [establishment.municipalityName, establishment.sectorLabel].filter(Boolean).join(", ");
+  // An organisation rated as a whole (Senelec in general) is not a place: say "organisme".
+  const general = establishment.scope === "general";
+  const details = [general ? "En général" : establishment.municipalityName, establishment.sectorLabel]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <>
@@ -38,7 +42,9 @@ export default async function EstablishmentPage({ params }: PageProps<"/avis/[id
               <span className="muted">Vous évaluez</span>
               <strong>{establishment.name}</strong>
               {details && <span>{details}</span>}
-              <Link href="/avis">Ce n&apos;est pas le bon établissement ?</Link>
+              <Link href="/avis">
+                {general ? "Ce n'est pas le bon organisme ?" : "Ce n'est pas le bon établissement ?"}
+              </Link>
             </div>
           </div>
         </div>

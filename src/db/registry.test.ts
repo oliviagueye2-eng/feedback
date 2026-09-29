@@ -48,6 +48,12 @@ describe("first establishments of the registry", () => {
     expect((await first("la poste"))?.name).toBe("La Poste");
   });
 
+  it("shows Sen'Eau under water and Senelec under electricity", async () => {
+    const [seneau, senelec] = (await searchEstablishments("sen")).results;
+    expect(seneau).toMatchObject({ name: "Sen'Eau", sectorLabel: "Eau" });
+    expect(senelec).toMatchObject({ name: "Senelec", sectorLabel: "Électricité" });
+  });
+
   it("proposes nothing below 3 letters", async () => {
     expect(await names("se")).toEqual([]);
   });

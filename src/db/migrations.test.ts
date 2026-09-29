@@ -37,14 +37,14 @@ describe("reference data", () => {
     expect(row).toEqual({ options: 5, prompts: 5 });
   });
 
-  it("has the eighteen sectors, each with a French label", async () => {
+  it("has the nineteen sectors, each with a French label", async () => {
     const row = await one<{ sectors: number; labelled: number; old_code: number }>(`
       SELECT count(*)::int AS sectors,
              count(t.text)::int AS labelled,
              count(*) FILTER (WHERE s.code = 'PUBLIC_TRANSPORT')::int AS old_code
       FROM sector s
       LEFT JOIN translation t ON t.target_table = 'sector' AND t.target_id = s.id AND t.language = 'fr'`);
-    expect(row).toEqual({ sectors: 18, labelled: 18, old_code: 0 });
+    expect(row).toEqual({ sectors: 19, labelled: 19, old_code: 0 });
   });
 
   it("has the nine topics", async () => {
