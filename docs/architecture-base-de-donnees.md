@@ -99,7 +99,7 @@ Domaine général. Partagé par les types d'établissement et par les services.
 | Colonne | Type | Note |
 |---|---|---|
 | id | smallint | |
-| code | text unique | `HEALTH`, `EDUCATION`, `ADMINISTRATION`, `JUSTICE`, `SECURITY`, `TAX`, `UTILITIES`, `TRANSPORT`, `SOCIAL`, `FOOD_SERVICE`, `HOSPITALITY`, `REAL_ESTATE`, `RETAIL`, `BANKING_INSURANCE`, `CULTURE`, `SPORT`, `TELECOM`. Un secteur n'est ni public ni privé : c'est `establishment.ownership` qui le précise |
+| code | text unique | `HEALTH`, `EDUCATION`, `ADMINISTRATION`, `JUSTICE`, `SECURITY`, `TAX`, `UTILITIES`, `TRANSPORT`, `SOCIAL`, `FOOD_SERVICE`, `HOSPITALITY`, `REAL_ESTATE`, `RETAIL`, `BANKING_INSURANCE`, `CULTURE`, `SPORT`, `TELECOM`, `TOURISM` (agences de voyages, guides, sites touristiques ; l'hébergement reste en `HOSPITALITY`, les musées en `CULTURE`). Un secteur n'est ni public ni privé : c'est `establishment.ownership` qui le précise |
 | fallback_questionnaire_id | fk questionnaire | questionnaire utilisé quand on connaît le secteur mais pas le service (sinon GENERIC) |
 
 Le libellé affiché passe par `translation`.
