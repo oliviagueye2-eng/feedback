@@ -29,7 +29,23 @@ if (!connectionString) {
   process.exit(1);
 }
 
-const client = new pg.Client({ connectionString });
+// Same as withStrictSsl() in src/db/connection-string.ts: keep pg's current
+// strict SSL behaviour (verify-full) and silence its sslmode deprecation warning.
+function withStrictSsl(value) {
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    return value;
+  }
+  const mode = url.searchParams.get("sslmode");
+  if (mode && ["prefer", "require", "verify-ca"].includes(mode) && !url.searchParams.has("uselibpqcompat")) {
+    url.searchParams.set("sslmode", "verify-full");
+  }
+  return url.toString();
+}
+
+const client = new pg.Client({ connectionString: withStrictSsl(connectionString) });
 await client.connect();
 
 try {

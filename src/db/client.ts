@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { withStrictSsl } from "./connection-string";
 
 let pool: Pool | null = null;
 
@@ -9,7 +10,7 @@ export function getPool(): Pool {
     if (!connectionString) {
       throw new Error("DATABASE_URL is not set (see .env.example)");
     }
-    pool = new Pool({ connectionString });
+    pool = new Pool({ connectionString: withStrictSsl(connectionString) });
   }
   return pool;
 }
