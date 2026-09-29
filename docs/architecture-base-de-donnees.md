@@ -4,6 +4,8 @@ Plateforme nationale de satisfaction des usagers des services publics (Sénégal
 Version de travail, construite en parallèle des maquettes (variante A).
 Hypothèse technique : PostgreSQL, avec les extensions `pg_trgm` (recherche approchée) et `unaccent` (recherche sans accents).
 
+Le schéma est créé par les migrations SQL de [`src/db/migrations/`](../src/db/migrations/) (`npm run db:migrate`). En cas d'écart entre ce document et les migrations, ce sont les migrations qui font foi.
+
 ## Convention de nommage
 
 - Tout ce qui est dans la base est **en anglais** : tables, colonnes, valeurs d'énumération, codes.
@@ -12,6 +14,7 @@ Hypothèse technique : PostgreSQL, avec les extensions `pg_trgm` (recherche appr
 - Dates : suffixe `_at` (`created_at`), booléens : préfixe `is_` (`is_active`).
 - Les textes affichés à l'usager (libellés, questions) ne sont pas dans les colonnes de code : ils passent par la table `translation`.
 - Ce document reste rédigé en français ; seuls les identifiants sont en anglais.
+- Les valeurs d'énumération sont stockées en `text` avec une contrainte `CHECK`, plus simples à faire évoluer que les types `ENUM` de PostgreSQL.
 
 ---
 
@@ -96,7 +99,7 @@ Domaine général. Partagé par les types d'établissement et par les services.
 | Colonne | Type | Note |
 |---|---|---|
 | id | smallint | |
-| code | text unique | `HEALTH`, `EDUCATION`, `ADMINISTRATION`, `JUSTICE`, `SECURITY`, `TAX`, `UTILITIES`, `PUBLIC_TRANSPORT`, `SOCIAL`… |
+| code | text unique | Public : `HEALTH`, `EDUCATION`, `ADMINISTRATION`, `JUSTICE`, `SECURITY`, `TAX`, `UTILITIES`, `PUBLIC_TRANSPORT`, `SOCIAL`. Privé : `FOOD_SERVICE`, `HOSPITALITY`, `REAL_ESTATE`, `RETAIL` |
 | fallback_questionnaire_id | fk questionnaire | questionnaire utilisé quand on connaît le secteur mais pas le service (sinon GENERIC) |
 
 Le libellé affiché passe par `translation`.
@@ -413,6 +416,9 @@ Règle de publication : ne rien publier sous un seuil d'avis (par exemple 10 par
 
 ### search_log (facultatif)
 Pour améliorer le référentiel : terme tapé (`query`), nombre de résultats (`result_count`), établissement choisi (`selected_establishment_id`) ou saisi (`created_establishment_id`), date (`searched_at`). Aucune donnée d'identification. Utile pour repérer les établissements manquants et les synonymes à ajouter.
+
+### agent
+Agents du back-office : `id`, `email` (unique), `name`, `is_active`, `created_at`. L'authentification reste à concevoir.
 
 ### moderation_action
 Historique des actions des agents : validation ou fusion d'un établissement saisi par un usager, masquage d'un commentaire.

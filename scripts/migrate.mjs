@@ -1,0 +1,54 @@
+// Applies src/db/migrations/*.sql in name order, each in its own transaction.
+// Applied files are recorded in schema_migration and never run twice.
+// Usage: npm run db:migrate (reads DATABASE_URL, from .env.local if present).
+import { readdir, readFile } from "node:fs/promises";
+import path from "node:path";
+import pg from "pg";
+
+const dir = path.join(import.meta.dirname, "..", "src", "db", "migrations");
+
+if (!process.env.DATABASE_URL) {
+  console.error("DATABASE_URL is not set (see .env.example)");
+  process.exit(1);
+}
+
+const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+await client.connect();
+
+try {
+  // Prevents two deployments from migrating at the same time.
+  await client.query("SELECT pg_advisory_lock(hashtext('schema_migration'))");
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS schema_migration (
+      name       text PRIMARY KEY,
+      applied_at timestamptz NOT NULL DEFAULT now()
+    )`);
+
+  const { rows } = await client.query("SELECT name FROM schema_migration");
+  const applied = new Set(rows.map((row) => row.name));
+  const files = (await readdir(dir)).filter((file) => file.endsWith(".sql")).sort();
+
+  let count = 0;
+  for (const file of files) {
+    if (applied.has(file)) continue;
+    const sql = await readFile(path.join(dir, file), "utf8");
+    await client.query("BEGIN");
+    try {
+      await client.query(sql);
+      await client.query("INSERT INTO schema_migration (name) VALUES ($1)", [file]);
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error(`Migration ${file} failed: ${error.message}`);
+      process.exitCode = 1;
+      break;
+    }
+    console.log(`Applied ${file}`);
+    count += 1;
+  }
+  if (!process.exitCode) {
+    console.log(count ? `${count} migration(s) applied.` : "Database is up to date.");
+  }
+} finally {
+  await client.end();
+}

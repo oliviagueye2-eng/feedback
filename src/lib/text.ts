@@ -5,6 +5,11 @@
  */
 export function normalizeForSearch(input: string): string {
   return input
+    // Ligatures are not decomposed by NFD; unaccent() expands them.
+    .replace(/œ/g, "oe")
+    .replace(/Œ/g, "OE")
+    .replace(/æ/g, "ae")
+    .replace(/Æ/g, "AE")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()

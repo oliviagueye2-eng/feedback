@@ -25,7 +25,8 @@ npm run dev                  # http://localhost:3000
 | `npm run build` | Build de production |
 | `npm run lint` | Vérification du code, dont la règle qui interdit à `src/` de dépendre de Next.js |
 | `npm run typecheck` | Vérification des types |
-| `npm test` | Tests unitaires (Vitest) |
+| `npm test` | Tests (Vitest), dont l'application des migrations sur une base PostgreSQL en mémoire (PGlite) |
+| `npm run db:migrate` | Applique les migrations de `src/db/migrations/` à la base `DATABASE_URL` |
 
 ### Organisation du code
 
@@ -35,7 +36,7 @@ npm run dev                  # http://localhost:3000
 | `app/(admin)/` | Back-office des agents (`/admin`), à construire |
 | `app/webapi/` | Routes de l'API REST, minces : elles appellent `src/domain` |
 | `src/domain/` | Logique métier, indépendante de Next.js |
-| `src/db/` | Accès à PostgreSQL, **à écrire** : chaque fonction répond pour l'instant « non implémenté » (HTTP 501) |
+| `src/db/` | Accès à PostgreSQL. Les **migrations** (`src/db/migrations/`) créent le schéma et les données de référence. Les requêtes restent **à écrire** : chaque fonction répond pour l'instant « non implémenté » (HTTP 501) |
 | `src/lib/` | Utilitaires partagés (normalisation du texte, validation) |
 
 Voir [l'architecture technique](docs/architecture-technique.md) pour les règles de cette organisation.
