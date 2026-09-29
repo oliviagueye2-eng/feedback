@@ -1,7 +1,8 @@
 /**
  * Data access for the registry (establishment, service, municipality, qr_code).
  */
-import type { EstablishmentSearchResult, EstablishmentSummary } from "../domain/types";
+import { invalidInput } from "../domain/errors";
+import type { EstablishmentSearchResult, EstablishmentSummary, Sector } from "../domain/types";
 import { query } from "./client";
 
 export interface EstablishmentDetail extends EstablishmentSummary {
@@ -10,7 +11,7 @@ export interface EstablishmentDetail extends EstablishmentSummary {
 
 export interface NewUserEstablishment {
   rawInput: string;
-  typeId: number | null;
+  sectorCode: string | null;
   municipalityInput: string | null;
 }
 
@@ -25,6 +26,7 @@ interface SummaryRow {
   name: string;
   municipality_name: string | null;
   type_code: string | null;
+  sector_label: string | null;
 }
 
 interface DetailRow extends SummaryRow {
@@ -36,7 +38,23 @@ const toSummary = (row: SummaryRow): EstablishmentSummary => ({
   name: row.name,
   municipalityName: row.municipality_name,
   typeCode: row.type_code,
+  sectorLabel: row.sector_label,
 });
+
+/**
+ * Columns and joins shared by every query returning an establishment summary.
+ * The municipality typed by a user (screen 0c) stands in until an agent links a real one.
+ */
+const SUMMARY_COLUMNS = `e.id, e.name,
+  coalesce(m.name, e.municipality_input) AS municipality_name, et.code AS type_code,
+  sl.text AS sector_label`;
+
+const SUMMARY_JOINS = `
+  LEFT JOIN municipality m ON m.id = e.municipality_id
+  LEFT JOIN establishment_type et ON et.id = e.type_id
+  LEFT JOIN translation sl ON sl.target_table = 'sector'
+    AND sl.target_id = coalesce(et.sector_id, e.sector_id)
+    AND sl.field = 'label' AND sl.language = 'fr'`;
 
 const toDetail = (row: DetailRow): EstablishmentDetail => ({
   ...toSummary(row),
@@ -92,13 +110,12 @@ export async function searchActiveEstablishments(
        FROM (SELECT * FROM by_name UNION ALL SELECT * FROM by_service) AS matches
        GROUP BY id
      )
-     SELECT e.id, e.name, m.name AS municipality_name, et.code AS type_code,
+     SELECT ${SUMMARY_COLUMNS},
             coalesce((SELECT max(score) FROM by_service)
                        >= coalesce((SELECT max(score) FROM by_name), 0), false) AS service_match
      FROM scored
      JOIN establishment e ON e.id = scored.id AND e.status = 'active'
-     LEFT JOIN municipality m ON m.id = e.municipality_id
-     LEFT JOIN establishment_type et ON et.id = e.type_id
+     ${SUMMARY_JOINS}
      ORDER BY coalesce(e.municipality_id IN (SELECT id FROM municipality_in_query), false) DESC,
               scored.score DESC,
               e.name
@@ -108,18 +125,60 @@ export async function searchActiveEstablishments(
   return {
     matchType: rows[0]?.service_match ? "service" : "establishment",
     results: rows.map(toSummary),
+    suggestions: [],
   };
 }
 
+/**
+ * Screen 0b ("Vouliez-vous dire"): looser matches, used only when the search
+ * found nothing. Each word of 3 letters or more is compared on its own, so a
+ * single recognisable word is enough ("hopitl dantek fan" finds Le Dantec).
+ * Not index-assisted: fine while it runs only after an empty search.
+ */
+export async function findSimilarEstablishments(
+  normalizedQuery: string,
+  limit: number,
+): Promise<EstablishmentSummary[]> {
+  const rows = await query<SummaryRow>(
+    `WITH words AS (
+       SELECT DISTINCT word FROM regexp_split_to_table($1, ' ') AS word WHERE length(word) >= 3
+     ),
+     scored AS (
+       SELECT e.id, sum(word_similarity(w.word, e.search_text)) AS score
+       FROM establishment e, words w
+       WHERE e.status = 'active'
+       GROUP BY e.id
+       HAVING max(word_similarity(w.word, e.search_text)) >= 0.6
+     )
+     SELECT ${SUMMARY_COLUMNS}
+     FROM scored
+     JOIN establishment e ON e.id = scored.id
+     ${SUMMARY_JOINS}
+     ORDER BY scored.score DESC, e.name
+     LIMIT $2`,
+    [normalizedQuery, limit],
+  );
+  return rows.map(toSummary);
+}
+
+/** Sectors with their French label, in alphabetical order (screen 0c). */
+export async function listSectors(): Promise<Sector[]> {
+  return query<Sector>(
+    `SELECT s.code, t.text AS label
+     FROM sector s
+     JOIN translation t ON t.target_table = 'sector' AND t.target_id = s.id
+       AND t.field = 'label' AND t.language = 'fr'
+     ORDER BY normalize_search(t.text)`,
+  );
+}
+
 const DETAIL_COLUMNS = `
-  e.id, e.name, m.name AS municipality_name, et.code AS type_code,
+  ${SUMMARY_COLUMNS},
   coalesce((SELECT json_agg(json_build_object('id', s.id, 'code', s.code) ORDER BY s.code)
             FROM establishment_service es JOIN service s ON s.id = es.service_id
             WHERE es.establishment_id = e.id), '[]') AS services`;
 
-const DETAIL_JOINS = `
-  LEFT JOIN municipality m ON m.id = e.municipality_id
-  LEFT JOIN establishment_type et ON et.id = e.type_id`;
+const DETAIL_JOINS = SUMMARY_JOINS;
 
 /**
  * An establishment that accepts feedback: active, or pending review (typed by
@@ -161,12 +220,16 @@ export async function insertUserEstablishment(
   input: NewUserEstablishment,
 ): Promise<string> {
   const rows = await query<{ id: string }>(
-    `INSERT INTO establishment (name, raw_input, type_id, municipality_input, status, source)
-     VALUES ($1, $1, $2, $3, 'pending_review', 'user')
+    `INSERT INTO establishment (name, raw_input, sector_id, municipality_input, status, source)
+     SELECT $1, $1, s.id, $3, 'pending_review', 'user'
+     FROM (SELECT NULL) AS one
+     LEFT JOIN sector s ON s.code = $2
+     WHERE $2::text IS NULL OR s.id IS NOT NULL
      RETURNING id`,
-    [input.rawInput, input.typeId, input.municipalityInput],
+    [input.rawInput, input.sectorCode, input.municipalityInput],
   );
-  return rows[0]!.id;
+  if (!rows[0]) throw invalidInput("Unknown sector");
+  return rows[0].id;
 }
 
 /**

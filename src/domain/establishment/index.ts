@@ -1,11 +1,13 @@
 import * as db from "../../db/establishments";
 import { normalizeForSearch } from "../../lib/text";
-import { asObject, optionalInteger, optionalString, requireString } from "../../lib/validation";
+import { asObject, optionalString, requireString } from "../../lib/validation";
 import { notFound } from "../errors";
 import type { EstablishmentSearchResult } from "../types";
 
 export const SEARCH_MIN_LENGTH = 2;
 export const SEARCH_LIMIT = 8;
+/** Screen 0b: at most this many "Vouliez-vous dire" suggestions. */
+export const SUGGESTION_LIMIT = 3;
 /** Below this number of feedbacks in a month, nothing is published (anonymity, representativeness). */
 export const MIN_FEEDBACK_TO_PUBLISH = 10;
 
@@ -15,9 +17,16 @@ export async function searchEstablishments(
 ): Promise<EstablishmentSearchResult> {
   const normalized = normalizeForSearch(query);
   if (normalized.length < SEARCH_MIN_LENGTH) {
-    return { matchType: "establishment", results: [] };
+    return { matchType: "establishment", results: [], suggestions: [] };
   }
-  return db.searchActiveEstablishments(normalized, SEARCH_LIMIT);
+  const found = await db.searchActiveEstablishments(normalized, SEARCH_LIMIT);
+  if (found.results.length > 0) return found;
+  return { ...found, suggestions: await db.findSimilarEstablishments(normalized, SUGGESTION_LIMIT) };
+}
+
+/** Screen 0c: the optional sector list. */
+export async function listSectors() {
+  return db.listSectors();
 }
 
 export async function getEstablishment(id: string) {
@@ -41,7 +50,7 @@ export async function createUserEstablishment(body: unknown): Promise<{ id: stri
   const input = asObject(body);
   const id = await db.insertUserEstablishment({
     rawInput: requireString(input, "name", { min: 2, max: 200 }),
-    typeId: optionalInteger(input, "typeId"),
+    sectorCode: optionalString(input, "sector", { max: 64 }),
     municipalityInput: optionalString(input, "municipality", { max: 120 }),
   });
   return { id };

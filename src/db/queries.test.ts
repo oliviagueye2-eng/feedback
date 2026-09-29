@@ -9,6 +9,7 @@ import {
   getEstablishment,
   getEstablishmentByQrCode,
   getEstablishmentStats,
+  listSectors,
   searchEstablishments,
 } from "../domain/establishment";
 import {
@@ -87,6 +88,7 @@ describe("search", () => {
       name: "Centre hospitalier universitaire Aristide Le Dantec",
       municipalityName: "Fann-Point E-Amitié",
       typeCode: "HOSPITAL",
+      sectorLabel: "Santé",
     });
   });
 
@@ -103,7 +105,17 @@ describe("search", () => {
   });
 
   it("returns nothing for an unknown place", async () => {
-    expect(await searchEstablishments("boulangerie")).toEqual({ matchType: "establishment", results: [] });
+    expect(await searchEstablishments("boulangerie")).toEqual({
+      matchType: "establishment",
+      results: [],
+      suggestions: [],
+    });
+  });
+
+  it("suggests close names when nothing matches (Vouliez-vous dire)", async () => {
+    const result = await searchEstablishments("hopitl dantek fan");
+    expect(result.results).toEqual([]);
+    expect(result.suggestions.map((e) => e.id)).toEqual([ids.dantec]);
   });
 });
 
@@ -126,8 +138,15 @@ describe("establishment", () => {
   });
 
   it("stores an establishment typed by the user as pending review, out of the search", async () => {
-    const { id } = await createUserEstablishment({ name: "Mairie de Ndiarème", municipality: "Guédiawaye" });
-    const [row] = await rows("SELECT status, source, raw_input, municipality_input FROM establishment WHERE id = $1", [id]);
+    const { id } = await createUserEstablishment({
+      name: "Mairie de Ndiarème",
+      sector: "ADMINISTRATION",
+      municipality: "Guédiawaye",
+    });
+    const [row] = await rows(
+      "SELECT status, source, raw_input, municipality_input FROM establishment WHERE id = $1",
+      [id],
+    );
     expect(row).toEqual({
       status: "pending_review",
       source: "user",
@@ -135,13 +154,30 @@ describe("establishment", () => {
       municipality_input: "Guédiawaye",
     });
     expect((await searchEstablishments("Ndiarème")).results).toEqual([]);
-    expect((await getEstablishment(id)).name).toBe("Mairie de Ndiarème");
+    const created = await getEstablishment(id);
+    expect(created.name).toBe("Mairie de Ndiarème");
+    expect(created.sectorLabel).toBe("Administration et état civil");
+    expect(created.municipalityName).toBe("Guédiawaye");
   });
 
-  it("rejects an unknown establishment type", async () => {
-    await expect(createUserEstablishment({ name: "Mairie X", typeId: 99999 })).rejects.toMatchObject({
+  it("accepts an establishment without sector, and rejects an unknown sector", async () => {
+    const { id } = await createUserEstablishment({ name: "Boutique de Fatou" });
+    expect((await getEstablishment(id)).sectorLabel).toBeNull();
+    await expect(createUserEstablishment({ name: "Mairie X", sector: "SPACE" })).rejects.toMatchObject({
       code: "INVALID_INPUT",
     });
+  });
+
+  it("lists the eighteen sectors in alphabetical order, accents ignored", async () => {
+    const sectors = await listSectors();
+    expect(sectors).toHaveLength(18);
+    expect(sectors.slice(0, 3).map((s) => s.label)).toEqual([
+      "Administration et état civil",
+      "Banques et assurances",
+      "Commerce",
+    ]);
+    // "Eau et électricité" < "Éducation" < "Emploi…": the accent does not push it to the end.
+    expect(sectors.findIndex((s) => s.label === "Éducation")).toBe(5);
   });
 });
 

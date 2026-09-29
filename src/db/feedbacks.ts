@@ -178,7 +178,7 @@ export async function upsertComment(input: {
 
 /**
  * Where to find the detailed questionnaire: the feedback's service, else its
- * sector (the service's, or the establishment type's). Only published
+ * sector (the service's, the establishment type's, or the one the user chose). Only published
  * questionnaires count.
  */
 export async function findQuestionnaireSources(feedbackId: string): Promise<{
@@ -191,7 +191,7 @@ export async function findQuestionnaireSources(feedbackId: string): Promise<{
      JOIN establishment e ON e.id = f.establishment_id
      LEFT JOIN service s ON s.id = f.service_id
      LEFT JOIN establishment_type et ON et.id = e.type_id
-     LEFT JOIN sector sec ON sec.id = coalesce(s.sector_id, et.sector_id)
+     LEFT JOIN sector sec ON sec.id = coalesce(s.sector_id, et.sector_id, e.sector_id)
      LEFT JOIN questionnaire sq ON sq.id = s.detailed_questionnaire_id AND sq.status = 'published'
      LEFT JOIN questionnaire fq ON fq.id = sec.fallback_questionnaire_id AND fq.status = 'published'
      WHERE f.id = $1`,

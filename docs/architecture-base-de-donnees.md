@@ -132,6 +132,7 @@ Le libellé affiché passe par `translation`.
 | aliases | text[] | autres noms de l'établissement (voir plus bas) |
 | search_text | text | nom + alias, en minuscules et sans accents, rempli automatiquement (index trigramme) |
 | type_id | fk establishment_type | nullable si saisi par un usager |
+| sector_id | fk sector | secteur quand le type est inconnu : choisi par l'usager à l'écran 0c (facultatif). Si les deux existent, le secteur du type prime |
 | ownership | enum | `public`, `private`, `community` (établissements communautaires, confessionnels…) |
 | municipality_id | fk municipality | nullable si saisi par un usager |
 | address | text | facultatif |
@@ -241,6 +242,8 @@ La recherche porte sur l'établissement. En arrière-plan, le texte tapé est co
 3. **Commune** (`municipality.name`) : si le texte contient un nom de commune (« état civil Grand-Yoff »), on classe d'abord les établissements de cette commune.
 
 La réponse de l'API indique au front si le texte ressemble à un service (`match_type = service`). C'est ce qui déclenche l'encadré « Précisez l'établissement » dans l'écran 0a.
+
+Quand rien n'est trouvé, une recherche plus souple compare chaque mot de 3 lettres ou plus séparément et propose au plus 3 établissements (« Vouliez-vous dire », écran 0b). Le comportement complet des écrans est décrit dans `docs/parcours-recherche.md`.
 
 Seuls les établissements au statut `active` sont proposés. Ceux en `pending_review` ne le sont pas, pour éviter de diffuser des doublons ou des erreurs, et ceux en `closed` non plus.
 

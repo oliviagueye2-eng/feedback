@@ -29,10 +29,19 @@ export interface EstablishmentSummary {
   name: string;
   municipalityName: string | null;
   typeCode: string | null;
+  /** French label of the sector, shown under the name in search results. */
+  sectorLabel: string | null;
 }
 
 export interface EstablishmentSearchResult {
   /** "service" when the query looks like a service ("état civil"): the UI then shows the "Précisez l'établissement" hint. */
   matchType: "establishment" | "service";
   results: EstablishmentSummary[];
+  /** Screen 0b: close matches ("Vouliez-vous dire"), only when results is empty. */
+  suggestions: EstablishmentSummary[];
+}
+
+export interface Sector {
+  code: string;
+  label: string;
 }

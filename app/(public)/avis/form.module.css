@@ -1,0 +1,156 @@
+/* Screens 0c (establishment not in the list) and 1 (establishment identified). */
+
+.page {
+  background: var(--page);
+}
+
+.bar {
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  min-height: 70px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bar h1 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.back {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.back svg {
+  width: 22px;
+  height: 22px;
+}
+
+.form {
+  width: 100%;
+  max-width: 596px;
+  margin: 0 auto;
+  padding: 20px 18px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.group label {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.group label .muted {
+  font-weight: 400;
+}
+
+.input {
+  font: inherit;
+  font-size: 17px;
+  min-height: 50px;
+  border: 1.5px solid var(--control);
+  border-radius: 10px;
+  padding: 0 14px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.note {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.note svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--green);
+}
+
+.error {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1.5px solid #b3261e;
+  border-radius: 10px;
+  background: #fdecea;
+  color: #7a1a14;
+  font-size: 15px;
+}
+
+.title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.15;
+}
+
+.identified {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.identified > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 15px;
+}
+
+.identified strong {
+  font-size: 18px;
+}
+
+.identified a {
+  margin-top: 8px;
+  font-weight: 700;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.check {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.check svg {
+  width: 16px;
+  height: 16px;
+}
