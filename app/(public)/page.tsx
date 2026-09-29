@@ -1,3 +1,4 @@
+import Form from "next/form";
 import { SiteFooter } from "../_components/SiteFooter";
 import { SiteHeader } from "../_components/SiteHeader";
 import styles from "./home.module.css";
@@ -33,8 +34,10 @@ export default function HomePage() {
                     </p>
                   </div>
                   <div className={styles.perforation} aria-hidden="true" />
-                  {/* On a computer the search sits in the stub; on a phone only the button shows. */}
-                  <form method="get" action="/avis" className={styles.stub}>
+                  {/* On a computer the search sits in the stub; on a phone only the button shows.
+                      next/form: goes to /avis without reloading the whole page (no blank flash),
+                      and still works as a plain form before JavaScript has loaded. */}
+                  <Form action="/avis" className={styles.stub}>
                     <label htmlFor="home-search" className={styles.searchLabel}>
                       Dans quel établissement êtes-vous allé(e)&nbsp;?
                     </label>
@@ -64,7 +67,7 @@ export default function HomePage() {
                       Donner mon avis
                     </button>
                     <p className="muted">Anonyme et gratuit, environ 1 minute.</p>
-                  </form>
+                  </Form>
                 </div>
               </div>
             </div>
