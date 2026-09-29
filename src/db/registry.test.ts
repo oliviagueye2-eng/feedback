@@ -22,12 +22,34 @@ afterAll(async () => {
 });
 
 describe("first establishments of the registry", () => {
-  it("has the nineteen establishments, all active and public", async () => {
+  it("has the nineteen places, all active and public", async () => {
     const { rows } = await db.query<{ n: number; active_public: number }>(`
       SELECT count(*)::int AS n,
              count(*) FILTER (WHERE status = 'active' AND ownership = 'public')::int AS active_public
-      FROM establishment`);
+      FROM establishment WHERE scope = 'site'`);
     expect(rows[0]).toEqual({ n: 19, active_public: 19 });
+  });
+
+  it("has the eleven organisations, each rated in general", async () => {
+    const { rows } = await db.query<{ organizations: number; general: number }>(`
+      SELECT (SELECT count(*)::int FROM organization) AS organizations,
+             (SELECT count(*)::int FROM establishment WHERE scope = 'general') AS general`);
+    expect(rows[0]).toEqual({ organizations: 11, general: 11 });
+  });
+
+  it("finds an organisation by its usual name, full name or former name", async () => {
+    const first = async (text: string) => (await searchEstablishments(text)).results[0];
+    expect(await first("senelec")).toMatchObject({ name: "Senelec", scope: "general", municipalityName: null });
+    expect((await first("societe nationale d'electricite"))?.name).toBe("Senelec");
+    expect((await first("free"))?.name).toBe("Yas");
+    expect((await first("sgbs"))?.name).toBe("Société Générale");
+    expect((await first("seneau"))?.name).toBe("Sen'Eau");
+    expect((await first("impots"))?.name).toBe("DGID");
+    expect((await first("la poste"))?.name).toBe("La Poste");
+  });
+
+  it("does not offer La Poste for a health post", async () => {
+    expect(await names("poste de sante")).not.toContain("La Poste");
   });
 
   it("finds establishments by their everyday name", async () => {

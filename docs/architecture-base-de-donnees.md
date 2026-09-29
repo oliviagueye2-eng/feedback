@@ -242,8 +242,13 @@ Organisme qui a plusieurs établissements : Senelec, Sen'Eau, La Poste, opérate
 |---|---|---|
 | id | smallint | |
 | code | text unique | `SENELEC`… |
-| name | text | Senelec |
+| name | text | nom usuel, affiché partout : Senelec |
+| full_name | text | nom complet officiel quand il diffère : Société nationale d'électricité du Sénégal |
 | sector_id | fk sector | |
+
+Le nom complet, les sigles et les anciens noms (Free pour Yas, SGBS pour Société Générale) sont aussi des **alias** de l'établissement « en général » : ils le font trouver par la recherche.
+
+Premiers organismes (migration 0006, liste validée le 2026-09-29) : Senelec, Sen'Eau, Orange, Yas, Expresso, La Poste (secteur Télécoms), IPRES, DGID, CBAO, UBA, Société Générale.
 
 Un organisme s'évalue de deux façons :
 - **dans une de ses agences** : un établissement ordinaire (`scope = site`) rattaché à l'organisme ;

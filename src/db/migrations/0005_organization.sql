@@ -10,7 +10,11 @@
 CREATE TABLE organization (
   id        smallint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   code      text NOT NULL UNIQUE,
+  -- Usual name, shown everywhere (Senelec).
   name      text NOT NULL,
+  -- Official full name, when it differs (Société nationale d'électricité du
+  -- Sénégal). Searchable through the aliases of the "in general" establishment.
+  full_name text,
   sector_id smallint NOT NULL REFERENCES sector (id)
 );
 

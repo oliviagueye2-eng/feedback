@@ -14,9 +14,9 @@ const BuildingIcon = () => (
   </svg>
 );
 
-/** Under the name: municipality and sector, whichever are known. */
+/** Under the name: municipality and sector, whichever are known; "En général" for an organisation as a whole. */
 const details = (e: EstablishmentSummary) =>
-  [e.municipalityName, e.sectorLabel].filter(Boolean).join(", ");
+  [e.scope === "general" ? "En général" : e.municipalityName, e.sectorLabel].filter(Boolean).join(", ");
 
 function Row({ establishment, icon }: { establishment: EstablishmentSummary; icon: boolean }) {
   return (

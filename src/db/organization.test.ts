@@ -23,15 +23,15 @@ beforeAll(async () => {
   useTestDatabase(db);
   organizationId = (await db.query<{ id: number }>(
     `INSERT INTO organization (code, name, sector_id)
-     SELECT 'TEST_POWER', 'Électricité Test', id FROM sector WHERE code = 'UTILITIES' RETURNING id`,
+     SELECT 'TEST_LIGHT', 'Lumière Test', id FROM sector WHERE code = 'UTILITIES' RETURNING id`,
   )).rows[0]!.id;
-  generalId = await insertEstablishment(`('Électricité Test', ${organizationId}, 'general', NULL)`);
+  generalId = await insertEstablishment(`('Lumière Test', ${organizationId}, 'general', NULL)`);
   agencyId = await insertEstablishment(
-    `('Agence Électricité Test de Grand Yoff', ${organizationId}, 'site',
+    `('Agence Lumière Test de Grand Yoff', ${organizationId}, 'site',
       (SELECT id FROM municipality WHERE code = 'SN-DK-GRAND-YOFF'))`,
   );
   await insertEstablishment(
-    `('Agence Électricité Test de la Médina', ${organizationId}, 'site',
+    `('Agence Lumière Test de la Médina', ${organizationId}, 'site',
       (SELECT id FROM municipality WHERE code = 'SN-DK-MEDINA'))`,
   );
 }, 60_000);
@@ -43,18 +43,18 @@ afterAll(async () => {
 
 describe("organisations", () => {
   it("lists the organisation in general first, then its agencies", async () => {
-    const { results } = await searchEstablishments("electricite test");
+    const { results } = await searchEstablishments("lumiere test");
     expect(results[0]).toMatchObject({ id: generalId, scope: "general", municipalityName: null });
     expect(results).toHaveLength(3);
   });
 
   it("puts the agency of the municipality typed first", async () => {
-    const { results } = await searchEstablishments("electricite test grand yoff");
+    const { results } = await searchEstablishments("lumiere test grand yoff");
     expect(results[0]?.id).toBe(agencyId);
   });
 
   it("allows one establishment in general per organisation", async () => {
-    await expect(insertEstablishment(`('Électricité Test bis', ${organizationId}, 'general', NULL)`))
+    await expect(insertEstablishment(`('Lumière Test bis', ${organizationId}, 'general', NULL)`))
       .rejects.toThrow(/establishment_one_general_per_organization/);
   });
 
