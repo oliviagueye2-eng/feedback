@@ -1,6 +1,5 @@
 import { SiteHeader } from "../../_components/SiteHeader";
 import { searchEstablishments } from "@/src/domain/establishment";
-import { DomainError } from "@/src/domain/errors";
 import type { EstablishmentSearchResult } from "@/src/domain/types";
 
 /**
@@ -13,16 +12,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/avis">) {
   const { q } = await searchParams;
   const query = typeof q === "string" ? q : "";
 
-  let result: EstablishmentSearchResult | null = null;
-  let unavailable = false;
-  if (query) {
-    try {
-      result = await searchEstablishments(query);
-    } catch (error) {
-      if (!(error instanceof DomainError && error.code === "NOT_IMPLEMENTED")) throw error;
-      unavailable = true;
-    }
-  }
+  const result: EstablishmentSearchResult | null = query ? await searchEstablishments(query) : null;
 
   return (
     <>
@@ -48,11 +38,6 @@ export default async function SearchPage({ searchParams }: PageProps<"/avis">) {
           </button>
         </form>
 
-        {unavailable && (
-          <p role="status" className="muted">
-            La recherche n&apos;est pas encore branchée à la base de données.
-          </p>
-        )}
         {result && result.results.length === 0 && (
           <p role="status">Aucun résultat exact. Vérifiez l&apos;orthographe, ou continuez quand même.</p>
         )}

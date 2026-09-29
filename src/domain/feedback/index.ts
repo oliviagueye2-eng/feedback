@@ -59,7 +59,15 @@ export async function saveAnswer(
   const optionCode = optionalString(input, "option", { max: 64 });
   const textValue = optionalString(input, "text", { max: COMMENT_MAX_LENGTH });
   if (!optionCode && !textValue) throw invalidInput("option or text is required");
-  await db.upsertAnswer({ feedbackId, questionCode, optionCode, textValue });
+  const sources = await db.findQuestionnaireSources(feedbackId);
+  if (!sources) throw notFound("Feedback not found");
+  await db.upsertAnswer({
+    feedbackId,
+    questionCode,
+    optionCode,
+    textValue,
+    detailed: selectDetailedQuestionnaire(sources),
+  });
 }
 
 /** Screen 2b: checked topics. "Autre" may carry a short text naming the topic. */
@@ -76,6 +84,9 @@ export async function saveTopics(feedbackId: string, body: unknown): Promise<voi
     }
     return { code, otherText };
   });
+  if (new Set(topics.map((t) => t.code)).size !== topics.length) {
+    throw invalidInput("Each topic can be given only once");
+  }
   await db.replaceTopics({ feedbackId, topics });
 }
 

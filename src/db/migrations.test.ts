@@ -2,25 +2,18 @@
  * Applies the real migration files to an in-memory PostgreSQL (PGlite) and
  * checks the behaviour the application relies on. No server needed.
  */
-import { readFileSync, readdirSync } from "node:fs";
-import path from "node:path";
-import { PGlite } from "@electric-sql/pglite";
-import { pg_trgm } from "@electric-sql/pglite/contrib/pg_trgm";
-import { unaccent } from "@electric-sql/pglite/contrib/unaccent";
+import type { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { normalizeForSearch } from "../lib/text";
+import { createTestDatabase } from "./test-database";
 
-const dir = path.join(__dirname, "migrations");
 let db: PGlite;
 
 const one = async <T>(sql: string, params: unknown[] = []) =>
   (await db.query<T>(sql, params)).rows[0];
 
 beforeAll(async () => {
-  db = new PGlite({ extensions: { pg_trgm, unaccent } });
-  for (const file of readdirSync(dir).filter((f) => f.endsWith(".sql")).sort()) {
-    await db.exec(readFileSync(path.join(dir, file), "utf8"));
-  }
+  db = await createTestDatabase();
   await db.exec(`
     INSERT INTO region (code, name) VALUES ('DK', 'Dakar');
     INSERT INTO department (region_id, code, name) SELECT id, 'DK1', 'Dakar' FROM region;
