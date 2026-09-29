@@ -35,6 +35,8 @@ npm run dev                  # http://localhost:3000
 3. **Variables d'environnement** (*Settings > Environment Variables*) : `DATABASE_URL` et `DATABASE_URL_UNPOOLED` (ajoutées automatiquement par l'intégration Neon), et `CRON_SECRET` (générer avec `openssl rand -hex 32`).
 4. **Déployer.** Chaque `git push` sur `main` déploie en production. Les migrations s'appliquent pendant le build de production seulement (`npm run vercel-build`) ; les aperçus de branche ne touchent pas à la base.
 
+**À faire plus tard :** ajouter `CRON_SECRET` dans Vercel. Sans lui, le site fonctionne, mais la tâche de nuit est refusée (401) et les résultats publiés ne sont jamais recalculés. À faire avant d'avoir de vrais avis.
+
 Configuration dans [`vercel.json`](vercel.json) : région `fra1` (Francfort, la même que la base), et recalcul des résultats publiés chaque nuit à 2 h UTC (`/webapi/internal/refresh-stats`, protégé par `CRON_SECRET`).
 
 ### Organisation du code
