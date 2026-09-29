@@ -6,10 +6,14 @@
 -- Sectors
 -- ---------------------------------------------------------------------------
 
+-- A sector is neither public nor private: establishment.ownership says so.
+-- TOURISM: travel agencies, guides, tourist sites, tourist offices
+-- (accommodation stays in HOSPITALITY, museums in CULTURE).
 INSERT INTO sector (code) VALUES
   ('HEALTH'), ('EDUCATION'), ('ADMINISTRATION'), ('JUSTICE'), ('SECURITY'),
-  ('TAX'), ('UTILITIES'), ('PUBLIC_TRANSPORT'), ('SOCIAL'),
-  ('FOOD_SERVICE'), ('HOSPITALITY'), ('REAL_ESTATE'), ('RETAIL');
+  ('TAX'), ('UTILITIES'), ('TRANSPORT'), ('SOCIAL'),
+  ('FOOD_SERVICE'), ('HOSPITALITY'), ('REAL_ESTATE'), ('RETAIL'),
+  ('BANKING_INSURANCE'), ('CULTURE'), ('SPORT'), ('TELECOM'), ('TOURISM');
 
 INSERT INTO translation (target_table, target_id, language, text)
 SELECT 'sector', s.id, 'fr', v.label
@@ -21,12 +25,17 @@ FROM (VALUES
   ('SECURITY', 'Sécurité'),
   ('TAX', 'Impôts et domaines'),
   ('UTILITIES', 'Eau et électricité'),
-  ('PUBLIC_TRANSPORT', 'Transport'),
+  ('TRANSPORT', 'Transport'),
   ('SOCIAL', 'Emploi et protection sociale'),
   ('FOOD_SERVICE', 'Restauration'),
   ('HOSPITALITY', 'Hôtellerie'),
   ('REAL_ESTATE', 'Immobilier'),
-  ('RETAIL', 'Commerce')
+  ('RETAIL', 'Commerce'),
+  ('BANKING_INSURANCE', 'Banques et assurances'),
+  ('CULTURE', 'Culture'),
+  ('SPORT', 'Sport'),
+  ('TELECOM', 'Télécoms'),
+  ('TOURISM', 'Tourisme')
 ) AS v (code, label)
 JOIN sector s ON s.code = v.code;
 

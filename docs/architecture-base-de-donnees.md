@@ -6,6 +6,8 @@ Hypothèse technique : PostgreSQL, avec les extensions `pg_trgm` (recherche appr
 
 Le schéma est créé par les migrations SQL de [`src/db/migrations/`](../src/db/migrations/) (`npm run db:migrate`). En cas d'écart entre ce document et les migrations, ce sont les migrations qui font foi.
 
+**Règle des migrations :** tant que la base n'est déployée nulle part, on modifie directement `0001_schema.sql` (schéma) et `0002_reference_data.sql` (données de référence). Après le premier déploiement, toute modification passe par une nouvelle migration numérotée, sans jamais modifier une migration déjà appliquée.
+
 ## Convention de nommage
 
 - Tout ce qui est dans la base est **en anglais** : tables, colonnes, valeurs d'énumération, codes.
