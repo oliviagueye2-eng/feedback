@@ -1,17 +1,12 @@
 /**
- * The demonstration data (demo.sql) applies after the migrations, can be run
- * twice, makes the usual searches work, and can be removed.
+ * The first real establishments (migration 0004) make the usual searches work.
  */
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import type { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { searchEstablishments } from "../../domain/establishment";
-import { useTestDatabase } from "../client";
-import { createTestDatabase } from "../test-database";
+import { searchEstablishments } from "../domain/establishment";
+import { useTestDatabase } from "./client";
+import { createTestDatabase } from "./test-database";
 
-const seed = readFileSync(path.join(__dirname, "demo.sql"), "utf8");
-const remove = readFileSync(path.join(__dirname, "demo-remove.sql"), "utf8");
 let db: PGlite;
 
 const names = async (text: string) => (await searchEstablishments(text)).results.map((e) => e.name);
@@ -19,8 +14,6 @@ const names = async (text: string) => (await searchEstablishments(text)).results
 beforeAll(async () => {
   db = await createTestDatabase();
   useTestDatabase(db);
-  await db.exec(seed);
-  await db.exec(seed);
 }, 60_000);
 
 afterAll(async () => {
@@ -28,12 +21,13 @@ afterAll(async () => {
   await db?.close();
 });
 
-describe("demonstration data", () => {
-  it("is not duplicated when run twice", async () => {
-    const { rows } = await db.query<{ n: number }>(
-      "SELECT count(*)::int AS n FROM establishment WHERE id::text LIKE 'd0000000-%'",
-    );
-    expect(rows[0]?.n).toBe(19);
+describe("first establishments of the registry", () => {
+  it("has the nineteen establishments, all active and public", async () => {
+    const { rows } = await db.query<{ n: number; active_public: number }>(`
+      SELECT count(*)::int AS n,
+             count(*) FILTER (WHERE status = 'active' AND ownership = 'public')::int AS active_public
+      FROM establishment`);
+    expect(rows[0]).toEqual({ n: 19, active_public: 19 });
   });
 
   it("finds establishments by their everyday name", async () => {
@@ -55,8 +49,7 @@ describe("demonstration data", () => {
     expect(first).toMatchObject({ municipalityName: "Grand Yoff", sectorLabel: "Administration et état civil" });
   });
 
-  it("can be removed", async () => {
-    await db.exec(remove);
-    expect(await names("hoggy")).toEqual([]);
+  it("does not offer Le Dantec, closed for reconstruction", async () => {
+    expect(await names("le dantec")).toEqual([]);
   });
 });

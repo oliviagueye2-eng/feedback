@@ -16,8 +16,8 @@ beforeAll(async () => {
   db = await createTestDatabase();
   await db.exec(`
     INSERT INTO region (code, name) VALUES ('DK', 'Dakar');
-    INSERT INTO department (region_id, code, name) SELECT id, 'DK1', 'Dakar' FROM region;
-    INSERT INTO municipality (department_id, code, name) SELECT id, 'GY', 'Grand-Yoff' FROM department;
+    INSERT INTO department (region_id, code, name) SELECT id, 'DK1', 'Dakar' FROM region WHERE code = 'DK';
+    INSERT INTO municipality (department_id, code, name) SELECT id, 'GY', 'Grand-Yoff' FROM department WHERE code = 'DK1';
   `);
 }, 60_000);
 

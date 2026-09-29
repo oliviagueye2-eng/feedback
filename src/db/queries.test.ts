@@ -25,6 +25,9 @@ import { createTestDatabase } from "./test-database";
 let db: PGlite;
 const ids: Record<string, string> = {};
 
+/** Only the establishments created by this test (the migrations add real ones). */
+const ours = (list: { id: string }[]) => list.map((e) => e.id).filter((id) => Object.values(ids).includes(id));
+
 const rows = async <T>(sql: string, params: unknown[] = []) =>
   (await db.query<T>(sql, params)).rows;
 
@@ -33,10 +36,11 @@ beforeAll(async () => {
   useTestDatabase(db);
   await db.exec(`
     INSERT INTO region (code, name) VALUES ('DK', 'Dakar');
-    INSERT INTO department (region_id, code, name) SELECT id, 'DK1', 'Dakar' FROM region;
+    INSERT INTO department (region_id, code, name) SELECT id, 'DK1', 'Dakar' FROM region WHERE code = 'DK';
     INSERT INTO municipality (department_id, code, name)
-    SELECT id, v.code, v.name FROM department, (VALUES
-      ('GY', 'Grand-Yoff'), ('PA', 'Parcelles Assainies'), ('FN', 'Fann-Point E-Amitié')) AS v (code, name);
+    SELECT d.id, v.code, v.name FROM department d, (VALUES
+      ('GY', 'Grand-Yoff'), ('PA', 'Parcelles Assainies'), ('FN', 'Fann-Point E-Amitié')) AS v (code, name)
+    WHERE d.code = 'DK1';
 
     INSERT INTO establishment_type (code, sector_id)
     SELECT v.code, s.id FROM (VALUES
@@ -67,7 +71,8 @@ beforeAll(async () => {
   await db.exec(`
     INSERT INTO establishment_service (establishment_id, service_id)
     SELECT e.id, s.id FROM establishment e, service s
-    WHERE e.type_id = (SELECT id FROM establishment_type WHERE code = 'CIVIL_REGISTRY_CENTER');
+    WHERE e.type_id = (SELECT id FROM establishment_type WHERE code = 'CIVIL_REGISTRY_CENTER')
+      AND s.code = 'CIVIL_REGISTRY_BIRTH';
     INSERT INTO qr_code (code, establishment_id, service_id)
     SELECT 'GY-EC-1', '${ids.gy}', id FROM service WHERE code = 'CIVIL_REGISTRY_BIRTH';
     INSERT INTO qr_code (code, establishment_id, is_active) VALUES ('OLD-1', '${ids.gy}', false);
@@ -95,13 +100,13 @@ describe("search", () => {
   it("recognises a service and lists the establishments offering it, never a closed one", async () => {
     const result = await searchEstablishments("extrait de naissance");
     expect(result.matchType).toBe("service");
-    expect(result.results.map((e) => e.id).sort()).toEqual([ids.gy, ids.pa].sort());
+    expect(ours(result.results).sort()).toEqual([ids.gy, ids.pa].sort());
   });
 
   it("puts establishments of the municipality named in the query first", async () => {
     const result = await searchEstablishments("État civil Parcelles Assainies");
     expect(result.matchType).toBe("service");
-    expect(result.results.map((e) => e.id)).toEqual([ids.pa, ids.gy]);
+    expect(ours(result.results)).toEqual([ids.pa, ids.gy]);
   });
 
   it("returns nothing for an unknown place", async () => {
@@ -115,7 +120,7 @@ describe("search", () => {
   it("suggests close names when nothing matches (Vouliez-vous dire)", async () => {
     const result = await searchEstablishments("hopitl dantek fan");
     expect(result.results).toEqual([]);
-    expect(result.suggestions.map((e) => e.id)).toEqual([ids.dantec]);
+    expect(result.suggestions.map((e) => e.id)).toContain(ids.dantec);
   });
 });
 
