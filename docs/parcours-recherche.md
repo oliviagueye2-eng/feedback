@@ -20,9 +20,8 @@ Comportement validé le 2026-09-29. Les textes affichés seront revus dans une p
 - **5 lettres et plus** : la tolérance aux fautes s'ajoute (« dantek » trouve Dantec). Principe : les mots sont découpés en morceaux de 3 lettres ; au moins 60 % de morceaux communs.
 - Accents ignorés. Le mot **« Sénégal » est ignoré** (il est dans presque tous les noms complets).
 - **Équivalences** : « hôtel de ville » est cherché comme « mairie » (« hotel de ville medina » → Mairie de la Médina). Liste dans `SEARCH_EQUIVALENTS` (`src/lib/text.ts`) et la fonction SQL `search_terms` (migration 0009).
-- **Commune tapée** : elle sert à classer, et les autres mots doivent correspondre. « mairie grand yoff » donne les mairies, celle de Grand Yoff en tête ; pas l'hôpital de Grand Yoff.
+- **Commune tapée** : les autres mots doivent correspondre, et **seuls les résultats de cette commune sont affichés** quand il y en a (« mairie de grand yoff » → Mairie de Grand Yoff seule). S'il n'y en a aucun dans la commune, les autres sont proposés.
 - Ordre : commune tapée d'abord ; puis les établissements dont le **nom affiché** correspond, avant ceux trouvés seulement par un alias ; puis début de mot avant faute tolérée ; à égalité, l'organisme « en général » avant ses agences. Aucune mention de l'alias sous le nom (décision du 2026-09-29).
-- Commune tapée en entier (« état civil Grand-Yoff ») : les établissements de cette commune passent en tête.
 - Sous chaque nom : **commune et secteur** (« Grand-Yoff, Administration et état civil »), ce qui est connu. Jamais le service.
 - Démarche reconnue : encadré « Précisez l'établissement ».
 - Aucun résultat : jusqu'à 3 suggestions plus approximatives (chaque mot comparé séparément), puis « Continuer avec « … » » vers l'écran 0c.

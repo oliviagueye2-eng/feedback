@@ -104,10 +104,10 @@ describe("search", () => {
     expect(ours(result.results).sort()).toEqual([ids.gy, ids.pa].sort());
   });
 
-  it("puts establishments of the municipality named in the query first", async () => {
+  it("shows only the establishments of the municipality named in the query", async () => {
     const result = await searchEstablishments("État civil Parcelles Assainies");
     expect(result.matchType).toBe("service");
-    expect(ours(result.results)).toEqual([ids.pa, ids.gy]);
+    expect(ours(result.results)).toEqual([ids.pa]);
   });
 
   it("returns nothing for an unknown place", async () => {

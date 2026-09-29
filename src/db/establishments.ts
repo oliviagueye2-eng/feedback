@@ -79,8 +79,8 @@ const toDetail = (row: DetailRow): EstablishmentDetail => ({
  * - tolerance to typos (`fuzzy`, from 5 letters): pg_trgm's word_similarity,
  *   operator <%, threshold 0.6 ("dantek" → Dantec).
  *
- * Order: establishments of the municipality named in the query ("etat civil
- * grand yoff"), then those whose displayed name matches by start of words
+ * Municipality named in the query ("etat civil grand yoff"): when some matches
+ * are in it, only they are shown. Order: those whose displayed name matches by start of words
  * (before a match on an alias only), then start-of-word matches before typo
  * matches, then closeness, then an organisation "in general" before its
  * agencies, then the name. Names and services are matched on the words other
@@ -148,6 +148,12 @@ export async function searchActiveEstablishments(
        SELECT id, max(tier * 10 + score) AS rank
        FROM (SELECT * FROM by_name UNION ALL SELECT * FROM by_service) AS matches
        GROUP BY id
+     ),
+     -- Matches in the municipality typed. When there are some, only they are shown.
+     in_municipality AS (
+       SELECT scored.id
+       FROM scored JOIN establishment e ON e.id = scored.id
+       WHERE e.municipality_id IN (SELECT id FROM municipality_in_query)
      )
      SELECT ${SUMMARY_COLUMNS},
             coalesce((SELECT max(tier * 10 + score) FROM services)
@@ -156,6 +162,7 @@ export async function searchActiveEstablishments(
      FROM scored
      JOIN establishment e ON e.id = scored.id AND e.status = 'active'
      ${SUMMARY_JOINS}
+     WHERE NOT EXISTS (SELECT 1 FROM in_municipality) OR e.id IN (SELECT id FROM in_municipality)
      ORDER BY coalesce(e.municipality_id IN (SELECT id FROM municipality_in_query), false) DESC,
               NOT EXISTS (SELECT 1 FROM words WHERE search_terms(e.name) !~ ('(^| )' || word)) DESC,
               scored.rank DESC,

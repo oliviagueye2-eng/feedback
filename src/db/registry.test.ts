@@ -55,15 +55,12 @@ describe("first establishments of the registry", () => {
   });
 
   it("searches « hôtel de ville » as « mairie »", async () => {
-    expect((await names("hotel de ville medina"))[0]).toBe("Mairie de la Médina");
+    expect(await names("hotel de ville medina")).toEqual(["Mairie de la Médina"]);
     expect(await names("hôtel de ville")).toHaveLength(6);
   });
 
   it("with a municipality, the other words must match too", async () => {
-    const found = await names("mairie grand yoff");
-    expect(found[0]).toBe("Mairie de Grand Yoff");
-    expect(found).not.toContain("Hôpital Général Idrissa Pouye");
-    expect((await names("hopital grand yoff"))[0]).toBe("Hôpital Général Idrissa Pouye");
+    expect(await names("mairie grand yoff")).not.toContain("Hôpital Général Idrissa Pouye");
   });
 
   it("proposes nothing below 3 letters", async () => {
@@ -97,11 +94,18 @@ describe("first establishments of the registry", () => {
     expect((await names("ucad"))[0]).toBe("Université Cheikh Anta Diop de Dakar");
   });
 
-  it("lists the town halls for a civil registry request, the named municipality first", async () => {
-    const result = await searchEstablishments("extrait de naissance Médina");
+  it("lists the town halls for a civil registry request", async () => {
+    const result = await searchEstablishments("extrait de naissance");
     expect(result.matchType).toBe("service");
-    expect(result.results[0]?.name).toBe("Mairie de la Médina");
     expect(result.results).toHaveLength(4);
+  });
+
+  it("shows only the establishments of the municipality typed, when there are some", async () => {
+    expect(await names("extrait de naissance Médina")).toEqual(["Mairie de la Médina"]);
+    expect(await names("mairie de grand yoff")).toEqual(["Mairie de Grand Yoff"]);
+    expect(await names("hopital grand yoff")).toEqual(["Hôpital Général Idrissa Pouye"]);
+    // Nothing in that municipality: the others are shown.
+    expect(await names("universite grand yoff")).toContain("Université Cheikh Anta Diop de Dakar");
   });
 
   it("shows municipality and sector under the name", async () => {
