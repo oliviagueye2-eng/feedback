@@ -69,23 +69,30 @@ const toDetail = (row: DetailRow): EstablishmentDetail => ({
 });
 
 /**
- * Searches active establishments on establishment.search_text, and
- * service.search_text translated into the establishments offering it.
- * `normalizedQuery` is already lowercased and without accents.
+ * Searches active establishments on establishment.search_text (name and
+ * aliases), and service.search_text translated into the establishments
+ * offering it. `terms` is normalized, without stop words (see toSearchTerms).
  *
- * Matching uses pg_trgm's word_similarity (operator <%, threshold 0.6 by
- * default), so a short or misspelt query still finds a long name. When the
- * query contains a municipality name ("etat civil grand yoff"), establishments
- * of that municipality come first, and the service is looked up without it.
- * Between equal matches, an organisation "in general" comes before its agencies.
+ * Two ways to match:
+ * - start of words: each word typed begins a word of the name or an alias
+ *   ("sen" → Senelec, "ucad" → UCAD). Always on.
+ * - tolerance to typos (`fuzzy`, from 5 letters): pg_trgm's word_similarity,
+ *   operator <%, threshold 0.6 ("dantek" → Dantec).
+ *
+ * Order: establishments of the municipality named in the query ("etat civil
+ * grand yoff"), then those whose displayed name matches by start of words
+ * (before a match on an alias only), then start-of-word matches before typo
+ * matches, then closeness, then an organisation "in general" before its
+ * agencies, then the name. The service is looked up without the municipality.
  */
 export async function searchActiveEstablishments(
-  normalizedQuery: string,
+  terms: string,
   limit: number,
+  fuzzy: boolean,
 ): Promise<EstablishmentSearchResult> {
   const rows = await query<SummaryRow & { service_match: boolean }>(
     `WITH input AS (
-       SELECT $1::text AS q
+       SELECT $1::text AS q, $3::boolean AS fuzzy
      ),
      municipality_in_query AS (
        SELECT m.id, m.search_name
@@ -101,35 +108,57 @@ export async function searchActiveEstablishments(
                 input.q) AS q
        FROM input
      ),
+     words AS (
+       SELECT DISTINCT word FROM input, regexp_split_to_table(input.q, ' ') AS word WHERE word <> ''
+     ),
+     service_words AS (
+       SELECT DISTINCT word FROM without_municipality w, regexp_split_to_table(w.q, ' ') AS word WHERE word <> ''
+     ),
+     -- tier 2: every word typed starts a word; tier 1: close enough (typos).
      by_name AS (
-       SELECT e.id, word_similarity(input.q, e.search_text) AS score
+       SELECT e.id,
+              CASE WHEN NOT EXISTS (SELECT 1 FROM words WHERE e.search_text !~ ('(^| )' || word))
+                   THEN 2 ELSE 1 END AS tier,
+              word_similarity(input.q, e.search_text) AS score
        FROM establishment e, input
-       WHERE e.status = 'active' AND input.q <% e.search_text
+       WHERE e.status = 'active'
+         AND (NOT EXISTS (SELECT 1 FROM words WHERE e.search_text !~ ('(^| )' || word))
+              OR (input.fuzzy AND input.q <% e.search_text))
+     ),
+     services AS (
+       SELECT s.id,
+              CASE WHEN NOT EXISTS (SELECT 1 FROM service_words WHERE s.search_text !~ ('(^| )' || word))
+                   THEN 2 ELSE 1 END AS tier,
+              word_similarity(w.q, s.search_text) AS score
+       FROM service s, without_municipality w, input
+       WHERE NOT EXISTS (SELECT 1 FROM service_words WHERE s.search_text !~ ('(^| )' || word))
+          OR (input.fuzzy AND w.q <% s.search_text)
      ),
      by_service AS (
-       SELECT es.establishment_id AS id, max(word_similarity(w.q, s.search_text)) AS score
-       FROM without_municipality w
-       JOIN service s ON w.q <% s.search_text
-       JOIN establishment_service es ON es.service_id = s.id
+       SELECT es.establishment_id AS id, max(sv.tier) AS tier, max(sv.score) AS score
+       FROM services sv
+       JOIN establishment_service es ON es.service_id = sv.id
        GROUP BY es.establishment_id
      ),
      scored AS (
-       SELECT id, max(score) AS score
+       SELECT id, max(tier * 10 + score) AS rank
        FROM (SELECT * FROM by_name UNION ALL SELECT * FROM by_service) AS matches
        GROUP BY id
      )
      SELECT ${SUMMARY_COLUMNS},
-            coalesce((SELECT max(score) FROM by_service)
-                       >= coalesce((SELECT max(score) FROM by_name), 0), false) AS service_match
+            coalesce((SELECT max(tier * 10 + score) FROM services)
+                       >= coalesce((SELECT max(tier * 10 + score) FROM by_name), 0), false)
+              AS service_match
      FROM scored
      JOIN establishment e ON e.id = scored.id AND e.status = 'active'
      ${SUMMARY_JOINS}
      ORDER BY coalesce(e.municipality_id IN (SELECT id FROM municipality_in_query), false) DESC,
-              scored.score DESC,
+              NOT EXISTS (SELECT 1 FROM words WHERE search_terms(e.name) !~ ('(^| )' || word)) DESC,
+              scored.rank DESC,
               e.scope = 'general' DESC,
               e.name
      LIMIT $2`,
-    [normalizedQuery, limit],
+    [terms, limit, fuzzy],
   );
   return {
     matchType: rows[0]?.service_match ? "service" : "establishment",

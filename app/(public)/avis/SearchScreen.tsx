@@ -1,12 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import type { EstablishmentSearchResult } from "@/src/domain/types";
 import { SearchResults, newEstablishmentHref } from "./SearchResults";
 import styles from "./search.module.css";
 
-const MIN_LENGTH = 2;
+const MIN_LENGTH = 3;
 const DEBOUNCE_MS = 250;
+const MOVE_MS = 240;
+
+const prefersReducedMotion = () =>
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 type Status = "idle" | "loading" | "done" | "too-short" | "offline" | "error";
 
@@ -14,8 +19,9 @@ type Status = "idle" | "loading" | "done" | "too-short" | "offline" | "error";
  * Screens 0 and 0a. Without JavaScript the form is a plain GET to /avis and the
  * server renders the results. With JavaScript, suggestions come as the user
  * types; on a phone, touching the field switches to a full-screen search mode
- * (field at the top, results under it, keyboard open). The phone's back button
- * leaves that mode instead of the page.
+ * (field at the top, results under it, keyboard open). The field glides to
+ * its new place instead of jumping (and back), unless the phone asks for
+ * reduced motion. The phone's back button leaves that mode instead of the page.
  */
 export function SearchScreen({
   initialQuery,
@@ -32,12 +38,30 @@ export function SearchScreen({
   );
   const [active, setActive] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  const field = useRef<HTMLDivElement>(null);
   const request = useRef<AbortController | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+  /**
+   * Switches the mode, then moves the field from where it was to where it is
+   * now (the "FLIP" technique). On a computer the field does not move: nothing to animate.
+   */
+  function switchMode(next: boolean) {
+    const el = field.current;
+    const before = el?.getBoundingClientRect().top;
+    flushSync(() => setActive(next));
+    if (!el || before === undefined || prefersReducedMotion()) return;
+    const delta = before - el.getBoundingClientRect().top;
+    if (Math.abs(delta) < 1) return;
+    el.animate([{ transform: `translateY(${delta}px)` }, { transform: "none" }], {
+      duration: MOVE_MS,
+      easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    });
+  }
+
   // The phone's back button closes the search mode.
   useEffect(() => {
-    const onPopState = () => setActive(false);
+    const onPopState = () => switchMode(false);
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
@@ -46,7 +70,7 @@ export function SearchScreen({
 
   function activate() {
     if (active) return;
-    setActive(true);
+    switchMode(true);
     window.history.pushState(null, "", window.location.href);
   }
 
@@ -131,7 +155,7 @@ export function SearchScreen({
           <label htmlFor="search" className={styles.label}>
             Dans quel établissement êtes-vous allé(e)&nbsp;?
           </label>
-          <div className={styles.field}>
+          <div ref={field} className={styles.field}>
             <input
               ref={input}
               id="search"
@@ -173,7 +197,7 @@ export function SearchScreen({
       <div className={styles.output} aria-busy={status === "loading"}>
         {status === "too-short" && (
           <p role="status" className={styles.message}>
-            Tapez au moins 2 lettres.
+            Tapez au moins 3 lettres.
           </p>
         )}
         {status === "offline" && (

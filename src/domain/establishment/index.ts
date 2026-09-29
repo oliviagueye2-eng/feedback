@@ -1,10 +1,13 @@
 import * as db from "../../db/establishments";
-import { normalizeForSearch } from "../../lib/text";
+import { toSearchTerms } from "../../lib/text";
 import { asObject, optionalString, requireString } from "../../lib/validation";
 import { notFound } from "../errors";
 import type { EstablishmentSearchResult } from "../types";
 
-export const SEARCH_MIN_LENGTH = 2;
+/** Below 3 letters, nothing is proposed. */
+export const SEARCH_MIN_LENGTH = 3;
+/** From 5 letters, typos are tolerated ("dantek" finds Dantec); before, only starts of words. */
+export const FUZZY_MIN_LENGTH = 5;
 export const SEARCH_LIMIT = 8;
 /** Screen 0b: at most this many "Vouliez-vous dire" suggestions. */
 export const SUGGESTION_LIMIT = 3;
@@ -15,13 +18,14 @@ export const MIN_FEEDBACK_TO_PUBLISH = 10;
 export async function searchEstablishments(
   query: string,
 ): Promise<EstablishmentSearchResult> {
-  const normalized = normalizeForSearch(query);
-  if (normalized.length < SEARCH_MIN_LENGTH) {
+  const terms = toSearchTerms(query);
+  if (terms.length < SEARCH_MIN_LENGTH) {
     return { matchType: "establishment", results: [], suggestions: [] };
   }
-  const found = await db.searchActiveEstablishments(normalized, SEARCH_LIMIT);
-  if (found.results.length > 0) return found;
-  return { ...found, suggestions: await db.findSimilarEstablishments(normalized, SUGGESTION_LIMIT) };
+  const fuzzy = terms.length >= FUZZY_MIN_LENGTH;
+  const found = await db.searchActiveEstablishments(terms, SEARCH_LIMIT, fuzzy);
+  if (found.results.length > 0 || !fuzzy) return found;
+  return { ...found, suggestions: await db.findSimilarEstablishments(terms, SUGGESTION_LIMIT) };
 }
 
 /** Screen 0c: the optional sector list. */

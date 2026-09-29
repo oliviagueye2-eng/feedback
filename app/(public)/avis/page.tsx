@@ -11,7 +11,7 @@ import styles from "./search.module.css";
 export default async function SearchPage({ searchParams }: PageProps<"/avis">) {
   const { q } = await searchParams;
   const query = typeof q === "string" ? q : "";
-  const result = query.trim().length >= 2 ? await searchEstablishments(query) : null;
+  const result = query.trim().length >= 3 ? await searchEstablishments(query) : null;
 
   return (
     <>

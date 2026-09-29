@@ -420,3 +420,32 @@
     padding: 20px 18px;
   }
 }
+
+/* Entering the search mode: the page fades behind a white sheet, the field
+   glides to the top (animated in SearchScreen.tsx), then the back button and
+   the results appear. Skipped when the phone asks for reduced motion. */
+@media (max-width: 899px) and (prefers-reduced-motion: no-preference) {
+  .active {
+    animation: sheet-in 200ms ease-out;
+  }
+
+  .active .back {
+    animation: fade-in 160ms ease-out 120ms both;
+  }
+
+  .active .output {
+    animation: fade-in 180ms ease-out 160ms both;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    background-color: rgb(255 255 255 / 0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}

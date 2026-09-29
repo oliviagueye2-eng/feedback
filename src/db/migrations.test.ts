@@ -4,7 +4,7 @@
  */
 import type { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { normalizeForSearch } from "../lib/text";
+import { normalizeForSearch, toSearchTerms } from "../lib/text";
 import { createTestDatabase } from "./test-database";
 
 let db: PGlite;
@@ -81,6 +81,13 @@ describe("search", () => {
     expect((await one<{ search_text: string }>(
       "SELECT search_text FROM service WHERE id = $1", [id]))?.search_text,
     ).toBe("etat civil extrait de naissance");
+  });
+
+  it("drops the stop words exactly like src/lib/text.ts", async () => {
+    for (const sample of ["Orange Sénégal", "Institution de prévoyance retraite du Sénégal", "Sénégal", "Sen'Eau"]) {
+      const row = await one<{ t: string }>("SELECT search_terms($1) AS t", [sample]);
+      expect(row?.t).toBe(toSearchTerms(sample));
+    }
   });
 
   it("normalizes text exactly like src/lib/text.ts", async () => {

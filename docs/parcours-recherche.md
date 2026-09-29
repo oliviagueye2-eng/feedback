@@ -15,8 +15,11 @@ Comportement validé le 2026-09-29. Les textes affichés seront revus dans une p
 ## Recherche
 
 - Recherche **par le nom** de l'établissement (et ses alias), ou par une démarche (« état civil », « extrait de naissance ») qui renvoie les établissements qui la proposent. Taper seulement une commune ne liste pas les établissements de la commune.
-- Suggestions à partir de **2 lettres**, environ 0,25 s après la dernière touche ; **8 résultats** au plus.
-- Fautes et accents tolérés (« le dantek » trouve Le Dantec).
+- Suggestions à partir de **3 lettres**, environ 0,25 s après la dernière touche ; **8 résultats** au plus.
+- **3 ou 4 lettres** : seulement les noms dont un mot (du nom ou d'un alias) **commence** par ce qui est tapé (« sen » → Sen'Eau, Senelec ; « ucad » → UCAD).
+- **5 lettres et plus** : la tolérance aux fautes s'ajoute (« dantek » trouve Dantec). Principe : les mots sont découpés en morceaux de 3 lettres ; au moins 60 % de morceaux communs.
+- Accents ignorés. Le mot **« Sénégal » est ignoré** (il est dans presque tous les noms complets).
+- Ordre : commune tapée d'abord ; puis les établissements dont le **nom affiché** correspond, avant ceux trouvés seulement par un alias ; puis début de mot avant faute tolérée ; à égalité, l'organisme « en général » avant ses agences. Aucune mention de l'alias sous le nom (décision du 2026-09-29).
 - Commune tapée en entier (« état civil Grand-Yoff ») : les établissements de cette commune passent en tête.
 - Sous chaque nom : **commune et secteur** (« Grand-Yoff, Administration et état civil »), ce qui est connu. Jamais le service.
 - Démarche reconnue : encadré « Précisez l'établissement ».
@@ -26,10 +29,11 @@ Comportement validé le 2026-09-29. Les textes affichés seront revus dans une p
 ## Comportement sur téléphone
 
 - En touchant le champ, la page passe en **mode recherche** : bandeau tricolore, flèche retour, champ en haut, résultats dessous, clavier ouvert.
+- **Transition** : le champ glisse jusqu'en haut (0,24 s), la page s'efface en fondu, puis la flèche retour et les résultats apparaissent ; mouvement inverse au retour. Pas d'animation si le téléphone demande de réduire les animations.
 - **Flèche retour** ou **bouton retour du téléphone** : on revient à l'écran 0, le texte tapé est conservé.
 - **Croix** : le champ et la liste se vident, le clavier reste ouvert.
 - Touche « Rechercher » du clavier : affiche la liste, n'ouvre pas le premier résultat.
-- Moins de 2 lettres : « Tapez au moins 2 lettres. »
+- Moins de 3 lettres : « Tapez au moins 3 lettres. »
 - Clavier : touche « Rechercher », pas de correction automatique (elle abîme les noms propres).
 
 Sur ordinateur, pas de mode plein écran : les résultats s'affichent sous le champ. La recherche du talon de la page d'accueil mène à `/avis?q=…`.

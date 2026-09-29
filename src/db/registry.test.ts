@@ -48,6 +48,26 @@ describe("first establishments of the registry", () => {
     expect((await first("la poste"))?.name).toBe("La Poste");
   });
 
+  it("proposes nothing below 3 letters", async () => {
+    expect(await names("se")).toEqual([]);
+  });
+
+  it("with 3 or 4 letters, only names with a word starting with them (Sénégal ignored)", async () => {
+    expect(await names("sen")).toEqual(["Sen'Eau", "Senelec"]);
+    expect(await names("ucad")).toEqual(["Université Cheikh Anta Diop de Dakar"]);
+    expect(await names("snl")).toEqual([]);
+  });
+
+  it("from 5 letters, tolerates typos", async () => {
+    expect(await names("senelc")).toContain("Senelec");
+  });
+
+  it("puts a match on the displayed name before a match on an alias only", async () => {
+    // "free" is only an alias of Yas; "Hôpital Fann" an alias, but "Fann" is in no displayed name.
+    const orange = await names("orange");
+    expect(orange[0]).toBe("Orange");
+  });
+
   it("does not offer La Poste for a health post", async () => {
     expect(await names("poste de sante")).not.toContain("La Poste");
   });

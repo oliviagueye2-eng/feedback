@@ -16,3 +16,14 @@ export function normalizeForSearch(input: string): string {
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 }
+
+/** Words ignored by the search. Must match search_terms() in migration 0007. */
+export const SEARCH_STOP_WORDS: readonly string[] = ["senegal"];
+
+/** What the search compares: normalized text without the stop words. */
+export function toSearchTerms(input: string): string {
+  return normalizeForSearch(input)
+    .split(" ")
+    .filter((word) => word && !SEARCH_STOP_WORDS.includes(word))
+    .join(" ");
+}
