@@ -40,9 +40,9 @@ export function SearchScreen({
     initialQuery && initialQuery.trim().length < MIN_LENGTH ? "too-short" : initialResult ? "done" : "idle",
   );
   const [active, setActive] = useState(false);
-  // True once JavaScript runs: the phone then drops the "Rechercher" button,
-  // useless there since touching the field opens the search. Without
-  // JavaScript the button stays: it is what sends the search.
+  // True once JavaScript runs: the "Rechercher" button is then dropped, since
+  // results come as the user types. Without JavaScript the button stays: it
+  // is what sends the search.
   const enhanced = useSyncExternalStore(noSubscription, () => true, () => false);
   const input = useRef<HTMLInputElement>(null);
   const field = useRef<HTMLDivElement>(null);

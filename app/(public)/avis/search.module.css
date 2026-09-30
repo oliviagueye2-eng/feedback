@@ -126,12 +126,11 @@
   height: 16px;
 }
 
-/* Phones with JavaScript: no "Rechercher" button (touching the field opens
-   the search). It stays on computers and while JavaScript has not loaded. */
-@media (max-width: 899px) {
-  .enhanced .submit {
-    display: none;
-  }
+/* With JavaScript, no "Rechercher" button: results come as the user types
+   (the Enter key still works). It stays while JavaScript has not loaded,
+   since it is then what sends the search. */
+.enhanced .submit {
+  display: none;
 }
 
 .help {
