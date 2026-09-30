@@ -79,7 +79,7 @@ export const fr = {
   search: {
     title: "Donnez votre avis sur un service",
     lead: "Anonyme et gratuit. Les résultats sont publiés chaque mois.",
-    help: "Nom de la mairie, de l'hôpital, de l'école…",
+    help: "Recherche par nom, type ou commune",
     submit: "Rechercher",
     clear: "Effacer la recherche",
     backHome: "Retour à l'accueil",
