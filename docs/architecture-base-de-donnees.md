@@ -315,7 +315,7 @@ Trois sortes de questionnaires :
 | value | smallint | pour les calculs (1 à 5, etc.) |
 | position | smallint | |
 
-Chaque option de `OVERALL_SATISFACTION` a aussi un **libellé de relance**, affiché au-dessus du texte libre (stocké dans `translation` avec `field = follow_up_prompt`) :
+Chaque option de `OVERALL_SATISFACTION` a aussi un **libellé de relance** (stocké dans `translation` avec `field = follow_up_prompt`). Il était affiché au-dessus du texte libre de l'écran 2b ; depuis le 2026-09-30 (option D), ce texte libre a un libellé unique, « Détail de votre expérience », et les libellés de relance ne sont plus affichés (gardés pour un usage futur) :
 
 | Option | Libellé de relance |
 |---|---|
@@ -324,7 +324,7 @@ Chaque option de `OVERALL_SATISFACTION` a aussi un **libellé de relance**, affi
 | `DISSATISFIED`, `VERY_DISSATISFIED` | Que s'est-il passé ? |
 
 ### topic
-Thèmes que l'usager peut toucher après la question essentielle (écran 2b), plusieurs choix possibles. Le titre au-dessus des thèmes suit la réponse : « Ce qui vous a plu » si l'usager est satisfait, « Ce qui n'a pas été » sinon.
+Thèmes proposés après la question essentielle (écran 2b), sous « Qu'avez-vous remarqué ? ». Pour chaque thème, l'usager peut toucher « Bien » ou « Pas bien », ou ne rien toucher (option D, 2026-09-30) : une visite mitigée se dit (bon accueil, attente trop longue).
 
 | Colonne | Type | Note |
 |---|---|---|
@@ -438,18 +438,19 @@ Le texte libre demandé juste après la question essentielle (écran 2b). Il rem
 | Colonne | Type | Note |
 |---|---|---|
 | feedback_id | fk unique | un commentaire par avis |
-| prompt_option_id | fk answer_option | option choisie à la question essentielle : indique quel libellé a été affiché (« Qu'est-ce qui vous a plu ? », « Que s'est-il passé ? »…) |
+| prompt_option_id | fk answer_option | option choisie à la question essentielle au moment où le texte a été écrit (avant l'option D, elle indiquait aussi le libellé affiché : « Qu'est-ce qui vous a plu ? », « Que s'est-il passé ? »…) |
 | text | text | 500 caractères au plus |
 | status | enum | `pending`, `published`, `hidden` |
 | hidden_reason | text | ex. donnée personnelle, injure |
 
 ### feedback_topic
-Thèmes touchés par l'usager, une ligne par thème. Le sens (positif ou négatif) n'est pas stocké : on le déduit de la réponse à `OVERALL_SATISFACTION`.
+Thèmes touchés par l'usager, une ligne par thème, avec leur sens (migration `0011_topic_sentiment.sql`). Les thèmes enregistrés avant cette migration ont reçu le sens qu'ils avaient à l'écran : `positive` après « Très satisfait » ou « Satisfait », `negative` sinon.
 
 | Colonne | Type | Note |
 |---|---|---|
 | feedback_id | fk | |
 | topic_id | fk | |
+| sentiment | enum | `positive` (« Bien ») ou `negative` (« Pas bien ») |
 | other_text | text | seulement pour le thème `OTHER` : le thème précisé par l'usager en quelques mots (« Parking »), 50 caractères au plus |
 
 Clé unique `(feedback_id, topic_id)`.
@@ -529,7 +530,7 @@ Historique des actions des agents : validation ou fusion d'un établissement sai
 Pas au lancement. Notées ici pour que le modèle actuel ne les empêche pas.
 
 ### Photo facultative
-- **Quand :** proposée seulement si l'usager a choisi `CLEANLINESS` (Propreté) ou `SAFETY` (Sécurité) dans « Ce qui n'a pas été ». Jamais obligatoire : un avis sans photo compte autant qu'un avis avec photo.
+- **Quand :** proposée seulement si l'usager a marqué `CLEANLINESS` (Propreté) ou `SAFETY` (Sécurité) « Pas bien ». Jamais obligatoire : un avis sans photo compte autant qu'un avis avec photo.
 - **Avertissement affiché :** « Ne photographiez ni personnes ni documents. »
 - **Traitement automatique à l'envoi :** suppression des métadonnées (position GPS, appareil, heure exacte), compression, floutage des visages.
 - **Diffusion :** jamais publiée, visible uniquement par les agents.

@@ -37,8 +37,8 @@ Chaque avis passe par ces étapes, dans cet ordre.
 | 2 | **Quoi ?** Le service | 1. Se souvenir | « Motif de votre visite » | Liste des services de l'établissement, ou « Autre démarche » | Non (déjà connu par le QR code du guichet) | 1 | `service_id` | Fait |
 | 3 | **Quand ?** La période | 1. Se souvenir | « Quand êtes-vous venu(e) ? » | Aujourd'hui / moins d'une semaine / moins d'un mois / plus d'un mois | Oui, sauf QR code (= aujourd'hui) | 1 | `visit_period`, `visit_month` | Fait |
 | 4 | **Le jugement global** | 5. Évaluer | « Êtes-vous satisfait(e) du service reçu ? » | 5 niveaux, un toucher | **Oui** : c'est la réponse qui compte dans les résultats | 2 | `answer` (`OVERALL_SATISFACTION`) | Fait |
-| 5 | **Les aspects** | 4. Analyser | « Ce qui vous a plu » ou « Ce qui n'a pas été » | Cases à cocher (thèmes du secteur), « Autre » à préciser | Non | 2b | `feedback_topic` | Fait |
-| 6 | **Le récit** | 2. Comprendre | « Qu'est-ce qui vous a plu ? » ou « Que s'est-il passé ? » | Texte libre, 500 caractères | Non | 2b | `comment` (relu avant publication) | Fait |
+| 5 | **Les aspects** | 4. Analyser | « Qu'avez-vous remarqué ? » | Pour chaque thème du secteur : « Bien », « Pas bien » ou rien ; « Autre » à préciser | Non | 2b | `feedback_topic` (avec `sentiment`) | Fait |
+| 6 | **Le récit** | 2. Comprendre | « Détail de votre expérience » (aide : points positifs, points négatifs, suggestions d'amélioration) | Texte libre, 500 caractères | Non | 2b | `comment` (relu avant publication) | Fait |
 | — | **Confirmation** | | « Votre avis est enregistré » | Terminer ou continuer | | 4-5 | `feedback.step` | À faire |
 
 ### Partie détaillée (facultative, proposée après la confirmation)
@@ -64,7 +64,7 @@ Ce que contient un avis complet, et ce qu'il ne contient jamais.
 - l'établissement, le service (s'il est connu), le canal d'arrivée (QR code ou recherche) ;
 - la période de visite et le mois de visite (calculé une fois pour toutes) ;
 - la réponse à la question essentielle ;
-- les thèmes cochés, le commentaire (facultatifs) ;
+- les thèmes touchés, chacun « Bien » ou « Pas bien », et le commentaire (facultatifs) ;
 - les réponses détaillées (facultatives) ;
 - la langue, l'étape atteinte (`essential`, `detailed`, `completed`), l'heure de début arrondie à l'heure.
 
@@ -83,7 +83,7 @@ Un ordre strictement conforme à Bloom placerait « Êtes-vous satisfait(e) ? »
 
 1. **Ne rien perdre.** Beaucoup d'usagers s'arrêtent après une ou deux réponses. La réponse qui compte dans les résultats doit être enregistrée tout de suite, d'un seul toucher.
 2. **Ne pas influencer le jugement.** Faire détailler les défauts avant de demander une note globale peut tirer la note vers le bas. On demande d'abord l'impression générale, puis le détail.
-3. **Adapter la suite.** La réponse choisit le titre des thèmes (« Ce qui vous a plu » ou « Ce qui n'a pas été ») et la question du récit.
+3. **Situer le détail.** La réponse globale donne le cadre ; les « Bien » et « Pas bien » par thème disent ensuite ce qui l'explique, y compris quand la visite est mitigée.
 
 ---
 

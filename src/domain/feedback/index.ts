@@ -15,6 +15,7 @@ import { computeVisitMonth, defaultVisitPeriod } from "./visit";
 export const COMMENT_MAX_LENGTH = 500;
 export const OTHER_TOPIC_MAX_LENGTH = 50;
 export const OTHER_TOPIC_CODE = "OTHER";
+export const TOPIC_SENTIMENTS = ["positive", "negative"] as const;
 const CHANNELS: readonly Channel[] = ["qr", "search", "link"];
 
 /** Screen 1: creates the feedback, or updates it when the phone sends it again. */
@@ -72,7 +73,10 @@ export async function saveAnswer(
   });
 }
 
-/** Screen 2b: checked topics. "Autre" may carry a short text naming the topic. */
+/**
+ * Screen 2b: the topics touched, each « Bien » (positive) or « Pas bien »
+ * (negative). "Autre" may carry a short text naming the topic.
+ */
 export async function saveTopics(feedbackId: string, body: unknown): Promise<void> {
   requireUuid(feedbackId, "id");
   const input = asObject(body);
@@ -80,11 +84,12 @@ export async function saveTopics(feedbackId: string, body: unknown): Promise<voi
   const topics = input.topics.map((raw) => {
     const topic = asObject(raw);
     const code = requireString(topic, "code", { max: 64 });
+    const sentiment = requireOneOf(topic, "sentiment", TOPIC_SENTIMENTS);
     const otherText = optionalString(topic, "otherText", { max: OTHER_TOPIC_MAX_LENGTH });
     if (otherText && code !== OTHER_TOPIC_CODE) {
       throw invalidInput("otherText is only allowed for the OTHER topic");
     }
-    return { code, otherText };
+    return { code, sentiment, otherText };
   });
   if (new Set(topics.map((t) => t.code)).size !== topics.length) {
     throw invalidInput("Each topic can be given only once");
@@ -92,7 +97,7 @@ export async function saveTopics(feedbackId: string, body: unknown): Promise<voi
   await db.replaceTopics({ feedbackId, topics });
 }
 
-/** Screen 2b: free text. promptOption tells which label was shown ("Que s'est-il passé ?"...). */
+/** Screen 2b: free text. promptOption is the essential answer given when it was written. */
 export async function saveComment(feedbackId: string, body: unknown): Promise<void> {
   requireUuid(feedbackId, "id");
   const input = asObject(body);
@@ -109,12 +114,9 @@ export async function removeComment(feedbackId: string): Promise<void> {
   await db.deleteComment(feedbackId);
 }
 
-/** Essential answers that open "Ce qui vous a plu"; the others open "Ce qui n'a pas été". */
-const SATISFIED_OPTIONS = ["VERY_SATISFIED", "SATISFIED"];
-
 /**
- * Screen 2b: the answer given (with its follow-up prompt), the topics of the
- * feedback's sector, and what the user already checked or wrote.
+ * Screen 2b: the answer given, the topics of the feedback's sector, and what
+ * the user already touched or wrote.
  */
 export async function getDetailsScreen(feedbackId: string) {
   const { context, question } = await getEssentialScreen(feedbackId);
@@ -127,7 +129,6 @@ export async function getDetailsScreen(feedbackId: string) {
     context,
     question: question.label,
     answer,
-    liked: answer !== null && SATISFIED_OPTIONS.includes(answer.code),
     topics,
     comment,
   };

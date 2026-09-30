@@ -274,19 +274,29 @@ describe("feedback", () => {
     expect(row!.used).toBe(row!.expected);
   });
 
-  it("replaces the checked topics", async () => {
-    await saveTopics(feedbackId, { topics: [{ code: "WAIT_TIME" }, { code: "OTHER", otherText: "Parking" }] });
-    await saveTopics(feedbackId, { topics: [{ code: "STAFF" }, { code: "OTHER", otherText: "Toilettes" }] });
+  it("replaces the topics touched, each with its sentiment", async () => {
+    await saveTopics(feedbackId, {
+      topics: [
+        { code: "WAIT_TIME", sentiment: "negative" },
+        { code: "OTHER", sentiment: "negative", otherText: "Parking" },
+      ],
+    });
+    await saveTopics(feedbackId, {
+      topics: [
+        { code: "STAFF", sentiment: "positive" },
+        { code: "OTHER", sentiment: "negative", otherText: "Toilettes" },
+      ],
+    });
     const topics = await rows(
-      `SELECT t.code, ft.other_text FROM feedback_topic ft JOIN topic t ON t.id = ft.topic_id
+      `SELECT t.code, ft.sentiment, ft.other_text FROM feedback_topic ft JOIN topic t ON t.id = ft.topic_id
        WHERE ft.feedback_id = $1 ORDER BY t.code`,
       [feedbackId],
     );
     expect(topics).toEqual([
-      { code: "OTHER", other_text: "Toilettes" },
-      { code: "STAFF", other_text: null },
+      { code: "OTHER", sentiment: "negative", other_text: "Toilettes" },
+      { code: "STAFF", sentiment: "positive", other_text: null },
     ]);
-    await expect(saveTopics(feedbackId, { topics: [{ code: "PARKING" }] }))
+    await expect(saveTopics(feedbackId, { topics: [{ code: "PARKING", sentiment: "positive" }] }))
       .rejects.toMatchObject({ code: "INVALID_INPUT" });
   });
 
@@ -304,24 +314,23 @@ describe("feedback", () => {
     // The Grand-Yoff centre is in the Administration sector (through its type).
     const screen = await getDetailsScreen(feedbackId);
     expect(screen.answer).toMatchObject({ code: "DISSATISFIED", followUpPrompt: "Que s'est-il passé ?" });
-    expect(screen.liked).toBe(false);
     const codes = screen.topics.map((t) => t.code);
     expect(codes).toHaveLength(12);
     expect(codes.slice(9)).toEqual(["PROCESSING_TIME", "CASE_TRACKING", "OTHER"]);
-    expect(screen.topics.filter((t) => t.checked).map((t) => [t.code, t.otherText])).toEqual([
-      ["STAFF", null],
-      ["OTHER", "Toilettes"],
+    expect(screen.topics.filter((t) => t.sentiment).map((t) => [t.code, t.sentiment, t.otherText])).toEqual([
+      ["STAFF", "positive", null],
+      ["OTHER", "negative", "Toilettes"],
     ]);
     expect(screen.comment).toBe("Deux heures d'attente, guichet fermé.");
   });
 
   it("refuses a topic of another sector, and removes an emptied comment", async () => {
-    await expect(saveTopics(feedbackId, { topics: [{ code: "POWER_CUTS" }] }))
+    await expect(saveTopics(feedbackId, { topics: [{ code: "POWER_CUTS", sentiment: "negative" }] }))
       .rejects.toMatchObject({ code: "INVALID_INPUT" });
-    await saveTopics(feedbackId, { topics: [{ code: "PROCESSING_TIME" }] });
+    await saveTopics(feedbackId, { topics: [{ code: "PROCESSING_TIME", sentiment: "negative" }] });
     await removeComment(feedbackId);
     const screen = await getDetailsScreen(feedbackId);
-    expect(screen.topics.filter((t) => t.checked).map((t) => t.code)).toEqual(["PROCESSING_TIME"]);
+    expect(screen.topics.filter((t) => t.sentiment).map((t) => t.code)).toEqual(["PROCESSING_TIME"]);
     expect(screen.comment).toBeNull();
   });
 });

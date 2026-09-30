@@ -139,7 +139,7 @@ const TOPICS_FOR_FEEDBACK = `
 /** Replaces all topics of a feedback. Codes must be unique (checked in src/domain). */
 export async function replaceTopics(input: {
   feedbackId: string;
-  topics: { code: string; otherText: string | null }[];
+  topics: { code: string; sentiment: TopicSentiment; otherText: string | null }[];
 }): Promise<void> {
   const codes = input.topics.map((t) => t.code);
   const known = await query<{ code: string }>(
@@ -148,21 +148,23 @@ export async function replaceTopics(input: {
   );
   if (known.length !== codes.length) throw invalidInput("Unknown topic");
 
-  // One statement: removes the topics no longer checked, then upserts the others.
+  // One statement: removes the topics no longer touched, then upserts the others.
   await query(
     `WITH wanted AS (
-       SELECT t.id, x.other_text
-       FROM unnest($2::text[], $3::text[]) AS x (code, other_text)
+       SELECT t.id, x.sentiment, x.other_text
+       FROM unnest($2::text[], $3::text[], $4::text[]) AS x (code, sentiment, other_text)
        JOIN topic t ON t.code = x.code
      ),
      removed AS (
        DELETE FROM feedback_topic
        WHERE feedback_id = $1 AND topic_id NOT IN (SELECT id FROM wanted)
      )
-     INSERT INTO feedback_topic (feedback_id, topic_id, other_text)
-     SELECT $1, id, other_text FROM wanted
-     ON CONFLICT (feedback_id, topic_id) DO UPDATE SET other_text = EXCLUDED.other_text`,
-    [input.feedbackId, codes, input.topics.map((t) => t.otherText)],
+     INSERT INTO feedback_topic (feedback_id, topic_id, sentiment, other_text)
+     SELECT $1, id, sentiment, other_text FROM wanted
+     ON CONFLICT (feedback_id, topic_id) DO UPDATE SET
+       sentiment = EXCLUDED.sentiment,
+       other_text = EXCLUDED.other_text`,
+    [input.feedbackId, codes, input.topics.map((t) => t.sentiment), input.topics.map((t) => t.otherText)],
   );
 }
 
@@ -198,18 +200,22 @@ export async function deleteComment(feedbackId: string): Promise<void> {
   await query("DELETE FROM comment WHERE feedback_id = $1", [feedbackId]);
 }
 
+/** « Bien » or « Pas bien », for one topic of screen 2b. */
+export type TopicSentiment = "positive" | "negative";
+
 export interface TopicChoice {
   code: string;
   label: string;
-  checked: boolean;
+  /** What the user touched for this topic, null when nothing. */
+  sentiment: TopicSentiment | null;
   /** Only for "Autre": what the user wrote. */
   otherText: string | null;
 }
 
-/** Screen 2b: the topics to show, in order, with those already checked. */
+/** Screen 2b: the topics to show, in order, with what the user already touched. */
 export async function findTopicChoices(feedbackId: string): Promise<TopicChoice[]> {
-  const rows = await query<{ code: string; label: string; checked: boolean; other_text: string | null }>(
-    `SELECT t.code, tr.text AS label, ft.topic_id IS NOT NULL AS checked, ft.other_text
+  const rows = await query<{ code: string; label: string; sentiment: TopicSentiment | null; other_text: string | null }>(
+    `SELECT t.code, tr.text AS label, ft.sentiment, ft.other_text
      FROM (${TOPICS_FOR_FEEDBACK}) t
      JOIN translation tr ON tr.target_table = 'topic' AND tr.target_id = t.id
        AND tr.field = 'label' AND tr.language = 'fr'
@@ -217,7 +223,7 @@ export async function findTopicChoices(feedbackId: string): Promise<TopicChoice[
      ORDER BY t.position`,
     [feedbackId],
   );
-  return rows.map((r) => ({ code: r.code, label: r.label, checked: r.checked, otherText: r.other_text }));
+  return rows.map((r) => ({ code: r.code, label: r.label, sentiment: r.sentiment, otherText: r.other_text }));
 }
 
 /** Screen 2b: the free text already written, to show it when coming back. */

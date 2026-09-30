@@ -60,28 +60,42 @@ describe("upsertFeedback", () => {
 });
 
 describe("saveTopics", () => {
-  it("accepts a short text for the OTHER topic", async () => {
+  it("keeps « Bien » or « Pas bien » for each topic, and a short text for OTHER", async () => {
     await saveTopics(FEEDBACK_ID, {
-      topics: [{ code: "WAIT_TIME" }, { code: "OTHER", otherText: "Parking" }],
+      topics: [
+        { code: "STAFF", sentiment: "positive" },
+        { code: "WAIT_TIME", sentiment: "negative" },
+        { code: "OTHER", sentiment: "negative", otherText: "Parking" },
+      ],
     });
     expect(db.replaceTopics).toHaveBeenCalledWith({
       feedbackId: FEEDBACK_ID,
       topics: [
-        { code: "WAIT_TIME", otherText: null },
-        { code: "OTHER", otherText: "Parking" },
+        { code: "STAFF", sentiment: "positive", otherText: null },
+        { code: "WAIT_TIME", sentiment: "negative", otherText: null },
+        { code: "OTHER", sentiment: "negative", otherText: "Parking" },
       ],
     });
   });
 
+  it("requires a known sentiment for each topic", async () => {
+    await expect(saveTopics(FEEDBACK_ID, { topics: [{ code: "STAFF" }] })).rejects.toMatchObject({
+      code: "INVALID_INPUT",
+    });
+    await expect(
+      saveTopics(FEEDBACK_ID, { topics: [{ code: "STAFF", sentiment: "neutral" }] }),
+    ).rejects.toMatchObject({ code: "INVALID_INPUT" });
+  });
+
   it("refuses a text on another topic", async () => {
     await expect(
-      saveTopics(FEEDBACK_ID, { topics: [{ code: "FEES", otherText: "Trop cher" }] }),
+      saveTopics(FEEDBACK_ID, { topics: [{ code: "FEES", sentiment: "negative", otherText: "Trop cher" }] }),
     ).rejects.toMatchObject({ code: "INVALID_INPUT" });
   });
 
   it("limits the OTHER text to 50 characters", async () => {
     await expect(
-      saveTopics(FEEDBACK_ID, { topics: [{ code: "OTHER", otherText: "x".repeat(51) }] }),
+      saveTopics(FEEDBACK_ID, { topics: [{ code: "OTHER", sentiment: "negative", otherText: "x".repeat(51) }] }),
     ).rejects.toMatchObject({ code: "INVALID_INPUT" });
   });
 });

@@ -57,19 +57,22 @@ export async function answerEssential(formData: FormData) {
 }
 
 /**
- * Screen 2b → screen 4-5: saves the checked topics and the free text, both
- * optional (sending nothing is allowed). The text of « Autre » counts only
- * when « Autre » is checked; an emptied comment is removed.
+ * Screen 2b → screen 4-5: saves the topics marked « Bien » or « Pas bien »
+ * (fields "topic:CODE") and the free text, both optional (sending nothing is
+ * allowed). The text of « Autre » counts only when « Autre » is marked; an
+ * emptied comment is removed.
  */
 export async function saveDetails(formData: FormData) {
   const id = String(formData.get("feedbackId") ?? "");
-  const codes = formData.getAll("topic").map(String);
+  const topics = [...formData.entries()]
+    .filter(([name]) => name.startsWith("topic:"))
+    .map(([name, sentiment]) => ({ code: name.slice("topic:".length), sentiment: String(sentiment) }));
   const otherText = String(formData.get("otherText") ?? "").trim();
   const comment = String(formData.get("comment") ?? "").trim();
   try {
     await saveTopics(id, {
-      topics: codes.map((code) =>
-        code === OTHER_TOPIC_CODE && otherText ? { code, otherText } : { code },
+      topics: topics.map((topic) =>
+        topic.code === OTHER_TOPIC_CODE && otherText ? { ...topic, otherText } : topic,
       ),
     });
     if (comment) {

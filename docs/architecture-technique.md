@@ -72,7 +72,7 @@ L'adresse imprimée dans les QR codes est la page `/e/{code}`, qui s'appuie sur 
 | `GET /webapi/establishments/{id}` | Détail d'un établissement et services proposés | 1 |
 | `PUT /webapi/feedbacks/{id}` | Crée ou met à jour l'avis (établissement, service, `visit_period`, langue) | 1 |
 | `PUT /webapi/feedbacks/{id}/answers/{question_code}` | Enregistre une réponse dès qu'elle est donnée | 2, 6 |
-| `PUT /webapi/feedbacks/{id}/topics` | Thèmes cochés, avec le texte de « Autre » | 2b |
+| `PUT /webapi/feedbacks/{id}/topics` | Thèmes touchés, chacun `positive` (« Bien ») ou `negative` (« Pas bien »), avec le texte de « Autre » | 2b |
 | `PUT /webapi/feedbacks/{id}/comment` | Texte libre | 2b |
 | `GET /webapi/feedbacks/{id}/questionnaire` | Questionnaire détaillé adapté au service ou au secteur | 6 |
 | `GET /webapi/establishments/{id}/stats` | Résultats publiés | Résultats |
