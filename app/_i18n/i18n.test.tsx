@@ -48,7 +48,7 @@ describe("frenchSpaces", () => {
 describe("getDictionary", () => {
   it("gives the French texts with French typography", async () => {
     const t = await getDictionary("fr");
-    expect(t.common.searchLabel).toBe("Dans quel établissement êtes-vous allé(e) ?");
+    expect(t.common.searchLabel).toBe("Quel établissement ou organisme voulez-vous évaluer\u00a0?");
     expect(t.home.steps).toHaveLength(3);
   });
 });
