@@ -1,7 +1,7 @@
 # HANDOFF
 
 Document de passation pour reprendre le travail avec un contexte vierge.
-Dernière mise à jour : 2026-09-29.
+Dernière mise à jour : 2026-09-30.
 
 ---
 
@@ -32,7 +32,7 @@ Le dépôt `oliviagueye2-eng/allo-pro-sn` est un **autre projet**, sans rapport 
 ### Maquettes (terminées pour la variante A)
 - Canevas Claude Design : https://claude.ai/artifact/FChdnQZ6GhpK52ZJqFxwQ7 (copie des fichiers dans `maquettes/`, voir `maquettes/README.md`).
 - **Variante A « minimaliste institutionnelle » retenue** (B, C, D gardées pour mémoire, non mises à jour).
-- Identité : police **Atkinson Hyperlegible**, vert `#0B6B3A`, encre `#13261C`, fond `#F3F6F4`, bandeau tricolore du drapeau, emblème étoile.
+- Identité : police **Atkinson Hyperlegible**, vert `#0B6B3A`, encre `#13261C`, fond `#F3F6F4`, bandeau tricolore du drapeau, logo (voir 4g). Sur le site, **toute la palette est nommée dans `app/globals.css`** (aucune couleur en dur ailleurs) ; le bandeau tricolore reprend les couleurs du logo (`#137A36`, `#FACC15`, `#CD1E22`).
 - **Page d'accueil = ticket de file d'attente** « C'est votre tour. » (N° 047), fond clair avec tickets N° 045/046 qui dépassent derrière et **filigrane tricolore en diagonale dans le coin haut gauche** (option « 2b »). Encoches du ticket = vraies découpes (mask CSS) + demi-cercles qui redessinent la bordure. Versions mobile et ordinateur. Sur ordinateur, la recherche est dans le talon du ticket.
 - Parcours A :
   ```
@@ -63,23 +63,24 @@ Le dépôt `oliviagueye2-eng/allo-pro-sn` est un **autre projet**, sans rapport 
   - `src/domain/` = règles métier, **interdiction d'importer Next.js/React** (règle ESLint `no-restricted-imports`).
   - `src/db/` = accès PostgreSQL + `migrations/`.
   - `src/lib/` = utilitaires (normalisation de texte, validation).
-- Pages : `/` (accueil ticket), `/avis` (recherche, fonctionne sans JS), `/e/[code]` (arrivée QR, squelette), `/admin` (vide).
+- Pages : `/` (accueil ticket + écran d'ouverture à la 1re visite), `/avis` (recherche, fonctionne sans JS), `/avis/nouveau` (0c), `/avis/[id]` et `/e/[code]` (écran 1), `/donner/[id]` (écran 2), `/donner/[id]/precisions` (écran 2b), `/donner/[id]/enregistre` (**provisoire**, à remplacer par les écrans 4-5), `/admin` (vide).
 - Routes `/webapi/` : qr, establishments (GET recherche, POST saisie usager), establishments/[id], stats, feedbacks/[id] (PUT), answers/[questionCode], topics, comment, questionnaire, internal/refresh-stats (cron).
 - Tout est **câblé de bout en bout** et **les requêtes `src/db/` sont écrites** (2026-09-29) : recherche (trigrammes `<%` / `word_similarity` sur nom + alias, services → établissements, commune tapée → établissements de la commune en tête, `matchType = service` quand le service correspond au moins aussi bien qu'un nom), fiche établissement (un établissement fusionné mène à son remplaçant ; seuls `active` et `pending_review` acceptent des avis), QR code (actif et établissement actif), saisie usager (`pending_review`), statistiques publiées (services additionnés, seuil 10), avis (ré-envoi idempotent ; `visit_month` ne change que si la réponse « Quand êtes-vous venu(e) ? » change), réponses (question cherchée dans ESSENTIAL puis dans le questionnaire détaillé choisi ; la première réponse détaillée enregistre `detailed_questionnaire_id`), thèmes (remplacement en une instruction), commentaire (modifié → repasse en modération).
 - `src/db/client.ts` : fonction `query()` unique ; erreurs PostgreSQL de clé étrangère / identifiant invalide traduites en 400/404 ; `useTestDatabase()` branche PGlite dans les tests.
 - Pas encore fait : `search_log` n'est pas alimenté.
 - Règles métier écrites et testées : mois de visite, choix du questionnaire (service → secteur → GENERIC), validation des thèmes/« Autre », normalisation de texte alignée sur `unaccent()` SQL (ligatures œ/æ incluses), SSL strict.
-- **50 tests Vitest**, dont `src/db/queries.test.ts` (requêtes testées de bout en bout via `src/domain`) et un test qui applique les vraies migrations sur un PostgreSQL en mémoire (**PGlite**, avec `pg_trgm` et `unaccent`).
+- **78 tests Vitest** (2026-09-30), dont `src/db/queries.test.ts` (requêtes testées de bout en bout via `src/domain`) et un test qui applique les vraies migrations sur un PostgreSQL en mémoire (**PGlite**, avec `pg_trgm` et `unaccent`).
 
 ### Base de données
 - `src/db/migrations/0001_schema.sql` : toutes les tables, contraintes CHECK (enums en `text` + CHECK), triggers `search_text` (établissement : nom + alias ; service : libellé FR + synonymes), index trigrammes, vue matérialisée `monthly_stats` (suit les fusions, exclut `over_month`).
-- `src/db/migrations/0002_reference_data.sql` : **18 secteurs** (HEALTH, EDUCATION, ADMINISTRATION, JUSTICE, SECURITY, TAX, UTILITIES, TRANSPORT, SOCIAL, FOOD_SERVICE, HOSPITALITY, REAL_ESTATE, RETAIL, BANKING_INSURANCE, CULTURE, SPORT, TELECOM, TOURISM), 9 thèmes, questionnaire ESSENTIAL (question + 5 options + libellés de relance), GENERIC en brouillon.
+- `src/db/migrations/0002_reference_data.sql` : 18 secteurs (19 depuis 0008 : `UTILITIES` devenu `ELECTRICITY`, plus `WATER`), 9 thèmes (revus par 0010), questionnaire ESSENTIAL (question + 5 options + libellés de relance), GENERIC en brouillon.
+- Migrations suivantes, **toutes appliquées sur Neon** : 0003 secteur de l'établissement, 0004 premiers établissements réels, 0005-0006 organismes, 0007 mots ignorés de la recherche, 0008 Eau / Électricité, 0009 « hôtel de ville » = « mairie », **0010 thèmes par secteur** (voir 4j).
 - Choix de modèle : alias = colonne `establishment.aliases text[]` (pas de table), synonymes = `service.synonyms text[]` ; public/privé = `establishment.ownership` (pas un secteur) ; statuts d'établissement `active/pending_review/rejected/merged/closed`.
 - `npm run db:migrate` (`scripts/migrate.mjs`) : une transaction par fichier, table `schema_migration`, verrou advisory, connexion directe `DATABASE_URL_UNPOOLED` si présente, conversion `sslmode=require` → `verify-full`.
 
 ### Hébergement (prototype en ligne)
 - **Vercel** (dépôt connecté, région `fra1`) + **Neon** (projet `floral-credit-39387239`, région Frankfurt, PostgreSQL 17 conseillé). Variables `DATABASE_URL` (poolée) et `DATABASE_URL_UNPOOLED` (directe) configurées en « Secret ».
-- Les migrations tournent au build de **production** uniquement (`npm run vercel-build`) ; les deux migrations **sont appliquées sur Neon** (vérifié : table `sector` avec `TRANSPORT`).
+- Les migrations tournent au build de **production** uniquement (`npm run vercel-build`) ; les migrations **0001 à 0010 sont appliquées sur Neon** (dernier déploiement : commit `57dd1d2`, 2026-09-30).
 - `vercel.json` : cron quotidien 2 h UTC sur `/webapi/internal/refresh-stats`.
 - Production nationale : hébergement souverain au Sénégal ou cloud européen, en conteneur (non fait).
 
@@ -90,6 +91,7 @@ Le dépôt `oliviagueye2-eng/allo-pro-sn` est un **autre projet**, sans rapport 
 - Proposer 3 à 5 options courtes avec une recommandation, puis appliquer le choix.
 - Ancrer le design dans le sujet (ticket de file d'attente, formulaire administratif à cases à cocher) plutôt que des motifs génériques.
 - Lire la doc Next.js embarquée (`node_modules/next/dist/docs/`) : la version 16 diffère (`params`/`searchParams` sont des Promise, helpers globaux `PageProps`, `LayoutProps`, `RouteContext` générés par `next typegen`).
+- Maquette sur le canevas **avant** de coder un choix visuel (loader, écran d'ouverture, réponses) : elle compare et tranche vite.
 - Tester la migration sur un **vrai PostgreSQL 16 local** (binaires dans `/usr/lib/postgresql/16/bin`) et en continu avec **PGlite**.
 - Vérifier chaque correctif par un test de contrôle (ex. avertissement SSL présent sans correctif, absent avec).
 
@@ -100,6 +102,10 @@ Le dépôt `oliviagueye2-eng/allo-pro-sn` est un **autre projet**, sans rapport 
 - `vitest` avec `@types/node@20` : conflit de dépendances → utiliser `@types/node@^22` (Node 22 est l'environnement).
 - Empiler des migrations correctives (0003, 0004) avant tout déploiement : l'utilisatrice préfère modifier directement 0001/0002 tant que la base n'est déployée nulle part.
 - Éléments de design refusés : fond vert franc derrière le ticket, fond « registre », tuiles à pictogrammes, pastilles, micro/audio.
+- Modifier un fichier qu'elle fournit (vidéo, image) : **partir de son fichier et ne changer que ce qu'elle demande**. Trois essais ratés sur la vidéo du loader (animation refaite, mauvaise lettre retirée) avant de comprendre.
+- `next/script` `beforeInteractive` avec un script **inline** : Next le met en file d'attente, il ne s'exécute **pas avant le premier affichage** → utiliser un `<script>` simple dans le `<head>` du layout racine. (L'avertissement React « Encountered a script tag » n'apparaît en dev qu'après une erreur 500, quand React reconstruit la page.)
+- Modules CSS : une classe globale comme `.muted` doit s'écrire `:global(.muted)`, sinon la règle ne s'applique pas (corrigé le 2026-09-30).
+- `pkill -f "next dev"` dans une commande qui contient elle-même ce texte tue le shell : arrêter le serveur dans une commande séparée.
 
 ---
 
@@ -120,6 +126,16 @@ Le dépôt `oliviagueye2-eng/allo-pro-sn` est un **autre projet**, sans rapport 
 4f. **Écran 1 complet** (2026-09-29) : composant partagé `app/(public)/_feedback/EstablishmentScreen.tsx`, action `startFeedback` (formulaire sans JavaScript), `/avis/{id}` et `/e/{code}` (QR) ; motif facultatif, date obligatoire sans présélection (choix par défaut à confirmer avec elle) ; `/donner/{feedbackId}` = page d'attente des écrans 2 à 7. Règle métier ajoutée : `visitPeriod` obligatoire hors QR code.
 4g. **Logo et photo (2026-09-30)** : logo fourni en image, vectorisé (voir README « Logo et icônes ») ; symbole seul, sans le texte « JubFeedback » (à sa demande) ; en-tête, pied de page (blanc), favicon, icône Apple. Accueil : photo du BRT en bandeau (téléphone) / moitié droite (ordinateur), variante 1 retenue sur le canevas ; les tickets 045/046 sont retirés. **Crédit de la photo inconnu** (aucune métadonnée ; recherche d'image inversée conseillée) : publiée quand même sur le prototype, à sa demande. Le logo est une **image générée par IA** (métadonnée « Made with Google AI » dans un fichier qu'elle a ajouté, supprimé depuis car c'était un PNG de 1 Mo dans une enveloppe SVG) : pas de source vectorielle, conseiller de le faire redessiner par un graphiste avant adoption officielle. Versions : à plat (site), blanche (pied de page), avec dégradés (grands formats, `logo-degrade*`) ; version réduite supprimée (inutile). Recommandation acceptée : à plat sur le site.
 4h. **Écran 2** (2026-09-30) : `/donner/{id}`, question essentielle, un toucher = enregistré (action `answerEssential`), `EssentialOptions` (état d'envoi via `useFormStatus`), en-tête `FeedbackHeader` ; `/donner/{id}/precisions` = attente de l'écran 2b. Espaces insécables avant ? ! : ; pour les textes de la base (`frenchSpaces`).
+4i. **Animations, palette, réponses (2026-09-30)** :
+   - Vidéo du loader : fichier MP4 fourni par elle, **seule la lettre ظ (et son losange) retirée**, le reste intact (son compris). Le logo contient un **ج** (losange dessous obligatoire) ; un autre logo proposé plus tard (lettre ح) a été écarté.
+   - **Loader** (option « logo fixe + barre tricolore », `app/_components/Loader.tsx`, `PendingLoader.tsx`) : s'affiche après 0,3 s pendant les envois de formulaires et la 1re recherche ; pas de `loading.tsx` (ramènerait le flash blanc).
+   - **Écran d'ouverture** (option 2, `app/(public)/_intro/`) : logo qui se construit + nom, 2,2 s, bouton « Passer » ; 1re visite de l'accueil seulement (`localStorage` `avis-intro-vue`), jamais par QR, jamais avec animations réduites. Déclenché par un **script inline dans le `<head>` du layout racine** (`introScript.ts`).
+   - **Écran 2, version C** : visages dessinés (`SatisfactionFace.tsx`) et couleurs du vert au rouge (`--satisfaction-1..5`), la réponse choisie prend sa couleur. Elle a choisi C malgré ma recommandation B (couleur unique).
+   - Planches ajoutées au canevas : `A-loader`, `A-premiere-visite`, `A-reponses-satisfaction`.
+4j. **Thèmes et écran 2b (2026-09-30)** :
+   - Migration **0010** : 10 thèmes communs + 19 thèmes de secteur (liste complète dans `docs/architecture-base-de-donnees.md`) ; Prix, Accessibilité, Sécurité, Qualité du service **désactivés**. **Règle de `topic_sector`** : un thème sans ligne est commun ; avec des lignes, seulement dans ces secteurs. Secteur de l'avis = celui du motif, sinon du type, sinon de l'établissement.
+   - **Écran 2b** (`/donner/{id}/precisions`, action `saveDetails`) : titre « Ce qui vous a plu » (très satisfait / satisfait) ou « Ce qui n'a pas été » (autres) ; « Autre » ouvre un champ (`:has()`) ; commentaire facultatif sous le libellé de relance ; tout facultatif, un seul bouton « Enregistrer mon avis » ; au retour, choix pré-remplis ; thème d'un autre secteur refusé ; commentaire vidé supprimé.
+4k. **Prochaine étape** : écrans **4-5** (« Votre avis est enregistré », puis « Terminer » / « Continuer le questionnaire »), puis 6 (questionnaire détaillé : aucun n'est encore rédigé, GENERIC en brouillon) et 7 (Merci). Ensuite : file d'envoi hors connexion.
 5. **Plus tard / à noter** : *nice to have* : journal des recherches (`search_log`, une ligne quand l'usager choisit ou saisit un établissement, jamais à chaque lettre) ; ajouter `CRON_SECRET` dans Vercel (noté dans le README) ; questions du questionnaire GENERIC ; import du territoire et du référentiel (sources : ministères, ANSD, OpenStreetMap sous ODbL) ; back-office et authentification des agents ; versionnement `/webapi/v1` ; décision d'hébergement de production (obligation d'hébergement au Sénégal ? loi 2008-12, CDP).
 
 ---
@@ -145,6 +161,10 @@ npm test               # Vitest + migrations sur PGlite
 npm run build
 npm run db:migrate     # DATABASE_URL / DATABASE_URL_UNPOOLED
 ```
+
+Base locale de test (scratchpad, port 5499, base `reg`) : voir « Ce qui n'a pas marché » pour la relancer ; serveur : `DATABASE_URL=postgres://postgres@localhost:5499/reg npx next dev -p 3100`. Tests navigateur : Playwright avec `executablePath: "/opt/pw-browsers/chromium"`.
+
+**Fusion dans `main`** : seulement quand elle le dit (« merge dans main ») ; vérifier que c'est une avance rapide, lancer tests + `npm run build`, puis `git push origin HEAD:main` et suivre le statut « Vercel » du commit (`https://api.github.com/repos/oliviagueye2-eng/feedback/commits/<sha>/status`).
 
 ## Rappel du skill « frontend-design » (installé dans ses Compétences)
 
