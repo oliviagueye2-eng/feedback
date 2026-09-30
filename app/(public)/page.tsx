@@ -3,22 +3,23 @@ import { SiteFooter } from "../_components/SiteFooter";
 import { SiteHeader } from "../_components/SiteHeader";
 import styles from "./home.module.css";
 
-/** Home page: the queue ticket "C'est votre tour." (variant A, background 2b). */
+/**
+ * Home page: the queue ticket "C'est votre tour." over a photo of an everyday
+ * public service (BRT bus, Dakar): a band on phones, the right half on computers.
+ */
 export default function HomePage() {
   return (
     <>
       <SiteHeader />
       <main>
         <section className={styles.hero}>
+          <figure className={styles.photo}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- already compressed (43 KB), shown at once */}
+            <img src="/images/accueil-brt.jpg" alt="Bus du BRT à Dakar" width={736} height={491} />
+            <figcaption>Bus du BRT, Dakar</figcaption>
+          </figure>
           <div className={`container ${styles.heroInner}`}>
-            {/* Tickets 045 and 046 stick out behind: the user's own ticket is next. */}
             <div className={styles.queue}>
-              <div className={`${styles.behind} ${styles.behind1}`} aria-hidden="true">
-                N° 045
-              </div>
-              <div className={`${styles.behind} ${styles.behind2}`} aria-hidden="true">
-                N° 046
-              </div>
               <div className={styles.ticketWrap}>
                 <div className={styles.ticket}>
                   <div className={styles.ticketMain}>
@@ -91,13 +92,6 @@ export default function HomePage() {
                 Encore au guichet&nbsp;? <strong>Scannez le QR code affiché</strong>,
                 l&apos;établissement sera déjà rempli.
               </p>
-              <div className={styles.qrDesktop}>
-                <p className={styles.qrTitle}>Encore au guichet&nbsp;?</p>
-                <p className="muted">
-                  Scannez avec votre téléphone le QR code affiché. L&apos;établissement sera
-                  déjà rempli.
-                </p>
-              </div>
             </div>
           </div>
         </section>

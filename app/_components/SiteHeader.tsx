@@ -10,14 +10,9 @@ export function SiteHeader() {
       </div>
       <header className="site-header">
         <div className="container site-header-inner">
-          <span className="crest" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path
-                d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"
-                fill="currentColor"
-              />
-            </svg>
-          </span>
+          {/* Logo (symbol only). Decorative: the name next to it says what the site is. */}
+          {/* eslint-disable-next-line @next/next/no-img-element -- small SVG, nothing to optimize */}
+          <img className="site-logo" src="/brand/logo.svg" alt="" width={40} height={42} />
           <span className="site-name">
             <small>République du Sénégal</small>
             <strong>Avis des usagers</strong>
