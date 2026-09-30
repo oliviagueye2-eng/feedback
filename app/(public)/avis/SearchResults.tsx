@@ -103,7 +103,6 @@ export function SearchResults({
           <span>{rich(fill(t.serviceHint, { query: query.trim() }))}</span>
         </div>
       )}
-      <h2 className={styles.sectionTitle}>{t.resultsTitle}</h2>
       <ul className={styles.list}>
         {result.results.map((e) => (
           <Row key={e.id} establishment={e} icon />
