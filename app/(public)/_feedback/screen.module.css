@@ -153,10 +153,10 @@
 .error {
   margin: 0;
   padding: 12px 14px;
-  border: 1.5px solid #b3261e;
+  border: 1.5px solid var(--error);
   border-radius: 10px;
-  background: #fdecea;
-  color: #7a1a14;
+  background: var(--error-tint);
+  color: var(--error-ink);
   font-size: 15px;
 }
 
@@ -201,10 +201,17 @@
   cursor: default;
 }
 
+/* The chosen answer takes its own colour (--answer, set per answer), else green. */
 .optionOn {
-  border: 2px solid var(--green);
-  background: var(--green-tint);
+  border: 2px solid var(--answer, var(--green));
+  background: var(--answer-tint, var(--green-tint));
   font-weight: 700;
+}
+
+.face {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
 }
 
 .radio {
