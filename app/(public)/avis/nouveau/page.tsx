@@ -36,7 +36,7 @@ export default async function NewEstablishmentPage({ searchParams }: PageProps<"
         )}
         <div className={styles.group}>
           <label htmlFor="name">{t.name}</label>
-          <input id="name" name="name" className={styles.input} defaultValue={name} required minLength={2} maxLength={200} autoComplete="off" />
+          <input id="name" name="name" className={styles.input} defaultValue={name} required minLength={3} maxLength={200} autoComplete="off" />
         </div>
         <div className={styles.group}>
           <label htmlFor="sector">

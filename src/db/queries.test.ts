@@ -178,6 +178,11 @@ describe("establishment", () => {
     });
   });
 
+  it("needs a name of 3 letters at least (UBA fits)", async () => {
+    await expect(createUserEstablishment({ name: "UB" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
+    await expect(createUserEstablishment({ name: "UBA" })).resolves.toHaveProperty("id");
+  });
+
   it("lists the nineteen sectors in alphabetical order, accents ignored", async () => {
     const sectors = await listSectors();
     expect(sectors).toHaveLength(19);

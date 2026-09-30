@@ -99,17 +99,17 @@ export const fr = {
   },
 
   newEstablishment: {
-    title: "Votre établissement",
+    title: "Ajouter un organisme ou un établissement à évaluer",
     backToSearch: "Retour à la recherche",
-    error: "Indiquez le nom de l'établissement (2 caractères au moins).",
-    name: "Nom de l'établissement",
+    error: "Indiquez le nom (3 lettres au moins).",
+    name: "Nom (minimum 3 lettres)",
     sector: "Secteur",
     sectorPlaceholder: "Choisir un secteur",
     municipality: "Commune ou village",
     municipalityPlaceholder: "Ex. : Ndiaganiao",
-    note: "Cet établissement sera ajouté à la liste après vérification. Votre avis compte dès maintenant.",
+    note: "Il sera ajouté à la liste après validation. Votre avis compte dès maintenant.",
     submit: "Utiliser cet établissement",
-    saving: "Enregistrement de l'établissement…",
+    saving: "Enregistrement en cours…",
   },
 
   establishment: {

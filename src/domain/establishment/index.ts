@@ -53,7 +53,7 @@ export async function getEstablishmentByQrCode(code: string) {
 export async function createUserEstablishment(body: unknown): Promise<{ id: string }> {
   const input = asObject(body);
   const id = await db.insertUserEstablishment({
-    rawInput: requireString(input, "name", { min: 2, max: 200 }),
+    rawInput: requireString(input, "name", { min: 3, max: 200 }),
     sectorCode: optionalString(input, "sector", { max: 64 }),
     municipalityInput: optionalString(input, "municipality", { max: 120 }),
   });
