@@ -169,7 +169,7 @@ export function SearchScreen({
               name="q"
               type="search"
               className="field"
-              placeholder="Ex. : mairie de Grand-Yoff"
+              placeholder="Ex. : hôpital Fann"
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"

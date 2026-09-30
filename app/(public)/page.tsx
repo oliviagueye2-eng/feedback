@@ -51,7 +51,7 @@ export default function HomePage() {
                         name="q"
                         type="search"
                         className="field"
-                        placeholder="Ex. : mairie de Grand-Yoff"
+                        placeholder="Ex. : hôpital Fann"
                       />
                       <svg
                         width="20"
