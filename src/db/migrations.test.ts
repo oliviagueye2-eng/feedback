@@ -47,9 +47,40 @@ describe("reference data", () => {
     expect(row).toEqual({ sectors: 19, labelled: 19, old_code: 0 });
   });
 
-  it("has the nine topics", async () => {
-    const row = await one<{ n: number }>("SELECT count(*)::int AS n FROM topic");
-    expect(row?.n).toBe(9);
+  it("shows the ten common topics everywhere, plus each sector's own, « Autre » last", async () => {
+    // Rule of topic_sector: a topic without rows is common; with rows, only in those sectors.
+    const topicsFor = async (sector: string) =>
+      (await db.query<{ code: string; label: string }>(`
+        SELECT t.code, tr.text AS label
+        FROM topic t
+        JOIN translation tr ON tr.target_table = 'topic' AND tr.target_id = t.id AND tr.language = 'fr'
+        WHERE t.is_active
+          AND (NOT EXISTS (SELECT 1 FROM topic_sector ts WHERE ts.topic_id = t.id)
+               OR EXISTS (SELECT 1 FROM topic_sector ts JOIN sector s ON s.id = ts.sector_id
+                          WHERE ts.topic_id = t.id AND s.code = $1))
+        ORDER BY t.position`, [sector])).rows;
+
+    const common = await topicsFor("RETAIL");
+    expect(common.map((t) => t.label)).toEqual([
+      "Accueil et politesse",
+      "Professionnalisme du personnel",
+      "Temps d'attente",
+      "Explications reçues",
+      "Simplicité de la démarche (papiers, allers-retours)",
+      "Horaires d'ouverture",
+      "Frais payés (montant, reçu)",
+      "Propreté et confort des locaux",
+      "Accès pour tous (personnes handicapées, âgées)",
+      "Autre",
+    ]);
+
+    const electricity = (await topicsFor("ELECTRICITY")).map((t) => t.code);
+    expect(electricity).toHaveLength(14);
+    expect(electricity.slice(9)).toEqual(["POWER_CUTS", "INTERVENTION_TIME", "BILLING", "CUSTOMER_SERVICE", "OTHER"]);
+    expect((await topicsFor("BANKING_INSURANCE")).map((t) => t.code).slice(9)).toEqual([
+      "PROCESSING_TIME", "CASE_TRACKING", "CUSTOMER_SERVICE", "OTHER",
+    ]);
+    expect(await topicsFor("HEALTH")).toHaveLength(13);
   });
 });
 

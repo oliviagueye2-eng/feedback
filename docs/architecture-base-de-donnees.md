@@ -333,20 +333,49 @@ Thèmes que l'usager peut toucher après la question essentielle (écran 2b), pl
 | position | smallint | ordre d'affichage |
 | is_active | boolean | |
 
+Liste revue le 2026-09-30 (migration `0010_topics_by_sector.sql`). **Thèmes communs**, affichés partout :
+
 | code | Libellé (dans `translation`) |
 |---|---|
-| `STAFF` | Accueil et personnel |
-| `WAIT_TIME` | Attente |
-| `PRICE` | Prix |
-| `CLEANLINESS` | Propreté |
-| `ACCESSIBILITY` | Accessibilité (accès, handicap, horaires) |
-| `INFORMATION` | Information |
-| `SAFETY` | Sécurité |
-| `SERVICE_QUALITY` | Qualité du service |
-| `OTHER` | Autre |
+| `STAFF` | Accueil et politesse |
+| `PROFESSIONALISM` | Professionnalisme du personnel |
+| `WAIT_TIME` | Temps d'attente |
+| `INFORMATION` | Explications reçues |
+| `PROCEDURE` | Simplicité de la démarche (papiers, allers-retours) |
+| `OPENING_HOURS` | Horaires d'ouverture |
+| `FEES` | Frais payés (montant, reçu) |
+| `CLEANLINESS` | Propreté et confort des locaux |
+| `ACCESS_FOR_ALL` | Accès pour tous (personnes handicapées, âgées) |
+| `OTHER` | Autre (toujours en dernier) |
+
+**Thèmes d'un secteur**, affichés après les thèmes communs, seulement dans ces secteurs (`topic_sector`) :
+
+| code | Libellé | Secteurs |
+|---|---|---|
+| `CARE_RECEIVED` | Soins reçus | Santé |
+| `MEDICINE_AVAILABILITY` | Médicaments et examens disponibles | Santé |
+| `PRIVACY` | Respect de l'intimité | Santé |
+| `TEACHING_QUALITY` | Qualité de l'enseignement | Éducation |
+| `STUDENT_SUPERVISION` | Encadrement des élèves | Éducation |
+| `PUNCTUALITY` | Ponctualité | Transport |
+| `ONBOARD_SAFETY` | Sécurité à bord | Transport |
+| `VEHICLE_CONDITION` | État des véhicules | Transport |
+| `POWER_CUTS` | Coupures de courant | Électricité |
+| `WATER_CUTS` | Coupures d'eau | Eau |
+| `WATER_QUALITY` | Qualité de l'eau | Eau |
+| `NETWORK_QUALITY` | Qualité du réseau | Télécoms |
+| `INTERVENTION_TIME` | Délai d'intervention | Électricité |
+| `BILLING` | Factures (exactes et faciles à comprendre) | Électricité, Eau, Télécoms |
+| `REQUEST_HANDLING` | Prise en compte de la demande | Sécurité |
+| `RIGHTS_RESPECT` | Respect des droits | Sécurité |
+| `PROCESSING_TIME` | Délai de traitement du dossier | Administration, Justice, Impôts, Social, Sécurité, Banques et assurances |
+| `CASE_TRACKING` | Suivi et transparence du dossier | Administration, Justice, Impôts, Social, Sécurité, Banques et assurances |
+| `CUSTOMER_SERVICE` | Service client et réclamations | Transport, Électricité, Eau, Télécoms, Banques et assurances |
+
+Désactivés le 2026-09-30, gardés pour les avis déjà donnés : `PRICE` (Prix), `ACCESSIBILITY` (Accessibilité), `SAFETY` (Sécurité), `SERVICE_QUALITY` (Qualité du service).
 
 ### topic_sector
-Facultatif : quels thèmes afficher selon le secteur (par exemple, pas de « Prix » pour un service gratuit). Sans ligne pour un secteur, tous les thèmes actifs sont affichés.
+Quels thèmes afficher selon le secteur. Un thème **sans ligne** dans cette table est commun : il s'affiche dans tous les secteurs. Un thème **avec des lignes** ne s'affiche que dans ces secteurs. Le secteur retenu est celui du service choisi, sinon celui de l'établissement.
 
 | Colonne | Type |
 |---|---|

@@ -75,7 +75,7 @@ describe("saveTopics", () => {
 
   it("refuses a text on another topic", async () => {
     await expect(
-      saveTopics(FEEDBACK_ID, { topics: [{ code: "PRICE", otherText: "Trop cher" }] }),
+      saveTopics(FEEDBACK_ID, { topics: [{ code: "FEES", otherText: "Trop cher" }] }),
     ).rejects.toMatchObject({ code: "INVALID_INPUT" });
   });
 
