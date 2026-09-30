@@ -65,7 +65,6 @@ Logo fourni le 2026-09-30 (symbole seul, sans le texte), vectorisé en SVG avec 
 | `public/brand/logo.svg` | Logo couleur (en-tête) |
 | `public/brand/logo-degrade.svg`, `logo-degrade-512.png`, `logo-degrade-1024.png` | Logo avec les dégradés de l'original, pour les grands formats (affiches, présentations) |
 | `public/brand/logo-blanc.svg` | Logo blanc, sur fond foncé (pied de page) |
-| `public/brand/logo-compact.svg` | Version réduite (J, personnage, bandes) pour les espaces étroits |
 | `public/brand/logo-512.png`, `logo-1024.png`, `logo-blanc-512.png` | Images pour documents, réseaux sociaux |
 | `public/brand/icon-192.png`, `icon-512.png` | Icônes d'application (fond blanc), pour un futur manifeste |
 | `app/favicon.ico` (16, 32, 48 px), `app/icon.svg`, `app/apple-icon.png` (180 px) | Icônes d'onglet et d'écran d'accueil, ajoutées automatiquement par Next.js |
