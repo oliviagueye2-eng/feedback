@@ -27,5 +27,5 @@ Les variantes B, C et D n'intègrent pas les dernières évolutions du parcours 
 ## Identité visuelle (variante A)
 
 - Police : Atkinson Hyperlegible (conçue pour la lisibilité par les personnes malvoyantes).
-- Couleurs : vert `#0B6B3A`, encre `#13261C`, fond `#F3F6F4`, bandeau tricolore du drapeau (`#00853F`, `#FDEF42`, `#E31B23`).
+- Couleurs : vert `#0B6B3A`, encre `#13261C`, fond `#F3F6F4`, bandeau tricolore du drapeau (`#00853F`, `#FDEF42`, `#E31B23` dans les maquettes). Sur le site, le bandeau reprend les couleurs du logo (`#137A36`, `#FACC15`, `#CD1E22`) ; toute la palette du site est dans `app/globals.css`.
 - Élément marquant : le ticket de file d'attente (« C'est votre tour. »).

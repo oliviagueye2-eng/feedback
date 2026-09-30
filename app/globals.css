@@ -1,17 +1,45 @@
-/* Variant A tokens (see maquettes/README.md). */
+/* Palette of the site: every colour is named here, style files use the names.
+   Variant A (see maquettes/README.md). */
 :root {
+  /* Interface */
   --green: #0b6b3a;
   --green-dark: #08512c;
   --green-tint: #e3f1e8;
   --ink: #13261c;
   --muted: #4d5f55;
   --line: #c9d6ce;
+  --line-light: #e1e9e4;
   --control: #6b7f73;
   --page: #f3f6f4;
   --hero: #eef2ef;
-  --flag-green: #00853f;
-  --flag-yellow: #fdef42;
-  --flag-red: #e31b23;
+  --ticket-line: #9aafa2;
+  --track: #dce5df;
+  --footer-text: #cfe0d5;
+
+  /* Messages */
+  --error: #b3261e;
+  --error-tint: #fdecea;
+  --error-ink: #7a1a14;
+  --notice-tint: #fff6cc;
+  --notice-line: #e8d77a;
+
+  /* Flag: the logo's colours (public/brand/logo.svg), also for the tricolour band. */
+  --flag-green: #137a36;
+  --flag-yellow: #facc15;
+  --flag-red: #cd1e22;
+
+  /* Answers of the essential question, from very satisfied (1) to not at all (5):
+     the face and, once chosen, the border; the tint is the chosen answer's background. */
+  --satisfaction-1: #137a36;
+  --satisfaction-1-tint: #e3f1e8;
+  --satisfaction-2: #6ba539;
+  --satisfaction-2-tint: #edf5e3;
+  --satisfaction-3: #d9a300;
+  --satisfaction-3-tint: #fbf3da;
+  --satisfaction-4: #e07020;
+  --satisfaction-4-tint: #fcebdd;
+  --satisfaction-5: #cd1e22;
+  --satisfaction-5-tint: #fbe4e4;
 }
 
 * {
@@ -163,7 +191,7 @@ a:hover {
 
 .site-footer-state em,
 .site-footer p {
-  color: #cfe0d5;
+  color: var(--footer-text);
 }
 
 .site-footer-state em {

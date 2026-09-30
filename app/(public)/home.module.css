@@ -55,7 +55,7 @@
 
 .ticket {
   background: #fff;
-  border: 1px solid #9aafa2;
+  border: 1px solid var(--ticket-line);
   border-radius: 6px;
   display: flex;
   flex-direction: column;
@@ -125,7 +125,7 @@
 .perforation {
   position: relative;
   height: 24px;
-  background: repeating-linear-gradient(90deg, #9aafa2 0 6px, transparent 6px 12px)
+  background: repeating-linear-gradient(90deg, var(--ticket-line) 0 6px, transparent 6px 12px)
     center / calc(100% - 36px) 2px no-repeat;
 }
 
@@ -138,7 +138,7 @@
   height: 24px;
   border-radius: 50%;
   background: var(--hero);
-  border: 1px solid #9aafa2;
+  border: 1px solid var(--ticket-line);
 }
 
 .perforation::before {
@@ -285,6 +285,7 @@
     content: "";
     position: absolute;
     inset: 0;
+    /* --hero fading to transparent. */
     background: linear-gradient(90deg, var(--hero) 0%, rgb(238 242 239 / 0.7) 18%, rgb(238 242 239 / 0) 45%);
   }
 
@@ -328,7 +329,7 @@
     right: 301px;
     width: 28px;
     height: 14px;
-    border: 1px solid #9aafa2;
+    border: 1px solid var(--ticket-line);
     pointer-events: none;
   }
 
@@ -380,7 +381,7 @@
     height: auto;
     width: 28px;
     flex-shrink: 0;
-    background: repeating-linear-gradient(180deg, #9aafa2 0 6px, transparent 6px 12px)
+    background: repeating-linear-gradient(180deg, var(--ticket-line) 0 6px, transparent 6px 12px)
       center / 2px calc(100% - 44px) no-repeat;
   }
 

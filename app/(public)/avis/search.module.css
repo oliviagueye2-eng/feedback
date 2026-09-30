@@ -133,8 +133,8 @@
   margin: 12px 12px 4px;
   padding: 12px 14px;
   border-radius: 12px;
-  background: #fff6cc;
-  border: 1px solid #e8d77a;
+  background: var(--notice-tint);
+  border: 1px solid var(--notice-line);
   display: flex;
   gap: 10px;
   align-items: flex-start;
@@ -171,7 +171,7 @@
   min-height: 60px;
   padding: 8px 16px;
   background: #fff;
-  border-bottom: 1px solid #e1e9e4;
+  border-bottom: 1px solid var(--line-light);
   color: var(--ink);
   text-decoration: none;
 }
