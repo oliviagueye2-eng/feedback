@@ -217,6 +217,12 @@ select:focus-visible {
   font-size: 15px;
 }
 
+.site-footer-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .site-footer p {
   margin: 0;
   font-size: 14px;

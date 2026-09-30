@@ -40,6 +40,7 @@ export const fr = {
     state: "République du Sénégal",
     motto: "Un Peuple, Un But, Une Foi",
     privacy: "Aucune donnée personnelle n'est demandée aux usagers.",
+    purpose: "Une plateforme au service de la transparence et de la bonne gouvernance.",
   },
 
   intro: {
@@ -63,7 +64,10 @@ export const fr = {
         title: "Des services qui s'améliorent",
         text: "Un avis, ce n'est pas qu'une note. Il montre ce qui marche et ce qui doit changer.",
       },
-      { title: "Des résultats publics", text: "Les résultats sont publiés chaque mois, pour tout le monde." },
+      {
+        title: "En toute transparence",
+        text: "Les résultats sont publiés chaque mois. Chacun peut voir comment les services sont jugés.",
+      },
     ],
     stepsTitle: "Comment ça marche",
     steps: [

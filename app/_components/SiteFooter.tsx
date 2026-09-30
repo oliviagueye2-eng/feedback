@@ -16,7 +16,10 @@ export async function SiteFooter() {
           <strong>{t.state}</strong>
           <em>{t.motto}</em>
         </div>
-        <p>{t.privacy}</p>
+        <div className="site-footer-text">
+          <p>{t.privacy}</p>
+          <p>{t.purpose}</p>
+        </div>
       </div>
     </footer>
   );
