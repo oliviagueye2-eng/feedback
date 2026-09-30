@@ -85,6 +85,13 @@
       "w": 1256,
       "h": 944,
       "title": "A. Première visite : 2 options (essai)"
+    },
+    "A-reponses-satisfaction.dc.html": {
+      "x": 5048,
+      "y": 7932,
+      "w": 1664,
+      "h": 904,
+      "title": "A. Réponses de satisfaction : 3 versions (essai)"
     }
   },
   "createdOnFiles": {
@@ -115,6 +122,7 @@
     "A-accueil-photo.dc.html",
     "A-loader.dc.html",
     "A-premiere-visite.dc.html",
+    "A-reponses-satisfaction.dc.html",
     "B-une-question.dc.html",
     "C-civic-tech.dc.html",
     "D-conversation.dc.html"
