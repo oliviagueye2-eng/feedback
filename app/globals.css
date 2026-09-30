@@ -79,6 +79,17 @@ a:hover {
   outline-offset: 2px;
 }
 
+/* Text fields always show focus, even when touched: the cursor and keyboard
+   already say so. Instead of a second outline around their border, the
+   border itself turns thick and dark. */
+input:not([type="checkbox"], [type="radio"]):focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 1px var(--ink);
+}
+
 .flag {
   display: flex;
   height: 5px;
