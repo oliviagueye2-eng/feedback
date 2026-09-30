@@ -15,7 +15,7 @@ Ces fichiers ne s'ouvrent pas seuls dans un navigateur : ils ont besoin du moteu
 | `A-fond-tricolore.dc.html` | Option de fond 4 : bande tricolore verticale |
 | `A-fond-photo.dc.html` | Option de fond 5 : photo de guichet (emplacement) |
 | `A-accueil-photo.dc.html` | Essai (2026-09-30) : accueil avec une photo en bandeau (variante retenue), BRT de Dakar et Monument de la Renaissance pour comparer, plus la version ordinateur avec le BRT. La photo est stockée dans le canevas (`/_blob/…`) |
-| `A-loader.dc.html` | Essai (2026-09-30) : 3 options de loader à partir du logo (le logo se construit, les points de la bulle, logo fixe et barre tricolore), avec les règles communes |
+| `A-loader.dc.html` | Essai (2026-09-30) : options de loader à partir du logo (le logo se construit, les points de la bulle, logo fixe et barre tricolore, points et barre ensemble), avec les règles communes |
 | `B-une-question.dc.html` | Variante B, une question par écran (pour mémoire) |
 | `C-civic-tech.dc.html` | Variante C, civic-tech moderne (pour mémoire) |
 | `D-conversation.dc.html` | Variante D, conversation guidée (pour mémoire) |
