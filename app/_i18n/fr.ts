@@ -56,7 +56,7 @@ export const fr = {
     duration: "Anonyme et gratuit, environ 1 minute.",
     qr: "Encore au guichet ? <b>Scannez le QR code affiché</b>, l'établissement sera déjà rempli.",
     civicTitle: "Un geste citoyen : donner son avis, c'est faire entendre la voix des usagers.",
-    civicLead: "Chaque expérience compte : mairie, hôpital, école, banque, transport, hôtel, restaurant.",
+    civicLead: "Chaque expérience compte : mairie, hôpital, banque, transport, hôtel, restaurant…",
     civicPoints: [
       { title: "Écouter", text: "Décrivez ce que vous avez vécu, avec respect et honnêteté." },
       {
