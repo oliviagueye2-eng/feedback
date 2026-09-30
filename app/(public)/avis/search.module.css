@@ -221,6 +221,18 @@
   flex-shrink: 0;
 }
 
+/* An organisation's logo in place of the pictogram: same size, never cropped. */
+.rowLogo {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 3px;
+}
+
 .rowIcon svg {
   width: 18px;
   height: 18px;

@@ -48,6 +48,11 @@ describe("organisations", () => {
     expect(results).toHaveLength(3);
   });
 
+  it("gives each of its places the organisation's code, which names its logo", async () => {
+    const { results } = await searchEstablishments("lumiere test");
+    expect(results.map((r) => r.organizationCode)).toEqual(["TEST_LIGHT", "TEST_LIGHT", "TEST_LIGHT"]);
+  });
+
   it("puts the agency of the municipality typed first", async () => {
     const { results } = await searchEstablishments("lumiere test grand yoff");
     expect(results[0]?.id).toBe(agencyId);

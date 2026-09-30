@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { organizationLogoSrc } from "../../_components/organizationLogo";
 import { PendingLoader } from "../../_components/PendingLoader";
 import { getDictionary } from "../../_i18n";
 import type { EstablishmentDetail } from "@/src/db/establishments";
@@ -38,6 +39,7 @@ export async function EstablishmentScreen({
   const qrService = qr?.serviceId ? establishment.services.find((s) => s.id === qr.serviceId) : undefined;
   const askReason = !qr?.serviceId && establishment.services.length > 0;
   const askWhen = channel !== "qr";
+  const logo = organizationLogoSrc(establishment.organizationCode);
 
   return (
     <form action={startFeedback} className={styles.screen}>
@@ -65,6 +67,10 @@ export async function EstablishmentScreen({
             {general ? t.wrongOrganization : t.wrongEstablishment}
           </Link>
         </div>
+        {logo && (
+          // eslint-disable-next-line @next/next/no-img-element -- small SVG, nothing to optimize
+          <img className={styles.identifiedLogo} src={logo} alt="" width={56} height={56} />
+        )}
       </div>
 
       {error && (

@@ -72,6 +72,15 @@ Logo fourni le 2026-09-30 (symbole seul, sans le texte), vectorisé en SVG avec 
 
 Photo de l'accueil : `public/images/accueil-brt.jpg` (BRT de Dakar, 736 px, 43 Ko). Crédit à préciser.
 
+### Logos des organismes
+
+Un organisme (Senelec, Orange…) peut avoir un logo, affiché dans les résultats de recherche et sur l'écran 1, pour lui-même et pour toutes ses agences. Les autres établissements gardent le pictogramme.
+
+- Le fichier porte le code de l'organisme (`organization.code`), en minuscules avec des tirets : `SENELEC` → `public/logos/senelec.svg`, `SOCIETE_GENERALE` → `public/logos/societe-generale.svg`. Aucune colonne dans la base.
+- Ajouter un logo : déposer le SVG (moins de 10 Ko) dans `public/logos/`, puis ajouter le code dans `ORGANIZATIONS_WITH_LOGO` (`app/_components/organizationLogo.ts`). Un test vérifie que chaque code a son fichier.
+- Avant de publier un logo, vérifier que l'organisme accepte son utilisation.
+- Aucun logo pour l'instant.
+
 ## Parcours retenu (variante A)
 
 ```

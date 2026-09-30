@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { organizationLogoSrc } from "../../_components/organizationLogo";
 import type { Dictionary } from "../../_i18n";
 import { fill, plural, rich } from "../../_i18n/format";
 import type { EstablishmentSearchResult, EstablishmentSummary } from "@/src/domain/types";
@@ -25,14 +26,19 @@ const details = (e: EstablishmentSummary, inGeneral: string) =>
 
 function Row({ establishment, icon, inGeneral }: { establishment: EstablishmentSummary; icon: boolean; inGeneral: string }) {
   const under = details(establishment, inGeneral);
+  const logo = organizationLogoSrc(establishment.organizationCode);
   return (
     <li>
       <Link href={`/avis/${establishment.id}`} className={styles.row}>
-        {icon && (
-          <span className={styles.rowIcon}>
-            <BuildingIcon />
-          </span>
-        )}
+        {icon &&
+          (logo ? (
+            // eslint-disable-next-line @next/next/no-img-element -- small SVG, nothing to optimize
+            <img className={styles.rowLogo} src={logo} alt="" width={36} height={36} loading="lazy" />
+          ) : (
+            <span className={styles.rowIcon}>
+              <BuildingIcon />
+            </span>
+          ))}
         <span className={styles.rowText}>
           <span>{establishment.name}</span>
           {under && <span className="muted">{under}</span>}

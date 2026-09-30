@@ -33,6 +33,7 @@ interface SummaryRow {
   type_code: string | null;
   sector_label: string | null;
   scope: EstablishmentScope;
+  organization_code: string | null;
 }
 
 interface DetailRow extends SummaryRow {
@@ -46,6 +47,7 @@ const toSummary = (row: SummaryRow): EstablishmentSummary => ({
   typeCode: row.type_code,
   sectorLabel: row.sector_label,
   scope: row.scope,
+  organizationCode: row.organization_code,
 });
 
 /**
@@ -54,11 +56,12 @@ const toSummary = (row: SummaryRow): EstablishmentSummary => ({
  */
 const SUMMARY_COLUMNS = `e.id, e.name,
   coalesce(m.name, e.municipality_input) AS municipality_name, et.code AS type_code,
-  sl.text AS sector_label, e.scope`;
+  sl.text AS sector_label, e.scope, o.code AS organization_code`;
 
 const SUMMARY_JOINS = `
   LEFT JOIN municipality m ON m.id = e.municipality_id
   LEFT JOIN establishment_type et ON et.id = e.type_id
+  LEFT JOIN organization o ON o.id = e.organization_id
   LEFT JOIN translation sl ON sl.target_table = 'sector'
     AND sl.target_id = coalesce(et.sector_id, e.sector_id)
     AND sl.field = 'label' AND sl.language = 'fr'`;

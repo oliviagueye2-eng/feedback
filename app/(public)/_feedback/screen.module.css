@@ -33,6 +33,15 @@
   font-size: 15px;
 }
 
+/* The organisation's logo, at the right of what is being rated. */
+.identifiedLogo {
+  width: 56px;
+  height: 56px;
+  margin-left: auto;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
 .identified strong {
   font-size: 18px;
 }

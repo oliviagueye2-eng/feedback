@@ -33,6 +33,8 @@ export interface EstablishmentSummary {
   sectorLabel: string | null;
   /** "general": an organisation rated as a whole (Senelec in general), not one of its places. */
   scope: EstablishmentScope;
+  /** Code of the organisation it belongs to (SENELEC), which also names its logo. */
+  organizationCode: string | null;
 }
 
 export type EstablishmentScope = "site" | "general";

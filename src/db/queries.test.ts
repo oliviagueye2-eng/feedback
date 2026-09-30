@@ -98,6 +98,7 @@ describe("search", () => {
       typeCode: "HOSPITAL",
       sectorLabel: "Santé",
       scope: "site",
+      organizationCode: null,
     });
   });
 
