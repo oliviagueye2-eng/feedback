@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { listSectors } from "@/src/domain/establishment";
+import { PendingLoader } from "../../../_components/PendingLoader";
 import styles from "../form.module.css";
 import { createEstablishment } from "./actions";
 
@@ -64,6 +65,7 @@ export default async function NewEstablishmentPage({ searchParams }: PageProps<"
         <button type="submit" className="btn">
           Utiliser cet établissement
         </button>
+        <PendingLoader message="Enregistrement de l'établissement…" />
       </form>
     </main>
   );

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PendingLoader } from "../../_components/PendingLoader";
 import type { EstablishmentDetail } from "@/src/db/establishments";
 import { startFeedback } from "./actions";
 import styles from "./screen.module.css";
@@ -110,6 +111,7 @@ export function EstablishmentScreen({
         </button>
         <p className="muted">Anonyme, environ 1 minute.</p>
       </div>
+      <PendingLoader message="Un instant…" />
     </form>
   );
 }

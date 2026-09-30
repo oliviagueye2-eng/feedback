@@ -1,12 +1,13 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { Loader } from "../../_components/Loader";
 import styles from "./screen.module.css";
 
 /**
  * The five answers of screen 2. Each one is a submit button: a tap saves the
- * answer. While it is being saved, the buttons are disabled and a message says
- * so (screen 3 of the mock-up). Without JavaScript, the buttons still submit.
+ * answer. While it is being saved, the buttons are disabled and the loader
+ * says so (screen 3 of the mock-up). Without JavaScript, the buttons still submit.
  */
 export function EssentialOptions({
   options,
@@ -37,9 +38,8 @@ export function EssentialOptions({
           </button>
         );
       })}
-      <p role="status" className={`muted ${styles.hint}`}>
-        {pending ? "Enregistrement de votre avis…" : "Choisissez une réponse pour continuer."}
-      </p>
+      <p className={`muted ${styles.hint}`}>Choisissez une réponse pour continuer.</p>
+      {pending && <Loader message="Enregistrement de votre avis…" />}
     </>
   );
 }

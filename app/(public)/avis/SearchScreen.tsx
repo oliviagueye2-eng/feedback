@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
+import { Loader } from "../../_components/Loader";
 import type { EstablishmentSearchResult } from "@/src/domain/types";
 import { SearchResults, newEstablishmentHref } from "./SearchResults";
 import styles from "./search.module.css";
@@ -217,6 +218,7 @@ export function SearchScreen({
             <a href={newEstablishmentHref(query)}>saisissez le nom vous-même</a>.
           </p>
         )}
+        {status === "loading" && !shown && <Loader variant="inline" message="Recherche en cours…" />}
         {(status === "done" || status === "loading") && shown && (
           <SearchResults query={shown.query} typed={query} result={shown.result} />
         )}
