@@ -81,13 +81,13 @@ a:hover {
 
 /* Text fields always show focus, even when touched: the cursor and keyboard
    already say so. Instead of a second outline around their border, the
-   border itself turns thick and dark. */
+   border itself turns thick and dark green. */
 input:not([type="checkbox"], [type="radio"]):focus-visible,
 textarea:focus-visible,
 select:focus-visible {
   outline: none;
-  border-color: var(--ink);
-  box-shadow: 0 0 0 1px var(--ink);
+  border-color: var(--green-dark);
+  box-shadow: 0 0 0 1px var(--green-dark);
 }
 
 .flag {
