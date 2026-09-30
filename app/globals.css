@@ -111,6 +111,15 @@ a:hover {
   min-height: 58px;
 }
 
+.site-home {
+  display: flex;
+  align-items: center;
+  gap: inherit;
+  flex-grow: 1;
+  min-height: 44px;
+  text-decoration: none;
+}
+
 .site-logo {
   width: auto;
   height: 42px;
@@ -129,7 +138,6 @@ a:hover {
 .site-name {
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
 }
 
 .site-name small {
