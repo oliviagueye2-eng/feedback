@@ -69,12 +69,12 @@ export const fr = {
     steps: [
       "Trouvez l'établissement où vous êtes allé(e).",
       "Dites si vous êtes satisfait(e). Une seule question est obligatoire.",
-      "Votre avis compte dans les résultats publiés chaque mois.",
+      "Votre avis est enregistré. C'est terminé !",
     ],
   },
 
   search: {
-    title: "Donnez votre avis sur un service public",
+    title: "Donnez votre avis sur un service",
     lead: "Anonyme et gratuit. Les résultats sont publiés chaque mois.",
     help: "Nom de la mairie, de l'hôpital, de l'école…",
     submit: "Rechercher",
