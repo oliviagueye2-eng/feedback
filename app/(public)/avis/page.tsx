@@ -23,13 +23,13 @@ export default async function SearchPage({ searchParams }: PageProps<"/avis">) {
             <h1>Donnez votre avis sur un service public</h1>
             <p className="muted">Anonyme et gratuit. Les résultats sont publiés chaque mois.</p>
           </div>
+          <SearchScreen initialQuery={query} initialResult={result} />
           <Link href="/" className={styles.home}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M15 18l-6-6 6-6" />
             </svg>
             Retour à l&apos;accueil
           </Link>
-          <SearchScreen initialQuery={query} initialResult={result} />
         </div>
         <div className={styles.qrSheet}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

@@ -33,6 +33,8 @@
 /* Way back to the home page, under the search (the header logo does the same). */
 .home {
   align-self: flex-start;
+  /* The link's 44 px touch area already leaves room: keep it close to the search. */
+  margin-top: -10px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -57,6 +59,11 @@
 
 .flag,
 .back {
+  display: none;
+}
+
+/* Nothing to show yet: no empty space under the search box. */
+.output:empty {
   display: none;
 }
 
