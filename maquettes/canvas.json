@@ -71,6 +71,13 @@
       "w": 2336,
       "h": 904,
       "title": "A. Accueil avec photo (essai)"
+    },
+    "A-loader.dc.html": {
+      "x": 5048,
+      "y": 5844,
+      "w": 1664,
+      "h": 904,
+      "title": "A. Loader : 3 options (essai)"
     }
   },
   "createdOnFiles": {
@@ -99,6 +106,7 @@
     "A-fond-tricolore.dc.html",
     "A-fond-photo.dc.html",
     "A-accueil-photo.dc.html",
+    "A-loader.dc.html",
     "B-une-question.dc.html",
     "C-civic-tech.dc.html",
     "D-conversation.dc.html"
