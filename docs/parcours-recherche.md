@@ -57,7 +57,14 @@ Sur ordinateur, pas de mode plein écran : les résultats s'affichent sous le ch
 - **Motif de votre visite** (« Sur quoi porte votre avis ? » pour un organisme) : la liste des services de l'établissement, plus « Autre démarche ». **Facultatif.** Pas affiché si l'établissement n'a aucun service.
 - **Quand êtes-vous venu(e) ?** (« Quand est-ce arrivé ? » pour un organisme) : 4 réponses en tuiles, **obligatoire**, aucune présélectionnée.
 - **QR code** : ni motif (le service du guichet est connu et affiché) ni date (visite du jour). QR code inconnu ou désactivé : « Ce QR code n'est plus actif » et lien vers la recherche.
-- « Donner mon avis » enregistre la visite (identifiant d'avis créé à l'affichage de la page : un double envoi met à jour le même avis) puis ouvre `/donner/{id}` (écrans 2 à 7, à construire).
+- « Donner mon avis » enregistre la visite (identifiant d'avis créé à l'affichage de la page : un double envoi met à jour le même avis) puis ouvre l'écran 2.
+
+## Écran 2 (`/donner/{id}`)
+
+- En-tête : l'établissement (et le motif s'il y en a un) à la place du nom du site.
+- « Une question, puis c'est enregistré. », puis « Êtes-vous satisfait(e) du service reçu ? » et 5 réponses en gros boutons.
+- **Un toucher = réponse enregistrée** (pas de bouton « Suivant ») ; pendant l'envoi, les boutons se désactivent et « Enregistrement de votre avis… » s'affiche. Fonctionne sans JavaScript.
+- Puis `/donner/{id}/precisions` (écran 2b, à construire : pour l'instant la réponse donnée et « Modifier », qui ramène à l'écran 2 avec la réponse cochée).
 - Fonctionne sans JavaScript.
 
 ## Décisions

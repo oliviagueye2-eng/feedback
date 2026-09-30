@@ -159,3 +159,102 @@
   color: #7a1a14;
   font-size: 15px;
 }
+
+/* ---- Screen 2: the essential question ---- */
+
+.options {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.question {
+  padding: 0;
+  margin-bottom: 12px;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.option {
+  font: inherit;
+  font-size: 17px;
+  color: var(--ink);
+  text-align: left;
+  min-height: 52px;
+  width: 100%;
+  border: 1.5px solid var(--control);
+  border-radius: 10px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+.option:disabled {
+  cursor: default;
+}
+
+.optionOn {
+  border: 2px solid var(--green);
+  background: var(--green-tint);
+  font-weight: 700;
+}
+
+.radio {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--control);
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.optionOn .radio {
+  border: 7px solid var(--green);
+}
+
+.hint {
+  margin: 12px 0 0;
+  font-size: 15px;
+  text-align: center;
+}
+
+/* ---- Screen 2b: answer given, "Modifier" ---- */
+
+.answered {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.answered > span {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.answered .muted {
+  font-size: 13px;
+}
+
+.answered strong {
+  font-size: 17px;
+}
+
+.answered a {
+  font-weight: 700;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}

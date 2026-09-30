@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { DomainError } from "@/src/domain/errors";
-import { upsertFeedback } from "@/src/domain/feedback";
+import { saveAnswer, upsertFeedback } from "@/src/domain/feedback";
 
 /**
  * Screen 1 → screen 2: records the visit (establishment, reason, when), then
@@ -35,4 +35,15 @@ export async function startFeedback(formData: FormData) {
     throw error;
   }
   redirect(`/donner/${id}`);
+}
+
+/**
+ * Screen 2 → screen 2b: saves the answer to the essential question as soon as
+ * it is chosen (each answer is a submit button: one tap, no "Next").
+ */
+export async function answerEssential(formData: FormData) {
+  const id = String(formData.get("feedbackId") ?? "");
+  const option = String(formData.get("option") ?? "");
+  await saveAnswer(id, "OVERALL_SATISFACTION", { option });
+  redirect(`/donner/${id}/precisions`);
 }

@@ -14,6 +14,7 @@ import {
 } from "../domain/establishment";
 import {
   getDetailedQuestionnaire,
+  getEssentialScreen,
   saveAnswer,
   saveComment,
   saveTopics,
@@ -217,6 +218,22 @@ describe("feedback", () => {
       [feedbackId],
     );
     expect(answers).toEqual([{ code: "DISSATISFIED" }]);
+  });
+
+  it("gives screen 2 the context and the essential question, in order", async () => {
+    const { context, question } = await getEssentialScreen(feedbackId);
+    expect(context).toEqual({
+      establishmentName: "Centre d'état civil de Grand-Yoff",
+      scope: "site",
+      serviceLabel: null,
+      essentialOption: "DISSATISFIED",
+    });
+    expect(question.label).toBe("Êtes-vous satisfait(e) du service reçu ?");
+    expect(question.options.map((o) => o.code)).toEqual([
+      "VERY_SATISFIED", "SATISFIED", "NEUTRAL", "DISSATISFIED", "VERY_DISSATISFIED",
+    ]);
+    expect(question.options[3]).toMatchObject({ label: "Peu satisfait(e)", followUpPrompt: "Que s'est-il passé ?" });
+    await expect(getEssentialScreen("9f4e3162-5d7e-4f90-a1b2-c3d4e5f60718")).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
   it("rejects an unknown option, an unknown question and an unknown feedback", async () => {

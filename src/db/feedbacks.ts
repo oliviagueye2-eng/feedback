@@ -201,3 +201,70 @@ export async function findQuestionnaireSources(feedbackId: string): Promise<{
   if (!row) return null;
   return { serviceQuestionnaireId: row.service_q, sectorFallbackQuestionnaireId: row.sector_q };
 }
+
+export interface FeedbackContext {
+  establishmentName: string;
+  scope: "site" | "general";
+  /** French label of the visit reason, when one was chosen. */
+  serviceLabel: string | null;
+  /** Option already chosen at the essential question (coming back to change it). */
+  essentialOption: string | null;
+}
+
+/** What the screens after screen 1 show about the feedback being given. */
+export async function findFeedbackContext(feedbackId: string): Promise<FeedbackContext | null> {
+  const rows = await query<{
+    establishment_name: string;
+    scope: "site" | "general";
+    service_label: string | null;
+    essential_option: string | null;
+  }>(
+    `SELECT e.name AS establishment_name, e.scope, st.text AS service_label,
+            (SELECT ao.code
+             FROM answer a
+             JOIN question q ON q.id = a.question_id
+             JOIN answer_option ao ON ao.id = a.option_id
+             WHERE a.feedback_id = f.id AND q.code = 'OVERALL_SATISFACTION') AS essential_option
+     FROM feedback f
+     JOIN establishment e ON e.id = f.establishment_id
+     LEFT JOIN translation st ON st.target_table = 'service' AND st.target_id = f.service_id
+       AND st.field = 'label' AND st.language = 'fr'
+     WHERE f.id = $1`,
+    [feedbackId],
+  );
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    establishmentName: row.establishment_name,
+    scope: row.scope,
+    serviceLabel: row.service_label,
+    essentialOption: row.essential_option,
+  };
+}
+
+export interface EssentialQuestion {
+  label: string;
+  options: { code: string; label: string; followUpPrompt: string | null }[];
+}
+
+/** Screen 2: the essential question of the published questionnaire, in French. */
+export async function findEssentialQuestion(): Promise<EssentialQuestion | null> {
+  const rows = await query<{ question: string; code: string; label: string; prompt: string | null }>(
+    `SELECT qt.text AS question, ao.code, ot.text AS label, pt.text AS prompt
+     FROM question q
+     JOIN translation qt ON qt.target_table = 'question' AND qt.target_id = q.id
+       AND qt.field = 'label' AND qt.language = 'fr'
+     JOIN answer_option ao ON ao.question_id = q.id
+     JOIN translation ot ON ot.target_table = 'answer_option' AND ot.target_id = ao.id
+       AND ot.field = 'label' AND ot.language = 'fr'
+     LEFT JOIN translation pt ON pt.target_table = 'answer_option' AND pt.target_id = ao.id
+       AND pt.field = 'follow_up_prompt' AND pt.language = 'fr'
+     WHERE q.code = 'OVERALL_SATISFACTION' AND q.questionnaire_id = ${PUBLISHED("ESSENTIAL")}
+     ORDER BY ao.position`,
+  );
+  if (rows.length === 0) return null;
+  return {
+    label: rows[0]!.question,
+    options: rows.map((r) => ({ code: r.code, label: r.label, followUpPrompt: r.prompt })),
+  };
+}

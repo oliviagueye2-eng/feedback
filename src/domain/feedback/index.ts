@@ -110,3 +110,15 @@ export async function getDetailedQuestionnaire(feedbackId: string) {
   if (!sources) throw notFound("Feedback not found");
   return selectDetailedQuestionnaire(sources);
 }
+
+/** Screen 2: the feedback's context and the essential question. */
+export async function getEssentialScreen(feedbackId: string) {
+  requireUuid(feedbackId, "id");
+  const [context, question] = await Promise.all([
+    db.findFeedbackContext(feedbackId),
+    db.findEssentialQuestion(),
+  ]);
+  if (!context) throw notFound("Feedback not found");
+  if (!question) throw new Error("The essential question is missing from the reference data");
+  return { context, question };
+}
