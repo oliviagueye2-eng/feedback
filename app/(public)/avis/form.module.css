@@ -58,7 +58,7 @@
   font-weight: 700;
 }
 
-.group label .muted {
+.group label :global(.muted) {
   font-weight: 400;
 }
 

@@ -119,6 +119,23 @@ export async function upsertAnswer(input: {
   }
 }
 
+/**
+ * Active topics shown for feedback $1: the common ones (no row in
+ * topic_sector) and those of its sector. The sector is the visit reason's,
+ * else the establishment type's, else the establishment's.
+ */
+const TOPICS_FOR_FEEDBACK = `
+  SELECT t.* FROM topic t
+  WHERE t.is_active
+    AND (NOT EXISTS (SELECT 1 FROM topic_sector ts WHERE ts.topic_id = t.id)
+         OR EXISTS (
+           SELECT 1 FROM topic_sector ts, feedback f
+           JOIN establishment e ON e.id = f.establishment_id
+           LEFT JOIN service s ON s.id = f.service_id
+           LEFT JOIN establishment_type et ON et.id = e.type_id
+           WHERE f.id = $1 AND ts.topic_id = t.id
+             AND ts.sector_id = coalesce(s.sector_id, et.sector_id, e.sector_id)))`;
+
 /** Replaces all topics of a feedback. Codes must be unique (checked in src/domain). */
 export async function replaceTopics(input: {
   feedbackId: string;
@@ -126,8 +143,8 @@ export async function replaceTopics(input: {
 }): Promise<void> {
   const codes = input.topics.map((t) => t.code);
   const known = await query<{ code: string }>(
-    "SELECT code FROM topic WHERE is_active AND code = ANY($1::text[])",
-    [codes],
+    `SELECT code FROM (${TOPICS_FOR_FEEDBACK}) t WHERE code = ANY($2::text[])`,
+    [input.feedbackId, codes],
   );
   if (known.length !== codes.length) throw invalidInput("Unknown topic");
 
@@ -174,6 +191,39 @@ export async function upsertComment(input: {
     [input.feedbackId, input.promptOptionCode, input.text],
   );
   if (rows.length === 0) throw invalidInput("Unknown promptOption");
+}
+
+/** The user emptied the free text: the comment goes. */
+export async function deleteComment(feedbackId: string): Promise<void> {
+  await query("DELETE FROM comment WHERE feedback_id = $1", [feedbackId]);
+}
+
+export interface TopicChoice {
+  code: string;
+  label: string;
+  checked: boolean;
+  /** Only for "Autre": what the user wrote. */
+  otherText: string | null;
+}
+
+/** Screen 2b: the topics to show, in order, with those already checked. */
+export async function findTopicChoices(feedbackId: string): Promise<TopicChoice[]> {
+  const rows = await query<{ code: string; label: string; checked: boolean; other_text: string | null }>(
+    `SELECT t.code, tr.text AS label, ft.topic_id IS NOT NULL AS checked, ft.other_text
+     FROM (${TOPICS_FOR_FEEDBACK}) t
+     JOIN translation tr ON tr.target_table = 'topic' AND tr.target_id = t.id
+       AND tr.field = 'label' AND tr.language = 'fr'
+     LEFT JOIN feedback_topic ft ON ft.feedback_id = $1 AND ft.topic_id = t.id
+     ORDER BY t.position`,
+    [feedbackId],
+  );
+  return rows.map((r) => ({ code: r.code, label: r.label, checked: r.checked, otherText: r.other_text }));
+}
+
+/** Screen 2b: the free text already written, to show it when coming back. */
+export async function findCommentText(feedbackId: string): Promise<string | null> {
+  const rows = await query<{ text: string }>("SELECT text FROM comment WHERE feedback_id = $1", [feedbackId]);
+  return rows[0]?.text ?? null;
 }
 
 /**

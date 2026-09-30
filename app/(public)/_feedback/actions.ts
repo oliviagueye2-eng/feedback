@@ -2,7 +2,14 @@
 
 import { redirect } from "next/navigation";
 import { DomainError } from "@/src/domain/errors";
-import { saveAnswer, upsertFeedback } from "@/src/domain/feedback";
+import {
+  OTHER_TOPIC_CODE,
+  removeComment,
+  saveAnswer,
+  saveComment,
+  saveTopics,
+  upsertFeedback,
+} from "@/src/domain/feedback";
 
 /**
  * Screen 1 → screen 2: records the visit (establishment, reason, when), then
@@ -46,4 +53,34 @@ export async function answerEssential(formData: FormData) {
   const option = String(formData.get("option") ?? "");
   await saveAnswer(id, "OVERALL_SATISFACTION", { option });
   redirect(`/donner/${id}/precisions`);
+}
+
+/**
+ * Screen 2b → screen 4-5: saves the checked topics and the free text, both
+ * optional (sending nothing is allowed). The text of « Autre » counts only
+ * when « Autre » is checked; an emptied comment is removed.
+ */
+export async function saveDetails(formData: FormData) {
+  const id = String(formData.get("feedbackId") ?? "");
+  const codes = formData.getAll("topic").map(String);
+  const otherText = String(formData.get("otherText") ?? "").trim();
+  const comment = String(formData.get("comment") ?? "").trim();
+  try {
+    await saveTopics(id, {
+      topics: codes.map((code) =>
+        code === OTHER_TOPIC_CODE && otherText ? { code, otherText } : { code },
+      ),
+    });
+    if (comment) {
+      await saveComment(id, { text: comment, promptOption: String(formData.get("promptOption") ?? "") });
+    } else {
+      await removeComment(id);
+    }
+  } catch (error) {
+    if (error instanceof DomainError && error.code === "INVALID_INPUT") {
+      redirect(`/donner/${id}/precisions?erreur=1`);
+    }
+    throw error;
+  }
+  redirect(`/donner/${id}/enregistre`);
 }

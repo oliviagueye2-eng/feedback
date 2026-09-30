@@ -103,6 +103,36 @@ export async function saveComment(feedbackId: string, body: unknown): Promise<vo
   });
 }
 
+/** Screen 2b: the user emptied the free text. */
+export async function removeComment(feedbackId: string): Promise<void> {
+  requireUuid(feedbackId, "id");
+  await db.deleteComment(feedbackId);
+}
+
+/** Essential answers that open "Ce qui vous a plu"; the others open "Ce qui n'a pas été". */
+const SATISFIED_OPTIONS = ["VERY_SATISFIED", "SATISFIED"];
+
+/**
+ * Screen 2b: the answer given (with its follow-up prompt), the topics of the
+ * feedback's sector, and what the user already checked or wrote.
+ */
+export async function getDetailsScreen(feedbackId: string) {
+  const { context, question } = await getEssentialScreen(feedbackId);
+  const [topics, comment] = await Promise.all([
+    db.findTopicChoices(feedbackId),
+    db.findCommentText(feedbackId),
+  ]);
+  const answer = question.options.find((o) => o.code === context.essentialOption) ?? null;
+  return {
+    context,
+    question: question.label,
+    answer,
+    liked: answer !== null && SATISFIED_OPTIONS.includes(answer.code),
+    topics,
+    comment,
+  };
+}
+
 /** Screen 6: which detailed questionnaire to show for this feedback. */
 export async function getDetailedQuestionnaire(feedbackId: string) {
   requireUuid(feedbackId, "id");

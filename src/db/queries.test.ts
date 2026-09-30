@@ -14,7 +14,9 @@ import {
 } from "../domain/establishment";
 import {
   getDetailedQuestionnaire,
+  getDetailsScreen,
   getEssentialScreen,
+  removeComment,
   saveAnswer,
   saveComment,
   saveTopics,
@@ -296,6 +298,31 @@ describe("feedback", () => {
     expect(row).toEqual({ text: "Deux heures d'attente, guichet fermé.", status: "pending" });
     await expect(saveComment(feedbackId, { text: "Bien", promptOption: "YES" }))
       .rejects.toMatchObject({ code: "INVALID_INPUT" });
+  });
+
+  it("gives screen 2b the common topics plus the sector's, with what was already given", async () => {
+    // The Grand-Yoff centre is in the Administration sector (through its type).
+    const screen = await getDetailsScreen(feedbackId);
+    expect(screen.answer).toMatchObject({ code: "DISSATISFIED", followUpPrompt: "Que s'est-il passé ?" });
+    expect(screen.liked).toBe(false);
+    const codes = screen.topics.map((t) => t.code);
+    expect(codes).toHaveLength(12);
+    expect(codes.slice(9)).toEqual(["PROCESSING_TIME", "CASE_TRACKING", "OTHER"]);
+    expect(screen.topics.filter((t) => t.checked).map((t) => [t.code, t.otherText])).toEqual([
+      ["STAFF", null],
+      ["OTHER", "Toilettes"],
+    ]);
+    expect(screen.comment).toBe("Deux heures d'attente, guichet fermé.");
+  });
+
+  it("refuses a topic of another sector, and removes an emptied comment", async () => {
+    await expect(saveTopics(feedbackId, { topics: [{ code: "POWER_CUTS" }] }))
+      .rejects.toMatchObject({ code: "INVALID_INPUT" });
+    await saveTopics(feedbackId, { topics: [{ code: "PROCESSING_TIME" }] });
+    await removeComment(feedbackId);
+    const screen = await getDetailsScreen(feedbackId);
+    expect(screen.topics.filter((t) => t.checked).map((t) => t.code)).toEqual(["PROCESSING_TIME"]);
+    expect(screen.comment).toBeNull();
   });
 });
 
