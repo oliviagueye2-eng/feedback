@@ -1,0 +1,99 @@
+/* See IntroSplash.tsx. Hidden unless the first-visit script sets <html data-intro>. */
+
+.splash {
+  display: none;
+}
+
+:global(html[data-intro]) .splash {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding-bottom: 6vh;
+  background: #fff;
+  animation: leave 0.45s cubic-bezier(0.6, 0, 0.4, 1) 2.2s forwards;
+}
+
+:global(html[data-intro="skip"]) .splash {
+  animation-duration: 0.3s;
+  animation-delay: 0s;
+}
+
+.logo {
+  width: 150px;
+  height: auto;
+}
+
+/* Each shape rises into place in turn (delays set in IntroSplash.tsx). */
+.logo path {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: build 0.35s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+.name {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  animation: rise 0.35s ease-out 1s both;
+}
+
+.name small {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.name strong {
+  font-size: 26px;
+  color: var(--green);
+}
+
+.skip {
+  position: absolute;
+  top: 16px;
+  right: 12px;
+  padding: 10px 12px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 16px;
+  color: var(--green);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@keyframes build {
+  from {
+    opacity: 0;
+    transform: translateY(60px) scale(0.94);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@keyframes leave {
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+@media (min-width: 900px) {
+  .logo {
+    width: 190px;
+  }
+
+  .name strong {
+    font-size: 32px;
+  }
+}

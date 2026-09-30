@@ -1,15 +1,18 @@
 import Form from "next/form";
 import { SiteFooter } from "../_components/SiteFooter";
 import { SiteHeader } from "../_components/SiteHeader";
+import { IntroSplash } from "./_intro/IntroSplash";
 import styles from "./home.module.css";
 
 /**
  * Home page: the queue ticket "C'est votre tour." over a photo of an everyday
  * public service (BRT bus, Dakar): a band on phones, the right half on computers.
+ * On the very first visit, an opening screen plays first (IntroSplash).
  */
 export default function HomePage() {
   return (
     <>
+      <IntroSplash />
       <SiteHeader />
       <main>
         <section className={styles.hero}>
