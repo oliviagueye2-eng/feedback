@@ -90,12 +90,14 @@ use{transform-box:fill-box;transform-origin:center}
 /* The button never waits: it stays put and visible. */
 .i1 .tk .btn{position:relative}
 
-/* Option 2: splash over the home page. */
+/* Option 2: splash over the home page. It leaves upward once; the demo loop
+   brings it back with a fade, never by sliding down. */
 .splash{position:absolute;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding-bottom:40px;animation:leave 6.5s cubic-bezier(.6,0,.4,1) infinite both}
 @keyframes leave{
-  0%,33.85%{transform:none}
-  40.77%,96.15%{transform:translateY(-100%)}
-  99.23%,100%{transform:none}
+  0%,33.85%{transform:none;opacity:1}
+  40.77%,90.77%{transform:translateY(-100%);opacity:1}
+  90.92%,93.85%{transform:none;opacity:0}
+  98.46%,100%{transform:none;opacity:1}
 }
 .splashlogo{width:150px;height:auto}
 .sname{display:flex;flex-direction:column;align-items:center;gap:2px;animation:name 6.5s ease-out infinite both}
