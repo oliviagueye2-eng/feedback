@@ -4,6 +4,7 @@ import { PendingLoader } from "../../../_components/PendingLoader";
 import { getDictionary } from "../../../_i18n";
 import styles from "../form.module.css";
 import { createEstablishment } from "./actions";
+import { ContinueButton } from "./ContinueButton";
 
 /** Screen 0c: establishment not in the list. Only the name is required. */
 export default async function NewEstablishmentPage({ searchParams }: PageProps<"/avis/nouveau">) {
@@ -64,9 +65,7 @@ export default async function NewEstablishmentPage({ searchParams }: PageProps<"
           </svg>
           <span>{t.note}</span>
         </div>
-        <button type="submit" className="btn">
-          {t.submit}
-        </button>
+        <ContinueButton fieldId="name" initialName={name} t={{ withName: t.submit, noName: t.submitNoName }} />
         <PendingLoader message={t.saving} />
       </form>
     </main>

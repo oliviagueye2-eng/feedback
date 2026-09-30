@@ -108,7 +108,8 @@ export const fr = {
     municipality: "Commune ou village",
     municipalityPlaceholder: "Ex. : Ndiaganiao",
     note: "Il sera ajouté à la liste après validation. Votre avis compte dès maintenant.",
-    submit: "Utiliser cet établissement",
+    submit: "Continuer avec « {name} »",
+    submitNoName: "Continuer",
     saving: "Enregistrement en cours…",
   },
 
