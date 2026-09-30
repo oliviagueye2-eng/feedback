@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { DomainError } from "@/src/domain/errors";
+import { defaultLocale } from "../../_i18n";
 import {
   OTHER_TOPIC_CODE,
   removeComment,
@@ -33,7 +34,7 @@ export async function startFeedback(formData: FormData) {
       // "other" = "Autre démarche": no service.
       serviceId: service && service !== "other" ? Number(service) : null,
       visitPeriod: field("visitPeriod"),
-      language: "fr",
+      language: defaultLocale,
     });
   } catch (error) {
     if (error instanceof DomainError && error.code === "INVALID_INPUT") {

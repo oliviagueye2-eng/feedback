@@ -23,6 +23,7 @@ app/                        Next.js (App Router)
     establishments/route.ts
     feedbacks/[id]/route.ts
     ...
+  _i18n/                    textes de l'interface, un fichier par langue (fr.ts)
 src/
   domain/                   logique métier : AUCUN import de Next.js
     establishment/          recherche, création d'un établissement saisi par l'usager
@@ -42,6 +43,22 @@ src/
 Une règle de lint (`no-restricted-imports` d'ESLint) peut interdire tout import de `next/*` dans `src/domain`, pour que la règle 2 soit vérifiée automatiquement.
 
 Le jour où l'API doit devenir un serveur séparé, on déplace `src/domain` et `src/db` dans ce nouveau serveur et on y recrée les routes. La logique métier ne change pas.
+
+### Textes et traductions
+
+Deux sources, selon l'origine du texte :
+
+- **Textes venant de la base** (questions, réponses, thèmes, services, secteurs, types d'établissement) : table `translation`, une ligne par langue.
+- **Textes de l'interface** (titres, boutons, messages, exemples) : `app/_i18n/fr.ts`, rangés par écran. Aucun texte d'interface n'est écrit directement dans les pages.
+
+Fonctionnement (méthode des « dictionnaires » de la documentation Next.js, sans bibliothèque) :
+
+- Les composants serveur appellent `getDictionary()` (`app/_i18n/index.ts`). Les composants client ne chargent jamais de dictionnaire : la page leur passe les textes dont ils ont besoin.
+- Dans `fr.ts`, on écrit des espaces ordinaires : les espaces insécables (avant `? ! : ;` et à l'intérieur de `« »`) sont ajoutés au chargement.
+- `{nom}` est remplacé par une valeur (`fill`), `<b>…</b>` est mis en gras (`rich`), `{ one, other }` donne le singulier ou le pluriel (`plural`), selon les règles de la langue.
+- Ajouter une langue : copier `fr.ts` (par exemple `wo.ts`, typé `Dictionary` : un texte manquant est signalé par `npm run typecheck`), l'ajouter à `locales` et `dictionaries` dans `index.ts`.
+
+Pas encore décidé : comment le site retient la langue choisie (adresse `/wo/…` ou réglage sur le téléphone ; le réglage garde la même adresse pour les QR codes imprimés), et quelles langues au lancement.
 
 ## 3. Routes de l'API
 

@@ -5,7 +5,8 @@ import { DomainError } from "@/src/domain/errors";
 import { COMMENT_MAX_LENGTH, getDetailsScreen, OTHER_TOPIC_CODE, OTHER_TOPIC_MAX_LENGTH } from "@/src/domain/feedback";
 import { saveDetails } from "../../../_feedback/actions";
 import { FeedbackHeader } from "../../../_feedback/FeedbackHeader";
-import { frenchSpaces } from "../../../_feedback/typography";
+import { getDictionary } from "../../../../_i18n";
+import { frenchSpaces } from "../../../../_i18n/typography";
 import styles from "../../../_feedback/screen.module.css";
 
 /**
@@ -27,6 +28,7 @@ export default async function DetailsPage({ params, searchParams }: PageProps<"/
   const { context, question, answer, liked, topics, comment } = screen;
   // Reached without answering the essential question: back to it.
   if (!answer) redirect(`/donner/${feedbackId}`);
+  const { common, details: t } = await getDictionary();
 
   return (
     <>
@@ -41,41 +43,40 @@ export default async function DetailsPage({ params, searchParams }: PageProps<"/
               <span className="muted">{frenchSpaces(question)}</span>
               <strong>{answer.label}</strong>
             </span>
-            <Link href={`/donner/${feedbackId}`}>Modifier</Link>
+            <Link href={`/donner/${feedbackId}`}>{t.change}</Link>
           </div>
 
           {erreur && (
             <p role="alert" className={styles.error}>
-              Votre avis n&apos;a pas pu être enregistré. Vérifiez vos réponses, puis réessayez.
+              {t.error}
             </p>
           )}
 
           <fieldset className={styles.topics}>
             <legend className={styles.question}>
-              {liked ? "Ce qui vous a plu" : "Ce qui n'a pas été"}{" "}
-              <span className="muted">(plusieurs choix possibles)</span>
+              {liked ? t.liked : t.notLiked} <span className="muted">{t.severalChoices}</span>
             </legend>
-            {topics.map((t) =>
-              t.code === OTHER_TOPIC_CODE ? (
-                <div key={t.code} className={styles.other}>
+            {topics.map((topic) =>
+              topic.code === OTHER_TOPIC_CODE ? (
+                <div key={topic.code} className={styles.other}>
                   <label className={styles.topic}>
-                    <input type="checkbox" name="topic" value={t.code} defaultChecked={t.checked} />
-                    <span>{t.label}</span>
+                    <input type="checkbox" name="topic" value={topic.code} defaultChecked={topic.checked} />
+                    <span>{topic.label}</span>
                   </label>
                   <input
                     name="otherText"
                     className={styles.otherField}
-                    aria-label="Précisez"
-                    placeholder="Précisez (ex. : parking)"
+                    aria-label={t.otherLabel}
+                    placeholder={t.otherPlaceholder}
                     maxLength={OTHER_TOPIC_MAX_LENGTH}
-                    defaultValue={t.otherText ?? ""}
+                    defaultValue={topic.otherText ?? ""}
                     autoComplete="off"
                   />
                 </div>
               ) : (
-                <label key={t.code} className={styles.topic}>
-                  <input type="checkbox" name="topic" value={t.code} defaultChecked={t.checked} />
-                  <span>{t.label}</span>
+                <label key={topic.code} className={styles.topic}>
+                  <input type="checkbox" name="topic" value={topic.code} defaultChecked={topic.checked} />
+                  <span>{topic.label}</span>
                 </label>
               ),
             )}
@@ -83,8 +84,8 @@ export default async function DetailsPage({ params, searchParams }: PageProps<"/
 
           <div className={styles.group}>
             <label htmlFor="comment">
-              {frenchSpaces(answer.followUpPrompt ?? "Votre commentaire")}{" "}
-              <span className="muted">(facultatif)</span>
+              {answer.followUpPrompt ? frenchSpaces(answer.followUpPrompt) : t.commentDefault}{" "}
+              <span className="muted">{common.optional}</span>
             </label>
             <textarea
               id="comment"
@@ -96,16 +97,16 @@ export default async function DetailsPage({ params, searchParams }: PageProps<"/
               aria-describedby="comment-help"
             />
             <span id="comment-help" className={`muted ${styles.commentHelp}`}>
-              N&apos;indiquez ni nom ni numéro de téléphone.
+              {t.commentHelp}
             </span>
           </div>
 
           <div className={styles.actions}>
             <button type="submit" className="btn">
-              Enregistrer mon avis
+              {t.submit}
             </button>
           </div>
-          <PendingLoader message="Enregistrement de votre avis…" />
+          <PendingLoader message={common.savingFeedback} />
         </form>
       </main>
     </>

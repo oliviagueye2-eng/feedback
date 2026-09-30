@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { getDictionary } from "../_i18n";
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const { header: t } = await getDictionary();
   return (
     <>
       <div className="flag" aria-hidden="true">
@@ -16,12 +18,12 @@ export function SiteHeader() {
             {/* eslint-disable-next-line @next/next/no-img-element -- small SVG, nothing to optimize */}
             <img className="site-logo" src="/brand/logo.svg" alt="" width={40} height={42} />
             <span className="site-name">
-              <small>République du Sénégal</small>
-              <strong>Avis des usagers</strong>
+              <small>{t.state}</small>
+              <strong>{t.siteName}</strong>
             </span>
           </Link>
-          <nav className="site-nav" aria-label="Navigation principale">
-            <Link href="/#comment-ca-marche">Comment ça marche</Link>
+          <nav className="site-nav" aria-label={t.navLabel}>
+            <Link href="/#comment-ca-marche">{t.howItWorks}</Link>
           </nav>
         </div>
       </header>

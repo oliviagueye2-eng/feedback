@@ -1,4 +1,6 @@
 import Link from "next/link";
+import type { Dictionary } from "../../_i18n";
+import { fill, plural, rich } from "../../_i18n/format";
 import type { EstablishmentSearchResult, EstablishmentSummary } from "@/src/domain/types";
 import styles from "./search.module.css";
 
@@ -14,11 +16,15 @@ const BuildingIcon = () => (
   </svg>
 );
 
-/** Under the name: municipality and sector, whichever are known; "En général" for an organisation as a whole. */
-const details = (e: EstablishmentSummary) =>
-  [e.scope === "general" ? "En général" : e.municipalityName, e.sectorLabel].filter(Boolean).join(", ");
+/** The texts of the results, given by the page. */
+export type SearchTexts = Dictionary["search"] & Pick<Dictionary["common"], "inGeneral">;
 
-function Row({ establishment, icon }: { establishment: EstablishmentSummary; icon: boolean }) {
+/** Under the name: municipality and sector, whichever are known; "En général" for an organisation as a whole. */
+const details = (e: EstablishmentSummary, inGeneral: string) =>
+  [e.scope === "general" ? inGeneral : e.municipalityName, e.sectorLabel].filter(Boolean).join(", ");
+
+function Row({ establishment, icon, inGeneral }: { establishment: EstablishmentSummary; icon: boolean; inGeneral: string }) {
+  const under = details(establishment, inGeneral);
   return (
     <li>
       <Link href={`/avis/${establishment.id}`} className={styles.row}>
@@ -29,7 +35,7 @@ function Row({ establishment, icon }: { establishment: EstablishmentSummary; ico
         )}
         <span className={styles.rowText}>
           <span>{establishment.name}</span>
-          {details(establishment) && <span className="muted">{details(establishment)}</span>}
+          {under && <span className="muted">{under}</span>}
         </span>
         {!icon && (
           <svg className={styles.chevron} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -46,12 +52,14 @@ export function SearchResults({
   query,
   typed = query,
   result,
+  t,
 }: {
   /** The text these results answer. */
   query: string;
   /** What the field holds now: "Continuer avec" and "Je ne trouve pas" use it. */
   typed?: string;
   result: EstablishmentSearchResult;
+  t: SearchTexts;
 }) {
   const count = result.results.length;
 
@@ -59,23 +67,21 @@ export function SearchResults({
     return (
       <div className={styles.empty}>
         <div role="status" className={styles.emptyStatus}>
-          <strong>Aucun résultat exact</strong>
-          <span className="muted">
-            Vérifiez l&apos;orthographe, ou continuez : votre avis sera pris en compte.
-          </span>
+          <strong>{t.noResult}</strong>
+          <span className="muted">{t.noResultHelp}</span>
         </div>
         {result.suggestions.length > 0 && (
           <div className={styles.suggestions}>
-            <span className="muted">Vouliez-vous dire :</span>
+            <span className="muted">{t.didYouMean}</span>
             <ul className={styles.box}>
               {result.suggestions.map((e) => (
-                <Row key={e.id} establishment={e} icon={false} />
+                <Row key={e.id} establishment={e} icon={false} inGeneral={t.inGeneral} />
               ))}
             </ul>
           </div>
         )}
         <Link href={newEstablishmentHref(typed)} className="btn">
-          Continuer avec « {typed.trim()} »
+          {fill(t.continueWith, { query: typed.trim() })}
         </Link>
       </div>
     );
@@ -84,21 +90,18 @@ export function SearchResults({
   return (
     <div className={styles.results}>
       <p role="status" className="visually-hidden">
-        {count === 1 ? "1 établissement trouvé" : `${count} établissements trouvés`}
+        {plural(t.found, count)}
       </p>
       {result.matchType === "service" && (
         <div className={styles.hint}>
           <BuildingIcon />
-          <span>
-            <strong>Précisez l&apos;établissement.</strong> Voici ceux qui proposent
-            « {query.trim()} ». Ajoutez la commune pour affiner.
-          </span>
+          <span>{rich(fill(t.serviceHint, { query: query.trim() }))}</span>
         </div>
       )}
-      <h2 className={styles.sectionTitle}>Établissements</h2>
+      <h2 className={styles.sectionTitle}>{t.resultsTitle}</h2>
       <ul className={styles.list}>
         {result.results.map((e) => (
-          <Row key={e.id} establishment={e} icon />
+          <Row key={e.id} establishment={e} icon inGeneral={t.inGeneral} />
         ))}
       </ul>
       <Link href={newEstablishmentHref(typed)} className={`${styles.row} ${styles.notFound}`}>
@@ -108,8 +111,8 @@ export function SearchResults({
           </svg>
         </span>
         <span className={styles.rowText}>
-          <strong>Je ne trouve pas mon établissement</strong>
-          <span className="muted">Le saisir moi-même</span>
+          <strong>{t.notFound}</strong>
+          <span className="muted">{t.notFoundAction}</span>
         </span>
       </Link>
     </div>

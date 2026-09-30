@@ -1,4 +1,7 @@
-export function SiteFooter() {
+import { getDictionary } from "../_i18n";
+
+export async function SiteFooter() {
+  const { footer: t } = await getDictionary();
   return (
     <footer className="site-footer">
       <div className="container site-footer-inner">
@@ -10,10 +13,10 @@ export function SiteFooter() {
             <i />
             <i />
           </div>
-          <strong>République du Sénégal</strong>
-          <em>Un Peuple, Un But, Une Foi</em>
+          <strong>{t.state}</strong>
+          <em>{t.motto}</em>
         </div>
-        <p>Aucune donnée personnelle n&apos;est demandée aux usagers.</p>
+        <p>{t.privacy}</p>
       </div>
     </footer>
   );

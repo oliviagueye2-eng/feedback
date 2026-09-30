@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteHeader } from "../../../_components/SiteHeader";
+import { getDictionary } from "../../../_i18n";
 import { getEstablishmentByQrCode } from "@/src/domain/establishment";
 import { DomainError } from "@/src/domain/errors";
 import { EstablishmentScreen } from "../../_feedback/EstablishmentScreen";
@@ -17,6 +18,8 @@ export default async function QrLandingPage({ params }: PageProps<"/e/[code]">) 
     if (!(error instanceof DomainError && error.code === "NOT_FOUND")) throw error;
   }
 
+  const { qr: t } = await getDictionary();
+
   return (
     <>
       <SiteHeader />
@@ -31,10 +34,10 @@ export default async function QrLandingPage({ params }: PageProps<"/e/[code]">) 
           />
         ) : (
           <div className="container" style={{ maxWidth: 596, paddingTop: 24, paddingBottom: 40 }}>
-            <h1 style={{ fontSize: 26, lineHeight: 1.15, margin: "0 0 12px" }}>Ce QR code n&apos;est plus actif</h1>
-            <p style={{ margin: "0 0 20px" }}>Vous pouvez chercher l&apos;établissement par son nom.</p>
+            <h1 style={{ fontSize: 26, lineHeight: 1.15, margin: "0 0 12px" }}>{t.inactiveTitle}</h1>
+            <p style={{ margin: "0 0 20px" }}>{t.inactiveText}</p>
             <Link href="/avis" className="btn">
-              Chercher l&apos;établissement
+              {t.search}
             </Link>
           </div>
         )}

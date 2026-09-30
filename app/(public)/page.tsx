@@ -1,6 +1,8 @@
 import Form from "next/form";
 import { SiteFooter } from "../_components/SiteFooter";
 import { SiteHeader } from "../_components/SiteHeader";
+import { getDictionary } from "../_i18n";
+import { rich } from "../_i18n/format";
 import { IntroSplash } from "./_intro/IntroSplash";
 import styles from "./home.module.css";
 
@@ -9,17 +11,18 @@ import styles from "./home.module.css";
  * public service (BRT bus, Dakar): a band on phones, the right half on computers.
  * On the very first visit, an opening screen plays first (IntroSplash).
  */
-export default function HomePage() {
+export default async function HomePage() {
+  const { common, header, home: t, intro } = await getDictionary();
   return (
     <>
-      <IntroSplash />
+      <IntroSplash t={{ ...intro, state: header.state, siteName: header.siteName }} />
       <SiteHeader />
       <main>
         <section className={styles.hero}>
           <figure className={styles.photo}>
             {/* eslint-disable-next-line @next/next/no-img-element -- already compressed (43 KB), shown at once */}
-            <img src="/images/accueil-brt.jpg" alt="Bus du BRT à Dakar" width={736} height={491} />
-            <figcaption>Bus du BRT, Dakar</figcaption>
+            <img src="/images/accueil-brt.jpg" alt={t.photoAlt} width={736} height={491} />
+            <figcaption>{t.photoCaption}</figcaption>
           </figure>
           <div className={`container ${styles.heroInner}`}>
             <div className={styles.queue}>
@@ -28,14 +31,11 @@ export default function HomePage() {
                   <div className={styles.ticketMain}>
                     <span className={styles.watermark} aria-hidden="true" />
                     <div className={`muted ${styles.ticketHead}`}>
-                      <span>Ticket usager</span>
-                      <strong>N° 047</strong>
+                      <span>{t.ticketLabel}</span>
+                      <strong>{t.ticketNumber}</strong>
                     </div>
-                    <h1 className={styles.title}>C&apos;est votre tour.</h1>
-                    <p className={styles.lead}>
-                      Vous sortez d&apos;une mairie, d&apos;un hôpital, d&apos;une école&nbsp;?
-                      Dites-nous comment ça s&apos;est passé.
-                    </p>
+                    <h1 className={styles.title}>{t.title}</h1>
+                    <p className={styles.lead}>{t.lead}</p>
                   </div>
                   <div className={styles.perforation} aria-hidden="true" />
                   {/* On a computer the search sits in the stub; on a phone only the button shows.
@@ -43,7 +43,7 @@ export default function HomePage() {
                       and still works as a plain form before JavaScript has loaded. */}
                   <Form action="/avis" className={styles.stub}>
                     <label htmlFor="home-search" className={styles.searchLabel}>
-                      Dans quel établissement êtes-vous allé(e)&nbsp;?
+                      {common.searchLabel}
                     </label>
                     <div className={styles.searchField}>
                       <input
@@ -51,7 +51,7 @@ export default function HomePage() {
                         name="q"
                         type="search"
                         className="field"
-                        placeholder="Ex. : hôpital Fann"
+                        placeholder={common.searchPlaceholder}
                       />
                       <svg
                         width="20"
@@ -68,9 +68,9 @@ export default function HomePage() {
                       </svg>
                     </div>
                     <button type="submit" className="btn">
-                      Donner mon avis
+                      {common.giveFeedback}
                     </button>
-                    <p className="muted">Anonyme et gratuit, environ 1 minute.</p>
+                    <p className="muted">{t.duration}</p>
                   </Form>
                 </div>
               </div>
@@ -91,20 +91,17 @@ export default function HomePage() {
                 <rect x="3" y="14" width="7" height="7" rx="1" />
                 <path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4M20 17v3" />
               </svg>
-              <p className={styles.qrPhone}>
-                Encore au guichet&nbsp;? <strong>Scannez le QR code affiché</strong>,
-                l&apos;établissement sera déjà rempli.
-              </p>
+              <p className={styles.qrPhone}>{rich(t.qr)}</p>
             </div>
           </div>
         </section>
 
         <section id="comment-ca-marche" className={`container ${styles.steps}`}>
-          <h2>Comment ça marche</h2>
+          <h2>{t.stepsTitle}</h2>
           <ol>
-            <li>Trouvez l&apos;établissement où vous êtes allé(e).</li>
-            <li>Dites si vous êtes satisfait(e). Une seule question est obligatoire.</li>
-            <li>Votre avis compte dans les résultats publiés chaque mois.</li>
+            {t.steps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
           </ol>
         </section>
       </main>

@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import { Loader } from "../../_components/Loader";
+import type { Dictionary } from "../../_i18n";
+import { rich } from "../../_i18n/format";
 import type { EstablishmentSearchResult } from "@/src/domain/types";
-import { SearchResults, newEstablishmentHref } from "./SearchResults";
+import { SearchResults, newEstablishmentHref, type SearchTexts } from "./SearchResults";
 import styles from "./search.module.css";
 
 const MIN_LENGTH = 3;
@@ -18,6 +20,9 @@ const prefersReducedMotion = () =>
 
 type Status = "idle" | "loading" | "done" | "too-short" | "offline" | "error";
 
+/** The texts of this screen, given by the page (a client component loads no dictionary). */
+export type SearchScreenTexts = SearchTexts & Pick<Dictionary["common"], "back" | "searchLabel" | "searchPlaceholder">;
+
 /**
  * Screens 0 and 0a. Without JavaScript the form is a plain GET to /avis and the
  * server renders the results. With JavaScript, suggestions come as the user
@@ -29,9 +34,11 @@ type Status = "idle" | "loading" | "done" | "too-short" | "offline" | "error";
 export function SearchScreen({
   initialQuery,
   initialResult,
+  t,
 }: {
   initialQuery: string;
   initialResult: EstablishmentSearchResult | null;
+  t: SearchScreenTexts;
 }) {
   const [query, setQuery] = useState(initialQuery);
   // The results with the text they answer: typing again keeps them on screen until the new ones arrive.
@@ -153,14 +160,14 @@ export function SearchScreen({
         <i />
       </div>
       <div className={styles.bar}>
-        <button type="button" className={styles.back} aria-label="Retour" onClick={leave}>
+        <button type="button" className={styles.back} aria-label={t.back} onClick={leave}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
         <div className={styles.card}>
           <label htmlFor="search" className={styles.label}>
-            Dans quel établissement êtes-vous allé(e)&nbsp;?
+            {t.searchLabel}
           </label>
           <div ref={field} className={styles.field}>
             <input
@@ -169,7 +176,7 @@ export function SearchScreen({
               name="q"
               type="search"
               className="field"
-              placeholder="Ex. : hôpital Fann"
+              placeholder={t.searchPlaceholder}
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
@@ -185,7 +192,7 @@ export function SearchScreen({
               <path d="M20 20l-3.5-3.5" />
             </svg>
             {query && (
-              <button type="button" className={styles.clear} aria-label="Effacer la recherche" onClick={clear}>
+              <button type="button" className={styles.clear} aria-label={t.clear} onClick={clear}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
                   <path d="M18 6 6 18M6 6l12 12" />
                 </svg>
@@ -193,10 +200,10 @@ export function SearchScreen({
             )}
           </div>
           <span id="search-help" className={`muted ${styles.help}`}>
-            Nom de la mairie, de l&apos;hôpital, de l&apos;école…
+            {t.help}
           </span>
           <button type="submit" className={`btn ${styles.submit}`}>
-            Rechercher
+            {t.submit}
           </button>
         </div>
       </div>
@@ -204,23 +211,22 @@ export function SearchScreen({
       <div className={styles.output} aria-busy={status === "loading"}>
         {status === "too-short" && (
           <p role="status" className={styles.message}>
-            Tapez au moins 3 lettres.
+            {t.tooShort}
           </p>
         )}
         {status === "offline" && (
           <p role="status" className={styles.message}>
-            Pas de connexion. Vérifiez votre réseau, puis réessayez.
+            {t.offline}
           </p>
         )}
         {status === "error" && (
           <p role="status" className={styles.message}>
-            La recherche ne répond pas. Réessayez dans un instant, ou{" "}
-            <a href={newEstablishmentHref(query)}>saisissez le nom vous-même</a>.
+            {rich(t.error, { a: (chunk) => <a href={newEstablishmentHref(query)}>{chunk}</a> })}
           </p>
         )}
-        {status === "loading" && !shown && <Loader variant="inline" message="Recherche en cours…" />}
+        {status === "loading" && !shown && <Loader variant="inline" message={t.loading} />}
         {(status === "done" || status === "loading") && shown && (
-          <SearchResults query={shown.query} typed={query} result={shown.result} />
+          <SearchResults query={shown.query} typed={query} result={shown.result} t={t} />
         )}
       </div>
     </form>

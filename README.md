@@ -50,6 +50,7 @@ Configuration dans [`vercel.json`](vercel.json) : région `fra1` (Francfort, la 
 | `app/(public)/` | Pages usagers : accueil (`/`), recherche (`/avis`), arrivée par QR code (`/e/{code}`) |
 | `app/(admin)/` | Back-office des agents (`/admin`), à construire |
 | `app/webapi/` | Routes de l'API REST, minces : elles appellent `src/domain` |
+| `app/_i18n/` | Textes de l'interface, un fichier par langue (`fr.ts`) ; voir l'architecture technique |
 | `src/domain/` | Logique métier, indépendante de Next.js |
 | `src/db/` | Accès à PostgreSQL. Les **migrations** (`src/db/migrations/`) créent le schéma et les données de référence. Les requêtes restent **à écrire** : chaque fonction répond pour l'instant « non implémenté » (HTTP 501) |
 | `src/lib/` | Utilitaires partagés (normalisation du texte, validation) |

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { DomainError } from "@/src/domain/errors";
 import { getEssentialScreen } from "@/src/domain/feedback";
+import { getDictionary } from "../../../../_i18n";
 import { FeedbackHeader } from "../../../_feedback/FeedbackHeader";
 import styles from "../../../_feedback/screen.module.css";
 
@@ -18,15 +19,16 @@ export default async function SavedPage({ params }: PageProps<"/donner/[feedback
     throw error;
   }
   const { context } = screen;
+  const { saved: t } = await getDictionary();
 
   return (
     <>
       <FeedbackHeader establishmentName={context.establishmentName} serviceLabel={context.serviceLabel} />
       <main style={{ background: "var(--page)" }}>
         <div className={styles.screen}>
-          <h1 className={styles.title}>Votre avis est enregistré</h1>
+          <h1 className={styles.title}>{t.title}</h1>
           <p className="muted" style={{ margin: 0 }}>
-            La suite (confirmation et questionnaire détaillé) sera ajoutée à la prochaine étape.
+            {t.next}
           </p>
         </div>
       </main>

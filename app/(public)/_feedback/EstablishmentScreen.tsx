@@ -1,22 +1,18 @@
 import Link from "next/link";
 import { PendingLoader } from "../../_components/PendingLoader";
+import { getDictionary } from "../../_i18n";
 import type { EstablishmentDetail } from "@/src/db/establishments";
 import { startFeedback } from "./actions";
 import styles from "./screen.module.css";
 
-const VISIT_PERIODS = [
-  ["today", "Aujourd'hui"],
-  ["under_week", "Il y a moins d'une semaine"],
-  ["under_month", "Il y a moins d'un mois"],
-  ["over_month", "Il y a plus d'un mois"],
-] as const;
+const VISIT_PERIODS = ["today", "under_week", "under_month", "over_month"] as const;
 
 /**
  * Screen 1: establishment identified, reason for the visit, when. Shared by
  * the search (/avis/{id}) and the QR code (/e/{code}). With a QR code the
  * visit is today and the counter's service is already known: not asked.
  */
-export function EstablishmentScreen({
+export async function EstablishmentScreen({
   establishment,
   feedbackId,
   channel,
@@ -33,9 +29,10 @@ export function EstablishmentScreen({
   qr?: { id: string; serviceId: number | null };
   error?: boolean;
 }) {
+  const { common, establishment: t } = await getDictionary();
   // An organisation rated as a whole (Senelec in general) is not a place.
   const general = establishment.scope === "general";
-  const details = [general ? "En général" : establishment.municipalityName, establishment.sectorLabel]
+  const details = [general ? common.inGeneral : establishment.municipalityName, establishment.sectorLabel]
     .filter(Boolean)
     .join(", ");
   const qrService = qr?.serviceId ? establishment.services.find((s) => s.id === qr.serviceId) : undefined;
@@ -51,7 +48,7 @@ export function EstablishmentScreen({
       {qr && <input type="hidden" name="qrCodeId" value={qr.id} />}
       {qr?.serviceId && <input type="hidden" name="service" value={qr.serviceId} />}
 
-      <h1 className={styles.title}>Donnez votre avis sur ce service</h1>
+      <h1 className={styles.title}>{t.title}</h1>
 
       <div className={styles.identified}>
         <span className={styles.check} aria-hidden="true">
@@ -60,45 +57,45 @@ export function EstablishmentScreen({
           </svg>
         </span>
         <div>
-          <span className="muted">Vous évaluez</span>
+          <span className="muted">{t.rating}</span>
           <strong>{establishment.name}</strong>
           {details && <span>{details}</span>}
           {qrService?.label && <span>{qrService.label}</span>}
           <Link href="/avis">
-            {general ? "Ce n'est pas le bon organisme ?" : "Ce n'est pas le bon établissement ?"}
+            {general ? t.wrongOrganization : t.wrongEstablishment}
           </Link>
         </div>
       </div>
 
       {error && (
         <p role="alert" className={styles.error}>
-          Indiquez quand vous êtes venu(e).
+          {t.whenError}
         </p>
       )}
 
       {askReason && (
         <div className={styles.group}>
-          <label htmlFor="service">{general ? "Sur quoi porte votre avis ?" : "Motif de votre visite"}</label>
+          <label htmlFor="service">{general ? t.reasonGeneral : t.reason}</label>
           <select id="service" name="service" className={styles.select} defaultValue="">
-            <option value="">Choisir dans la liste</option>
+            <option value="">{t.reasonPlaceholder}</option>
             {establishment.services.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.label ?? s.code}
               </option>
             ))}
-            <option value="other">Autre démarche</option>
+            <option value="other">{t.reasonOther}</option>
           </select>
         </div>
       )}
 
       {askWhen && (
         <fieldset className={styles.group}>
-          <legend>{general ? "Quand est-ce arrivé ?" : "Quand êtes-vous venu(e) ?"}</legend>
+          <legend>{general ? t.whenGeneral : t.when}</legend>
           <div className={styles.periods}>
-            {VISIT_PERIODS.map(([value, label]) => (
+            {VISIT_PERIODS.map((value) => (
               <label key={value} className={styles.period}>
                 <input type="radio" name="visitPeriod" value={value} required />
-                <span>{label}</span>
+                <span>{t.periods[value]}</span>
               </label>
             ))}
           </div>
@@ -107,11 +104,11 @@ export function EstablishmentScreen({
 
       <div className={styles.actions}>
         <button type="submit" className="btn">
-          Donner mon avis
+          {common.giveFeedback}
         </button>
-        <p className="muted">Anonyme, environ 1 minute.</p>
+        <p className="muted">{t.duration}</p>
       </div>
-      <PendingLoader message="Un instant…" />
+      <PendingLoader message={t.loading} />
     </form>
   );
 }

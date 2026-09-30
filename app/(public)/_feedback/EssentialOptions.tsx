@@ -15,9 +15,12 @@ import styles from "./screen.module.css";
 export function EssentialOptions({
   options,
   chosen,
+  t,
 }: {
   options: { code: string; label: string }[];
   chosen: string | null;
+  /** Texts given by the page. */
+  t: { hint: string; saving: string };
 }) {
   const { pending, data } = useFormStatus();
   const sending = pending ? String(data?.get("option") ?? "") : null;
@@ -52,8 +55,8 @@ export function EssentialOptions({
           </button>
         );
       })}
-      <p className={`muted ${styles.hint}`}>Choisissez une réponse pour continuer.</p>
-      {pending && <Loader message="Enregistrement de votre avis…" />}
+      <p className={`muted ${styles.hint}`}>{t.hint}</p>
+      {pending && <Loader message={t.saving} />}
     </>
   );
 }
