@@ -16,6 +16,7 @@ Ces fichiers ne s'ouvrent pas seuls dans un navigateur : ils ont besoin du moteu
 | `A-fond-photo.dc.html` | Option de fond 5 : photo de guichet (emplacement) |
 | `A-accueil-photo.dc.html` | Essai (2026-09-30) : accueil avec une photo en bandeau (variante retenue), BRT de Dakar et Monument de la Renaissance pour comparer, plus la version ordinateur avec le BRT. La photo est stockée dans le canevas (`/_blob/…`) |
 | `A-loader.dc.html` | Essai (2026-09-30) : options de loader à partir du logo (le logo se construit, les points de la bulle, logo fixe et barre tricolore, points et barre ensemble), avec les règles communes |
+| `A-premiere-visite.dc.html` | Essai (2026-09-30) : animation à la première visite, 2 options (animation dans l'accueil sans rien bloquer ; écran d'ouverture avec « Passer »). Photo et logo stockés dans le canevas (`/_blob/…`) |
 | `B-une-question.dc.html` | Variante B, une question par écran (pour mémoire) |
 | `C-civic-tech.dc.html` | Variante C, civic-tech moderne (pour mémoire) |
 | `D-conversation.dc.html` | Variante D, conversation guidée (pour mémoire) |

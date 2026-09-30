@@ -78,6 +78,13 @@
       "w": 2072,
       "h": 904,
       "title": "A. Loader : options (essai)"
+    },
+    "A-premiere-visite.dc.html": {
+      "x": 5048,
+      "y": 6868,
+      "w": 1256,
+      "h": 944,
+      "title": "A. Première visite : 2 options (essai)"
     }
   },
   "createdOnFiles": {
@@ -107,6 +114,7 @@
     "A-fond-photo.dc.html",
     "A-accueil-photo.dc.html",
     "A-loader.dc.html",
+    "A-premiere-visite.dc.html",
     "B-une-question.dc.html",
     "C-civic-tech.dc.html",
     "D-conversation.dc.html"
