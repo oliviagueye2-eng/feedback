@@ -30,6 +30,23 @@
   font-size: 16px;
 }
 
+/* Way back to the home page, under the search (the header logo does the same). */
+.home {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.home svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
 /* ---- Search form ---- */
 
 .search {
