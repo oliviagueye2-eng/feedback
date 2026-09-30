@@ -96,6 +96,21 @@ export default async function HomePage() {
           </div>
         </section>
 
+        <section className={styles.civic} aria-labelledby="participer">
+          <div className="container">
+            <h2 id="participer">{t.civicTitle}</h2>
+            <p className={styles.civicLead}>{t.civicLead}</p>
+            <ul>
+              {t.civicPoints.map((point) => (
+                <li key={point.title}>
+                  <h3>{point.title}</h3>
+                  <p>{point.text}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
         <section id="comment-ca-marche" className={`container ${styles.steps}`}>
           <h2>{t.stepsTitle}</h2>
           <ol>

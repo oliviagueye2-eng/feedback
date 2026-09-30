@@ -55,6 +55,16 @@ export const fr = {
     lead: "Vous avez utilisé un service, public ou privé ? Dites-nous comment ça s'est passé. Votre avis aide à améliorer les services au Sénégal.",
     duration: "Anonyme et gratuit, environ 1 minute.",
     qr: "Encore au guichet ? <b>Scannez le QR code affiché</b>, l'établissement sera déjà rempli.",
+    civicTitle: "Un geste citoyen : donner son avis, c'est participer.",
+    civicLead: "Chaque expérience compte : mairie, hôpital, école, banque, transport, hôtel, restaurant.",
+    civicPoints: [
+      { title: "Un avis honnête et respectueux", text: "Décrivez ce que vous avez vécu, avec respect." },
+      {
+        title: "Des services qui s'améliorent",
+        text: "Un avis, ce n'est pas qu'une note. Il montre ce qui marche et ce qui doit changer.",
+      },
+      { title: "Des résultats publics", text: "Les résultats sont publiés chaque mois, pour tout le monde." },
+    ],
     stepsTitle: "Comment ça marche",
     steps: [
       "Trouvez l'établissement où vous êtes allé(e).",

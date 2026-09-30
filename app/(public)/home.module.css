@@ -227,6 +227,55 @@
 
 /* ---- How it works ---- */
 
+/* ---- Why take part: a citizen's act ---- */
+
+.civic {
+  background: #fff;
+  padding: 30px 0 34px;
+  border-bottom: 1px solid var(--line);
+}
+
+.civic h2 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.2;
+  max-width: 22ch;
+}
+
+.civicLead {
+  margin: 10px 0 0;
+  font-size: 17px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.civic ul {
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 22px;
+}
+
+/* Not a sequence: no numbers. A short green rule opens each point. */
+.civic li {
+  border-top: 3px solid var(--green);
+  padding-top: 12px;
+  max-width: 40ch;
+}
+
+.civic h3 {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.3;
+}
+
+.civic li p {
+  margin: 6px 0 0;
+  font-size: 17px;
+  line-height: 1.45;
+}
+
 .steps {
   padding-top: 30px;
   padding-bottom: 40px;
@@ -411,6 +460,32 @@
   }
 
   .qrPhone {
+    font-size: 18px;
+  }
+
+  .civic {
+    padding: 72px 0 64px;
+  }
+
+  .civic h2 {
+    font-size: 34px;
+  }
+
+  .civicLead {
+    font-size: 19px;
+  }
+
+  .civic ul {
+    margin-top: 36px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 40px;
+  }
+
+  .civic h3 {
+    font-size: 21px;
+  }
+
+  .civic li p {
     font-size: 18px;
   }
 
