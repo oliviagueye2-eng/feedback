@@ -64,6 +64,13 @@
       "w": 1520,
       "h": 684,
       "title": "A. Fond 2b : file de tickets et filigrane"
+    },
+    "A-accueil-photo.dc.html": {
+      "x": 5048,
+      "y": 4820,
+      "w": 2336,
+      "h": 904,
+      "title": "A. Accueil avec photo (essai)"
     }
   },
   "createdOnFiles": {
@@ -91,6 +98,7 @@
     "A-fond-file-filigrane.dc.html",
     "A-fond-tricolore.dc.html",
     "A-fond-photo.dc.html",
+    "A-accueil-photo.dc.html",
     "B-une-question.dc.html",
     "C-civic-tech.dc.html",
     "D-conversation.dc.html"
