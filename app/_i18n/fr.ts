@@ -52,7 +52,7 @@ export const fr = {
     ticketLabel: "Ticket usager",
     ticketNumber: "N° 047",
     title: "C'est votre tour.",
-    lead: "Vous avez utilisé un service, public ou privé ? Dites-nous comment ça s'est passé. Votre avis aide à améliorer les services au Sénégal.",
+    lead: "Vous avez utilisé un service, public ou privé ? Dites-nous comment ça s'est passé. Ensemble, pour un Sénégal qui progresse.",
     duration: "Anonyme et gratuit, environ 1 minute.",
     qr: "Encore au guichet ? <b>Scannez le QR code affiché</b>, l'établissement sera déjà rempli.",
     civicTitle: "Un geste citoyen : donner son avis, c'est faire entendre la voix des usagers.",
