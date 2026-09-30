@@ -136,19 +136,22 @@
   top: 0;
   width: 24px;
   height: 24px;
+  box-sizing: border-box;
   border-radius: 50%;
   background: var(--hero);
   border: 1px solid var(--ticket-line);
 }
 
+/* Centred on the ticket's 1px border, and clipped half a pixel beyond the
+   centre so the notch hides that border instead of sitting next to it. */
 .perforation::before {
   left: -12.5px;
-  clip-path: inset(0 0 0 50%);
+  clip-path: inset(0 0 0 calc(50% - 0.5px));
 }
 
 .perforation::after {
   right: -12.5px;
-  clip-path: inset(0 50% 0 0);
+  clip-path: inset(0 calc(50% - 0.5px) 0 0);
 }
 
 /* ---- Stub ---- */
