@@ -55,7 +55,7 @@ export const fr = {
     lead: "Vous avez utilisé un service, public ou privé ? Dites-nous comment ça s'est passé. Votre avis aide à améliorer les services au Sénégal.",
     duration: "Anonyme et gratuit, environ 1 minute.",
     qr: "Encore au guichet ? <b>Scannez le QR code affiché</b>, l'établissement sera déjà rempli.",
-    civicTitle: "Un geste citoyen : donner son avis, c'est participer.",
+    civicTitle: "Un geste citoyen : donner son avis, c'est faire entendre la voix des usagers.",
     civicLead: "Chaque expérience compte : mairie, hôpital, école, banque, transport, hôtel, restaurant.",
     civicPoints: [
       { title: "Un avis honnête et respectueux", text: "Décrivez ce que vous avez vécu, avec respect." },
