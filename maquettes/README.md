@@ -14,7 +14,7 @@ Ces fichiers ne s'ouvrent pas seuls dans un navigateur : ils ont besoin du moteu
 | `A-fond-file.dc.html` | Option de fond 2 : file de tickets |
 | `A-fond-tricolore.dc.html` | Option de fond 4 : bande tricolore verticale |
 | `A-fond-photo.dc.html` | Option de fond 5 : photo de guichet (emplacement) |
-| `A-accueil-photo.dc.html` | Essai (2026-09-30) : accueil avec une photo (Monument de la Renaissance africaine), 2 variantes téléphone et 1 ordinateur. La photo est stockée dans le canevas (`/_blob/…`) |
+| `A-accueil-photo.dc.html` | Essai (2026-09-30) : accueil avec une photo en bandeau (variante retenue), BRT de Dakar et Monument de la Renaissance pour comparer, plus la version ordinateur avec le BRT. La photo est stockée dans le canevas (`/_blob/…`) |
 | `B-une-question.dc.html` | Variante B, une question par écran (pour mémoire) |
 | `C-civic-tech.dc.html` | Variante C, civic-tech moderne (pour mémoire) |
 | `D-conversation.dc.html` | Variante D, conversation guidée (pour mémoire) |
