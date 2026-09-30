@@ -59,7 +59,7 @@ export const fr = {
     civicTitle: "Un geste citoyen : donner son avis, c'est faire entendre la voix des usagers.",
     civicLead: "Chaque expérience compte : mairie, hôpital, école, banque, transport, hôtel, restaurant.",
     civicPoints: [
-      { title: "Écouter", text: "Décrivez ce que vous avez vécu, avec respect." },
+      { title: "Écouter", text: "Décrivez ce que vous avez vécu, avec respect et honnêteté." },
       {
         title: "Comprendre",
         text: "Un avis, ce n'est pas qu'une note. Les avis sont analysés pour montrer ce qui marche et ce qui doit changer.",
