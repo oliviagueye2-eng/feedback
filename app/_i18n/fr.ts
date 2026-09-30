@@ -150,7 +150,7 @@ export const fr = {
   details: {
     change: "Modifier",
     error: "Votre avis n'a pas pu être enregistré. Vérifiez vos réponses, puis réessayez.",
-    topicsTitle: "Qu'avez-vous remarqué ?",
+    topicsTitle: "Comment ça s'est passé ?",
     topicsHint: "(choisissez seulement ce qui vous concerne)",
     good: "Bien",
     bad: "Pas bien",

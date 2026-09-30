@@ -324,7 +324,7 @@ Chaque option de `OVERALL_SATISFACTION` a aussi un **libellé de relance** (stoc
 | `DISSATISFIED`, `VERY_DISSATISFIED` | Que s'est-il passé ? |
 
 ### topic
-Thèmes proposés après la question essentielle (écran 2b), sous « Qu'avez-vous remarqué ? ». Pour chaque thème, l'usager peut toucher « Bien » ou « Pas bien », ou ne rien toucher (option D, 2026-09-30) : une visite mitigée se dit (bon accueil, attente trop longue).
+Thèmes proposés après la question essentielle (écran 2b), sous « Comment ça s'est passé ? ». Pour chaque thème, l'usager peut toucher « Bien » ou « Pas bien », ou ne rien toucher (option D, 2026-09-30) : une visite mitigée se dit (bon accueil, attente trop longue).
 
 | Colonne | Type | Note |
 |---|---|---|
