@@ -33,7 +33,8 @@ export async function EstablishmentScreen({
   const { common, establishment: t } = await getDictionary();
   // An organisation rated as a whole (Senelec in general) is not a place.
   const general = establishment.scope === "general";
-  const details = [general ? common.inGeneral : establishment.municipalityName, establishment.sectorLabel]
+  // An organisation as a whole has no municipality: only its sector shows.
+  const details = [establishment.municipalityName, establishment.sectorLabel]
     .filter(Boolean)
     .join(", ");
   const qrService = qr?.serviceId ? establishment.services.find((s) => s.id === qr.serviceId) : undefined;

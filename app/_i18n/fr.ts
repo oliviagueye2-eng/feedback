@@ -23,10 +23,9 @@ export const fr = {
     optional: "(facultatif)",
     back: "Retour",
     giveFeedback: "Donner mon avis",
-    searchLabel: "Dans quel établissement êtes-vous allé(e) ?",
+    searchLabel: "Quel établissement ou organisme voulez-vous évaluer ?",
     searchPlaceholder: "Ex. : hôpital Fann",
     savingFeedback: "Enregistrement de votre avis…",
-    inGeneral: "En général",
   },
 
   header: {

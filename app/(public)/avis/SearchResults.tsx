@@ -18,14 +18,13 @@ const BuildingIcon = () => (
 );
 
 /** The texts of the results, given by the page. */
-export type SearchTexts = Dictionary["search"] & Pick<Dictionary["common"], "inGeneral">;
+export type SearchTexts = Dictionary["search"];
 
-/** Under the name: municipality and sector, whichever are known; "En général" for an organisation as a whole. */
-const details = (e: EstablishmentSummary, inGeneral: string) =>
-  [e.scope === "general" ? inGeneral : e.municipalityName, e.sectorLabel].filter(Boolean).join(", ");
+/** Under the name: municipality and sector, whichever are known (an organisation as a whole has no municipality). */
+const details = (e: EstablishmentSummary) => [e.municipalityName, e.sectorLabel].filter(Boolean).join(", ");
 
-function Row({ establishment, icon, inGeneral }: { establishment: EstablishmentSummary; icon: boolean; inGeneral: string }) {
-  const under = details(establishment, inGeneral);
+function Row({ establishment, icon }: { establishment: EstablishmentSummary; icon: boolean }) {
+  const under = details(establishment);
   const logo = organizationLogoSrc(establishment.organizationCode);
   return (
     <li>
@@ -81,7 +80,7 @@ export function SearchResults({
             <span className="muted">{t.didYouMean}</span>
             <ul className={styles.box}>
               {result.suggestions.map((e) => (
-                <Row key={e.id} establishment={e} icon={false} inGeneral={t.inGeneral} />
+                <Row key={e.id} establishment={e} icon={false} />
               ))}
             </ul>
           </div>
@@ -107,7 +106,7 @@ export function SearchResults({
       <h2 className={styles.sectionTitle}>{t.resultsTitle}</h2>
       <ul className={styles.list}>
         {result.results.map((e) => (
-          <Row key={e.id} establishment={e} icon inGeneral={t.inGeneral} />
+          <Row key={e.id} establishment={e} icon />
         ))}
       </ul>
       <Link href={newEstablishmentHref(typed)} className={`${styles.row} ${styles.notFound}`}>
