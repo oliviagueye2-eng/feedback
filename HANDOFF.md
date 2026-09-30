@@ -1,7 +1,7 @@
 # HANDOFF
 
 Document de passation pour reprendre le travail avec un contexte vierge.
-Dernière mise à jour : 2026-09-30.
+Dernière mise à jour : 2026-09-30 (soir : corrections du parcours, textes, traductions, écran 2b en « Bien / Pas bien », logos).
 
 ---
 
@@ -22,8 +22,10 @@ Le dépôt `oliviagueye2-eng/allo-pro-sn` est un **autre projet**, sans rapport 
 - **Tout ce qui est dans la base et le code est en anglais** (tables, colonnes, enums, codes) ; la documentation et l'interface sont en français.
 - **Ne pas ajouter de fonctionnalités non demandées** : un micro et des boutons « Écouter » ajoutés de ma propre initiative ont été refusés puis retirés. Proposer, puis attendre son accord.
 - Design : elle veut un rendu **institutionnel et original, qui ne « fasse pas IA »**. Le skill **frontend-design** est installé dans ses Compétences : le charger (outil Skill) avant tout travail d'interface. Résumé plus bas au cas où il manquerait.
-- Elle valide pas à pas : présenter des options courtes avec une recommandation, puis appliquer.
-- Commits directement sur `main` (dépôt créé vide par elle ; aucune branche imposée). Terminer les messages de commit par les lignes `Co-Authored-By` / `Claude-Session` demandées par l'environnement.
+- Elle valide pas à pas : présenter des options courtes avec une recommandation, puis appliquer. Pour un choix visuel, lui **montrer des captures côte à côte** (Playwright, puis une page HTML qui assemble les images) : elle tranche vite.
+- Elle répond souvent en quelques mots (« A et C », « ok pour les deux ») : n'appliquer que ce qu'elle a validé explicitement, et redemander pour le reste.
+- Textes : phrases courtes, mots de tous les jours, pas de barre oblique (« organisme ou établissement » plutôt que « organisme/établissement »), deux-points suivis d'une minuscule, « voulez-vous » plutôt que « souhaitez-vous ».
+- L'environnement de session impose une branche de travail (`ccr-…` ou `claude/…`) : y committer et pousser, puis fusionner dans `main` seulement quand elle dit « merge dans main ». Terminer les messages de commit par les lignes `Co-Authored-By` / `Claude-Session` demandées par l'environnement.
 
 ---
 
@@ -33,7 +35,7 @@ Le dépôt `oliviagueye2-eng/allo-pro-sn` est un **autre projet**, sans rapport 
 - Canevas Claude Design : https://claude.ai/artifact/FChdnQZ6GhpK52ZJqFxwQ7 (copie des fichiers dans `maquettes/`, voir `maquettes/README.md`).
 - **Variante A « minimaliste institutionnelle » retenue** (B, C, D gardées pour mémoire, non mises à jour).
 - Identité : police **Atkinson Hyperlegible**, vert `#0B6B3A`, encre `#13261C`, fond `#F3F6F4`, bandeau tricolore du drapeau, logo (voir 4g). Sur le site, **toute la palette est nommée dans `app/globals.css`** (aucune couleur en dur ailleurs) ; le bandeau tricolore reprend les couleurs du logo (`#137A36`, `#FACC15`, `#CD1E22`).
-- **Page d'accueil = ticket de file d'attente** « C'est votre tour. » (N° 047), fond clair avec tickets N° 045/046 qui dépassent derrière et **filigrane tricolore en diagonale dans le coin haut gauche** (option « 2b »). Encoches du ticket = vraies découpes (mask CSS) + demi-cercles qui redessinent la bordure. Versions mobile et ordinateur. Sur ordinateur, la recherche est dans le talon du ticket.
+- **Page d'accueil = ticket de file d'attente** « C'est votre tour. » (N° 047), **filigrane tricolore en diagonale dans le coin haut gauche** (option « 2b »). Encoches du ticket : vraies découpes (mask CSS) sur ordinateur ; sur téléphone, demi-cercles centrés sur la bordure (corrigé le 2026-09-30). Sur ordinateur, la recherche est dans le talon du ticket.
 - Parcours A :
   ```
   Accueil ─► 0. Recherche ─► 0a. Autocomplétion ─┬─► 1. Établissement identifié
@@ -51,10 +53,16 @@ Le dépôt `oliviagueye2-eng/allo-pro-sn` est un **autre projet**, sans rapport 
 - **« Quand êtes-vous venu(e) ? »** (aujourd'hui / moins d'une semaine / moins d'un mois / plus d'un mois), seulement hors QR code. On stocke un **mois de visite** calculé une fois pour toutes ; « plus d'un mois » est gardé mais exclu des notes publiées.
 - **Pas de micro, pas de lecture audio, pas de photo** (photo notée en « évolution future »).
 - **Anonymat** : aucune donnée personnelle, `started_at` arrondi à l'heure.
+- **Écran 2b, option D (2026-09-30)** : « Comment ça s'est passé ? (choisissez seulement ce qui vous concerne) », puis pour **chaque thème deux boutons 👍 Bien / 👎 Pas bien** (on peut n'en toucher aucun ; toucher à nouveau annule), « Autre » ouvre « Précisez » ; puis « **Détail de votre expérience** (facultatif) », texte d'aide « Décrivez votre expérience : les points positifs, les points négatifs, vos suggestions d'amélioration… ». Remplace les cases à cocher sous « Ce qui vous a plu / Ce qui n'a pas été » : une visite mitigée se dit. Les **libellés de relance** (« Que s'est-il passé ? »…) ne sont plus affichés (gardés dans la base). Les notes par thème (étoiles) ont été écartées : trop longues ; des notes fines iront dans le questionnaire détaillé.
+- **Recherche** : « Quel établissement ou organisme voulez-vous évaluer ? » (on peut évaluer un organisme sans lieu : opérateur, Senelec) ; aide « Recherche par nom, type ou commune » ; pas de titre au-dessus des résultats ; lien « Je ne le trouve pas dans la liste » / « Le saisir moi-même » ; sous le nom : commune puis secteur, **plus de « En général »** (un organisme dans son ensemble n'affiche que son secteur) ; plus de bouton « Rechercher » quand JavaScript fonctionne (Entrée marche) ; lien « ‹ Retour à l'accueil » sous l'encadré ; logo et nom de l'en-tête cliquables vers l'accueil.
+- **Saisie d'un établissement (0c)** : titre « Ajouter un organisme ou un établissement à évaluer », « Nom (minimum 3 lettres) » (**3 lettres au moins**, vérifié aussi côté serveur), « Localité ou quartier » (exemple « Dakar, Médina » : le quartier doit être dans la localité), « Il sera ajouté à la liste après validation. Votre avis compte dès maintenant. », bouton « Continuer avec « nom tapé » » (coupé après 30 caractères).
+- **Accueil, textes** : accroche du ticket « Vous avez utilisé un service, public ou privé ? Dites-nous comment ça s'est passé. Votre avis aide à améliorer les services au Sénégal. » ; section « Un geste citoyen : donner son avis, c'est faire entendre la voix des usagers. » avec **Écouter / Comprendre / Améliorer** (cycle retenu, résumé de la taxonomie de Bloom) ; « Comment ça marche » : 1. « Trouvez l'établissement ou l'organisme à évaluer. » 3. « Votre avis est enregistré. C'est terminé ! » ; pied de page : « Une plateforme au service de la transparence et de la bonne gouvernance. »
+- **Mis de côté pour une future page « À propos »** : la devise « Jub, Jubbal, Jubanti » (prudence : devise du programme du gouvernement actuel, à valider avec l'organisme porteur ; traductions à faire valider par un locuteur wolof) et la version Bloom en 6 étapes. Ne pas reprendre le slogan d'un produit anglais qu'elle avait collé (« Hear every citizen. Improve every service. »).
 
 ### Documentation
 - `docs/architecture-base-de-donnees.md` : modèle complet (source de vérité fonctionnelle ; en cas d'écart, les migrations font foi).
-- `docs/architecture-technique.md` : Next.js SSR, API REST `/webapi/`, organisation du code, hébergement.
+- `docs/architecture-technique.md` : Next.js SSR, API REST `/webapi/`, organisation du code, hébergement, **textes et traductions**.
+- `docs/processus-recolte-avis.md` : **canevas de la récolte d'un avis** selon la taxonomie de Bloom (étapes, question, obligatoire, écran, donnée, état), fiche d'un avis, pourquoi la satisfaction vient avant les thèmes, décisions en attente.
 - `README.md` : démarrage, commandes, organisation, mise en ligne Vercel + Neon.
 
 ### Code (Next.js 16, TypeScript)
@@ -63,24 +71,26 @@ Le dépôt `oliviagueye2-eng/allo-pro-sn` est un **autre projet**, sans rapport 
   - `src/domain/` = règles métier, **interdiction d'importer Next.js/React** (règle ESLint `no-restricted-imports`).
   - `src/db/` = accès PostgreSQL + `migrations/`.
   - `src/lib/` = utilitaires (normalisation de texte, validation).
+  - `app/_i18n/` = **tous les textes de l'interface** dans `fr.ts`, rangés par écran (aucun texte en dur dans les pages). `getDictionary()` dans les composants serveur ; les composants client reçoivent leurs textes en props. Espaces insécables ajoutées au chargement du français ; `fill` ({nom}), `rich` (<b>, <a>), `plural` ({ one, other }). Méthode « dictionnaires » de la doc Next.js, sans bibliothèque (choix validé). Langue fixe `fr` : pas encore de choix de langue (adresse `/wo/…` ou réglage : non décidé).
 - Pages : `/` (accueil ticket + écran d'ouverture à la 1re visite), `/avis` (recherche, fonctionne sans JS), `/avis/nouveau` (0c), `/avis/[id]` et `/e/[code]` (écran 1), `/donner/[id]` (écran 2), `/donner/[id]/precisions` (écran 2b), `/donner/[id]/enregistre` (**provisoire**, à remplacer par les écrans 4-5), `/admin` (vide).
 - Routes `/webapi/` : qr, establishments (GET recherche, POST saisie usager), establishments/[id], stats, feedbacks/[id] (PUT), answers/[questionCode], topics, comment, questionnaire, internal/refresh-stats (cron).
 - Tout est **câblé de bout en bout** et **les requêtes `src/db/` sont écrites** (2026-09-29) : recherche (trigrammes `<%` / `word_similarity` sur nom + alias, services → établissements, commune tapée → établissements de la commune en tête, `matchType = service` quand le service correspond au moins aussi bien qu'un nom), fiche établissement (un établissement fusionné mène à son remplaçant ; seuls `active` et `pending_review` acceptent des avis), QR code (actif et établissement actif), saisie usager (`pending_review`), statistiques publiées (services additionnés, seuil 10), avis (ré-envoi idempotent ; `visit_month` ne change que si la réponse « Quand êtes-vous venu(e) ? » change), réponses (question cherchée dans ESSENTIAL puis dans le questionnaire détaillé choisi ; la première réponse détaillée enregistre `detailed_questionnaire_id`), thèmes (remplacement en une instruction), commentaire (modifié → repasse en modération).
 - `src/db/client.ts` : fonction `query()` unique ; erreurs PostgreSQL de clé étrangère / identifiant invalide traduites en 400/404 ; `useTestDatabase()` branche PGlite dans les tests.
 - Pas encore fait : `search_log` n'est pas alimenté.
+- **Logos des organismes** (mécanisme prêt, aucun logo) : fichier `public/logos/{code en minuscules avec tirets}.svg` (SENELEC → `senelec.svg`), liste `ORGANIZATIONS_WITH_LOGO` dans `app/_components/organizationLogo.ts` (un test vérifie fichier présent et < 10 Ko), aucune colonne en base ; affiché dans les résultats et sur l'écran 1, pour l'organisme et ses agences. **Vérifier l'accord des organismes** avant de publier un logo.
 - Règles métier écrites et testées : mois de visite, choix du questionnaire (service → secteur → GENERIC), validation des thèmes/« Autre », normalisation de texte alignée sur `unaccent()` SQL (ligatures œ/æ incluses), SSL strict.
-- **78 tests Vitest** (2026-09-30), dont `src/db/queries.test.ts` (requêtes testées de bout en bout via `src/domain`) et un test qui applique les vraies migrations sur un PostgreSQL en mémoire (**PGlite**, avec `pg_trgm` et `unaccent`).
+- **91 tests Vitest** (2026-09-30 soir), dont `src/db/queries.test.ts` (requêtes testées de bout en bout via `src/domain`) et un test qui applique les vraies migrations sur un PostgreSQL en mémoire (**PGlite**, avec `pg_trgm` et `unaccent`).
 
 ### Base de données
 - `src/db/migrations/0001_schema.sql` : toutes les tables, contraintes CHECK (enums en `text` + CHECK), triggers `search_text` (établissement : nom + alias ; service : libellé FR + synonymes), index trigrammes, vue matérialisée `monthly_stats` (suit les fusions, exclut `over_month`).
 - `src/db/migrations/0002_reference_data.sql` : 18 secteurs (19 depuis 0008 : `UTILITIES` devenu `ELECTRICITY`, plus `WATER`), 9 thèmes (revus par 0010), questionnaire ESSENTIAL (question + 5 options + libellés de relance), GENERIC en brouillon.
-- Migrations suivantes, **toutes appliquées sur Neon** : 0003 secteur de l'établissement, 0004 premiers établissements réels, 0005-0006 organismes, 0007 mots ignorés de la recherche, 0008 Eau / Électricité, 0009 « hôtel de ville » = « mairie », **0010 thèmes par secteur** (voir 4j).
+- Migrations suivantes, **toutes appliquées sur Neon** : 0003 secteur de l'établissement, 0004 premiers établissements réels, 0005-0006 organismes, 0007 mots ignorés de la recherche, 0008 Eau / Électricité, 0009 « hôtel de ville » = « mairie », 0010 thèmes par secteur (voir 4j), **0011 `feedback_topic.sentiment`** (`positive` / `negative`, obligatoire ; les anciens thèmes ont reçu le sens qu'ils avaient à l'écran).
 - Choix de modèle : alias = colonne `establishment.aliases text[]` (pas de table), synonymes = `service.synonyms text[]` ; public/privé = `establishment.ownership` (pas un secteur) ; statuts d'établissement `active/pending_review/rejected/merged/closed`.
 - `npm run db:migrate` (`scripts/migrate.mjs`) : une transaction par fichier, table `schema_migration`, verrou advisory, connexion directe `DATABASE_URL_UNPOOLED` si présente, conversion `sslmode=require` → `verify-full`.
 
 ### Hébergement (prototype en ligne)
 - **Vercel** (dépôt connecté, région `fra1`) + **Neon** (projet `floral-credit-39387239`, région Frankfurt, PostgreSQL 17 conseillé). Variables `DATABASE_URL` (poolée) et `DATABASE_URL_UNPOOLED` (directe) configurées en « Secret ».
-- Les migrations tournent au build de **production** uniquement (`npm run vercel-build`) ; les migrations **0001 à 0010 sont appliquées sur Neon** (dernier déploiement : commit `57dd1d2`, 2026-09-30).
+- Les migrations tournent au build de **production** uniquement (`npm run vercel-build`) ; les migrations **0001 à 0011 sont appliquées sur Neon** (dernier déploiement : commit `ab5cae8`, 2026-09-30, statut Vercel « success »).
 - `vercel.json` : cron quotidien 2 h UTC sur `/webapi/internal/refresh-stats`.
 - Production nationale : hébergement souverain au Sénégal ou cloud européen, en conteneur (non fait).
 
@@ -106,6 +116,9 @@ Le dépôt `oliviagueye2-eng/allo-pro-sn` est un **autre projet**, sans rapport 
 - `next/script` `beforeInteractive` avec un script **inline** : Next le met en file d'attente, il ne s'exécute **pas avant le premier affichage** → utiliser un `<script>` simple dans le `<head>` du layout racine. (L'avertissement React « Encountered a script tag » n'apparaît en dev qu'après une erreur 500, quand React reconstruit la page.)
 - Modules CSS : une classe globale comme `.muted` doit s'écrire `:global(.muted)`, sinon la règle ne s'applique pas (corrigé le 2026-09-30).
 - `pkill -f "next dev"` dans une commande qui contient elle-même ce texte tue le shell : arrêter le serveur dans une commande séparée.
+- PostgreSQL local dans le scratchpad : s'arrête sans cesse (droits remis à 700). **Remède adopté** : données copiées dans `/opt/pgtest/data` (propriétaire `postgres`), socket dans `/var/run/postgresql`, serveur lancé avec l'outil Bash en `run_in_background` (timeout 7 200 000 ms) : `su postgres -c "/usr/lib/postgresql/16/bin/postgres -D /opt/pgtest/data -p 5499 -k /var/run/postgresql"` (supprimer `postmaster.pid` s'il reste). Le serveur `next dev` aussi en `run_in_background`. Tous deux s'arrêtent au bout de la limite de temps : les relancer. `/opt` ne survit pas à un nouveau conteneur : refaire `initdb` + `npm run db:migrate` si besoin.
+- Changer un texte vérifié par un test (`app/_i18n/i18n.test.tsx`) sans relancer les tests : un commit rouge est parti le 2026-09-30, corrigé aussitôt. Toujours `npm test` avant de pousser.
+- Elle avait écrit « Autres référence » sans pièce jointe : ne pas deviner, redemander.
 
 ---
 
@@ -136,6 +149,13 @@ Le dépôt `oliviagueye2-eng/allo-pro-sn` est un **autre projet**, sans rapport 
    - Migration **0010** : 10 thèmes communs + 19 thèmes de secteur (liste complète dans `docs/architecture-base-de-donnees.md`) ; Prix, Accessibilité, Sécurité, Qualité du service **désactivés**. **Règle de `topic_sector`** : un thème sans ligne est commun ; avec des lignes, seulement dans ces secteurs. Secteur de l'avis = celui du motif, sinon du type, sinon de l'établissement.
    - **Écran 2b** (`/donner/{id}/precisions`, action `saveDetails`) : titre « Ce qui vous a plu » (très satisfait / satisfait) ou « Ce qui n'a pas été » (autres) ; « Autre » ouvre un champ (`:has()`) ; commentaire facultatif sous le libellé de relance ; tout facultatif, un seul bouton « Enregistrer mon avis » ; au retour, choix pré-remplis ; thème d'un autre secteur refusé ; commentaire vidé supprimé.
 4k. **Prochaine étape** : écrans **4-5** (« Votre avis est enregistré », puis « Terminer » / « Continuer le questionnaire »), puis 6 (questionnaire détaillé : aucun n'est encore rédigé, GENERIC en brouillon) et 7 (Merci). Ensuite : file d'envoi hors connexion.
+4l. **Session du 2026-09-30 (soir)**, fusionnée dans `main` (`ab5cae8`) : corrections du parcours et textes (voir « Décisions fonctionnelles »), dictionnaire `fr.ts`, écran 2b option D + migration 0011, mécanisme des logos, canevas Bloom (`docs/processus-recolte-avis.md`). **Décisions en attente** :
+   - étape 9 du canevas (niveau « Créer ») : ajouter une question de proposition à la fin des questionnaires détaillés (ex. « Qu'est-ce qui aurait rendu votre visite plus simple ? ») ;
+   - rédiger les questionnaires détaillés (étapes 7-8 : `GOAL_ACHIEVED`, faits mesurables, notes fines sur 3-4 thèmes du secteur), en commençant par santé, administration, éducation ;
+   - seuil de publication (10 avis par mois et par établissement ?) ;
+   - accord des organismes pour leurs logos ;
+   - page « À propos » (devise Jub Jubbal Jubanti, version Bloom en 6 étapes, bonne gouvernance développée) ;
+   - langues au lancement et manière de retenir la langue choisie.
 5. **Plus tard / à noter** : *nice to have* : journal des recherches (`search_log`, une ligne quand l'usager choisit ou saisit un établissement, jamais à chaque lettre) ; ajouter `CRON_SECRET` dans Vercel (noté dans le README) ; questions du questionnaire GENERIC ; import du territoire et du référentiel (sources : ministères, ANSD, OpenStreetMap sous ODbL) ; back-office et authentification des agents ; versionnement `/webapi/v1` ; décision d'hébergement de production (obligation d'hébergement au Sénégal ? loi 2008-12, CDP).
 
 ---
