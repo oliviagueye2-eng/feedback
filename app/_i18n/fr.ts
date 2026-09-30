@@ -70,7 +70,7 @@ export const fr = {
     ],
     stepsTitle: "Comment ça marche",
     steps: [
-      "Trouvez l'établissement où vous êtes allé(e).",
+      "Trouvez l'établissement ou l'organisme à évaluer.",
       "Dites si vous êtes satisfait(e). Une seule question est obligatoire.",
       "Votre avis est enregistré. C'est terminé !",
     ],
