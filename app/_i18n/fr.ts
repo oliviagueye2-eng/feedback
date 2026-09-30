@@ -106,7 +106,7 @@ export const fr = {
     sector: "Secteur",
     sectorPlaceholder: "Choisir un secteur",
     municipality: "Localité ou quartier",
-    municipalityPlaceholder: "Ex. : Ndiaganiao, Médina",
+    municipalityPlaceholder: "Ex. : Dakar, Médina",
     note: "Il sera ajouté à la liste après validation. Votre avis compte dès maintenant.",
     submit: "Continuer avec « {name} »",
     submitNoName: "Continuer",
