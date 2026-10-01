@@ -56,15 +56,14 @@ const toSummary = (row: SummaryRow): EstablishmentSummary => ({
  */
 const SUMMARY_COLUMNS = `e.id, e.name,
   coalesce(m.name, e.municipality_input) AS municipality_name, et.code AS type_code,
-  sl.text AS sector_label, e.scope, o.code AS organization_code`;
+  sl.label AS sector_label, e.scope, o.code AS organization_code`;
 
 const SUMMARY_JOINS = `
   LEFT JOIN municipality m ON m.id = e.municipality_id
   LEFT JOIN establishment_type et ON et.id = e.type_id
   LEFT JOIN organization o ON o.id = e.organization_id
-  LEFT JOIN translation sl ON sl.target_table = 'sector'
-    AND sl.target_id = coalesce(et.sector_id, e.sector_id)
-    AND sl.field = 'label' AND sl.language = 'fr'`;
+  LEFT JOIN sector_translation sl ON sl.sector_id = coalesce(et.sector_id, e.sector_id)
+    AND sl.language = 'fr'`;
 
 const toDetail = (row: DetailRow): EstablishmentDetail => ({
   ...toSummary(row),
@@ -216,21 +215,19 @@ export async function findSimilarEstablishments(
 /** Sectors with their French label, in alphabetical order (screen 0c). */
 export async function listSectors(): Promise<Sector[]> {
   return query<Sector>(
-    `SELECT s.code, t.text AS label
+    `SELECT s.code, t.label
      FROM sector s
-     JOIN translation t ON t.target_table = 'sector' AND t.target_id = s.id
-       AND t.field = 'label' AND t.language = 'fr'
-     ORDER BY normalize_search(t.text)`,
+     JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
+     ORDER BY normalize_search(t.label)`,
   );
 }
 
 const DETAIL_COLUMNS = `
   ${SUMMARY_COLUMNS},
-  coalesce((SELECT json_agg(json_build_object('id', s.id, 'code', s.code, 'label', st.text)
-                           ORDER BY coalesce(st.text, s.code))
+  coalesce((SELECT json_agg(json_build_object('id', s.id, 'code', s.code, 'label', st.label)
+                           ORDER BY coalesce(st.label, s.code))
             FROM establishment_service es JOIN service s ON s.id = es.service_id
-            LEFT JOIN translation st ON st.target_table = 'service' AND st.target_id = s.id
-              AND st.field = 'label' AND st.language = 'fr'
+            LEFT JOIN service_translation st ON st.service_id = s.id AND st.language = 'fr'
             WHERE es.establishment_id = e.id), '[]') AS services`;
 
 const DETAIL_JOINS = SUMMARY_JOINS;

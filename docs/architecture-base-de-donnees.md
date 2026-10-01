@@ -14,7 +14,7 @@ Le schéma est créé par les migrations SQL de [`src/db/migrations/`](../src/db
 - Noms en `snake_case`, tables au singulier (`establishment`, pas `establishments`).
 - Clés étrangères : `<table>_id` (`establishment_id`).
 - Dates : suffixe `_at` (`created_at`), booléens : préfixe `is_` (`is_active`).
-- Les textes affichés à l'usager (libellés, questions) ne sont pas dans les colonnes de code : ils passent par la table `translation`.
+- Les textes affichés à l'usager (libellés, questions) ne sont pas dans les colonnes de code : ils passent par une table de traduction propre à chaque table (`sector_translation`, `question_translation`…), une ligne par langue.
 - Ce document reste rédigé en français ; seuls les identifiants sont en anglais.
 - Les valeurs d'énumération sont stockées en `text` avec une contrainte `CHECK`, plus simples à faire évoluer que les types `ENUM` de PostgreSQL.
 
@@ -65,7 +65,7 @@ Les tables se répartissent en quatre blocs :
 | Bloc | Tables | Rôle |
 |---|---|---|
 | Référentiel | region, department, municipality, sector, establishment_type, establishment, service, establishment_service, qr_code | Ce que l'usager cherche et évalue |
-| Questionnaires | questionnaire, question, answer_option, topic, topic_sector, translation | Ce qu'on demande à l'usager |
+| Questionnaires | questionnaire, question, answer_option, topic, topic_sector, tables `*_translation` | Ce qu'on demande à l'usager |
 | Collecte | feedback, answer, comment, feedback_topic | Ce que l'usager répond |
 | Exploitation | monthly_stats (vue), search_log, moderation_action | Résultats publiés, amélioration du référentiel |
 
@@ -104,7 +104,7 @@ Domaine général. Partagé par les types d'établissement et par les services.
 | code | text unique | `HEALTH`, `EDUCATION`, `ADMINISTRATION`, `JUSTICE`, `SECURITY`, `TAX`, `ELECTRICITY`, `WATER`, `TRANSPORT`, `SOCIAL`, `FOOD_SERVICE`, `HOSPITALITY`, `REAL_ESTATE`, `RETAIL`, `BANKING_INSURANCE`, `CULTURE`, `SPORT`, `TELECOM`, `TOURISM` (agences de voyages, guides, sites touristiques ; l'hébergement reste en `HOSPITALITY`, les musées en `CULTURE`). `ELECTRICITY` et `WATER` remplacent l'ancien `UTILITIES` « Eau et électricité » (migration 0008). Un secteur n'est ni public ni privé : c'est `establishment.ownership` qui le précise |
 | fallback_questionnaire_id | fk questionnaire | questionnaire utilisé quand on connaît le secteur mais pas le service (sinon GENERIC) |
 
-Le libellé affiché passe par `translation`.
+Le libellé affiché passe par sa table de traduction (`*_translation`).
 
 ### establishment_type
 Genre de lieu : mairie, centre d'état civil, hôpital, poste de santé, école primaire, lycée, commissariat, etc.
@@ -115,7 +115,7 @@ Genre de lieu : mairie, centre d'état civil, hôpital, poste de santé, école 
 | code | text unique | `TOWN_HALL`, `CIVIL_REGISTRY_CENTER`, `HOSPITAL`, `HEALTH_POST`, `PRIMARY_SCHOOL`… |
 | sector_id | fk sector | |
 
-Le libellé affiché passe par `translation`.
+Le libellé affiché passe par sa table de traduction (`*_translation`).
 
 À quoi sert le type :
 1. **Comparer ce qui est comparable.** Les statistiques et les classements publiés comparent un hôpital à d'autres hôpitaux, pas à un poste de santé.
@@ -315,7 +315,7 @@ Trois sortes de questionnaires :
 | value | smallint | pour les calculs (1 à 5, etc.) |
 | position | smallint | |
 
-Chaque option de `OVERALL_SATISFACTION` a aussi un **libellé de relance** (stocké dans `translation` avec `field = follow_up_prompt`). Il était affiché au-dessus du texte libre de l'écran 2b ; depuis le 2026-09-30 (option D), ce texte libre a un libellé unique, « Détail de votre expérience », et les libellés de relance ne sont plus affichés (gardés pour un usage futur) :
+Chaque option de `OVERALL_SATISFACTION` a aussi un **libellé de relance** (colonne `follow_up_prompt` de `answer_option_translation`). Il était affiché au-dessus du texte libre de l'écran 2b ; depuis le 2026-09-30 (option D), ce texte libre a un libellé unique, « Détail de votre expérience », et les libellés de relance ne sont plus affichés (gardés pour un usage futur) :
 
 | Option | Libellé de relance |
 |---|---|
@@ -335,7 +335,7 @@ Thèmes proposés après la question essentielle (écran 2b), sous « Comment ç
 
 Liste revue le 2026-09-30 (migration `0010_topics_by_sector.sql`). **Thèmes communs**, affichés partout :
 
-| code | Libellé (dans `translation`) |
+| code | Libellé (dans `topic_translation`) |
 |---|---|
 | `STAFF` | Accueil et politesse |
 | `PROFESSIONALISM` | Professionnalisme du personnel |
@@ -382,18 +382,19 @@ Quels thèmes afficher selon le secteur. Un thème **sans ligne** dans cette tab
 | topic_id | fk |
 | sector_id | fk |
 
-### translation
-Table unique pour tous les textes traduisibles (libellés de questions, d'options, de services, de types d'établissement).
+### Tables de traduction (`*_translation`)
+Une table par table traduite (migration 0013, 2026-10-01 ; elle remplace la table unique `translation`, dont le lien n'était pas vérifié par la base). Chaque table a une clé étrangère vers la ligne traduite (la traduction est supprimée avec elle) et une ligne par langue.
 
-| Colonne | Type |
-|---|---|
-| target_table | text (`question`, `answer_option`, `topic`, `service`, `sector`, `establishment_type`…) |
-| target_id | int |
-| field | text (`label` par défaut, `follow_up_prompt` pour les libellés de relance) |
-| language | text (`fr`, `wo`, `ff`, `srr`…) |
-| text | text |
+| Table | Clé | Colonnes de texte |
+|---|---|---|
+| `sector_translation` | `(sector_id, language)` | `label` |
+| `establishment_type_translation` | `(establishment_type_id, language)` | `label` |
+| `service_translation` | `(service_id, language)` | `label` (le libellé français alimente `service.search_text`, recalculé par trigger) |
+| `topic_translation` | `(topic_id, language)` | `label` |
+| `question_translation` | `(question_id, language)` | `label` |
+| `answer_option_translation` | `(answer_option_id, language)` | `label`, `follow_up_prompt` (facultatif : libellé de relance) |
 
-Clé unique `(target_table, target_id, field, language)`.
+`language` : `fr`, `wo`, `ff`, `srr`… Ce qu'on traduit, ce sont les réponses **proposées** (`answer_option`) ; les réponses données par les usagers (`answer`) ne se traduisent pas. Les noms d'établissements et d'organismes ne sont pas traduits (noms propres).
 
 ---
 
@@ -507,7 +508,7 @@ Historique des actions des agents : validation ou fusion d'un établissement sai
 | QR code scanné | qr_code, establishment | |
 | 1. Établissement identifié | establishment, establishment_service | feedback (création, dont `visit_period` et `visit_month`) |
 | 2. Question essentielle | questionnaire ESSENTIAL | answer |
-| 2b. Thèmes et texte libre | topic, topic_sector, translation (libellés de relance) | feedback_topic, comment |
+| 2b. Thèmes et texte libre | topic, topic_sector, topic_translation | feedback_topic, comment |
 | 3 à 5. Enregistrement, confirmation, choix | | feedback.step |
 | 6. Questionnaire détaillé | service → questionnaire (ou GENERIC) | answer |
 | 7. Remerciement | | feedback.completed_at |

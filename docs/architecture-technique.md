@@ -48,7 +48,7 @@ Le jour où l'API doit devenir un serveur séparé, on déplace `src/domain` et 
 
 Deux sources, selon l'origine du texte :
 
-- **Textes venant de la base** (questions, réponses, thèmes, services, secteurs, types d'établissement) : table `translation`, une ligne par langue.
+- **Textes venant de la base** (questions, réponses, thèmes, services, secteurs, types d'établissement) : une table de traduction par table (`sector_translation`, `question_translation`, `answer_option_translation`…), une ligne par langue.
 - **Textes de l'interface** (titres, boutons, messages, exemples) : `app/_i18n/fr.ts`, rangés par écran. Aucun texte d'interface n'est écrit directement dans les pages.
 
 Fonctionnement (méthode des « dictionnaires » de la documentation Next.js, sans bibliothèque) :

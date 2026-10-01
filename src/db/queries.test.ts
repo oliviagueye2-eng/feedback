@@ -58,8 +58,8 @@ beforeAll(async () => {
 
     INSERT INTO service (code, sector_id, synonyms)
     SELECT 'CIVIL_REGISTRY_BIRTH', id, '{extrait de naissance}' FROM sector WHERE code = 'ADMINISTRATION';
-    INSERT INTO translation (target_table, target_id, language, text)
-    SELECT 'service', id, 'fr', 'État civil' FROM service WHERE code = 'CIVIL_REGISTRY_BIRTH';
+    INSERT INTO service_translation (service_id, language, label)
+    SELECT id, 'fr', 'État civil' FROM service WHERE code = 'CIVIL_REGISTRY_BIRTH';
   `);
 
   const add = async (key: string, name: string, aliases: string[], municipality: string | null, type: string, status = "active") => {

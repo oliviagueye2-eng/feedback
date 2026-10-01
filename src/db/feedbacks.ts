@@ -225,10 +225,9 @@ export interface TopicChoice {
 /** Screen 2b: the topics to show, in order, with what the user already touched. */
 export async function findTopicChoices(feedbackId: string): Promise<TopicChoice[]> {
   const rows = await query<{ code: string; label: string; sentiment: TopicSentiment | null; other_text: string | null }>(
-    `SELECT t.code, tr.text AS label, ft.sentiment, ft.other_text
+    `SELECT t.code, tr.label, ft.sentiment, ft.other_text
      FROM (${TOPICS_FOR_FEEDBACK}) t
-     JOIN translation tr ON tr.target_table = 'topic' AND tr.target_id = t.id
-       AND tr.field = 'label' AND tr.language = 'fr'
+     JOIN topic_translation tr ON tr.topic_id = t.id AND tr.language = 'fr'
      LEFT JOIN feedback_topic ft ON ft.feedback_id = $1 AND ft.topic_id = t.id
      ORDER BY t.position`,
     [feedbackId],
@@ -301,7 +300,7 @@ export async function findFeedbackContext(feedbackId: string): Promise<FeedbackC
     completed: boolean;
   }>(
     `SELECT e.id AS establishment_id, e.name AS establishment_name, e.scope, f.channel,
-            qc.code AS qr_code, f.service_id, f.visit_period, st.text AS service_label,
+            qc.code AS qr_code, f.service_id, f.visit_period, st.label AS service_label,
             f.step = 'completed' AS completed,
             (SELECT ao.code
              FROM answer a
@@ -311,8 +310,7 @@ export async function findFeedbackContext(feedbackId: string): Promise<FeedbackC
      FROM feedback f
      JOIN establishment e ON e.id = f.establishment_id
      LEFT JOIN qr_code qc ON qc.id = f.qr_code_id
-     LEFT JOIN translation st ON st.target_table = 'service' AND st.target_id = f.service_id
-       AND st.field = 'label' AND st.language = 'fr'
+     LEFT JOIN service_translation st ON st.service_id = f.service_id AND st.language = 'fr'
      WHERE f.id = $1`,
     [feedbackId],
   );
@@ -340,15 +338,11 @@ export interface EssentialQuestion {
 /** Screen 2: the essential question of the published questionnaire, in French. */
 export async function findEssentialQuestion(): Promise<EssentialQuestion | null> {
   const rows = await query<{ question: string; code: string; label: string; prompt: string | null }>(
-    `SELECT qt.text AS question, ao.code, ot.text AS label, pt.text AS prompt
+    `SELECT qt.label AS question, ao.code, ot.label, ot.follow_up_prompt AS prompt
      FROM question q
-     JOIN translation qt ON qt.target_table = 'question' AND qt.target_id = q.id
-       AND qt.field = 'label' AND qt.language = 'fr'
+     JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
      JOIN answer_option ao ON ao.question_id = q.id
-     JOIN translation ot ON ot.target_table = 'answer_option' AND ot.target_id = ao.id
-       AND ot.field = 'label' AND ot.language = 'fr'
-     LEFT JOIN translation pt ON pt.target_table = 'answer_option' AND pt.target_id = ao.id
-       AND pt.field = 'follow_up_prompt' AND pt.language = 'fr'
+     JOIN answer_option_translation ot ON ot.answer_option_id = ao.id AND ot.language = 'fr'
      WHERE q.code = 'OVERALL_SATISFACTION' AND q.questionnaire_id = ${PUBLISHED("ESSENTIAL")}
      ORDER BY ao.position`,
   );
@@ -443,14 +437,12 @@ export async function findDetailedQuestions(
     option_label: string;
     chosen: boolean;
   }>(
-    `SELECT q.code, q.type, qt.text AS label, ao.code AS option_code, ot.text AS option_label,
+    `SELECT q.code, q.type, qt.label, ao.code AS option_code, ot.label AS option_label,
             EXISTS (SELECT 1 FROM answer a WHERE a.feedback_id = $1 AND a.option_id = ao.id) AS chosen
      FROM question q
-     JOIN translation qt ON qt.target_table = 'question' AND qt.target_id = q.id
-       AND qt.field = 'label' AND qt.language = 'fr'
+     JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
      JOIN answer_option ao ON ao.question_id = q.id
-     JOIN translation ot ON ot.target_table = 'answer_option' AND ot.target_id = ao.id
-       AND ot.field = 'label' AND ot.language = 'fr'
+     JOIN answer_option_translation ot ON ot.answer_option_id = ao.id AND ot.language = 'fr'
      WHERE q.questionnaire_id = ${generic ? PUBLISHED(selected.code) : "$2::int"}
      ORDER BY q.position, ao.position`,
     generic ? [feedbackId] : [feedbackId, selected.id],

@@ -29,10 +29,10 @@ describe("reference data", () => {
   it("has the essential question with five options and follow-up prompts", async () => {
     const row = await one<{ options: number; prompts: number }>(`
       SELECT count(DISTINCT ao.id)::int AS options,
-             count(t.text) FILTER (WHERE t.field = 'follow_up_prompt')::int AS prompts
+             count(t.follow_up_prompt)::int AS prompts
       FROM question q
       JOIN answer_option ao ON ao.question_id = q.id
-      LEFT JOIN translation t ON t.target_table = 'answer_option' AND t.target_id = ao.id
+      LEFT JOIN answer_option_translation t ON t.answer_option_id = ao.id AND t.language = 'fr'
       WHERE q.code = 'OVERALL_SATISFACTION'`);
     expect(row).toEqual({ options: 5, prompts: 5 });
   });
@@ -40,10 +40,10 @@ describe("reference data", () => {
   it("has the nineteen sectors, each with a French label", async () => {
     const row = await one<{ sectors: number; labelled: number; old_code: number }>(`
       SELECT count(*)::int AS sectors,
-             count(t.text)::int AS labelled,
+             count(t.label)::int AS labelled,
              count(*) FILTER (WHERE s.code = 'PUBLIC_TRANSPORT')::int AS old_code
       FROM sector s
-      LEFT JOIN translation t ON t.target_table = 'sector' AND t.target_id = s.id AND t.language = 'fr'`);
+      LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'`);
     expect(row).toEqual({ sectors: 19, labelled: 19, old_code: 0 });
   });
 
@@ -51,9 +51,9 @@ describe("reference data", () => {
     // Rule of topic_sector: a topic without rows is common; with rows, only in those sectors.
     const topicsFor = async (sector: string) =>
       (await db.query<{ code: string; label: string }>(`
-        SELECT t.code, tr.text AS label
+        SELECT t.code, tr.label
         FROM topic t
-        JOIN translation tr ON tr.target_table = 'topic' AND tr.target_id = t.id AND tr.language = 'fr'
+        JOIN topic_translation tr ON tr.topic_id = t.id AND tr.language = 'fr'
         WHERE t.is_active
           AND (NOT EXISTS (SELECT 1 FROM topic_sector ts WHERE ts.topic_id = t.id)
                OR EXISTS (SELECT 1 FROM topic_sector ts JOIN sector s ON s.id = ts.sector_id
@@ -85,15 +85,15 @@ describe("reference data", () => {
 
   it("gives health its published detailed questionnaire, every option labelled", async () => {
     const questions = (await db.query<{ code: string; label: string; options: number; labelled: number }>(
-      `SELECT q.code, qt.text AS label, count(ao.id)::int AS options, count(ot.text)::int AS labelled
+      `SELECT q.code, qt.label, count(ao.id)::int AS options, count(ot.label)::int AS labelled
        FROM sector s
        JOIN questionnaire qn ON qn.id = s.fallback_questionnaire_id AND qn.status = 'published'
        JOIN question q ON q.questionnaire_id = qn.id
-       JOIN translation qt ON qt.target_table = 'question' AND qt.target_id = q.id AND qt.language = 'fr'
+       JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
        JOIN answer_option ao ON ao.question_id = q.id
-       LEFT JOIN translation ot ON ot.target_table = 'answer_option' AND ot.target_id = ao.id AND ot.language = 'fr'
+       LEFT JOIN answer_option_translation ot ON ot.answer_option_id = ao.id AND ot.language = 'fr'
        WHERE s.code = 'HEALTH'
-       GROUP BY q.code, qt.text, q.position ORDER BY q.position`)).rows;
+       GROUP BY q.code, qt.label, q.position ORDER BY q.position`)).rows;
     expect(questions.map((q) => [q.code, q.options])).toEqual([
       ["PATIENT", 3], ["GOAL_ACHIEVED", 3], ["WAIT_TIME", 5], ["PRESCRIPTION_AVAILABLE", 4], ["RECEIPT_GIVEN", 4],
     ]);
@@ -124,12 +124,39 @@ describe("search", () => {
       SELECT 'CIVIL_REGISTRY_BIRTH', id, '{extrait de naissance}' FROM sector WHERE code = 'ADMINISTRATION'
       RETURNING id`))!;
     await db.query(
-      "INSERT INTO translation (target_table, target_id, language, text) VALUES ('service', $1, 'fr', 'État civil')",
+      "INSERT INTO service_translation (service_id, language, label) VALUES ($1, 'fr', 'État civil')",
       [id],
     );
     expect((await one<{ search_text: string }>(
       "SELECT search_text FROM service WHERE id = $1", [id]))?.search_text,
     ).toBe("etat civil extrait de naissance");
+  });
+
+  it("moved every text to the translation tables (0013), the old table is gone", async () => {
+    const row = await one<{ sectors: number; topics: number; questions: number; options: number; prompts: number; old: string | null }>(`
+      SELECT (SELECT count(*)::int FROM sector_translation) AS sectors,
+             (SELECT count(*)::int FROM topic_translation) AS topics,
+             (SELECT count(*)::int FROM question_translation) AS questions,
+             (SELECT count(*)::int FROM answer_option_translation) AS options,
+             (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts,
+             to_regclass('translation')::text AS old`);
+    expect(row).toEqual({ sectors: 19, topics: 33, questions: 6, options: 24, prompts: 5, old: null });
+    // The real service of 0004 keeps its French label (then its synonyms) in its search_text.
+    expect((await one<{ search_text: string }>(
+      "SELECT search_text FROM service WHERE code = 'CIVIL_REGISTRY'"))?.search_text,
+    ).toMatch(/^etat civil extrait de naissance /);
+  });
+
+  it("refuses a text for a row that does not exist, and removes it with its row", async () => {
+    await expect(db.query(
+      "INSERT INTO topic_translation (topic_id, language, label) VALUES (32000, 'fr', 'Fantôme')",
+    )).rejects.toThrow(/foreign key/);
+    const { id } = (await one<{ id: number }>(
+      "INSERT INTO topic (code, position) VALUES ('TEMPORARY', 98) RETURNING id"))!;
+    await db.query("INSERT INTO topic_translation (topic_id, language, label) VALUES ($1, 'fr', 'Temporaire')", [id]);
+    await db.query("DELETE FROM topic WHERE id = $1", [id]);
+    expect((await one<{ n: number }>(
+      "SELECT count(*)::int AS n FROM topic_translation WHERE topic_id = $1", [id]))?.n).toBe(0);
   });
 
   it("drops stop words and replaces equivalents exactly like src/lib/text.ts", async () => {
