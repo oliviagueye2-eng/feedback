@@ -158,7 +158,7 @@ export const fr = {
     commentLabel: "Détail de votre expérience",
     commentPlaceholder: "Décrivez votre expérience : les points positifs, les points négatifs, vos suggestions d'amélioration…",
     commentHelp: "N'indiquez ni nom ni numéro de téléphone.",
-    submit: "Enregistrer mon avis",
+    submit: "Continuer",
   },
 
   saved: {

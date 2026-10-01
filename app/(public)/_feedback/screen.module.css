@@ -48,7 +48,8 @@
   font-size: 18px;
 }
 
-/* « Changer »: top right, aligned with « Vous évaluez », a 44 px touch area all the same. */
+/* « Changer » (screen 1) and « Modifier » (screen 2b): top right of their box, on
+   its first line, with a 44 px touch area all the same. */
 .change {
   position: absolute;
   top: 4px;
@@ -251,13 +252,18 @@
 /* ---- Screen 2b: answer given, "Modifier" ---- */
 
 .answered {
+  position: relative;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 12px 14px;
   display: flex;
-  align-items: center;
   gap: 12px;
+}
+
+/* The question's first line leaves room for « Modifier », top right. */
+.answered > span > :first-child {
+  padding-right: 84px;
 }
 
 .answered > span {
@@ -272,13 +278,6 @@
 
 .answered strong {
   font-size: 17px;
-}
-
-.answered a {
-  font-weight: 700;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
 }
 
 /* ---- Screen 2b: topics and free text ---- */

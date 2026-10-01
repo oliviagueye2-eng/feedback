@@ -13,7 +13,7 @@ import styles from "../../../_feedback/screen.module.css";
 /**
  * Screen 2b: for each topic of the feedback's sector, « Bien » or « Pas bien »
  * (option D; « Autre » with a short text), then an optional free text.
- * Everything is optional: « Enregistrer mon avis » with nothing touched is
+ * Everything is optional: « Continuer » with nothing touched is
  * fine. Coming back shows what was already touched and written.
  */
 export default async function DetailsPage({ params, searchParams }: PageProps<"/donner/[feedbackId]/precisions">) {
@@ -44,7 +44,9 @@ export default async function DetailsPage({ params, searchParams }: PageProps<"/
               <span className="muted">{frenchSpaces(question)}</span>
               <strong>{answer.label}</strong>
             </span>
-            <Link href={`/donner/${feedbackId}`}>{t.change}</Link>
+            <Link href={`/donner/${feedbackId}`} className={styles.change}>
+              {t.change}
+            </Link>
           </div>
 
           {erreur && (
