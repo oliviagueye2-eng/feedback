@@ -14,7 +14,7 @@ import {
 } from "../domain/establishment";
 import {
   completeFeedback,
-  countDetailedQuestions,
+  nextQuestionPage,
   findFeedbackToResume,
   getDetailedQuestionnaire,
   getDetailsScreen,
@@ -311,7 +311,7 @@ describe("feedback", () => {
     expect(row!.used).toBe(row!.expected);
 
     // Offered after screen 2b, with its number of questions.
-    expect(await countDetailedQuestions(questionnaireFeedback)).toBe(1);
+    expect(await nextQuestionPage(questionnaireFeedback, "details")).toBe("sector");
   });
 
   it("completes a feedback only once the essential question is answered, at the hour", async () => {
@@ -320,7 +320,7 @@ describe("feedback", () => {
       channel: "search", establishmentId: ids.dantec, language: "fr", visitPeriod: "today",
     });
     // Health has its five questions (migration 0012).
-    expect(await countDetailedQuestions(unanswered)).toBe(5);
+    expect((await getQuestionnaireScreen(unanswered, "sector")).questions).toHaveLength(5);
     await expect(completeFeedback(unanswered)).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect((await getEssentialScreen(unanswered)).context.completed).toBe(false);
 
@@ -340,15 +340,16 @@ describe("feedback", () => {
     const health = "b2c3d4e5-0000-4000-8000-000000000001";
     await upsertFeedback(health, { channel: "search", establishmentId: ids.dantec, language: "fr", visitPeriod: "today" });
     await saveAnswer(health, "OVERALL_SATISFACTION", { option: "NEUTRAL" });
-    const before = await getQuestionnaireScreen(health);
+    const before = await getQuestionnaireScreen(health, "sector");
     expect(before.questions.map((q) => q.code)).toEqual([
       "PATIENT", "GOAL_ACHIEVED", "WAIT_TIME", "PRESCRIPTION_AVAILABLE", "RECEIPT_GIVEN",
     ]);
     expect(before.questions[2]!.options.map((o) => o.label)[0]).toBe("Moins de 30 minutes");
 
     // Two answered, three skipped.
-    await saveQuestionnaire(health, { WAIT_TIME: "2_TO_4_H", RECEIPT_GIVEN: "NO" });
-    const after = await getQuestionnaireScreen(health);
+    // Satisfied enough: no common page after the sector's, the feedback ends.
+    expect(await saveQuestionnaire(health, "sector", { WAIT_TIME: "2_TO_4_H", RECEIPT_GIVEN: "NO" })).toBeNull();
+    const after = await getQuestionnaireScreen(health, "sector");
     expect(after.questions.map((q) => q.chosen)).toEqual([null, null, "2_TO_4_H", null, "NO"]);
     expect(after.context.completed).toBe(true);
     const [row] = await rows<{ code: string }>(
@@ -357,16 +358,20 @@ describe("feedback", () => {
     );
     expect(row?.code).toBe("HEALTH");
 
-    await expect(saveQuestionnaire(health, { WAIT_TIME: "NEVER" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
+    await expect(saveQuestionnaire(health, "sector", { WAIT_TIME: "NEVER" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
   });
 
   it("adds the common questions for a user not satisfied, and drops the answers that no longer apply", async () => {
     const unhappy = "b2c3d4e5-0000-4000-8000-000000000002";
     await upsertFeedback(unhappy, { channel: "search", establishmentId: ids.dantec, language: "fr", visitPeriod: "today" });
     await saveAnswer(unhappy, "OVERALL_SATISFACTION", { option: "VERY_DISSATISFIED" });
-    expect(await countDetailedQuestions(unhappy)).toBe(7);
-    const { questions } = await getQuestionnaireScreen(unhappy);
-    expect(questions.slice(5).map((q) => [q.code, q.revealedBy])).toEqual([
+    expect(await nextQuestionPage(unhappy, "details")).toBe("sector");
+    expect(await nextQuestionPage(unhappy, "sector")).toBe("common");
+    expect((await getQuestionnaireScreen(unhappy, "sector")).questions).toHaveLength(5);
+    // The common questions on their own page, « Précédent » back to the sector's.
+    const common = await getQuestionnaireScreen(unhappy, "common");
+    expect(common.previous).toBe("sector");
+    expect(common.questions.map((q) => [q.code, q.revealedBy])).toEqual([
       ["REPORTED", null],
       ["REPORT_WHY", { dependsOn: "REPORTED", options: ["NO"] }],
     ]);
@@ -379,16 +384,17 @@ describe("feedback", () => {
     expect(await used()).toBeNull();
 
     // « Pourquoi ? » answered, then « Non » changed to « Oui » on the same page.
-    await saveQuestionnaire(unhappy, { REPORTED: "YES_ANSWERED", REPORT_WHY: "POINTLESS", WAIT_TIME: "OVER_4_H" });
+    expect(await saveQuestionnaire(unhappy, "sector", { WAIT_TIME: "OVER_4_H" })).toBe("common");
+    expect(await saveQuestionnaire(unhappy, "common", { REPORTED: "YES_ANSWERED", REPORT_WHY: "POINTLESS" })).toBeNull();
     expect(await used()).toBe("HEALTH");
     const answered = async () => (await rows<{ code: string }>(
       `SELECT q.code FROM answer a JOIN question q ON q.id = a.question_id
        WHERE a.feedback_id = $1 ORDER BY q.code`, [unhappy])).map((r) => r.code);
     expect(await answered()).toEqual(["OVERALL_SATISFACTION", "REPORTED", "WAIT_TIME"]);
 
-    // Became satisfied: « Avez-vous signalé ce problème ? » no longer applies.
+    // Became satisfied: « Avez-vous signalé cette situation ? » no longer applies.
     await saveAnswer(unhappy, "OVERALL_SATISFACTION", { option: "SATISFIED" });
-    expect(await countDetailedQuestions(unhappy)).toBe(5);
+    expect(await nextQuestionPage(unhappy, "sector")).toBeNull();
     await completeFeedback(unhappy);
     expect(await answered()).toEqual(["OVERALL_SATISFACTION", "WAIT_TIME"]);
   });

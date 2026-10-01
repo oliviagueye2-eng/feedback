@@ -146,6 +146,10 @@ describe("search", () => {
       { question: "REPORTED", depends_on: "OVERALL_SATISFACTION", option: "VERY_DISSATISFIED" },
       { question: "REPORT_WHY", depends_on: "REPORTED", option: "NO" },
     ]);
+    // Wording of 0015: « cette situation », on its own page.
+    expect((await one<{ label: string }>(
+      `SELECT qt.label FROM question_translation qt JOIN question q ON q.id = qt.question_id
+       WHERE q.code = 'REPORTED' AND qt.language = 'fr'`))?.label).toMatch(/^Avez-vous signalé cette situation/);
     // A condition on an answer of another question is refused.
     await expect(db.query(
       `INSERT INTO question_condition (question_id, depends_on_question_id, option_id)

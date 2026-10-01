@@ -155,36 +155,65 @@ async function loadPageQuestions(feedbackId: string) {
 }
 
 /**
- * After screen 2b: how many questions screen 6 shows (the common ones only
- * to the users not satisfied). 0: the feedback ends there.
+ * The pages of questions after screen 2b: the sector's (or service's)
+ * questions (screen 6), then the common ones on their own page (screen 6b),
+ * so that « cette situation » is not read as the previous question's subject.
  */
-export async function countDetailedQuestions(feedbackId: string): Promise<number> {
+export type QuestionPage = "sector" | "common";
+const QUESTION_PAGES: QuestionPage[] = ["sector", "common"];
+
+/** The questions a page shows for this feedback (the common ones only to the users not satisfied). */
+const shownOn = (
+  page: QuestionPage,
+  { questions, answers }: Awaited<ReturnType<typeof loadPageQuestions>>,
+) => questionsToShow(questions.filter((q) => q.common === (page === "common")), answers);
+
+/**
+ * The page of questions that comes after screen 2b ("details") or after a
+ * page of questions: the next one with questions to show, or null (the
+ * feedback ends there).
+ */
+export async function nextQuestionPage(
+  feedbackId: string,
+  after: "details" | QuestionPage,
+): Promise<QuestionPage | null> {
   requireUuid(feedbackId, "id");
-  const { questions, answers } = await loadPageQuestions(feedbackId);
-  return questionsToShow(questions, answers).length;
+  const loaded = await loadPageQuestions(feedbackId);
+  const candidates = after === "details" ? QUESTION_PAGES : QUESTION_PAGES.slice(QUESTION_PAGES.indexOf(after) + 1);
+  return candidates.find((page) => shownOn(page, loaded).length > 0) ?? null;
 }
 
 /**
- * Screen 6: the feedback's context and the questions to show, with what was
- * already answered. A question that depends on an earlier one of the page
- * says which answer reveals it (revealedBy).
+ * Screens 6 and 6b: the feedback's context and the questions to show on the
+ * page, with what was already answered. A question that depends on an
+ * earlier one of the page says which answer reveals it (revealedBy).
+ * previous: the page « Précédent » leads to (screen 2b, or screen 6).
  */
-export async function getQuestionnaireScreen(feedbackId: string) {
+export async function getQuestionnaireScreen(feedbackId: string, page: QuestionPage) {
   requireUuid(feedbackId, "id");
-  const { context, questions, answers } = await loadPageQuestions(feedbackId);
-  return { context, questions: questionsToShow(questions, answers) };
+  const loaded = await loadPageQuestions(feedbackId);
+  const previous =
+    page === "common" && shownOn("sector", loaded).length > 0 ? ("sector" as const) : ("details" as const);
+  return { context: loaded.context, questions: shownOn(page, loaded), previous };
 }
 
 /**
- * Screen 6 → screen 7: the answers given (question code → option code), all
- * optional, then the feedback is complete. A question not answered keeps the
- * answer given before, if any.
+ * Screen 6 or 6b → the next page of questions, or the end of the feedback
+ * (screen 7): the answers given (question code → option code), all optional.
+ * A question not answered keeps the answer given before, if any. Returns the
+ * next page, or null when the feedback is complete.
  */
-export async function saveQuestionnaire(feedbackId: string, answers: Record<string, string>): Promise<void> {
+export async function saveQuestionnaire(
+  feedbackId: string,
+  page: QuestionPage,
+  answers: Record<string, string>,
+): Promise<QuestionPage | null> {
   for (const [questionCode, option] of Object.entries(answers)) {
     await saveAnswer(feedbackId, questionCode, { option });
   }
-  await completeFeedback(feedbackId);
+  const next = await nextQuestionPage(feedbackId, page);
+  if (!next) await completeFeedback(feedbackId);
+  return next;
 }
 
 /**

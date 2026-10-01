@@ -411,11 +411,13 @@ export interface DetailedQuestion {
   chosen: string | null;
   /** Shown only if the question it depends on got one of these answers. */
   conditions: QuestionCondition[];
+  /** A common question (questionnaire COMMON), shown on its own page. */
+  common: boolean;
 }
 
 /**
- * Screen 6: the questions of the chosen detailed questionnaire, then the
- * common ones (questionnaire COMMON, linked to no sector: always loaded), in
+ * Screens 6 and 6b: the questions of the chosen detailed questionnaire, then
+ * the common ones (questionnaire COMMON, linked to no sector: always loaded), in
  * French and in order, with what this feedback already answered and their
  * conditions. Only questions with options (no free text for now).
  */
@@ -437,8 +439,10 @@ export async function findDetailedQuestions(
       option_code: string;
       option_label: string;
       chosen: boolean;
+      common: boolean;
     }>(
       `SELECT q.id, q.code, q.type, qt.label, ao.code AS option_code, ot.label AS option_label,
+              q.questionnaire_id = ${PUBLISHED("COMMON")} AS common,
               EXISTS (SELECT 1 FROM answer a WHERE a.feedback_id = $1 AND a.option_id = ao.id) AS chosen
        FROM question q
        JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
@@ -463,7 +467,16 @@ export async function findDetailedQuestions(
   for (const row of rows) {
     let question = questions.at(-1);
     if (question?.code !== row.code) {
-      question = { id: row.id, code: row.code, type: row.type, label: row.label, options: [], chosen: null, conditions: [] };
+      question = {
+        id: row.id,
+        code: row.code,
+        type: row.type,
+        label: row.label,
+        options: [],
+        chosen: null,
+        conditions: [],
+        common: row.common,
+      };
       questions.push(question);
     }
     question.options.push({ code: row.option_code, label: row.option_label });

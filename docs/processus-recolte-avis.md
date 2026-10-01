@@ -59,15 +59,15 @@ Les questions des étapes 7 à 9 dépendent du service (questionnaire détaillé
 | `GOAL_ACHIEVED` | Avez-vous reçu les soins pour lesquels vous étiez venu(e) ? | Oui / En partie / Non |
 | `WAIT_TIME` | Combien de temps avez-vous attendu avant d'être reçu(e) ? | Moins de 30 minutes / 30 minutes à 1 heure / 1 à 2 heures / 2 à 4 heures / Plus de 4 heures |
 | `PRESCRIPTION_AVAILABLE` | Les médicaments ou examens prescrits étaient-ils disponibles sur place ? | Oui, tous / Une partie / Non, aucun / Rien n'a été prescrit |
-| `RECEIPT_GIVEN` | Avez-vous reçu un reçu pour ce que vous avez payé ? | Oui, pour tout / Pour une partie / Non / Je n'ai rien payé |
+| `RECEIPT_GIVEN` | Vous a-t-on donné un reçu pour ce que vous avez payé ? (formulation de 0015) | Oui, pour tout / Pour une partie / Non / Je n'ai rien payé |
 
 Écarté : « Vous a-t-on demandé de payer en dehors de la caisse ? » (trop sensible sans l'accord de l'organisme porteur).
 
-**Questions communes** (questionnaire `COMMON`, migration 0014, validé le 2026-10-01) : dans tous les secteurs, à la fin de l'écran 6, **seulement après « Peu satisfait(e) » ou « Pas du tout satisfait(e) »**. Un usager peu satisfait d'un secteur sans questionnaire propre voit une page avec ces seules questions ; un usager satisfait n'en voit aucune.
+**Questions communes** (questionnaire `COMMON`, migration 0014, validé le 2026-10-01) : dans tous les secteurs, **sur leur propre page (écran 6b, `/donner/{id}/questionnaire/commun`) après celle du secteur**, pour que « cette situation » ne soit pas lue comme le sujet de la question précédente, et **seulement après « Peu satisfait(e) » ou « Pas du tout satisfait(e) »**. Un usager peu satisfait d'un secteur sans questionnaire propre va directement de l'écran 2b à l'écran 6b ; un usager satisfait ne la voit pas.
 
 | Code | Question | Réponses | Affichée si |
 |---|---|---|---|
-| `REPORTED` | Avez-vous signalé ce problème à l'établissement (accueil, service client, direction…) ? | Oui, et on m'a répondu / Oui, mais sans réponse / J'ai essayé, sans réussir à les joindre / Non | satisfaction = peu ou pas du tout satisfait(e) |
+| `REPORTED` | Avez-vous signalé cette situation à l'établissement (accueil, service client, direction…) ? (formulation de 0015) | Oui, et on m'a répondu / Oui, mais sans réponse / J'ai essayé, sans réussir à les joindre / Non | satisfaction = peu ou pas du tout satisfait(e) |
 | `REPORT_WHY` | Pourquoi ? | Je ne savais pas à qui m'adresser / Je pensais que ça ne servirait à rien / Autre raison | `REPORTED` = Non (apparaît dès que « Non » est touché) |
 
 Écarté : « Par peur des conséquences ». Une réponse qui ne s'applique plus (devenu satisfait, ou « Non » changé en « Oui ») est effacée à la fin de l'avis.

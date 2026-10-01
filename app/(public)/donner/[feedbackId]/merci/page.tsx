@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { BackLink } from "../../../../_components/BackLink";
 import { DomainError } from "@/src/domain/errors";
 import { getEssentialScreen } from "@/src/domain/feedback";
 import { getDictionary } from "../../../../_i18n";
@@ -18,7 +19,7 @@ export default async function ThanksPage({ params }: PageProps<"/donner/[feedbac
   const { context } = screen;
   // Not finished yet: back to screen 2b (which goes back to screen 2 if needed).
   if (!context.completed) redirect(`/donner/${feedbackId}/precisions`);
-  const { thanks: t } = await getDictionary();
+  const { common, thanks: t } = await getDictionary();
 
   return (
     <>
@@ -33,6 +34,7 @@ export default async function ThanksPage({ params }: PageProps<"/donner/[feedbac
           <h1 className={styles.title}>{t.title}</h1>
           <p>{t.text}</p>
           <p className={`muted ${styles.thanksClose}`}>{t.close}</p>
+          <BackLink href="/" label={common.backHome} />
         </div>
       </main>
     </>

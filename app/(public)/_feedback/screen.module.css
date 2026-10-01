@@ -459,12 +459,16 @@
 }
 
 .thanks .thanksClose {
-  margin-top: 24px;
   font-size: 15px;
-  text-align: center;
 }
 
-/* ---- Screen 6: the detailed questions ---- */
+/* ---- Screens 6 and 6b: the questions ---- */
+
+/* Clearly more space between two questions than between two answers
+   (36 px against 8 px): each question reads as its own block. */
+.questionBlock + .questionBlock {
+  margin-top: 18px;
+}
 
 /* The answers of a question, as the tiles of « À quand remonte votre
    expérience ? » (screen 1): two per row; an odd last one takes the whole row.
