@@ -426,38 +426,8 @@
   font-size: 14px;
 }
 
-/* ---- Screens 4-5: saved, then go further or finish ---- */
+/* ---- Screen 7: thanks ---- */
 
-/* Full width under the header, as in the mock-up: the one green moment of the flow. */
-.savedBanner {
-  background: var(--green);
-  color: #fff;
-}
-
-.savedBannerInner {
-  max-width: 596px;
-  margin: 0 auto;
-  padding: 22px 18px;
-  display: flex;
-  gap: 14px;
-  align-items: center;
-}
-
-.savedBannerInner > span:last-child {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 15px;
-  color: var(--green-tint);
-}
-
-.savedBannerInner strong {
-  font-size: 21px;
-  line-height: 1.2;
-  color: #fff;
-}
-
-.savedCheck,
 .thanksCheck {
   border-radius: 50%;
   display: flex;
@@ -465,64 +435,6 @@
   justify-content: center;
   flex-shrink: 0;
 }
-
-.savedCheck {
-  width: 48px;
-  height: 48px;
-  background: #fff;
-  color: var(--green);
-}
-
-.savedCheck svg {
-  width: 26px;
-  height: 26px;
-}
-
-.more {
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.more h2 {
-  margin: 0;
-  font-size: 21px;
-}
-
-.more p {
-  margin: 0;
-  font-size: 17px;
-  line-height: 1.4;
-}
-
-.more > span {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  font-size: 15px;
-}
-
-.more svg {
-  width: 18px;
-  height: 18px;
-}
-
-/* « Terminer » next to « Continuer le questionnaire »: the same size, less weight. */
-.btnSecondary,
-.btnSecondary:hover {
-  background: #fff;
-  color: var(--green);
-}
-
-.btnSecondary:hover {
-  background: var(--green-tint);
-}
-
-/* ---- Screen 7: thanks ---- */
 
 .thanks {
   padding-top: 44px;

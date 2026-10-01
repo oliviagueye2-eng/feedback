@@ -272,7 +272,7 @@ export interface FeedbackContext {
   serviceLabel: string | null;
   /** Option already chosen at the essential question (coming back to change it). */
   essentialOption: string | null;
-  /** « Terminer » tapped (screens 4-5). */
+  /** Feedback complete (screen 7 reached). */
   completed: boolean;
 }
 
@@ -351,7 +351,7 @@ export async function findEssentialQuestion(): Promise<EssentialQuestion | null>
 
 /**
  * Number of questions of the detailed questionnaire chosen for a feedback
- * (screens 4-5 offer it only when there is one). 0 when GENERIC is not published.
+ * (shown after screen 2b only when there is one). 0 when GENERIC is not published.
  */
 export async function countQuestions(selected: SelectedQuestionnaire): Promise<number> {
   const rows = await query<{ count: number }>(
@@ -364,9 +364,9 @@ export async function countQuestions(selected: SelectedQuestionnaire): Promise<n
 }
 
 /**
- * « Terminer »: the feedback is complete. Only once the essential question is
- * answered; completed_at is rounded to the hour, like started_at, and kept when
- * the user taps « Terminer » again. False when there is no such feedback.
+ * The feedback is complete. Only once the essential question is answered;
+ * completed_at is rounded to the hour, like started_at, and kept when the
+ * last screen is sent again. False when there is no such feedback.
  */
 export async function completeFeedback(feedbackId: string): Promise<boolean> {
   const rows = await query(

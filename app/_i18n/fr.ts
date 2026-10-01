@@ -161,16 +161,6 @@ export const fr = {
     submit: "Continuer",
   },
 
-  saved: {
-    title: "Votre avis est enregistré",
-    counts: "Il compte même si vous vous arrêtez ici.",
-    moreTitle: "Voulez-vous aller plus loin ?",
-    moreQuestions: { one: "{count} question sur votre expérience.", other: "{count} questions sur votre expérience." },
-    moreDuration: { one: "Environ {count} minute", other: "Environ {count} minutes" },
-    continue: "Continuer le questionnaire",
-    finish: "Terminer",
-  },
-
   questionnaire: {
     title: "Questionnaire détaillé",
     next: "Le questionnaire détaillé sera ajouté à une prochaine étape.",

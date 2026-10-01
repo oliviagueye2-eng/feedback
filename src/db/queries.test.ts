@@ -14,11 +14,11 @@ import {
 } from "../domain/establishment";
 import {
   completeFeedback,
+  countDetailedQuestions,
   findFeedbackToResume,
   getDetailedQuestionnaire,
   getDetailsScreen,
   getEssentialScreen,
-  getSavedScreen,
   removeComment,
   saveAnswer,
   saveComment,
@@ -298,8 +298,8 @@ describe("feedback", () => {
     );
     expect(row!.used).toBe(row!.expected);
 
-    // Screens 4-5 offer it with its number of questions.
-    expect((await getSavedScreen(questionnaireFeedback)).questionCount).toBe(1);
+    // Offered after screen 2b, with its number of questions.
+    expect(await countDetailedQuestions(questionnaireFeedback)).toBe(1);
   });
 
   it("completes a feedback only once the essential question is answered, at the hour", async () => {
@@ -307,8 +307,8 @@ describe("feedback", () => {
     await upsertFeedback(unanswered, {
       channel: "search", establishmentId: ids.dantec, language: "fr", visitPeriod: "today",
     });
-    // Nothing to offer at screens 4-5: no questionnaire published for health.
-    expect((await getSavedScreen(unanswered)).questionCount).toBe(0);
+    // Nothing to offer after screen 2b: no questionnaire published for health.
+    expect(await countDetailedQuestions(unanswered)).toBe(0);
     await expect(completeFeedback(unanswered)).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect((await getEssentialScreen(unanswered)).context.completed).toBe(false);
 

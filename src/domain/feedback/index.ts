@@ -136,18 +136,17 @@ export async function getDetailsScreen(feedbackId: string) {
 }
 
 /**
- * Screens 4-5: the feedback's context, and how many questions the detailed
- * questionnaire has (0: none published yet, nothing to offer).
+ * After screen 2b: how many questions the detailed questionnaire has
+ * (0: none published yet, the feedback ends there).
  */
-export async function getSavedScreen(feedbackId: string) {
-  const { context } = await getEssentialScreen(feedbackId);
+export async function countDetailedQuestions(feedbackId: string): Promise<number> {
+  requireUuid(feedbackId, "id");
   const sources = await db.findQuestionnaireSources(feedbackId);
   if (!sources) throw notFound("Feedback not found");
-  const questionCount = await db.countQuestions(selectDetailedQuestionnaire(sources));
-  return { context, questionCount };
+  return db.countQuestions(selectDetailedQuestionnaire(sources));
 }
 
-/** « Terminer » (screens 4-5): only once the essential question is answered. */
+/** End of the feedback (screen 7 follows): only once the essential question is answered. */
 export async function completeFeedback(feedbackId: string): Promise<void> {
   requireUuid(feedbackId, "id");
   if (!(await db.completeFeedback(feedbackId))) {

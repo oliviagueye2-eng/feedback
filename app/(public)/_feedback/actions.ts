@@ -5,6 +5,7 @@ import { DomainError } from "@/src/domain/errors";
 import { defaultLocale } from "../../_i18n";
 import {
   completeFeedback,
+  countDetailedQuestions,
   OTHER_TOPIC_CODE,
   removeComment,
   saveAnswer,
@@ -58,7 +59,9 @@ export async function answerEssential(formData: FormData) {
 }
 
 /**
- * Screen 2b → screen 4-5: saves the topics marked « Bien » or « Pas bien »
+ * Screen 2b → the detailed questionnaire (screen 6) when one is published,
+ * else the feedback is complete and screen 7 (thanks) follows: the user only
+ * sees « Continuer », never a choice between stopping and going on. Saves the topics marked « Bien » or « Pas bien »
  * (fields "topic:CODE") and the free text, both optional (sending nothing is
  * allowed). The text of « Autre » counts only when « Autre » is marked; an
  * emptied comment is removed.
@@ -87,18 +90,8 @@ export async function saveDetails(formData: FormData) {
     }
     throw error;
   }
-  redirect(`/donner/${id}/enregistre`);
-}
-
-/** Screens 4-5 → screen 7: « Terminer » closes the feedback. */
-export async function finishFeedback(formData: FormData) {
-  const id = String(formData.get("feedbackId") ?? "");
-  try {
-    await completeFeedback(id);
-  } catch (error) {
-    // Essential question not answered (or unknown feedback): back to it.
-    if (error instanceof DomainError && error.code === "NOT_FOUND") redirect(`/donner/${id}`);
-    throw error;
-  }
+  if ((await countDetailedQuestions(id)) > 0) redirect(`/donner/${id}/questionnaire`);
+  await completeFeedback(id);
   redirect(`/donner/${id}/merci`);
 }
+

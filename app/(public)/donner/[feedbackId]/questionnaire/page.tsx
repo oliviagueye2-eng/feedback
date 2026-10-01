@@ -8,7 +8,8 @@ import styles from "../../../_feedback/screen.module.css";
 
 /**
  * Screen 6 (detailed questionnaire). TODO: to be built once a questionnaire is
- * written; screens 4-5 link here only when one is published.
+ * written; screen 2b leads here only when one is published. Its last
+ * « Continuer » will complete the feedback, then screen 7.
  */
 export default async function QuestionnairePage({ params }: PageProps<"/donner/[feedbackId]/questionnaire">) {
   const { feedbackId } = await params;
@@ -31,7 +32,7 @@ export default async function QuestionnairePage({ params }: PageProps<"/donner/[
           <p className="muted" style={{ margin: 0 }}>
             {t.next}
           </p>
-          <BackLink href={`/donner/${feedbackId}/enregistre`} label={common.previous} />
+          <BackLink href={`/donner/${feedbackId}/precisions`} label={common.previous} />
         </div>
       </main>
     </>
