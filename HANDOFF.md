@@ -158,6 +158,11 @@ Le dépôt `oliviagueye2-eng/allo-pro-sn` est un **autre projet**, sans rapport 
    - accord des organismes pour leurs logos ;
    - page « À propos » (devise Jub Jubbal Jubanti, version Bloom en 6 étapes, bonne gouvernance développée) ;
    - langues au lancement et manière de retenir la langue choisie.
+4m. **À faire (TODO, notés le 2026-10-01)** :
+   - **Doublon possible après rechargement de l'écran 1** : retour avec le bouton du téléphone puis rechargement (ou rechargement automatique) → l'écran 1 tire un nouveau numéro d'avis, et « Commencer » crée un deuxième avis. Remède proposé : garder le numéro de l'avis en cours dans `sessionStorage` (par établissement, effacé à la fermeture de l'onglet) et le reprendre sur l'écran 1. Le bouton « ‹ Précédent » et le simple retour du téléphone (sans rechargement) sont déjà sans doublon (vérifié).
+   - **Nettoyage nocturne** : supprimer les avis commencés depuis plus de 7 jours sans réponse à la question essentielle (avec le cron `/webapi/internal/refresh-stats`). Choix validé : on garde l'enregistrement dès l'écran 1 (mesure des abandons) plutôt qu'une refonte qui n'enregistrerait qu'au toucher sur la satisfaction.
+   - Écran 2b : ajouter « ‹ Précédent » en bas (vers l'écran 2), en plus de « Modifier » en haut ? Question posée, sans réponse.
+   - Aligner l'erreur générale de l'écran 2b (« Votre avis n'a pas pu être enregistré… », encore en encadré rose) sur le nouveau style ? Proposé, sans réponse.
 5. **Plus tard / à noter** : *nice to have* : journal des recherches (`search_log`, une ligne quand l'usager choisit ou saisit un établissement, jamais à chaque lettre) ; ajouter `CRON_SECRET` dans Vercel (noté dans le README) ; questions du questionnaire GENERIC ; import du territoire et du référentiel (sources : ministères, ANSD, OpenStreetMap sous ODbL) ; back-office et authentification des agents ; versionnement `/webapi/v1` ; décision d'hébergement de production (obligation d'hébergement au Sénégal ? loi 2008-12, CDP).
 
 ---
