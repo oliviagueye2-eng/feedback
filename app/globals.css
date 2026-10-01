@@ -10,6 +10,8 @@
   --line: #c9d6ce;
   --line-light: #e1e9e4;
   --control: #6b7f73;
+  /* Lighter border of answers not chosen, where many sit on one page (screen 6). */
+  --control-light: #9aafa2;
   --page: #f3f6f4;
   --hero: #eef2ef;
   --ticket-line: #9aafa2;

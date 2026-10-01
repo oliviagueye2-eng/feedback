@@ -172,6 +172,7 @@ export const fr = {
     title: "Merci pour votre participation",
     text: "Vos réponses aideront à améliorer ce service.",
     close: "Vous pouvez fermer cette page.",
+    stamp: "Merci",
   },
 
   admin: {

@@ -425,41 +425,146 @@
   font-size: 14px;
 }
 
-/* ---- Screen 7: thanks ---- */
+/* ---- Screen 7: thanks, on the home page's queue ticket, stamped ---- */
 
-.thanksCheck {
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
+/* The flow opens on the ticket « C'est votre tour. » and closes on the same
+   ticket, stamped « Merci » with the day's date, as at a counter. */
 .thanks {
-  padding-top: 44px;
-  gap: 16px;
+  padding-top: 36px;
+  gap: 22px;
 }
 
-.thanks p {
+.thanksTicket {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--ticket-line);
+  border-radius: 6px;
+}
+
+.thanksMain {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px 6px 0 0;
+  padding: 16px 20px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.thanksMain > :not(.thanksWatermark) {
+  position: relative;
+}
+
+/* The tricolour watermark of the home page's ticket, top left. */
+.thanksWatermark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 120px;
+  height: 120px;
+  opacity: 0.22;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    var(--flag-green) 0 16%,
+    transparent 16% 22%,
+    var(--flag-yellow) 22% 38%,
+    transparent 38% 44%,
+    var(--flag-red) 44% 60%,
+    transparent 60%
+  );
+}
+
+.thanksHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 14px;
+}
+
+.thanksHead strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.thanksMain h1 {
+  margin: 28px 0 0;
+  font-size: 34px;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
+
+.thanksMain p {
   margin: 0;
   font-size: 18px;
   line-height: 1.45;
 }
 
-.thanksCheck {
-  width: 72px;
-  height: 72px;
-  background: var(--green);
-  color: #fff;
+.thanksTear {
+  height: 24px;
+  background: repeating-linear-gradient(90deg, var(--ticket-line) 0 6px, transparent 6px 12px)
+    center / calc(100% - 36px) 2px no-repeat;
 }
 
-.thanksCheck svg {
-  width: 38px;
-  height: 38px;
-}
-
-.thanks .thanksClose {
+.thanksStub {
+  margin: 0;
+  /* Tall enough for the stamp, even when the text holds on one line (computer). */
+  min-height: 96px;
+  padding: 14px 20px 26px;
+  max-width: 52%;
   font-size: 15px;
+  line-height: 1.45;
+}
+
+/* The stamp, in the stub, slightly askew; capitals as on a real stamp. */
+.stamp {
+  position: absolute;
+  right: 20px;
+  bottom: 18px;
+  transform: rotate(-9deg);
+  border: 3px solid var(--green);
+  outline: 1.5px solid var(--green);
+  outline-offset: 3px;
+  border-radius: 4px;
+  padding: 6px 14px 5px;
+  color: var(--green);
+  text-align: center;
+  opacity: 0.88;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.stamp strong {
+  display: block;
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stamp span {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+
+/* The page's one moment of motion: the stamp comes down on the ticket. */
+@media (prefers-reduced-motion: no-preference) {
+  .stamp {
+    animation: stamp 0.28s ease-out 0.15s both;
+  }
+}
+
+@keyframes stamp {
+  from {
+    opacity: 0;
+    transform: rotate(-9deg) scale(1.6);
+  }
+  to {
+    opacity: 0.88;
+    transform: rotate(-9deg) scale(1);
+  }
 }
 
 /* ---- Screens 6 and 6b: the questions ---- */
@@ -518,4 +623,28 @@
   .revealHint {
     display: none;
   }
+}
+
+/* Screens 6 and 6b: many answers on one page, so the answers not chosen have a
+   lighter border, and the chosen one carries a tick in its corner (seen even
+   on a dull screen in the sun, not only by its colour). */
+.choices > .period {
+  border-color: var(--control-light);
+}
+
+.choices > .period:has(input:checked) {
+  border-color: var(--green);
+}
+
+.choices > .period:has(input:checked)::after {
+  content: "";
+  position: absolute;
+  right: -7px;
+  top: -7px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--page);
+  background: var(--green) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 12.5l3.2 3.2L17 9' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / 22px no-repeat;
 }
