@@ -467,7 +467,8 @@
 /* ---- Screen 6: the detailed questions ---- */
 
 /* The answers of a question, as the tiles of « À quand remonte votre
-   expérience ? » (screen 1): two per row; an odd last one takes the whole row. */
+   expérience ? » (screen 1): two per row; an odd last one takes the whole row.
+   Three answers (« Oui, En partie, Non ») stand side by side on one row. */
 .choices {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -476,4 +477,12 @@
 
 .choices > :last-child:nth-child(odd) {
   grid-column: 1 / -1;
+}
+
+.choices:has(> :nth-child(3):last-child) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.choices:has(> :nth-child(3):last-child) > :last-child {
+  grid-column: auto;
 }
