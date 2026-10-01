@@ -13,6 +13,7 @@ import {
   searchEstablishments,
 } from "../domain/establishment";
 import {
+  findFeedbackToResume,
   getDetailedQuestionnaire,
   getDetailsScreen,
   getEssentialScreen,
@@ -210,6 +211,16 @@ describe("feedback", () => {
     expect(row).toEqual({ visit_month: "2026-03-01", started_at: "2026-03-31 22:00:00+00" });
   });
 
+  it("finds the feedback to resume with « Précédent », only for its establishment", async () => {
+    expect(await findFeedbackToResume(feedbackId, ids.gy)).toEqual({
+      id: feedbackId,
+      serviceId: null,
+      visitPeriod: "under_week",
+    });
+    expect(await findFeedbackToResume(feedbackId, ids.dantec)).toBeNull();
+    expect(await findFeedbackToResume("pas-un-uuid", ids.gy)).toBeNull();
+  });
+
   it("refuses feedback for a closed establishment", async () => {
     await expect(
       upsertFeedback("6c1d0e3f-2a4b-4c6d-9e7f-8091a2b3c4d5", {
@@ -231,7 +242,12 @@ describe("feedback", () => {
   it("gives screen 2 the context and the essential question, in order", async () => {
     const { context, question } = await getEssentialScreen(feedbackId);
     expect(context).toEqual({
+      establishmentId: ids.gy,
       establishmentName: "Centre d'état civil de Grand-Yoff",
+      channel: "search",
+      qrCode: null,
+      serviceId: null,
+      visitPeriod: "under_week",
       scope: "site",
       serviceLabel: null,
       essentialOption: "DISSATISFIED",

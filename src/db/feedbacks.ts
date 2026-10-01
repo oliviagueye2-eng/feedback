@@ -259,7 +259,14 @@ export async function findQuestionnaireSources(feedbackId: string): Promise<{
 }
 
 export interface FeedbackContext {
+  establishmentId: string;
   establishmentName: string;
+  channel: "qr" | "search" | "link";
+  /** Code of the QR code scanned, to go back to its screen 1 (/e/{code}). */
+  qrCode: string | null;
+  /** Visit reason and period chosen at screen 1 (coming back to change them). */
+  serviceId: number | null;
+  visitPeriod: string | null;
   scope: "site" | "general";
   /** French label of the visit reason, when one was chosen. */
   serviceLabel: string | null;
@@ -270,12 +277,18 @@ export interface FeedbackContext {
 /** What the screens after screen 1 show about the feedback being given. */
 export async function findFeedbackContext(feedbackId: string): Promise<FeedbackContext | null> {
   const rows = await query<{
+    establishment_id: string;
     establishment_name: string;
     scope: "site" | "general";
+    channel: "qr" | "search" | "link";
+    qr_code: string | null;
+    service_id: number | null;
+    visit_period: string | null;
     service_label: string | null;
     essential_option: string | null;
   }>(
-    `SELECT e.name AS establishment_name, e.scope, st.text AS service_label,
+    `SELECT e.id AS establishment_id, e.name AS establishment_name, e.scope, f.channel,
+            qc.code AS qr_code, f.service_id, f.visit_period, st.text AS service_label,
             (SELECT ao.code
              FROM answer a
              JOIN question q ON q.id = a.question_id
@@ -283,6 +296,7 @@ export async function findFeedbackContext(feedbackId: string): Promise<FeedbackC
              WHERE a.feedback_id = f.id AND q.code = 'OVERALL_SATISFACTION') AS essential_option
      FROM feedback f
      JOIN establishment e ON e.id = f.establishment_id
+     LEFT JOIN qr_code qc ON qc.id = f.qr_code_id
      LEFT JOIN translation st ON st.target_table = 'service' AND st.target_id = f.service_id
        AND st.field = 'label' AND st.language = 'fr'
      WHERE f.id = $1`,
@@ -291,7 +305,12 @@ export async function findFeedbackContext(feedbackId: string): Promise<FeedbackC
   const row = rows[0];
   if (!row) return null;
   return {
+    establishmentId: row.establishment_id,
     establishmentName: row.establishment_name,
+    channel: row.channel,
+    qrCode: row.qr_code,
+    serviceId: row.service_id,
+    visitPeriod: row.visit_period,
     scope: row.scope,
     serviceLabel: row.service_label,
     essentialOption: row.essential_option,

@@ -4,6 +4,8 @@ import { getEssentialScreen } from "@/src/domain/feedback";
 import { answerEssential } from "../../_feedback/actions";
 import { EssentialOptions } from "../../_feedback/EssentialOptions";
 import { FeedbackHeader } from "../../_feedback/FeedbackHeader";
+import { screenOneHref } from "../../_feedback/links";
+import { BackLink } from "../../../_components/BackLink";
 import { getDictionary } from "../../../_i18n";
 import { frenchSpaces } from "../../../_i18n/typography";
 import styles from "../../_feedback/screen.module.css";
@@ -34,6 +36,7 @@ export default async function EssentialQuestionPage({ params }: PageProps<"/donn
             <legend className={styles.question}>{frenchSpaces(question.label)}</legend>
             <EssentialOptions options={question.options} chosen={context.essentialOption} t={{ hint: t.hint, saving: common.savingFeedback }} />
           </fieldset>
+          <BackLink href={screenOneHref(context, feedbackId)} label={common.previous} />
         </form>
       </main>
     </>

@@ -1,6 +1,7 @@
 import * as db from "../../db/feedbacks";
 import {
   asObject,
+  isUuid,
   optionalInteger,
   optionalString,
   requireOneOf,
@@ -140,6 +141,18 @@ export async function getDetailedQuestionnaire(feedbackId: string) {
   const sources = await db.findQuestionnaireSources(feedbackId);
   if (!sources) throw notFound("Feedback not found");
   return selectDetailedQuestionnaire(sources);
+}
+
+/**
+ * Screen 1 reached again with « Précédent »: the feedback to update instead of
+ * creating a new one, with the reason and period already chosen. Null when the
+ * id is not a feedback of this establishment (screen 1 then starts a new one).
+ */
+export async function findFeedbackToResume(feedbackId: string, establishmentId: string) {
+  if (!isUuid(feedbackId)) return null;
+  const context = await db.findFeedbackContext(feedbackId);
+  if (!context || context.establishmentId !== establishmentId) return null;
+  return { id: feedbackId, serviceId: context.serviceId, visitPeriod: context.visitPeriod };
 }
 
 /** Screen 2: the feedback's context and the essential question. */

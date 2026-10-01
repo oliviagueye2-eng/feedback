@@ -3,14 +3,16 @@ import { SiteHeader } from "../../../_components/SiteHeader";
 import { getDictionary } from "../../../_i18n";
 import { getEstablishmentByQrCode } from "@/src/domain/establishment";
 import { DomainError } from "@/src/domain/errors";
+import { findFeedbackToResume } from "@/src/domain/feedback";
 import { EstablishmentScreen } from "../../_feedback/EstablishmentScreen";
 
 /**
  * QR code landing: the URL printed in the QR code is /e/{code}. Screen 1 with
  * the establishment (and the counter's service) already known, visit today.
  */
-export default async function QrLandingPage({ params }: PageProps<"/e/[code]">) {
+export default async function QrLandingPage({ params, searchParams }: PageProps<"/e/[code]">) {
   const { code } = await params;
+  const { avis } = await searchParams;
   let found;
   try {
     found = await getEstablishmentByQrCode(code);
@@ -19,6 +21,10 @@ export default async function QrLandingPage({ params }: PageProps<"/e/[code]">) 
   }
 
   const { qr: t } = await getDictionary();
+  // Back from screen 2 with « Précédent »: the same feedback, not a new one.
+  const resumed =
+    found && typeof avis === "string" ? await findFeedbackToResume(avis, found.establishment.id) : null;
+  const returnTo = `/e/${encodeURIComponent(code)}${resumed ? `?avis=${resumed.id}` : ""}`;
 
   return (
     <>
@@ -27,9 +33,10 @@ export default async function QrLandingPage({ params }: PageProps<"/e/[code]">) 
         {found ? (
           <EstablishmentScreen
             establishment={found.establishment}
-            feedbackId={crypto.randomUUID()}
+            feedbackId={resumed?.id ?? crypto.randomUUID()}
             channel="qr"
-            returnTo={`/e/${encodeURIComponent(code)}`}
+            returnTo={returnTo}
+            initial={resumed ?? undefined}
             qr={{ id: found.qrCodeId, serviceId: found.serviceId }}
           />
         ) : (

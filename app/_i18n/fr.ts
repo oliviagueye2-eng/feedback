@@ -23,6 +23,8 @@ export const fr = {
     optional: "(facultatif)",
     back: "Retour",
     backHome: "Retour à l'accueil",
+    previous: "Précédent",
+    home: "Accueil",
     giveFeedback: "Donner mon avis",
     searchLabel: "Quel établissement ou organisme voulez-vous évaluer ?",
     searchPlaceholder: "Ex. : hôpital Fann",

@@ -1,4 +1,4 @@
-import { BackHomeLink } from "../../_components/BackHomeLink";
+import { BackLink } from "../../_components/BackLink";
 import { SiteHeader } from "../../_components/SiteHeader";
 import { getDictionary } from "../../_i18n";
 import { searchEstablishments } from "@/src/domain/establishment";
@@ -25,7 +25,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/avis">) {
             <h1>{t.title}</h1>
           </div>
           <SearchScreen initialQuery={query} initialResult={result} t={{ ...t, ...common }} />
-          <BackHomeLink label={common.backHome} />
+          <BackLink href="/" label={common.backHome} />
         </div>
         <div className={styles.qrSheet}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

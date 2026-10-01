@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BackHomeLink } from "../../_components/BackHomeLink";
+import { BackLink } from "../../_components/BackLink";
 import { FormValidation } from "../../_components/FormValidation";
 import { organizationLogoSrc } from "../../_components/organizationLogo";
 import { PendingLoader } from "../../_components/PendingLoader";
@@ -22,6 +22,7 @@ export async function EstablishmentScreen({
   returnTo,
   qr,
   error,
+  initial,
 }: {
   establishment: EstablishmentDetail;
   /** New for each display of the page; sent back by the form. */
@@ -31,6 +32,8 @@ export async function EstablishmentScreen({
   returnTo: string;
   qr?: { id: string; serviceId: number | null };
   error?: boolean;
+  /** Back with « Précédent »: what was already chosen for this feedback. */
+  initial?: { serviceId: number | null; visitPeriod: string | null };
 }) {
   const { common, establishment: t } = await getDictionary();
   // An organisation as a whole has no municipality: only its sector shows.
@@ -79,7 +82,13 @@ export async function EstablishmentScreen({
       {askReason && (
         <div className={styles.group}>
           <label htmlFor="service">{t.reason}</label>
-          <select id="service" name="service" className={styles.select} defaultValue="">
+          <select
+            id="service"
+            name="service"
+            className={styles.select}
+            // « Autre démarche » and no choice are both saved as no service: shown as no choice.
+            defaultValue={initial?.serviceId ? String(initial.serviceId) : ""}
+          >
             <option value="">{t.reasonPlaceholder}</option>
             {establishment.services.map((s) => (
               <option key={s.id} value={s.id}>
@@ -98,7 +107,7 @@ export async function EstablishmentScreen({
           <div className={styles.periods}>
             {VISIT_PERIODS.map((value) => (
               <label key={value} className={styles.period}>
-                <input type="radio" name="visitPeriod" value={value} required />
+                <input type="radio" name="visitPeriod" value={value} required defaultChecked={initial?.visitPeriod === value} />
                 <span>{t.periods[value]}</span>
               </label>
             ))}
@@ -112,7 +121,7 @@ export async function EstablishmentScreen({
         </button>
         <p className="muted">{t.duration}</p>
       </div>
-      <BackHomeLink label={common.backHome} />
+      <BackLink href="/" label={common.backHome} />
       <PendingLoader message={t.loading} />
     </form>
   );

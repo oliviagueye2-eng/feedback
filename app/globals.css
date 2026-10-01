@@ -131,6 +131,13 @@ select:focus-visible {
   text-decoration: none;
 }
 
+.site-logo-link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+
 .site-logo {
   width: auto;
   height: 42px;
