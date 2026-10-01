@@ -380,3 +380,28 @@ export async function completeFeedback(feedbackId: string): Promise<boolean> {
   );
   return rows.length > 0;
 }
+
+/**
+ * Nightly cleanup: feedbacks started more than `days` days ago and never
+ * answered at the essential question (left at screen 1). Their topics,
+ * comment and answers go with them (none in practice: screen 2b needs the
+ * essential answer). Returns how many were deleted.
+ */
+export async function deleteAbandonedFeedbacks(days: number): Promise<number> {
+  const rows = await query(
+    `WITH abandoned AS (
+       SELECT f.id FROM feedback f
+       WHERE f.started_at < now() - make_interval(days => $1)
+         AND NOT EXISTS (
+           SELECT 1 FROM answer a JOIN question q ON q.id = a.question_id
+           WHERE a.feedback_id = f.id AND q.code = 'OVERALL_SATISFACTION')
+     ),
+     topics AS (DELETE FROM feedback_topic WHERE feedback_id IN (SELECT id FROM abandoned)),
+     comments AS (DELETE FROM comment WHERE feedback_id IN (SELECT id FROM abandoned)),
+     answers AS (DELETE FROM answer WHERE feedback_id IN (SELECT id FROM abandoned))
+     DELETE FROM feedback WHERE id IN (SELECT id FROM abandoned)
+     RETURNING id`,
+    [days],
+  );
+  return rows.length;
+}

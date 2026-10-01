@@ -2,7 +2,10 @@ import { refreshPublishedStats } from "@/src/domain/stats";
 import { isAuthorizedCronCall } from "../../_lib/cron";
 import { respond } from "../../_lib/respond";
 
-/** Nightly job (vercel.json "crons"): recompute the published monthly results. */
+/**
+ * Nightly job (vercel.json "crons"): delete the abandoned feedbacks, then
+ * recompute the published monthly results.
+ */
 export async function GET(request: Request) {
   if (!isAuthorizedCronCall(request.headers.get("authorization"), process.env.CRON_SECRET)) {
     return Response.json(

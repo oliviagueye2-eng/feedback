@@ -166,14 +166,13 @@
   text-align: center;
 }
 
+/* Same look as the questions' messages (FormValidation): red bold text, no box. */
 .error {
   margin: 0;
-  padding: 12px 14px;
-  border: 1.5px solid var(--error);
-  border-radius: 10px;
-  background: var(--error-tint);
-  color: var(--error-ink);
-  font-size: 15px;
+  color: var(--error);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 /* ---- Screen 2: the essential question ---- */

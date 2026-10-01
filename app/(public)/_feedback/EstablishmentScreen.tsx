@@ -6,6 +6,7 @@ import { PendingLoader } from "../../_components/PendingLoader";
 import { getDictionary } from "../../_i18n";
 import type { EstablishmentDetail } from "@/src/db/establishments";
 import { startFeedback } from "./actions";
+import { ResumeFeedback } from "./ResumeFeedback";
 import styles from "./screen.module.css";
 
 const VISIT_PERIODS = ["today", "under_week", "under_month", "over_month"] as const;
@@ -53,6 +54,7 @@ export async function EstablishmentScreen({
       <input type="hidden" name="returnTo" value={returnTo} />
       {qr && <input type="hidden" name="qrCodeId" value={qr.id} />}
       {qr?.serviceId && <input type="hidden" name="service" value={qr.serviceId} />}
+      <ResumeFeedback feedbackId={feedbackId} establishmentId={establishment.id} />
 
       <h1 className={styles.title}>{t.title}</h1>
 

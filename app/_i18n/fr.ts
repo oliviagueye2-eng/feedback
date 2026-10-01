@@ -142,7 +142,6 @@ export const fr = {
   },
 
   essential: {
-    lead: "Une question, puis c'est enregistré.",
     hint: "Choisissez une réponse pour continuer.",
   },
 

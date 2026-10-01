@@ -25,6 +25,7 @@ import {
   saveTopics,
   upsertFeedback,
 } from "../domain/feedback";
+import { refreshPublishedStats } from "../domain/stats";
 import { useTestDatabase } from "./client";
 import { createTestDatabase } from "./test-database";
 
@@ -320,6 +321,8 @@ describe("feedback", () => {
     );
     expect(row).toEqual({ step: "completed", on_the_hour: true });
     expect((await getEssentialScreen(feedbackId)).context.completed).toBe(true);
+    // A complete feedback is never resumed: screen 1 starts a new one.
+    expect(await findFeedbackToResume(feedbackId, ids.gy)).toBeNull();
   });
 
   it("replaces the topics touched, each with its sentiment", async () => {
@@ -400,5 +403,30 @@ describe("published stats", () => {
     ]);
     // One feedback in March for Grand-Yoff: below the threshold.
     expect(await getEstablishmentStats(ids.gy!)).toEqual([]);
+  });
+});
+
+describe("nightly job", () => {
+  it("deletes feedbacks left at screen 1 for more than 7 days, and only those", async () => {
+    const old = "a1b2c3d4-0000-4000-8000-000000000001";
+    const oldAnswered = "a1b2c3d4-0000-4000-8000-000000000002";
+    const recent = "a1b2c3d4-0000-4000-8000-000000000003";
+    await db.exec(`
+      INSERT INTO feedback (id, establishment_id, channel, language, visit_period, visit_month, started_at)
+      SELECT v.id::uuid, '${ids.gy}', 'search', 'fr', 'today', date_trunc('month', now())::date,
+             date_trunc('hour', now()) - v.age
+      FROM (VALUES ('${old}', interval '8 days'), ('${oldAnswered}', interval '8 days'),
+                   ('${recent}', interval '6 days')) AS v (id, age);
+      -- Never happens through the screens, but must not block the deletion.
+      INSERT INTO feedback_topic (feedback_id, topic_id, sentiment) SELECT '${old}', id, 'negative' FROM topic LIMIT 1;
+    `);
+    await saveAnswer(oldAnswered, "OVERALL_SATISFACTION", { option: "SATISFIED" });
+
+    expect((await refreshPublishedStats()).abandonedDeleted).toBe(1);
+    const left = await rows<{ id: string }>(
+      "SELECT id::text FROM feedback WHERE id IN ($1, $2, $3) ORDER BY id",
+      [old, oldAnswered, recent],
+    );
+    expect(left.map((r) => r.id)).toEqual([oldAnswered, recent]);
   });
 });

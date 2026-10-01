@@ -163,14 +163,15 @@ export async function getDetailedQuestionnaire(feedbackId: string) {
 }
 
 /**
- * Screen 1 reached again with « Précédent »: the feedback to update instead of
- * creating a new one, with the reason and period already chosen. Null when the
- * id is not a feedback of this establishment (screen 1 then starts a new one).
+ * Screen 1 reached again (« Précédent », or a reload: see ResumeFeedback): the
+ * feedback to update instead of creating a new one, with the reason and period
+ * already chosen. Null when the id is not a feedback of this establishment, or
+ * when that feedback is complete (screen 1 then starts a new one).
  */
 export async function findFeedbackToResume(feedbackId: string, establishmentId: string) {
   if (!isUuid(feedbackId)) return null;
   const context = await db.findFeedbackContext(feedbackId);
-  if (!context || context.establishmentId !== establishmentId) return null;
+  if (!context || context.establishmentId !== establishmentId || context.completed) return null;
   return { id: feedbackId, serviceId: context.serviceId, visitPeriod: context.visitPeriod };
 }
 

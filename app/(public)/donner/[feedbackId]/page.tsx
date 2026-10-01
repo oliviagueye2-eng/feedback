@@ -29,9 +29,6 @@ export default async function EssentialQuestionPage({ params }: PageProps<"/donn
       <main style={{ background: "var(--page)" }}>
         <form action={answerEssential} className={styles.screen}>
           <input type="hidden" name="feedbackId" value={feedbackId} />
-          <p className="muted" style={{ margin: 0, fontSize: 15 }}>
-            {t.lead}
-          </p>
           <fieldset className={styles.options}>
             <legend className={styles.question}>{frenchSpaces(question.label)}</legend>
             <EssentialOptions options={question.options} chosen={context.essentialOption} t={{ hint: t.hint, saving: common.wait }} />
