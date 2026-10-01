@@ -72,7 +72,7 @@ export const fr = {
     steps: [
       "Trouvez l'établissement ou l'organisme à évaluer.",
       "En quelques clics, dites si vous êtes satisfait(e) et ajoutez vos commentaires et suggestions.",
-      "Votre avis est enregistré. C'est terminé !",
+      "C'est enregistré : votre réponse compte dans les résultats du mois.",
     ],
   },
 
