@@ -157,6 +157,40 @@ describe("search", () => {
     expect(wait.same).toBe(true);
   });
 
+  it("gives every sector its questions (0017): GENERIC for the private ones, none yet for security", async () => {
+    const counts = Object.fromEntries((await db.query<{ code: string; questions: number }>(
+      `SELECT s.code, count(q.id)::int AS questions
+       FROM sector s
+       LEFT JOIN questionnaire qn ON qn.id = s.fallback_questionnaire_id AND qn.status = 'published'
+       LEFT JOIN question q ON q.questionnaire_id = qn.id
+       GROUP BY s.code`)).rows.map((r) => [r.code, r.questions]));
+    expect(counts).toMatchObject({
+      HEALTH: 5, ADMINISTRATION: 5, TAX: 5, JUSTICE: 5, SOCIAL: 5, EDUCATION: 5,
+      ELECTRICITY: 4, WATER: 3, TELECOM: 2, TRANSPORT: 3, BANKING_INSURANCE: 3, SECURITY: 0,
+    });
+    // The private sectors have no questionnaire of their own: GENERIC, now published.
+    for (const sector of ["RETAIL", "HOSPITALITY", "FOOD_SERVICE", "TOURISM", "CULTURE", "SPORT", "REAL_ESTATE"]) {
+      expect(counts[sector]).toBe(0);
+    }
+    expect((await one<{ n: number }>(
+      `SELECT count(q.id)::int AS n FROM questionnaire qn JOIN question q ON q.questionnaire_id = qn.id
+       WHERE qn.code = 'GENERIC' AND qn.status = 'published'`))?.n).toBe(3);
+    // The wait at the counter has the same answers wherever it is asked.
+    expect((await one<{ variants: number }>(
+      `SELECT count(DISTINCT options)::int AS variants FROM (
+         SELECT string_agg(ao.code || '=' || ot.label, ',' ORDER BY ao.position) AS options
+         FROM question q JOIN answer_option ao ON ao.question_id = q.id
+         JOIN answer_option_translation ot ON ot.answer_option_id = ao.id AND ot.language = 'fr'
+         WHERE q.code = 'WAIT_TIME' GROUP BY q.id) x`))?.variants).toBe(1);
+    // « Prévenu(e) avant la coupure ? » only after at least one cut.
+    expect((await db.query<{ option: string }>(
+      `SELECT ao.code AS option FROM question_condition qc
+       JOIN question q ON q.id = qc.question_id JOIN questionnaire qn ON qn.id = q.questionnaire_id
+       JOIN answer_option ao ON ao.id = qc.option_id
+       WHERE qn.code = 'ELECTRICITY' AND q.code = 'CUT_NOTICE' ORDER BY ao.position`)).rows.map((r) => r.option))
+      .toEqual(["1_TO_3", "4_TO_10", "OVER_10"]);
+  });
+
   it("has the common questions, shown only after a dissatisfied answer, « Pourquoi ? » after « Non »", async () => {
     const conditions = (await db.query<{ question: string; depends_on: string; option: string }>(
       `SELECT q.code AS question, dq.code AS depends_on, ao.code AS option
@@ -184,16 +218,19 @@ describe("search", () => {
   });
 
   it("moved every text to the translation tables (0013), the old table is gone", async () => {
+    // Every question and every answer has its French text; the 5 follow-up prompts came along.
     const row = await one<{ sectors: number; topics: number; questions: number; options: number; prompts: number; old: string | null }>(`
-      SELECT (SELECT count(*)::int FROM sector_translation) AS sectors,
-             (SELECT count(*)::int FROM topic_translation) AS topics,
-             (SELECT count(*)::int FROM question_translation) AS questions,
-             (SELECT count(*)::int FROM answer_option_translation) AS options,
+      SELECT (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
+              WHERE t.label IS NULL) AS sectors,
+             (SELECT count(*)::int FROM topic p LEFT JOIN topic_translation t ON t.topic_id = p.id AND t.language = 'fr'
+              WHERE t.label IS NULL) AS topics,
+             (SELECT count(*)::int FROM question q LEFT JOIN question_translation t ON t.question_id = q.id AND t.language = 'fr'
+              WHERE t.label IS NULL) AS questions,
+             (SELECT count(*)::int FROM answer_option o LEFT JOIN answer_option_translation t ON t.answer_option_id = o.id AND t.language = 'fr'
+              WHERE t.label IS NULL) AS options,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts,
              to_regclass('translation')::text AS old`);
-    // Questions and options: those of 0002 and 0012, the common ones of 0014 (2 and 7),
-    // and Administration's of 0016 (5 and 18).
-    expect(row).toEqual({ sectors: 19, topics: 33, questions: 13, options: 49, prompts: 5, old: null });
+    expect(row).toEqual({ sectors: 0, topics: 0, questions: 0, options: 0, prompts: 5, old: null });
     // The real service of 0004 keeps its French label (then its synonyms) in its search_text.
     expect((await one<{ search_text: string }>(
       "SELECT search_text FROM service WHERE code = 'CIVIL_REGISTRY'"))?.search_text,
