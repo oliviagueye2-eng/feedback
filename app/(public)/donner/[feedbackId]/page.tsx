@@ -34,7 +34,7 @@ export default async function EssentialQuestionPage({ params }: PageProps<"/donn
           </p>
           <fieldset className={styles.options}>
             <legend className={styles.question}>{frenchSpaces(question.label)}</legend>
-            <EssentialOptions options={question.options} chosen={context.essentialOption} t={{ hint: t.hint, saving: common.savingFeedback }} />
+            <EssentialOptions options={question.options} chosen={context.essentialOption} t={{ hint: t.hint, saving: common.wait }} />
           </fieldset>
           <BackLink href={screenOneHref(context, feedbackId)} label={common.previous} />
         </form>

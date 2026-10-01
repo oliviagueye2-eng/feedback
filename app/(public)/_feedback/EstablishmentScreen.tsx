@@ -122,7 +122,7 @@ export async function EstablishmentScreen({
         <p className="muted">{t.duration}</p>
       </div>
       <BackLink href="/" label={common.backHome} />
-      <PendingLoader message={t.loading} />
+      <PendingLoader message={common.wait} />
     </form>
   );
 }

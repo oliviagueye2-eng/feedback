@@ -28,7 +28,8 @@ export const fr = {
     giveFeedback: "Donner mon avis",
     searchLabel: "Quel établissement ou organisme voulez-vous évaluer ?",
     searchPlaceholder: "Ex. : hôpital Fann",
-    savingFeedback: "Enregistrement de votre avis…",
+    /** Loader while moving from one step to the next (the feedback is not finished yet). */
+    wait: "Un instant…",
   },
 
   header: {
@@ -132,7 +133,6 @@ export const fr = {
     },
     start: "Commencer",
     duration: "Anonyme, environ 1 minute.",
-    loading: "Un instant…",
   },
 
   qr: {

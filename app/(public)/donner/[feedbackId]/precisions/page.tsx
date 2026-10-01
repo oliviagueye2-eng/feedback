@@ -91,7 +91,7 @@ export default async function DetailsPage({ params, searchParams }: PageProps<"/
               {t.submit}
             </button>
           </div>
-          <PendingLoader message={common.savingFeedback} />
+          <PendingLoader message={common.wait} />
         </form>
       </main>
     </>
