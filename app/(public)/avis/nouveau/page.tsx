@@ -31,7 +31,7 @@ export default async function NewEstablishmentPage({ searchParams }: PageProps<"
       </div>
 
       <form action={createEstablishment} className={styles.form}>
-        <div className={styles.group} data-error-group>
+        <div className={styles.group}>
           <label htmlFor="name">{t.name}</label>
           <FormValidation message={t.error} shown={erreur !== undefined} />
           <input id="name" name="name" className={styles.input} defaultValue={name} required minLength={3} maxLength={200} autoComplete="off" />

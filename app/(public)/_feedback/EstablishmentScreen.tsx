@@ -64,14 +64,15 @@ export async function EstablishmentScreen({
           <strong>{establishment.name}</strong>
           {details && <span>{details}</span>}
           {qrService?.label && <span>{qrService.label}</span>}
-          <Link href="/avis" aria-label={t.changeLabel}>
-            {t.change}
-          </Link>
         </div>
         {logo && (
           // eslint-disable-next-line @next/next/no-img-element -- small SVG, nothing to optimize
           <img className={styles.identifiedLogo} src={logo} alt="" width={56} height={56} />
         )}
+        {/* Top right, on the line of « Vous évaluez »: the name below keeps the full width. */}
+        <Link href="/avis" className={styles.change} aria-label={t.changeLabel}>
+          {t.change}
+        </Link>
       </div>
 
 
@@ -91,7 +92,7 @@ export async function EstablishmentScreen({
       )}
 
       {askWhen && (
-        <fieldset className={styles.group} data-error-group>
+        <fieldset className={styles.group}>
           <legend>{t.when}</legend>
           <FormValidation message={t.whenError} shown={error} />
           <div className={styles.periods}>

@@ -6,9 +6,7 @@ import styles from "./formValidation.module.css";
 /**
  * Replaces the browser's own bubble (« Veuillez sélectionner l'une de ces
  * options ») by the site's message, placed under the title of the question
- * it concerns. Like a correction on a paper form: the message in red and
- * bold, and a red bar in the margin of the question (the element marked
- * data-error-group, see globals.css). On sending, if a required field is empty, the message
+ * it concerns, in red and bold. On sending, if a required field is empty, the message
  * shows and the first such field gets the focus. Without JavaScript, the
  * browser's bubble stays, and the server answers with the same message.
  */
@@ -44,7 +42,7 @@ export function FormValidation({
   }, []);
 
   return (
-    <div ref={anchor} hidden={!shown} data-error={shown ? "shown" : undefined}>
+    <div ref={anchor} hidden={!shown}>
       <p role="alert" className={styles.message}>
         {shown ? message : null}
       </p>

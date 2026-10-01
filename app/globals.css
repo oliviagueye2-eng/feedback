@@ -328,15 +328,6 @@ select:focus-visible {
   background: #fff;
 }
 
-/* A question left empty: a red bar in its margin, like a correction on a
-   paper form (see FormValidation). The bar sits in the left padding, so the
-   question does not move. */
-[data-error-group]:has([data-error="shown"]) {
-  border-left: 4px solid var(--error);
-  padding-left: 12px;
-  margin-left: -16px;
-}
-
 .muted {
   color: var(--muted);
 }

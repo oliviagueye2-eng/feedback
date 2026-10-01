@@ -17,6 +17,7 @@
 }
 
 .identified {
+  position: relative;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -37,7 +38,8 @@
 .identifiedLogo {
   width: 56px;
   height: 56px;
-  margin-left: auto;
+  /* Under « Changer ». */
+  margin: 36px 0 0 auto;
   flex-shrink: 0;
   object-fit: contain;
 }
@@ -46,8 +48,12 @@
   font-size: 18px;
 }
 
-.identified a {
-  margin-top: 8px;
+/* « Changer »: top right, aligned with « Vous évaluez », a 44 px touch area all the same. */
+.change {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  padding: 0 8px;
   font-weight: 700;
   min-height: 44px;
   display: flex;
