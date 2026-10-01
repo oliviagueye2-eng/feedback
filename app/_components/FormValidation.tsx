@@ -1,23 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import styles from "./formValidation.module.css";
 
 /**
  * Replaces the browser's own bubble (« Veuillez sélectionner l'une de ces
- * options ») by the site's message, in the site's style, where this component
- * sits in the form. On sending, if a required field is empty, the message
+ * options ») by the site's message, placed under the title of the question
+ * it concerns. Like a correction on a paper form: the message in red and
+ * bold, and a red bar in the margin of the question (the element marked
+ * data-error-group, see globals.css). On sending, if a required field is empty, the message
  * shows and the first such field gets the focus. Without JavaScript, the
  * browser's bubble stays, and the server answers with the same message.
  */
 export function FormValidation({
   message,
   shown: shownByServer = false,
-  className,
 }: {
   message: string;
   /** The server already found the error (page reloaded with ?erreur). */
   shown?: boolean;
-  className?: string;
 }) {
   const anchor = useRef<HTMLDivElement>(null);
   const [shown, setShown] = useState(shownByServer);
@@ -43,8 +44,8 @@ export function FormValidation({
   }, []);
 
   return (
-    <div ref={anchor} hidden={!shown}>
-      <p role="alert" className={className}>
+    <div ref={anchor} hidden={!shown} data-error={shown ? "shown" : undefined}>
+      <p role="alert" className={styles.message}>
         {shown ? message : null}
       </p>
     </div>

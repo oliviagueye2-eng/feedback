@@ -74,7 +74,6 @@ export async function EstablishmentScreen({
         )}
       </div>
 
-      <FormValidation message={t.whenError} shown={error} className={styles.error} />
 
       {askReason && (
         <div className={styles.group}>
@@ -92,8 +91,9 @@ export async function EstablishmentScreen({
       )}
 
       {askWhen && (
-        <fieldset className={styles.group}>
+        <fieldset className={styles.group} data-error-group>
           <legend>{t.when}</legend>
+          <FormValidation message={t.whenError} shown={error} />
           <div className={styles.periods}>
             {VISIT_PERIODS.map((value) => (
               <label key={value} className={styles.period}>
