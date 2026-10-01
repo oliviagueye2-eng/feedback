@@ -78,7 +78,6 @@ export const fr = {
 
   search: {
     title: "Donnez votre avis sur un service",
-    lead: "Anonyme et gratuit. Les résultats sont publiés chaque mois.",
     help: "Recherche par nom, type ou commune",
     submit: "Rechercher",
     clear: "Effacer la recherche",

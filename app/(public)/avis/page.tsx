@@ -23,7 +23,6 @@ export default async function SearchPage({ searchParams }: PageProps<"/avis">) {
         <div className={styles.column}>
           <div className={styles.intro}>
             <h1>{t.title}</h1>
-            <p className="muted">{t.lead}</p>
           </div>
           <SearchScreen initialQuery={query} initialResult={result} t={{ ...t, ...common }} />
           <Link href="/" className={styles.home}>

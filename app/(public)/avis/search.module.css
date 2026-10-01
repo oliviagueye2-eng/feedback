@@ -25,11 +25,6 @@
   line-height: 1.15;
 }
 
-.intro p {
-  margin: 6px 0 0;
-  font-size: 16px;
-}
-
 /* Way back to the home page, under the search (the header logo does the same). */
 .home {
   align-self: flex-start;
