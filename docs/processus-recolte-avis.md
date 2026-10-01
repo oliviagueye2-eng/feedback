@@ -39,7 +39,7 @@ Chaque avis passe par ces étapes, dans cet ordre.
 | 4 | **Le jugement global** | 5. Évaluer | « Êtes-vous satisfait(e) du service reçu ? » | 5 niveaux, un toucher | **Oui** : c'est la réponse qui compte dans les résultats | 2 | `answer` (`OVERALL_SATISFACTION`) | Fait |
 | 5 | **Les aspects** | 4. Analyser | « Comment ça s'est passé ? » | Pour chaque thème du secteur : « Bien », « Pas bien » ou rien ; « Autre » à préciser | Non | 2b | `feedback_topic` (avec `sentiment`) | Fait |
 | 6 | **Le récit** | 2. Comprendre | « Détail de votre expérience » (aide : points positifs, points négatifs, suggestions d'amélioration) | Texte libre, 500 caractères | Non | 2b | `comment` (relu avant publication) | Fait |
-| — | **Confirmation** | | « Votre avis est enregistré » | Terminer ou continuer | | 4-5 | `feedback.step` | À faire |
+| — | **Confirmation** | | « Votre avis est enregistré » | Terminer ou continuer (proposé seulement si un questionnaire détaillé est publié) | | 4-5 | `feedback.step`, `feedback.completed_at` (arrondi à l'heure) | Fait |
 
 ### Partie détaillée (facultative, proposée après la confirmation)
 
@@ -48,7 +48,7 @@ Chaque avis passe par ces étapes, dans cet ordre.
 | 7 | **Le résultat de la démarche** | 3. Appliquer | « Avez-vous obtenu ce que vous étiez venu(e) chercher ? » | Oui / en partie / non | Non | 6 | `answer` (`GOAL_ACHIEVED`) | À rédiger (secteurs où la question a du sens) |
 | 8 | **Les faits mesurables** | 3. Appliquer | Selon le secteur, ex. « Combien de temps avez-vous attendu ? » | Choix fermés (tranches) | Non | 6 | `answer` (`WAIT_TIME`…) | À rédiger |
 | 9 | **La proposition** | 6. Créer | Ex. « Qu'est-ce qui aurait rendu votre visite plus simple ? » | Texte libre court | Non | 6 | `answer` (question `text`) | **Proposition, à valider** |
-| — | **Remerciement** | | « Merci » | | | 7 | `feedback.completed_at` | À faire |
+| — | **Remerciement** | | « Merci » | | | 7 | | Fait |
 
 Les questions des étapes 7 à 9 dépendent du service (questionnaire détaillé du service, sinon du secteur, sinon `GENERIC`). Aucune n'est encore rédigée.
 

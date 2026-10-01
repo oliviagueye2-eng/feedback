@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { DomainError } from "@/src/domain/errors";
 import { defaultLocale } from "../../_i18n";
 import {
+  completeFeedback,
   OTHER_TOPIC_CODE,
   removeComment,
   saveAnswer,
@@ -87,4 +88,17 @@ export async function saveDetails(formData: FormData) {
     throw error;
   }
   redirect(`/donner/${id}/enregistre`);
+}
+
+/** Screens 4-5 → screen 7: « Terminer » closes the feedback. */
+export async function finishFeedback(formData: FormData) {
+  const id = String(formData.get("feedbackId") ?? "");
+  try {
+    await completeFeedback(id);
+  } catch (error) {
+    // Essential question not answered (or unknown feedback): back to it.
+    if (error instanceof DomainError && error.code === "NOT_FOUND") redirect(`/donner/${id}`);
+    throw error;
+  }
+  redirect(`/donner/${id}/merci`);
 }

@@ -135,6 +135,26 @@ export async function getDetailsScreen(feedbackId: string) {
   };
 }
 
+/**
+ * Screens 4-5: the feedback's context, and how many questions the detailed
+ * questionnaire has (0: none published yet, nothing to offer).
+ */
+export async function getSavedScreen(feedbackId: string) {
+  const { context } = await getEssentialScreen(feedbackId);
+  const sources = await db.findQuestionnaireSources(feedbackId);
+  if (!sources) throw notFound("Feedback not found");
+  const questionCount = await db.countQuestions(selectDetailedQuestionnaire(sources));
+  return { context, questionCount };
+}
+
+/** « Terminer » (screens 4-5): only once the essential question is answered. */
+export async function completeFeedback(feedbackId: string): Promise<void> {
+  requireUuid(feedbackId, "id");
+  if (!(await db.completeFeedback(feedbackId))) {
+    throw notFound("Feedback not found or essential question not answered");
+  }
+}
+
 /** Screen 6: which detailed questionnaire to show for this feedback. */
 export async function getDetailedQuestionnaire(feedbackId: string) {
   requireUuid(feedbackId, "id");

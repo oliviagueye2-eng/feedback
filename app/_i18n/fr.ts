@@ -163,7 +163,23 @@ export const fr = {
 
   saved: {
     title: "Votre avis est enregistré",
-    next: "La suite (confirmation et questionnaire détaillé) sera ajoutée à la prochaine étape.",
+    counts: "Il compte même si vous vous arrêtez ici.",
+    moreTitle: "Voulez-vous aller plus loin ?",
+    moreQuestions: { one: "{count} question sur votre expérience.", other: "{count} questions sur votre expérience." },
+    moreDuration: { one: "Environ {count} minute", other: "Environ {count} minutes" },
+    continue: "Continuer le questionnaire",
+    finish: "Terminer",
+  },
+
+  questionnaire: {
+    title: "Questionnaire détaillé",
+    next: "Le questionnaire détaillé sera ajouté à une prochaine étape.",
+  },
+
+  thanks: {
+    title: "Merci pour votre participation",
+    text: "Vos réponses aideront à améliorer ce service.",
+    close: "Vous pouvez fermer cette page.",
   },
 
   admin: {

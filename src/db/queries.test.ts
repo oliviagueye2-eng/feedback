@@ -13,10 +13,12 @@ import {
   searchEstablishments,
 } from "../domain/establishment";
 import {
+  completeFeedback,
   findFeedbackToResume,
   getDetailedQuestionnaire,
   getDetailsScreen,
   getEssentialScreen,
+  getSavedScreen,
   removeComment,
   saveAnswer,
   saveComment,
@@ -251,6 +253,7 @@ describe("feedback", () => {
       scope: "site",
       serviceLabel: null,
       essentialOption: "DISSATISFIED",
+      completed: false,
     });
     expect(question.label).toBe("Êtes-vous satisfait(e) du service reçu ?");
     expect(question.options.map((o) => o.code)).toEqual([
@@ -294,6 +297,29 @@ describe("feedback", () => {
       [questionnaireFeedback],
     );
     expect(row!.used).toBe(row!.expected);
+
+    // Screens 4-5 offer it with its number of questions.
+    expect((await getSavedScreen(questionnaireFeedback)).questionCount).toBe(1);
+  });
+
+  it("completes a feedback only once the essential question is answered, at the hour", async () => {
+    const unanswered = "9f4a3162-5d7e-4f9a-8b1c-b3c4d5e6f7a8";
+    await upsertFeedback(unanswered, {
+      channel: "search", establishmentId: ids.dantec, language: "fr", visitPeriod: "today",
+    });
+    // Nothing to offer at screens 4-5: no questionnaire published for health.
+    expect((await getSavedScreen(unanswered)).questionCount).toBe(0);
+    await expect(completeFeedback(unanswered)).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect((await getEssentialScreen(unanswered)).context.completed).toBe(false);
+
+    await completeFeedback(feedbackId);
+    await completeFeedback(feedbackId);
+    const [row] = await rows<{ step: string; on_the_hour: boolean }>(
+      "SELECT step, completed_at = date_trunc('hour', completed_at) AS on_the_hour FROM feedback WHERE id = $1",
+      [feedbackId],
+    );
+    expect(row).toEqual({ step: "completed", on_the_hour: true });
+    expect((await getEssentialScreen(feedbackId)).context.completed).toBe(true);
   });
 
   it("replaces the topics touched, each with its sentiment", async () => {

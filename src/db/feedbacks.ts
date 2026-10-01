@@ -272,6 +272,8 @@ export interface FeedbackContext {
   serviceLabel: string | null;
   /** Option already chosen at the essential question (coming back to change it). */
   essentialOption: string | null;
+  /** « Terminer » tapped (screens 4-5). */
+  completed: boolean;
 }
 
 /** What the screens after screen 1 show about the feedback being given. */
@@ -286,9 +288,11 @@ export async function findFeedbackContext(feedbackId: string): Promise<FeedbackC
     visit_period: string | null;
     service_label: string | null;
     essential_option: string | null;
+    completed: boolean;
   }>(
     `SELECT e.id AS establishment_id, e.name AS establishment_name, e.scope, f.channel,
             qc.code AS qr_code, f.service_id, f.visit_period, st.text AS service_label,
+            f.step = 'completed' AS completed,
             (SELECT ao.code
              FROM answer a
              JOIN question q ON q.id = a.question_id
@@ -314,6 +318,7 @@ export async function findFeedbackContext(feedbackId: string): Promise<FeedbackC
     scope: row.scope,
     serviceLabel: row.service_label,
     essentialOption: row.essential_option,
+    completed: row.completed,
   };
 }
 
@@ -342,4 +347,36 @@ export async function findEssentialQuestion(): Promise<EssentialQuestion | null>
     label: rows[0]!.question,
     options: rows.map((r) => ({ code: r.code, label: r.label, followUpPrompt: r.prompt })),
   };
+}
+
+/**
+ * Number of questions of the detailed questionnaire chosen for a feedback
+ * (screens 4-5 offer it only when there is one). 0 when GENERIC is not published.
+ */
+export async function countQuestions(selected: SelectedQuestionnaire): Promise<number> {
+  const rows = await query<{ count: number }>(
+    selected.kind === "generic"
+      ? `SELECT count(*)::int AS count FROM question WHERE questionnaire_id = ${PUBLISHED(selected.code)}`
+      : `SELECT count(*)::int AS count FROM question WHERE questionnaire_id = $1`,
+    selected.kind === "generic" ? [] : [selected.id],
+  );
+  return rows[0]?.count ?? 0;
+}
+
+/**
+ * « Terminer »: the feedback is complete. Only once the essential question is
+ * answered; completed_at is rounded to the hour, like started_at, and kept when
+ * the user taps « Terminer » again. False when there is no such feedback.
+ */
+export async function completeFeedback(feedbackId: string): Promise<boolean> {
+  const rows = await query(
+    `UPDATE feedback f
+     SET step = 'completed', completed_at = coalesce(f.completed_at, date_trunc('hour', now()))
+     WHERE f.id = $1 AND EXISTS (
+       SELECT 1 FROM answer a JOIN question q ON q.id = a.question_id
+       WHERE a.feedback_id = f.id AND q.code = 'OVERALL_SATISFACTION')
+     RETURNING f.id`,
+    [feedbackId],
+  );
+  return rows.length > 0;
 }
