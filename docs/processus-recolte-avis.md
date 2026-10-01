@@ -44,12 +44,24 @@ Chaque avis passe par ces étapes, dans cet ordre.
 
 | # | Étape | Bloom | Question posée à l'usager | Réponse | Obligatoire | Écran | Donnée enregistrée | État |
 |---|---|---|---|---|---|---|---|---|
-| 7 | **Le résultat de la démarche** | 3. Appliquer | « Avez-vous obtenu ce que vous étiez venu(e) chercher ? » | Oui / en partie / non | Non | 6 | `answer` (`GOAL_ACHIEVED`) | À rédiger (secteurs où la question a du sens) |
-| 8 | **Les faits mesurables** | 3. Appliquer | Selon le secteur, ex. « Combien de temps avez-vous attendu ? » | Choix fermés (tranches) | Non | 6 | `answer` (`WAIT_TIME`…) | À rédiger |
-| 9 | **La proposition** | 6. Créer | Ex. « Qu'est-ce qui aurait rendu votre visite plus simple ? » | Texte libre court | Non | 6 | `answer` (question `text`) | **Proposition, à valider** |
+| 7 | **Le résultat de la démarche** | 3. Appliquer | « Avez-vous obtenu ce que vous étiez venu(e) chercher ? » | Oui / en partie / non | Non | 6 | `answer` (`GOAL_ACHIEVED`) | Fait pour la santé ; à rédiger ailleurs (secteurs où la question a du sens) |
+| 8 | **Les faits mesurables** | 3. Appliquer | Selon le secteur, ex. « Combien de temps avez-vous attendu ? » | Choix fermés (tranches) | Non | 6 | `answer` (`WAIT_TIME`…) | Fait pour la santé ; à rédiger ailleurs |
+| 9 | **La proposition** | 6. Créer | Ex. « Qu'est-ce qui aurait rendu votre visite plus simple ? » | Texte libre court | Non | 6 | `answer` (question `text`) | **Écartée pour la santé** (2026-10-01 : l'écran 2b demande déjà un texte libre) |
 | — | **Remerciement** | | « Merci » | | | 7 | `feedback.step`, `feedback.completed_at` (arrondi à l'heure) | Fait |
 
-Les questions des étapes 7 à 9 dépendent du service (questionnaire détaillé du service, sinon du secteur, sinon `GENERIC`). Aucune n'est encore rédigée.
+Les questions des étapes 7 à 9 dépendent du service (questionnaire détaillé du service, sinon du secteur, sinon `GENERIC`). Toutes sur une seule page (écran 6), toutes facultatives : on passe une question en n'y répondant pas.
+
+**Santé** (questionnaire `HEALTH`, migration 0012, validé le 2026-10-01), pour tous les établissements de santé (repli du secteur, aucun service de santé n'étant défini) :
+
+| Code | Question | Réponses |
+|---|---|---|
+| `PATIENT` | Pour qui êtes-vous venu(e) ? | Pour moi / Pour mon enfant / Pour un autre proche |
+| `GOAL_ACHIEVED` | Avez-vous reçu les soins pour lesquels vous étiez venu(e) ? | Oui / En partie / Non |
+| `WAIT_TIME` | Combien de temps avez-vous attendu avant d'être reçu(e) ? | Moins de 30 minutes / 30 minutes à 1 heure / 1 à 2 heures / 2 à 4 heures / Plus de 4 heures |
+| `PRESCRIPTION_AVAILABLE` | Les médicaments ou examens prescrits étaient-ils disponibles sur place ? | Oui, tous / Une partie / Non, aucun / Rien n'a été prescrit |
+| `RECEIPT_GIVEN` | Avez-vous reçu un reçu pour ce que vous avez payé ? | Oui, pour tout / Pour une partie / Non / Je n'ai rien payé |
+
+Écarté : « Vous a-t-on demandé de payer en dehors de la caisse ? » (trop sensible sans l'accord de l'organisme porteur).
 
 ---
 

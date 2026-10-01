@@ -146,6 +146,30 @@ export async function countDetailedQuestions(feedbackId: string): Promise<number
   return db.countQuestions(selectDetailedQuestionnaire(sources));
 }
 
+/**
+ * Screen 6: the feedback's context and the questions of its detailed
+ * questionnaire, with what was already answered (none: nothing to show).
+ */
+export async function getQuestionnaireScreen(feedbackId: string) {
+  const { context } = await getEssentialScreen(feedbackId);
+  const sources = await db.findQuestionnaireSources(feedbackId);
+  if (!sources) throw notFound("Feedback not found");
+  const questions = await db.findDetailedQuestions(feedbackId, selectDetailedQuestionnaire(sources));
+  return { context, questions };
+}
+
+/**
+ * Screen 6 → screen 7: the answers given (question code → option code), all
+ * optional, then the feedback is complete. A question not answered keeps the
+ * answer given before, if any.
+ */
+export async function saveQuestionnaire(feedbackId: string, answers: Record<string, string>): Promise<void> {
+  for (const [questionCode, option] of Object.entries(answers)) {
+    await saveAnswer(feedbackId, questionCode, { option });
+  }
+  await completeFeedback(feedbackId);
+}
+
 /** End of the feedback (screen 7 follows): only once the essential question is answered. */
 export async function completeFeedback(feedbackId: string): Promise<void> {
   requireUuid(feedbackId, "id");

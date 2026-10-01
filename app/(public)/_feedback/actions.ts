@@ -10,6 +10,7 @@ import {
   removeComment,
   saveAnswer,
   saveComment,
+  saveQuestionnaire,
   saveTopics,
   upsertFeedback,
 } from "@/src/domain/feedback";
@@ -95,3 +96,25 @@ export async function saveDetails(formData: FormData) {
   redirect(`/donner/${id}/merci`);
 }
 
+/**
+ * Screen 6 → screen 7: saves the answers given (fields "q:CODE", each one
+ * optional), then the feedback is complete. An unknown question or option
+ * (a forged sending) comes back with the error message.
+ */
+export async function saveDetailedAnswers(formData: FormData) {
+  const id = String(formData.get("feedbackId") ?? "");
+  const answers = Object.fromEntries(
+    [...formData.entries()]
+      .filter(([name, value]) => name.startsWith("q:") && typeof value === "string" && value !== "")
+      .map(([name, value]) => [name.slice("q:".length), String(value)]),
+  );
+  try {
+    await saveQuestionnaire(id, answers);
+  } catch (error) {
+    if (error instanceof DomainError && (error.code === "INVALID_INPUT" || error.code === "NOT_FOUND")) {
+      redirect(`/donner/${id}/questionnaire?erreur=1`);
+    }
+    throw error;
+  }
+  redirect(`/donner/${id}/merci`);
+}

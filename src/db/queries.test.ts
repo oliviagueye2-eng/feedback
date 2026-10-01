@@ -19,9 +19,11 @@ import {
   getDetailedQuestionnaire,
   getDetailsScreen,
   getEssentialScreen,
+  getQuestionnaireScreen,
   removeComment,
   saveAnswer,
   saveComment,
+  saveQuestionnaire,
   saveTopics,
   upsertFeedback,
 } from "../domain/feedback";
@@ -281,7 +283,8 @@ describe("feedback", () => {
       INSERT INTO question (questionnaire_id, code, type, position)
       SELECT id, 'GOAL_ACHIEVED', 'yes_partial_no', 1 FROM questionnaire WHERE code = 'ADMINISTRATION';
       INSERT INTO answer_option (question_id, code, value, position)
-      SELECT id, 'YES', 1, 1 FROM question WHERE code = 'GOAL_ACHIEVED';
+      SELECT q.id, 'YES', 1, 1 FROM question q JOIN questionnaire qn ON qn.id = q.questionnaire_id
+      WHERE q.code = 'GOAL_ACHIEVED' AND qn.code = 'ADMINISTRATION';
     `);
     // The feedback has no service: the sector comes from the establishment type.
     const questionnaireFeedback = "8e3f2051-4c6d-4e8f-9091-a2b3c4d5e6f7";
@@ -308,8 +311,8 @@ describe("feedback", () => {
     await upsertFeedback(unanswered, {
       channel: "search", establishmentId: ids.dantec, language: "fr", visitPeriod: "today",
     });
-    // Nothing to offer after screen 2b: no questionnaire published for health.
-    expect(await countDetailedQuestions(unanswered)).toBe(0);
+    // Health has its five questions (migration 0012).
+    expect(await countDetailedQuestions(unanswered)).toBe(5);
     await expect(completeFeedback(unanswered)).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect((await getEssentialScreen(unanswered)).context.completed).toBe(false);
 
@@ -323,6 +326,30 @@ describe("feedback", () => {
     expect((await getEssentialScreen(feedbackId)).context.completed).toBe(true);
     // A complete feedback is never resumed: screen 1 starts a new one.
     expect(await findFeedbackToResume(feedbackId, ids.gy)).toBeNull();
+  });
+
+  it("shows the health questions, saves the answers given and completes the feedback", async () => {
+    const health = "b2c3d4e5-0000-4000-8000-000000000001";
+    await upsertFeedback(health, { channel: "search", establishmentId: ids.dantec, language: "fr", visitPeriod: "today" });
+    await saveAnswer(health, "OVERALL_SATISFACTION", { option: "NEUTRAL" });
+    const before = await getQuestionnaireScreen(health);
+    expect(before.questions.map((q) => q.code)).toEqual([
+      "PATIENT", "GOAL_ACHIEVED", "WAIT_TIME", "PRESCRIPTION_AVAILABLE", "RECEIPT_GIVEN",
+    ]);
+    expect(before.questions[2]!.options.map((o) => o.label)[0]).toBe("Moins de 30 minutes");
+
+    // Two answered, three skipped.
+    await saveQuestionnaire(health, { WAIT_TIME: "2_TO_4_H", RECEIPT_GIVEN: "NO" });
+    const after = await getQuestionnaireScreen(health);
+    expect(after.questions.map((q) => q.chosen)).toEqual([null, null, "2_TO_4_H", null, "NO"]);
+    expect(after.context.completed).toBe(true);
+    const [row] = await rows<{ code: string }>(
+      "SELECT qn.code FROM feedback f JOIN questionnaire qn ON qn.id = f.detailed_questionnaire_id WHERE f.id = $1",
+      [health],
+    );
+    expect(row?.code).toBe("HEALTH");
+
+    await expect(saveQuestionnaire(health, { WAIT_TIME: "NEVER" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
   });
 
   it("replaces the topics touched, each with its sentiment", async () => {
@@ -396,7 +423,7 @@ describe("published stats", () => {
       INSERT INTO answer (feedback_id, question_id, option_id)
       SELECT f.id, q.id, ao.id
       FROM feedback f, question q JOIN answer_option ao ON ao.question_id = q.id
-      WHERE f.establishment_id = '${ids.dantec}' AND q.code = 'OVERALL_SATISFACTION' AND ao.code = 'VERY_SATISFIED';
+      WHERE f.establishment_id = '${ids.dantec}' AND f.visit_month = '2026-02-01' AND q.code = 'OVERALL_SATISFACTION' AND ao.code = 'VERY_SATISFIED';
       REFRESH MATERIALIZED VIEW monthly_stats;
     `);
     expect(await getEstablishmentStats(ids.dantec!)).toEqual([

@@ -161,8 +161,9 @@ export const fr = {
   },
 
   questionnaire: {
-    title: "Questionnaire détaillé",
-    next: "Le questionnaire détaillé sera ajouté à une prochaine étape.",
+    lead: "Répondez seulement à ce qui vous concerne.",
+    error: "Une réponse n'a pas été acceptée. Vérifiez vos réponses, puis appuyez de nouveau sur « Continuer ».",
+    submit: "Continuer",
   },
 
   thanks: {

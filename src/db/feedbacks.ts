@@ -415,3 +415,55 @@ export async function deleteAbandonedFeedbacks(days: number): Promise<number> {
   );
   return rows.length;
 }
+
+export interface DetailedQuestion {
+  code: string;
+  type: string;
+  label: string;
+  options: { code: string; label: string }[];
+  /** Option already chosen for this feedback (coming back to the page). */
+  chosen: string | null;
+}
+
+/**
+ * Screen 6: the questions of the chosen detailed questionnaire, in French and
+ * in order, with what this feedback already answered. Only questions with
+ * options (no free text in the detailed questionnaires for now).
+ */
+export async function findDetailedQuestions(
+  feedbackId: string,
+  selected: SelectedQuestionnaire,
+): Promise<DetailedQuestion[]> {
+  const generic = selected.kind === "generic";
+  const rows = await query<{
+    code: string;
+    type: string;
+    label: string;
+    option_code: string;
+    option_label: string;
+    chosen: boolean;
+  }>(
+    `SELECT q.code, q.type, qt.text AS label, ao.code AS option_code, ot.text AS option_label,
+            EXISTS (SELECT 1 FROM answer a WHERE a.feedback_id = $1 AND a.option_id = ao.id) AS chosen
+     FROM question q
+     JOIN translation qt ON qt.target_table = 'question' AND qt.target_id = q.id
+       AND qt.field = 'label' AND qt.language = 'fr'
+     JOIN answer_option ao ON ao.question_id = q.id
+     JOIN translation ot ON ot.target_table = 'answer_option' AND ot.target_id = ao.id
+       AND ot.field = 'label' AND ot.language = 'fr'
+     WHERE q.questionnaire_id = ${generic ? PUBLISHED(selected.code) : "$2::int"}
+     ORDER BY q.position, ao.position`,
+    generic ? [feedbackId] : [feedbackId, selected.id],
+  );
+  const questions: DetailedQuestion[] = [];
+  for (const row of rows) {
+    let question = questions.at(-1);
+    if (question?.code !== row.code) {
+      question = { code: row.code, type: row.type, label: row.label, options: [], chosen: null };
+      questions.push(question);
+    }
+    question.options.push({ code: row.option_code, label: row.option_label });
+    if (row.chosen) question.chosen = row.option_code;
+  }
+  return questions;
+}

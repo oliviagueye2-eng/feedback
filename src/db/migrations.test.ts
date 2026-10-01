@@ -82,6 +82,24 @@ describe("reference data", () => {
     ]);
     expect(await topicsFor("HEALTH")).toHaveLength(13);
   });
+
+  it("gives health its published detailed questionnaire, every option labelled", async () => {
+    const questions = (await db.query<{ code: string; label: string; options: number; labelled: number }>(
+      `SELECT q.code, qt.text AS label, count(ao.id)::int AS options, count(ot.text)::int AS labelled
+       FROM sector s
+       JOIN questionnaire qn ON qn.id = s.fallback_questionnaire_id AND qn.status = 'published'
+       JOIN question q ON q.questionnaire_id = qn.id
+       JOIN translation qt ON qt.target_table = 'question' AND qt.target_id = q.id AND qt.language = 'fr'
+       JOIN answer_option ao ON ao.question_id = q.id
+       LEFT JOIN translation ot ON ot.target_table = 'answer_option' AND ot.target_id = ao.id AND ot.language = 'fr'
+       WHERE s.code = 'HEALTH'
+       GROUP BY q.code, qt.text, q.position ORDER BY q.position`)).rows;
+    expect(questions.map((q) => [q.code, q.options])).toEqual([
+      ["PATIENT", 3], ["GOAL_ACHIEVED", 3], ["WAIT_TIME", 5], ["PRESCRIPTION_AVAILABLE", 4], ["RECEIPT_GIVEN", 4],
+    ]);
+    expect(questions.every((q) => q.labelled === q.options)).toBe(true);
+    expect(questions[0]!.label).toBe("Pour qui êtes-vous venu(e) ?");
+  });
 });
 
 describe("search", () => {
