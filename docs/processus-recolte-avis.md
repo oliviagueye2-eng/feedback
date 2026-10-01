@@ -63,6 +63,18 @@ Les questions des étapes 7 à 9 dépendent du service (questionnaire détaillé
 
 Écarté : « Vous a-t-on demandé de payer en dehors de la caisse ? » (trop sensible sans l'accord de l'organisme porteur).
 
+**Administration et état civil** (questionnaire `ADMINISTRATION`, migration 0016, validé le 2026-10-01), pour tous les établissements du secteur (repli du secteur, « État civil » des mairies compris). Mêmes codes et mêmes réponses que la santé quand la question est la même, pour comparer les secteurs :
+
+| Code | Question | Réponses |
+|---|---|---|
+| `GOAL_ACHIEVED` | Avez-vous obtenu ce que vous étiez venu(e) chercher ? | Oui / En partie / Non |
+| `VISITS_COUNT` | Combien de fois êtes-vous venu(e) pour cette démarche ? | 1 fois / 2 fois / 3 fois ou plus |
+| `WAIT_TIME` | Combien de temps avez-vous attendu avant d'être reçu(e) ? | *mêmes tranches que la santé* |
+| `DOCUMENTS_KNOWN` | Saviez-vous à l'avance quels papiers apporter ? | Oui / En partie / Non |
+| `RECEIPT_GIVEN` | Vous a-t-on donné un reçu pour ce que vous avez payé ? | Oui, pour tout / Pour une partie / Non / Je n'ai rien payé |
+
+**Propositions pour les autres secteurs (2026-10-01, non validées)** : Impôts et domaines, Justice, Emploi et protection sociale : même base que l'Administration ; Sécurité : attente, nombre de venues, document remis (à valider avec l'organisme porteur) ; Éducation : vous êtes (élève, parent, autre), cours tenus, effectif de la classe, toilettes et eau, reçu ; Électricité et Eau : sujet de l'avis, nombre de coupures (ou de jours sans eau), prévenu avant la coupure (si coupures), compteur Woyofal (électricité) ; Télécoms : sujet de l'avis, fréquence des pertes de réseau ; Transport : moyen de transport, attente à l'arrêt, véhicule bondé, ticket ; Banques et assurances : démarche obtenue, attente, frais expliqués ; secteurs privés (commerce, hôtellerie, restauration, tourisme, culture, sport, immobilier) : questionnaire `GENERIC` (prix juste, reçu ou facture, recommanderiez-vous).
+
 **Questions communes** (questionnaire `COMMON`, migration 0014, validé le 2026-10-01) : dans tous les secteurs, **sur leur propre page (écran 6b, `/donner/{id}/questionnaire/commun`) après celle du secteur**, pour que « cette situation » ne soit pas lue comme le sujet de la question précédente, et **seulement après « Peu satisfait(e) » ou « Pas du tout satisfait(e) »**. Un usager peu satisfait d'un secteur sans questionnaire propre va directement de l'écran 2b à l'écran 6b ; un usager satisfait ne la voit pas.
 
 | Code | Question | Réponses | Affichée si |

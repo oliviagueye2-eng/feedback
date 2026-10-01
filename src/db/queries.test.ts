@@ -275,25 +275,7 @@ describe("feedback", () => {
       .rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
-  it("uses the sector's detailed questionnaire and records it on the feedback", async () => {
-    await db.exec(`
-      INSERT INTO questionnaire (code, status, published_at) VALUES ('ADMINISTRATION', 'published', now());
-      UPDATE sector SET fallback_questionnaire_id = (SELECT id FROM questionnaire WHERE code = 'ADMINISTRATION')
-      WHERE code = 'ADMINISTRATION';
-      INSERT INTO question (questionnaire_id, code, type, position)
-      SELECT id, 'GOAL_ACHIEVED', 'yes_partial_no', 1 FROM questionnaire WHERE code = 'ADMINISTRATION';
-      INSERT INTO answer_option (question_id, code, value, position)
-      SELECT q.id, 'YES', 1, 1 FROM question q JOIN questionnaire qn ON qn.id = q.questionnaire_id
-      WHERE q.code = 'GOAL_ACHIEVED' AND qn.code = 'ADMINISTRATION';
-      INSERT INTO question_translation (question_id, language, label)
-      SELECT q.id, 'fr', 'Avez-vous obtenu ce que vous étiez venu(e) chercher ?'
-      FROM question q JOIN questionnaire qn ON qn.id = q.questionnaire_id
-      WHERE q.code = 'GOAL_ACHIEVED' AND qn.code = 'ADMINISTRATION';
-      INSERT INTO answer_option_translation (answer_option_id, language, label)
-      SELECT ao.id, 'fr', 'Oui' FROM answer_option ao JOIN question q ON q.id = ao.question_id
-      JOIN questionnaire qn ON qn.id = q.questionnaire_id
-      WHERE q.code = 'GOAL_ACHIEVED' AND qn.code = 'ADMINISTRATION';
-    `);
+  it("uses the sector's detailed questionnaire (Administration, 0016) and records it on the feedback", async () => {
     // The feedback has no service: the sector comes from the establishment type.
     const questionnaireFeedback = "8e3f2051-4c6d-4e8f-9091-a2b3c4d5e6f7";
     await upsertFeedback(questionnaireFeedback, {

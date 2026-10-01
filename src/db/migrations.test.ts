@@ -132,6 +132,31 @@ describe("search", () => {
     ).toBe("etat civil extrait de naissance");
   });
 
+  it("gives Administration its five questions, comparable with health's where they are the same", async () => {
+    const questions = (await db.query<{ code: string; options: string }>(
+      `SELECT q.code, string_agg(ao.code, ',' ORDER BY ao.position) AS options
+       FROM sector s
+       JOIN questionnaire qn ON qn.id = s.fallback_questionnaire_id AND qn.status = 'published'
+       JOIN question q ON q.questionnaire_id = qn.id
+       JOIN answer_option ao ON ao.question_id = q.id
+       JOIN answer_option_translation ot ON ot.answer_option_id = ao.id AND ot.language = 'fr'
+       JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
+       WHERE s.code = $1
+       GROUP BY q.code, q.position ORDER BY q.position`, ["ADMINISTRATION"])).rows;
+    expect(questions.map((q) => q.code)).toEqual([
+      "GOAL_ACHIEVED", "VISITS_COUNT", "WAIT_TIME", "DOCUMENTS_KNOWN", "RECEIPT_GIVEN",
+    ]);
+    // The wait has the same answers in health and administration.
+    const wait = (await one<{ same: boolean }>(
+      `SELECT count(DISTINCT x.options) = 1 AS same FROM (
+         SELECT string_agg(ao.code, ',' ORDER BY ao.position) AS options
+         FROM question q JOIN questionnaire qn ON qn.id = q.questionnaire_id
+         JOIN answer_option ao ON ao.question_id = q.id
+         WHERE q.code = 'WAIT_TIME' AND qn.code IN ('HEALTH', 'ADMINISTRATION')
+         GROUP BY qn.code) x`))!;
+    expect(wait.same).toBe(true);
+  });
+
   it("has the common questions, shown only after a dissatisfied answer, « Pourquoi ? » after « Non »", async () => {
     const conditions = (await db.query<{ question: string; depends_on: string; option: string }>(
       `SELECT q.code AS question, dq.code AS depends_on, ao.code AS option
@@ -166,8 +191,9 @@ describe("search", () => {
              (SELECT count(*)::int FROM answer_option_translation) AS options,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts,
              to_regclass('translation')::text AS old`);
-    // Questions and options: those of 0002 and 0012, plus the common ones of 0014 (2 and 7).
-    expect(row).toEqual({ sectors: 19, topics: 33, questions: 8, options: 31, prompts: 5, old: null });
+    // Questions and options: those of 0002 and 0012, the common ones of 0014 (2 and 7),
+    // and Administration's of 0016 (5 and 18).
+    expect(row).toEqual({ sectors: 19, topics: 33, questions: 13, options: 49, prompts: 5, old: null });
     // The real service of 0004 keeps its French label (then its synonyms) in its search_text.
     expect((await one<{ search_text: string }>(
       "SELECT search_text FROM service WHERE code = 'CIVIL_REGISTRY'"))?.search_text,
