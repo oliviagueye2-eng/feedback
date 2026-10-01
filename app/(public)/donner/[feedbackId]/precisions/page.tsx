@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { BackLink } from "../../../../_components/BackLink";
 import { PendingLoader } from "../../../../_components/PendingLoader";
 import { DomainError } from "@/src/domain/errors";
 import { COMMENT_MAX_LENGTH, getDetailsScreen, OTHER_TOPIC_CODE, OTHER_TOPIC_MAX_LENGTH } from "@/src/domain/feedback";
@@ -91,6 +92,7 @@ export default async function DetailsPage({ params, searchParams }: PageProps<"/
               {t.submit}
             </button>
           </div>
+          <BackLink href={`/donner/${feedbackId}`} label={common.previous} />
           <PendingLoader message={common.wait} />
         </form>
       </main>
