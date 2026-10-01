@@ -10,7 +10,7 @@ Comportement validé le 2026-09-29. Les textes affichés seront revus dans une p
 | 0a. Résultats | `/avis` (mode recherche) | Liste d'établissements ; « Je ne trouve pas mon établissement » toujours en dernier |
 | 0b. Aucun résultat | `/avis` (mode recherche) | « Aucun résultat exact », suggestions « Vouliez-vous dire », bouton « Continuer avec « … » » |
 | 0c. Non répertorié | `/avis/nouveau?nom=…` | Nom (obligatoire, prérempli), secteur (facultatif), commune ou village (facultatif), « Utiliser cet établissement » |
-| 1. Établissement identifié | `/avis/{id}` (recherche), `/e/{code}` (QR code) | Établissement évalué, motif, « Quand êtes-vous venu(e) ? » (voir plus bas) |
+| 1. Établissement identifié | `/avis/{id}` (recherche), `/e/{code}` (QR code) | Établissement évalué, motif, « À quand remonte votre expérience ? » (voir plus bas) |
 
 ## Recherche
 
@@ -53,9 +53,10 @@ Sur ordinateur, pas de mode plein écran : les résultats s'affichent sous le ch
 
 ## Écran 1
 
-- Carte « Vous évaluez » : nom, commune et secteur (« En général » pour un organisme), lien « Ce n'est pas le bon établissement / organisme ? » selon le type.
-- **Motif de votre visite** (« Sur quoi porte votre avis ? » pour un organisme) : la liste des services de l'établissement, plus « Autre démarche ». **Facultatif.** Pas affiché si l'établissement n'a aucun service.
-- **Quand êtes-vous venu(e) ?** (« Quand est-ce arrivé ? » pour un organisme) : 4 réponses en tuiles, **obligatoire**, aucune présélectionnée.
+- Carte « Vous évaluez » : nom, commune (si connue) et secteur, lien « Changer » (vers la recherche).
+- **Sur quoi porte votre avis ?** (mêmes textes pour un lieu ou un organisme, 2026-10-01) : la liste des services de l'établissement, plus « Autre démarche ». **Facultatif.** Pas affiché si l'établissement n'a aucun service.
+- **À quand remonte votre expérience ?** : 4 réponses en tuiles, **obligatoire**, aucune présélectionnée. Oubli : message du site « Indiquez à quand remonte votre expérience. » (plus la bulle du navigateur ; `FormValidation`).
+- Bouton **« Commencer »**, puis « Anonyme, environ 1 minute. » et le lien « ‹ Retour à l'accueil ».
 - **QR code** : ni motif (le service du guichet est connu et affiché) ni date (visite du jour). QR code inconnu ou désactivé : « Ce QR code n'est plus actif » et lien vers la recherche.
 - « Donner mon avis » enregistre la visite (identifiant d'avis créé à l'affichage de la page : un double envoi met à jour le même avis) puis ouvre l'écran 2.
 

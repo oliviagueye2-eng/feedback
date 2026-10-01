@@ -34,8 +34,8 @@ Chaque avis passe par ces étapes, dans cet ordre.
 | # | Étape | Bloom | Question posée à l'usager | Réponse | Obligatoire | Écran | Donnée enregistrée | État |
 |---|---|---|---|---|---|---|---|---|
 | 1 | **Où ?** L'établissement | 1. Se souvenir | « Dans quel établissement êtes-vous allé(e) ? » (ou QR code scanné) | Recherche, choix dans une liste, ou saisie libre | Oui | 0 à 0c, ou QR | `establishment_id`, `channel`, `qr_code_id` | Fait |
-| 2 | **Quoi ?** Le service | 1. Se souvenir | « Motif de votre visite » | Liste des services de l'établissement, ou « Autre démarche » | Non (déjà connu par le QR code du guichet) | 1 | `service_id` | Fait |
-| 3 | **Quand ?** La période | 1. Se souvenir | « Quand êtes-vous venu(e) ? » | Aujourd'hui / moins d'une semaine / moins d'un mois / plus d'un mois | Oui, sauf QR code (= aujourd'hui) | 1 | `visit_period`, `visit_month` | Fait |
+| 2 | **Quoi ?** Le service | 1. Se souvenir | « Sur quoi porte votre avis ? » | Liste des services de l'établissement, ou « Autre démarche » | Non (déjà connu par le QR code du guichet) | 1 | `service_id` | Fait |
+| 3 | **Quand ?** La période | 1. Se souvenir | « À quand remonte votre expérience ? » | Aujourd'hui / moins d'une semaine / moins d'un mois / plus d'un mois | Oui, sauf QR code (= aujourd'hui) | 1 | `visit_period`, `visit_month` | Fait |
 | 4 | **Le jugement global** | 5. Évaluer | « Êtes-vous satisfait(e) du service reçu ? » | 5 niveaux, un toucher | **Oui** : c'est la réponse qui compte dans les résultats | 2 | `answer` (`OVERALL_SATISFACTION`) | Fait |
 | 5 | **Les aspects** | 4. Analyser | « Comment ça s'est passé ? » | Pour chaque thème du secteur : « Bien », « Pas bien » ou rien ; « Autre » à préciser | Non | 2b | `feedback_topic` (avec `sentiment`) | Fait |
 | 6 | **Le récit** | 2. Comprendre | « Détail de votre expérience » (aide : points positifs, points négatifs, suggestions d'amélioration) | Texte libre, 500 caractères | Non | 2b | `comment` (relu avant publication) | Fait |

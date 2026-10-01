@@ -258,7 +258,7 @@ Chaque avis reste ainsi rattaché à un établissement. Dans la recherche, à sc
 
 **Note globale d'un organisme** (décision du 2026-09-29) : tous les avis de tous ses établissements regroupés (« en général » et agences), avec le détail par établissement.
 
-**Écran 1** pour un établissement « en général » : « Quand est-ce arrivé ? » au lieu de « Quand êtes-vous venu(e) ? » (mêmes réponses, même calcul du mois) ; le motif devient « Sur quoi porte votre avis ? ».
+**Écran 1** : depuis le 2026-10-01, mêmes textes pour un lieu et pour un organisme « en général » : « À quand remonte votre expérience ? » (mêmes réponses, même calcul du mois) et « Sur quoi porte votre avis ? ».
 
 ## 4. Recherche d'établissement (écrans 0 et 0a)
 
@@ -412,7 +412,7 @@ Un avis : le passage d'un usager, de la première réponse à la fin.
 | language | text | langue choisie |
 | step | enum | `essential`, `detailed`, `completed` |
 | detailed_questionnaire_id | fk | version utilisée pour la partie détaillée |
-| visit_period | enum | `today`, `under_week`, `under_month`, `over_month` : réponse à « Quand êtes-vous venu(e) ? ». Vaut `today` automatiquement pour une arrivée par QR code |
+| visit_period | enum | `today`, `under_week`, `under_month`, `over_month` : réponse à « À quand remonte votre expérience ? » (anciennement « Quand êtes-vous venu(e) ? »). Vaut `today` automatiquement pour une arrivée par QR code |
 | visit_month | date | mois de la visite, calculé à l'enregistrement à partir de `visit_period` et `started_at` (ex. 2026-03-01). Ne change plus ensuite |
 | started_at | timestamptz | arrondi à l'heure pour limiter la réidentification |
 | completed_at | timestamptz | |

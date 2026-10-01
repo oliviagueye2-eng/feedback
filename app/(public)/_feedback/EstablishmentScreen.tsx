@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BackHomeLink } from "../../_components/BackHomeLink";
+import { FormValidation } from "../../_components/FormValidation";
 import { organizationLogoSrc } from "../../_components/organizationLogo";
 import { PendingLoader } from "../../_components/PendingLoader";
 import { getDictionary } from "../../_i18n";
@@ -32,8 +33,6 @@ export async function EstablishmentScreen({
   error?: boolean;
 }) {
   const { common, establishment: t } = await getDictionary();
-  // An organisation rated as a whole (Senelec in general) is not a place.
-  const general = establishment.scope === "general";
   // An organisation as a whole has no municipality: only its sector shows.
   const details = [establishment.municipalityName, establishment.sectorLabel]
     .filter(Boolean)
@@ -65,8 +64,8 @@ export async function EstablishmentScreen({
           <strong>{establishment.name}</strong>
           {details && <span>{details}</span>}
           {qrService?.label && <span>{qrService.label}</span>}
-          <Link href="/avis">
-            {general ? t.wrongOrganization : t.wrongEstablishment}
+          <Link href="/avis" aria-label={t.changeLabel}>
+            {t.change}
           </Link>
         </div>
         {logo && (
@@ -75,15 +74,11 @@ export async function EstablishmentScreen({
         )}
       </div>
 
-      {error && (
-        <p role="alert" className={styles.error}>
-          {t.whenError}
-        </p>
-      )}
+      <FormValidation message={t.whenError} shown={error} className={styles.error} />
 
       {askReason && (
         <div className={styles.group}>
-          <label htmlFor="service">{general ? t.reasonGeneral : t.reason}</label>
+          <label htmlFor="service">{t.reason}</label>
           <select id="service" name="service" className={styles.select} defaultValue="">
             <option value="">{t.reasonPlaceholder}</option>
             {establishment.services.map((s) => (
@@ -98,7 +93,7 @@ export async function EstablishmentScreen({
 
       {askWhen && (
         <fieldset className={styles.group}>
-          <legend>{general ? t.whenGeneral : t.when}</legend>
+          <legend>{t.when}</legend>
           <div className={styles.periods}>
             {VISIT_PERIODS.map((value) => (
               <label key={value} className={styles.period}>
@@ -112,7 +107,7 @@ export async function EstablishmentScreen({
 
       <div className={styles.actions}>
         <button type="submit" className="btn">
-          {common.giveFeedback}
+          {t.start}
         </button>
         <p className="muted">{t.duration}</p>
       </div>

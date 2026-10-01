@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { listSectors } from "@/src/domain/establishment";
+import { FormValidation } from "../../../_components/FormValidation";
 import { PendingLoader } from "../../../_components/PendingLoader";
 import { getDictionary } from "../../../_i18n";
 import styles from "../form.module.css";
@@ -30,11 +31,7 @@ export default async function NewEstablishmentPage({ searchParams }: PageProps<"
       </div>
 
       <form action={createEstablishment} className={styles.form}>
-        {erreur && (
-          <p role="alert" className={styles.error}>
-            {t.error}
-          </p>
-        )}
+        <FormValidation message={t.error} shown={erreur !== undefined} className={styles.error} />
         <div className={styles.group}>
           <label htmlFor="name">{t.name}</label>
           <input id="name" name="name" className={styles.input} defaultValue={name} required minLength={3} maxLength={200} autoComplete="off" />
