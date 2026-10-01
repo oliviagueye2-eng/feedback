@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BackHomeLink } from "../../_components/BackHomeLink";
 import { organizationLogoSrc } from "../../_components/organizationLogo";
 import { PendingLoader } from "../../_components/PendingLoader";
 import { getDictionary } from "../../_i18n";
@@ -115,6 +116,7 @@ export async function EstablishmentScreen({
         </button>
         <p className="muted">{t.duration}</p>
       </div>
+      <BackHomeLink label={common.backHome} />
       <PendingLoader message={t.loading} />
     </form>
   );

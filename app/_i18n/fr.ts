@@ -22,6 +22,7 @@ export const fr = {
   common: {
     optional: "(facultatif)",
     back: "Retour",
+    backHome: "Retour à l'accueil",
     giveFeedback: "Donner mon avis",
     searchLabel: "Quel établissement ou organisme voulez-vous évaluer ?",
     searchPlaceholder: "Ex. : hôpital Fann",
@@ -81,7 +82,6 @@ export const fr = {
     help: "Recherche par nom, type ou commune",
     submit: "Rechercher",
     clear: "Effacer la recherche",
-    backHome: "Retour à l'accueil",
     qrHint: "Vous êtes au guichet ? Ouvrez l'appareil photo de votre téléphone et visez le QR code affiché.",
     tooShort: "Tapez au moins 3 lettres.",
     offline: "Pas de connexion. Vérifiez votre réseau, puis réessayez.",
