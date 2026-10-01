@@ -93,12 +93,3 @@
   color: var(--green);
 }
 
-.error {
-  margin: 0;
-  padding: 12px 14px;
-  border: 1.5px solid var(--error);
-  border-radius: 10px;
-  background: var(--error-tint);
-  color: var(--error-ink);
-  font-size: 15px;
-}
