@@ -92,7 +92,7 @@ Le dépôt `oliviagueye2-eng/allo-pro-sn` est un **autre projet**, sans rapport 
 
 ### Hébergement (prototype en ligne)
 - **Vercel** (dépôt connecté, région `fra1`) + **Neon** (projet `floral-credit-39387239`, région Frankfurt, PostgreSQL 17 conseillé). Variables `DATABASE_URL` (poolée) et `DATABASE_URL_UNPOOLED` (directe) configurées en « Secret ».
-- Les migrations tournent au build de **production** uniquement (`npm run vercel-build`) ; les migrations **0001 à 0011 sont appliquées sur Neon** (dernier déploiement : commit `ab5cae8`, 2026-09-30, statut Vercel « success »).
+- Les migrations tournent au build de **production** uniquement (`npm run vercel-build`) ; les migrations **0001 à 0011 sont appliquées sur Neon** (dernier déploiement : commit `c056c3e`, 2026-10-01, statut Vercel « success »).
 - `vercel.json` : cron quotidien 2 h UTC sur `/webapi/internal/refresh-stats`.
 - Production nationale : hébergement souverain au Sénégal ou cloud européen, en conteneur (non fait).
 
