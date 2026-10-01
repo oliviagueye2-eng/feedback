@@ -1,5 +1,6 @@
+/* Close to the question's title, as a note under it (the group's gap is 8 px). */
 .message {
-  margin: 0;
+  margin: -6px 0 0;
   color: var(--error);
   font-size: 14px;
   font-weight: 700;
