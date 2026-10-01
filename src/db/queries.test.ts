@@ -347,8 +347,6 @@ describe("feedback", () => {
       { code: "OTHER", sentiment: "negative", other_text: "Toilettes" },
       { code: "STAFF", sentiment: "positive", other_text: null },
     ]);
-    await expect(saveTopics(feedbackId, { topics: [{ code: "PARKING", sentiment: "positive" }] }))
-      .rejects.toMatchObject({ code: "INVALID_INPUT" });
   });
 
   it("saves the comment and sends an edited comment back to moderation", async () => {
@@ -375,10 +373,13 @@ describe("feedback", () => {
     expect(screen.comment).toBe("Deux heures d'attente, guichet fermé.");
   });
 
-  it("refuses a topic of another sector, and removes an emptied comment", async () => {
-    await expect(saveTopics(feedbackId, { topics: [{ code: "POWER_CUTS", sentiment: "negative" }] }))
-      .rejects.toMatchObject({ code: "INVALID_INPUT" });
-    await saveTopics(feedbackId, { topics: [{ code: "PROCESSING_TIME", sentiment: "negative" }] });
+  it("ignores a topic of another sector, keeps the others, and removes an emptied comment", async () => {
+    await saveTopics(feedbackId, {
+      topics: [
+        { code: "POWER_CUTS", sentiment: "negative" },
+        { code: "PROCESSING_TIME", sentiment: "negative" },
+      ],
+    });
     await removeComment(feedbackId);
     const screen = await getDetailsScreen(feedbackId);
     expect(screen.topics.filter((t) => t.sentiment).map((t) => t.code)).toEqual(["PROCESSING_TIME"]);

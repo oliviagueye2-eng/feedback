@@ -136,17 +136,27 @@ const TOPICS_FOR_FEEDBACK = `
            WHERE f.id = $1 AND ts.topic_id = t.id
              AND ts.sector_id = coalesce(s.sector_id, et.sector_id, e.sector_id)))`;
 
-/** Replaces all topics of a feedback. Codes must be unique (checked in src/domain). */
+/**
+ * Replaces all topics of a feedback. Codes must be unique (checked in src/domain).
+ * A topic that is not (or no longer) offered for this feedback is ignored, the
+ * others are kept: e.g. screen 2b shown again from the phone's memory after
+ * the visit reason moved the feedback to another sector, or a topic turned off
+ * in between. The user sees no error for it.
+ */
 export async function replaceTopics(input: {
   feedbackId: string;
   topics: { code: string; sentiment: TopicSentiment; otherText: string | null }[];
 }): Promise<void> {
-  const codes = input.topics.map((t) => t.code);
-  const known = await query<{ code: string }>(
-    `SELECT code FROM (${TOPICS_FOR_FEEDBACK}) t WHERE code = ANY($2::text[])`,
-    [input.feedbackId, codes],
+  const known = new Set(
+    (
+      await query<{ code: string }>(
+        `SELECT code FROM (${TOPICS_FOR_FEEDBACK}) t WHERE code = ANY($2::text[])`,
+        [input.feedbackId, input.topics.map((t) => t.code)],
+      )
+    ).map((row) => row.code),
   );
-  if (known.length !== codes.length) throw invalidInput("Unknown topic");
+  const topics = input.topics.filter((t) => known.has(t.code));
+  const codes = topics.map((t) => t.code);
 
   // One statement: removes the topics no longer touched, then upserts the others.
   await query(
@@ -164,7 +174,7 @@ export async function replaceTopics(input: {
      ON CONFLICT (feedback_id, topic_id) DO UPDATE SET
        sentiment = EXCLUDED.sentiment,
        other_text = EXCLUDED.other_text`,
-    [input.feedbackId, codes, input.topics.map((t) => t.sentiment), input.topics.map((t) => t.otherText)],
+    [input.feedbackId, codes, topics.map((t) => t.sentiment), topics.map((t) => t.otherText)],
   );
 }
 

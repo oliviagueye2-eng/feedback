@@ -147,7 +147,7 @@ export const fr = {
 
   details: {
     change: "Modifier",
-    error: "Votre avis n'a pas pu être enregistré. Vérifiez vos réponses, puis réessayez.",
+    error: "Une réponse n'a pas été acceptée. Vérifiez vos réponses, puis appuyez de nouveau sur « Continuer ».",
     topicsTitle: "Comment ça s'est passé ?",
     topicsHint: "(choisissez seulement ce qui vous concerne)",
     good: "Bien",
