@@ -4,6 +4,7 @@
  * sent twice after a network cut gives the same result.
  */
 import { invalidInput, notFound } from "../domain/errors";
+import type { QuestionCondition } from "../domain/questionnaire/conditions";
 import type { SelectedQuestionnaire } from "../domain/questionnaire/select";
 import type { Channel, VisitPeriod } from "../domain/types";
 import { query } from "./client";
@@ -65,7 +66,7 @@ export async function upsertFeedback(row: FeedbackRow): Promise<void> {
 
 /**
  * The question is looked up by its code in the essential questionnaire, then
- * in the detailed questionnaire chosen for this feedback. The first detailed
+ * in the detailed questionnaire chosen for this feedback, then in COMMON. The first detailed
  * answer records which questionnaire was used (feedback.detailed_questionnaire_id).
  */
 export async function upsertAnswer(input: {
@@ -76,11 +77,14 @@ export async function upsertAnswer(input: {
   detailed: SelectedQuestionnaire;
 }): Promise<void> {
   const detailedId = input.detailed.kind === "generic" ? PUBLISHED("GENERIC") : "$2::int";
-  const questions = await query<{ id: number; questionnaire_id: number; type: string; is_essential: boolean }>(
-    `SELECT q.id, q.questionnaire_id, q.type, q.questionnaire_id = ${PUBLISHED("ESSENTIAL")} AS is_essential
+  // Looked up in ESSENTIAL, then the detailed questionnaire, then COMMON.
+  const questions = await query<{ id: number; questionnaire_id: number; type: string; is_detailed: boolean }>(
+    `SELECT q.id, q.questionnaire_id, q.type,
+            q.questionnaire_id IS NOT DISTINCT FROM ${detailedId} AS is_detailed
      FROM question q
-     WHERE q.code = $1 AND q.questionnaire_id IN (${PUBLISHED("ESSENTIAL")}, ${detailedId})
-     ORDER BY is_essential DESC
+     WHERE q.code = $1
+       AND q.questionnaire_id IN (${PUBLISHED("ESSENTIAL")}, ${detailedId}, ${PUBLISHED("COMMON")})
+     ORDER BY q.questionnaire_id = ${PUBLISHED("ESSENTIAL")} DESC, is_detailed DESC
      LIMIT 1`,
     input.detailed.kind === "generic" ? [input.questionCode] : [input.questionCode, input.detailed.id],
   );
@@ -110,7 +114,8 @@ export async function upsertAnswer(input: {
     [input.feedbackId, question.id, optionId, question.type === "text" ? input.textValue : null],
   );
 
-  if (!question.is_essential) {
+  // Only the sector's (or service's) questionnaire is recorded, not COMMON.
+  if (question.is_detailed) {
     await query(
       `UPDATE feedback SET detailed_questionnaire_id = $2
        WHERE id = $1 AND detailed_questionnaire_id IS NULL`,
@@ -354,20 +359,6 @@ export async function findEssentialQuestion(): Promise<EssentialQuestion | null>
 }
 
 /**
- * Number of questions of the detailed questionnaire chosen for a feedback
- * (shown after screen 2b only when there is one). 0 when GENERIC is not published.
- */
-export async function countQuestions(selected: SelectedQuestionnaire): Promise<number> {
-  const rows = await query<{ count: number }>(
-    selected.kind === "generic"
-      ? `SELECT count(*)::int AS count FROM question WHERE questionnaire_id = ${PUBLISHED(selected.code)}`
-      : `SELECT count(*)::int AS count FROM question WHERE questionnaire_id = $1`,
-    selected.kind === "generic" ? [] : [selected.id],
-  );
-  return rows[0]?.count ?? 0;
-}
-
-/**
  * The feedback is complete. Only once the essential question is answered;
  * completed_at is rounded to the hour, like started_at, and kept when the
  * last screen is sent again. False when there is no such feedback.
@@ -411,51 +402,88 @@ export async function deleteAbandonedFeedbacks(days: number): Promise<number> {
 }
 
 export interface DetailedQuestion {
+  id: number;
   code: string;
   type: string;
   label: string;
   options: { code: string; label: string }[];
   /** Option already chosen for this feedback (coming back to the page). */
   chosen: string | null;
+  /** Shown only if the question it depends on got one of these answers. */
+  conditions: QuestionCondition[];
 }
 
 /**
- * Screen 6: the questions of the chosen detailed questionnaire, in French and
- * in order, with what this feedback already answered. Only questions with
- * options (no free text in the detailed questionnaires for now).
+ * Screen 6: the questions of the chosen detailed questionnaire, then the
+ * common ones (questionnaire COMMON, linked to no sector: always loaded), in
+ * French and in order, with what this feedback already answered and their
+ * conditions. Only questions with options (no free text for now).
  */
 export async function findDetailedQuestions(
   feedbackId: string,
   selected: SelectedQuestionnaire,
 ): Promise<DetailedQuestion[]> {
   const generic = selected.kind === "generic";
-  const rows = await query<{
-    code: string;
-    type: string;
-    label: string;
-    option_code: string;
-    option_label: string;
-    chosen: boolean;
-  }>(
-    `SELECT q.code, q.type, qt.label, ao.code AS option_code, ot.label AS option_label,
-            EXISTS (SELECT 1 FROM answer a WHERE a.feedback_id = $1 AND a.option_id = ao.id) AS chosen
-     FROM question q
-     JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
-     JOIN answer_option ao ON ao.question_id = q.id
-     JOIN answer_option_translation ot ON ot.answer_option_id = ao.id AND ot.language = 'fr'
-     WHERE q.questionnaire_id = ${generic ? PUBLISHED(selected.code) : "$2::int"}
-     ORDER BY q.position, ao.position`,
-    generic ? [feedbackId] : [feedbackId, selected.id],
-  );
+  // The questions of the page; $n is the detailed questionnaire's id (unless GENERIC).
+  const pageQuestions = (n: number) =>
+    `q.questionnaire_id IN (${generic ? PUBLISHED(selected.code) : `$${n}::int`}, ${PUBLISHED("COMMON")})`;
+  const questionnaireParam = generic ? [] : [selected.id];
+  const [rows, conditions] = await Promise.all([
+    query<{
+      id: number;
+      code: string;
+      type: string;
+      label: string;
+      option_code: string;
+      option_label: string;
+      chosen: boolean;
+    }>(
+      `SELECT q.id, q.code, q.type, qt.label, ao.code AS option_code, ot.label AS option_label,
+              EXISTS (SELECT 1 FROM answer a WHERE a.feedback_id = $1 AND a.option_id = ao.id) AS chosen
+       FROM question q
+       JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
+       JOIN answer_option ao ON ao.question_id = q.id
+       JOIN answer_option_translation ot ON ot.answer_option_id = ao.id AND ot.language = 'fr'
+       WHERE ${pageQuestions(2)}
+       ORDER BY q.questionnaire_id = ${PUBLISHED("COMMON")}, q.position, ao.position`,
+      [feedbackId, ...questionnaireParam],
+    ),
+    query<{ code: string; depends_on: string; option_code: string }>(
+      `SELECT q.code, dq.code AS depends_on, ao.code AS option_code
+       FROM question_condition qc
+       JOIN question q ON q.id = qc.question_id
+       JOIN question dq ON dq.id = qc.depends_on_question_id
+       JOIN answer_option ao ON ao.id = qc.option_id
+       WHERE ${pageQuestions(1)}
+       ORDER BY dq.code, ao.position`,
+      questionnaireParam,
+    ),
+  ]);
   const questions: DetailedQuestion[] = [];
   for (const row of rows) {
     let question = questions.at(-1);
     if (question?.code !== row.code) {
-      question = { code: row.code, type: row.type, label: row.label, options: [], chosen: null };
+      question = { id: row.id, code: row.code, type: row.type, label: row.label, options: [], chosen: null, conditions: [] };
       questions.push(question);
     }
     question.options.push({ code: row.option_code, label: row.option_label });
     if (row.chosen) question.chosen = row.option_code;
   }
+  for (const row of conditions) {
+    const question = questions.find((q) => q.code === row.code);
+    if (!question) continue;
+    let condition = question.conditions.find((c) => c.dependsOn === row.depends_on);
+    if (!condition) {
+      condition = { dependsOn: row.depends_on, options: [] };
+      question.conditions.push(condition);
+    }
+    condition.options.push(row.option_code);
+  }
   return questions;
+}
+
+/** Removes this feedback's answers to these questions (answers that no longer apply). */
+export async function deleteAnswers(feedbackId: string, questionIds: number[]): Promise<void> {
+  if (questionIds.length === 0) return;
+  await query("DELETE FROM answer WHERE feedback_id = $1 AND question_id = ANY($2::int[])", [feedbackId, questionIds]);
 }

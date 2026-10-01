@@ -6,12 +6,17 @@ import { getQuestionnaireScreen } from "@/src/domain/feedback";
 import { saveDetailedAnswers } from "../../../_feedback/actions";
 import { FeedbackHeader } from "../../../_feedback/FeedbackHeader";
 import { getDictionary } from "../../../../_i18n";
+import { fill } from "../../../../_i18n/format";
 import { frenchSpaces } from "../../../../_i18n/typography";
 import styles from "../../../_feedback/screen.module.css";
 
+/** Over this many characters, an answer is a sentence: one per row. */
+const LONG_ANSWER = 24;
+
 /**
- * Screen 6: the detailed questionnaire of the feedback's service or sector, all
- * questions on one page, each one optional (not answering is how to skip it).
+ * Screen 6: the detailed questionnaire of the feedback's service or sector, then
+ * the common questions (only for the users not satisfied), all on one page,
+ * each one optional (not answering is how to skip it).
  * « Continuer » saves what was answered, completes the feedback, then screen 7.
  * Real radio buttons: works without JavaScript.
  */
@@ -32,6 +37,23 @@ export default async function QuestionnairePage({ params, searchParams }: PagePr
   if (questions.length === 0) redirect(`/donner/${feedbackId}/precisions`);
   const { common, questionnaire: t } = await getDictionary();
 
+  // A question revealed by an answer of the page (« Pourquoi ? » after « Non »):
+  // hidden until that answer is touched, where the browser knows :has().
+  // Without it, the question stays visible with its hint.
+  const revealLabels = (condition: { dependsOn: string; options: string[] }) =>
+    (questions.find((q) => q.code === condition.dependsOn)?.options ?? [])
+      .filter((o) => condition.options.includes(o.code))
+      .map((o) => frenchSpaces(`« ${o.label} »`))
+      .join(t.or);
+  const revealRules = questions
+    .filter((q) => q.revealedBy)
+    .map((q) => {
+      const { dependsOn, options } = q.revealedBy!;
+      const checked = options.map((o) => `input[name="q:${dependsOn}"][value="${o}"]:checked`).join(", ");
+      return `@supports selector(:has(*)) { form:not(:has(${checked})) [data-question="${q.code}"] { display: none; } }`;
+    })
+    .join("\n");
+
   return (
     <>
       <FeedbackHeader establishmentName={context.establishmentName} serviceLabel={context.serviceLabel} />
@@ -46,10 +68,28 @@ export default async function QuestionnairePage({ params, searchParams }: PagePr
               {t.error}
             </p>
           )}
+          {revealRules && <style>{revealRules}</style>}
           {questions.map((question) => (
-            <fieldset key={question.code} className={styles.group}>
-              <legend>{frenchSpaces(question.label)}</legend>
-              <div className={styles.choices}>
+            <fieldset key={question.code} className={styles.group} data-question={question.code}>
+              <legend>
+                {frenchSpaces(question.label)}
+                {question.revealedBy && (
+                  <>
+                    {" "}
+                    <span className={`muted ${styles.revealHint}`}>
+                      {fill(t.revealHint, { answer: revealLabels(question.revealedBy) })}
+                    </span>
+                  </>
+                )}
+              </legend>
+              <div
+                className={
+                  // Long answers (a sentence) read better one per row, at full width.
+                  question.options.some((o) => o.label.length > LONG_ANSWER)
+                    ? `${styles.choices} ${styles.choicesLong}`
+                    : styles.choices
+                }
+              >
                 {question.options.map((option) => (
                   <label key={option.code} className={styles.period}>
                     <input

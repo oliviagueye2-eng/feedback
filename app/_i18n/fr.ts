@@ -162,6 +162,8 @@ export const fr = {
 
   questionnaire: {
     lead: "Répondez seulement à ce qui vous concerne.",
+    revealHint: "(si vous avez répondu {answer})",
+    or: " ou ",
     error: "Une réponse n'a pas été acceptée. Vérifiez vos réponses, puis appuyez de nouveau sur « Continuer ».",
     submit: "Continuer",
   },

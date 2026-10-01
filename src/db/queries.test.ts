@@ -285,6 +285,14 @@ describe("feedback", () => {
       INSERT INTO answer_option (question_id, code, value, position)
       SELECT q.id, 'YES', 1, 1 FROM question q JOIN questionnaire qn ON qn.id = q.questionnaire_id
       WHERE q.code = 'GOAL_ACHIEVED' AND qn.code = 'ADMINISTRATION';
+      INSERT INTO question_translation (question_id, language, label)
+      SELECT q.id, 'fr', 'Avez-vous obtenu ce que vous étiez venu(e) chercher ?'
+      FROM question q JOIN questionnaire qn ON qn.id = q.questionnaire_id
+      WHERE q.code = 'GOAL_ACHIEVED' AND qn.code = 'ADMINISTRATION';
+      INSERT INTO answer_option_translation (answer_option_id, language, label)
+      SELECT ao.id, 'fr', 'Oui' FROM answer_option ao JOIN question q ON q.id = ao.question_id
+      JOIN questionnaire qn ON qn.id = q.questionnaire_id
+      WHERE q.code = 'GOAL_ACHIEVED' AND qn.code = 'ADMINISTRATION';
     `);
     // The feedback has no service: the sector comes from the establishment type.
     const questionnaireFeedback = "8e3f2051-4c6d-4e8f-9091-a2b3c4d5e6f7";
@@ -350,6 +358,39 @@ describe("feedback", () => {
     expect(row?.code).toBe("HEALTH");
 
     await expect(saveQuestionnaire(health, { WAIT_TIME: "NEVER" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
+  });
+
+  it("adds the common questions for a user not satisfied, and drops the answers that no longer apply", async () => {
+    const unhappy = "b2c3d4e5-0000-4000-8000-000000000002";
+    await upsertFeedback(unhappy, { channel: "search", establishmentId: ids.dantec, language: "fr", visitPeriod: "today" });
+    await saveAnswer(unhappy, "OVERALL_SATISFACTION", { option: "VERY_DISSATISFIED" });
+    expect(await countDetailedQuestions(unhappy)).toBe(7);
+    const { questions } = await getQuestionnaireScreen(unhappy);
+    expect(questions.slice(5).map((q) => [q.code, q.revealedBy])).toEqual([
+      ["REPORTED", null],
+      ["REPORT_WHY", { dependsOn: "REPORTED", options: ["NO"] }],
+    ]);
+
+    // A common answer alone does not record the sector's questionnaire.
+    await saveAnswer(unhappy, "REPORTED", { option: "NO" });
+    const used = async () => (await rows<{ code: string | null }>(
+      `SELECT qn.code FROM feedback f LEFT JOIN questionnaire qn ON qn.id = f.detailed_questionnaire_id
+       WHERE f.id = $1`, [unhappy]))[0]?.code;
+    expect(await used()).toBeNull();
+
+    // « Pourquoi ? » answered, then « Non » changed to « Oui » on the same page.
+    await saveQuestionnaire(unhappy, { REPORTED: "YES_ANSWERED", REPORT_WHY: "POINTLESS", WAIT_TIME: "OVER_4_H" });
+    expect(await used()).toBe("HEALTH");
+    const answered = async () => (await rows<{ code: string }>(
+      `SELECT q.code FROM answer a JOIN question q ON q.id = a.question_id
+       WHERE a.feedback_id = $1 ORDER BY q.code`, [unhappy])).map((r) => r.code);
+    expect(await answered()).toEqual(["OVERALL_SATISFACTION", "REPORTED", "WAIT_TIME"]);
+
+    // Became satisfied: « Avez-vous signalé ce problème ? » no longer applies.
+    await saveAnswer(unhappy, "OVERALL_SATISFACTION", { option: "SATISFIED" });
+    expect(await countDetailedQuestions(unhappy)).toBe(5);
+    await completeFeedback(unhappy);
+    expect(await answered()).toEqual(["OVERALL_SATISFACTION", "WAIT_TIME"]);
   });
 
   it("replaces the topics touched, each with its sentiment", async () => {

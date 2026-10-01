@@ -63,6 +63,15 @@ Les questions des étapes 7 à 9 dépendent du service (questionnaire détaillé
 
 Écarté : « Vous a-t-on demandé de payer en dehors de la caisse ? » (trop sensible sans l'accord de l'organisme porteur).
 
+**Questions communes** (questionnaire `COMMON`, migration 0014, validé le 2026-10-01) : dans tous les secteurs, à la fin de l'écran 6, **seulement après « Peu satisfait(e) » ou « Pas du tout satisfait(e) »**. Un usager peu satisfait d'un secteur sans questionnaire propre voit une page avec ces seules questions ; un usager satisfait n'en voit aucune.
+
+| Code | Question | Réponses | Affichée si |
+|---|---|---|---|
+| `REPORTED` | Avez-vous signalé ce problème à l'établissement (accueil, service client, direction…) ? | Oui, et on m'a répondu / Oui, mais sans réponse / J'ai essayé, sans réussir à les joindre / Non | satisfaction = peu ou pas du tout satisfait(e) |
+| `REPORT_WHY` | Pourquoi ? | Je ne savais pas à qui m'adresser / Je pensais que ça ne servirait à rien / Autre raison | `REPORTED` = Non (apparaît dès que « Non » est touché) |
+
+Écarté : « Par peur des conséquences ». Une réponse qui ne s'applique plus (devenu satisfait, ou « Non » changé en « Oui ») est effacée à la fin de l'avis.
+
 ---
 
 ## 3. Fiche d'un avis

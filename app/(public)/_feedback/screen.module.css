@@ -479,10 +479,39 @@
   grid-column: 1 / -1;
 }
 
-.choices:has(> :nth-child(3):last-child) {
+.choices:not(.choicesLong):has(> :nth-child(3):last-child) {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.choices:has(> :nth-child(3):last-child) > :last-child {
+.choices:not(.choicesLong):has(> :nth-child(3):last-child) > :last-child {
   grid-column: auto;
+}
+
+/* Answers that are sentences (« J'ai essayé, sans réussir à les joindre »):
+   one per row, text from the left, like the answers of screen 2. */
+.choicesLong {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.choicesLong > :last-child:nth-child(odd) {
+  grid-column: auto;
+}
+
+.choicesLong > .period {
+  justify-content: flex-start;
+  text-align: left;
+  padding: 6px 14px;
+}
+
+/* « (si vous avez répondu « Non ») »: only where the question cannot be hidden
+   until then (browsers without :has()). */
+.revealHint {
+  font-size: 15px;
+  font-weight: 400;
+}
+
+@supports selector(:has(*)) {
+  .revealHint {
+    display: none;
+  }
 }

@@ -382,6 +382,19 @@ Quels thèmes afficher selon le secteur. Un thème **sans ligne** dans cette tab
 | topic_id | fk |
 | sector_id | fk |
 
+### question_condition
+« Cette question ne s'affiche que si telle question a reçu l'une de ces réponses » (migration 0014). Une ligne par réponse acceptée ; une question sans ligne s'affiche toujours. La réponse doit appartenir à la question dont on dépend (clé étrangère vers `answer_option (id, question_id)`).
+
+| Colonne | Type |
+|---|---|
+| question_id | fk question (supprimée avec elle) |
+| depends_on_question_id | fk question (ESSENTIAL ou une question placée avant) |
+| option_id | fk answer_option de `depends_on_question_id` |
+
+Clé `(question_id, option_id)`. Règle d'affichage et de nettoyage dans `src/domain/questionnaire/conditions.ts` : si la question dont on dépend est sur la même page, la question apparaît dès que la réponse est touchée (CSS `:has()`, sans JavaScript ; sinon elle reste visible avec « (si vous avez répondu « Non ») ») ; à la fin de l'avis, les réponses dont la condition n'est plus remplie sont effacées.
+
+**Questionnaire `COMMON`** : relié à aucun secteur ni service, chargé pour tous les avis (comme `ESSENTIAL`), ses questions viennent après celles du secteur à l'écran 6. Ses réponses ne renseignent pas `feedback.detailed_questionnaire_id` (qui reste celui du secteur ou du service).
+
 ### Tables de traduction (`*_translation`)
 Une table par table traduite (migration 0013, 2026-10-01 ; elle remplace la table unique `translation`, dont le lien n'était pas vérifié par la base). Chaque table a une clé étrangère vers la ligne traduite (la traduction est supprimée avec elle) et une ligne par langue.
 

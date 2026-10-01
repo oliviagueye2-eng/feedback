@@ -9,6 +9,7 @@ import {
   requireUuid,
 } from "../../lib/validation";
 import { invalidInput, notFound } from "../errors";
+import { questionsNotApplicable, questionsToShow } from "../questionnaire/conditions";
 import { selectDetailedQuestionnaire } from "../questionnaire/select";
 import { VISIT_PERIODS, type Channel, type VisitPeriod } from "../types";
 import { computeVisitMonth, defaultVisitPeriod } from "./visit";
@@ -136,26 +137,42 @@ export async function getDetailsScreen(feedbackId: string) {
 }
 
 /**
- * After screen 2b: how many questions the detailed questionnaire has
- * (0: none published yet, the feedback ends there).
+ * The questions of screen 6 for this feedback (detailed questionnaire, then
+ * the common ones) and its answers by question code, essential answer included.
  */
-export async function countDetailedQuestions(feedbackId: string): Promise<number> {
-  requireUuid(feedbackId, "id");
-  const sources = await db.findQuestionnaireSources(feedbackId);
+async function loadPageQuestions(feedbackId: string) {
+  const [{ context }, sources] = await Promise.all([
+    getEssentialScreen(feedbackId),
+    db.findQuestionnaireSources(feedbackId),
+  ]);
   if (!sources) throw notFound("Feedback not found");
-  return db.countQuestions(selectDetailedQuestionnaire(sources));
+  const questions = await db.findDetailedQuestions(feedbackId, selectDetailedQuestionnaire(sources));
+  const answers: Record<string, string | null> = {
+    OVERALL_SATISFACTION: context.essentialOption,
+    ...Object.fromEntries(questions.map((q) => [q.code, q.chosen])),
+  };
+  return { context, questions, answers };
 }
 
 /**
- * Screen 6: the feedback's context and the questions of its detailed
- * questionnaire, with what was already answered (none: nothing to show).
+ * After screen 2b: how many questions screen 6 shows (the common ones only
+ * to the users not satisfied). 0: the feedback ends there.
+ */
+export async function countDetailedQuestions(feedbackId: string): Promise<number> {
+  requireUuid(feedbackId, "id");
+  const { questions, answers } = await loadPageQuestions(feedbackId);
+  return questionsToShow(questions, answers).length;
+}
+
+/**
+ * Screen 6: the feedback's context and the questions to show, with what was
+ * already answered. A question that depends on an earlier one of the page
+ * says which answer reveals it (revealedBy).
  */
 export async function getQuestionnaireScreen(feedbackId: string) {
-  const { context } = await getEssentialScreen(feedbackId);
-  const sources = await db.findQuestionnaireSources(feedbackId);
-  if (!sources) throw notFound("Feedback not found");
-  const questions = await db.findDetailedQuestions(feedbackId, selectDetailedQuestionnaire(sources));
-  return { context, questions };
+  requireUuid(feedbackId, "id");
+  const { context, questions, answers } = await loadPageQuestions(feedbackId);
+  return { context, questions: questionsToShow(questions, answers) };
 }
 
 /**
@@ -170,9 +187,16 @@ export async function saveQuestionnaire(feedbackId: string, answers: Record<stri
   await completeFeedback(feedbackId);
 }
 
-/** End of the feedback (screen 7 follows): only once the essential question is answered. */
+/**
+ * End of the feedback (screen 7 follows): only once the essential question is
+ * answered. The answers that no longer apply are removed first (e.g. « Avez-
+ * vous signalé ce problème ? » answered, then the user became satisfied).
+ */
 export async function completeFeedback(feedbackId: string): Promise<void> {
   requireUuid(feedbackId, "id");
+  const { questions, answers } = await loadPageQuestions(feedbackId);
+  const stale = questionsNotApplicable(questions, answers).filter((q) => q.chosen !== null);
+  await db.deleteAnswers(feedbackId, stale.map((q) => q.id));
   if (!(await db.completeFeedback(feedbackId))) {
     throw notFound("Feedback not found or essential question not answered");
   }

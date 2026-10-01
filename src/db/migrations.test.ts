@@ -132,6 +132,28 @@ describe("search", () => {
     ).toBe("etat civil extrait de naissance");
   });
 
+  it("has the common questions, shown only after a dissatisfied answer, « Pourquoi ? » after « Non »", async () => {
+    const conditions = (await db.query<{ question: string; depends_on: string; option: string }>(
+      `SELECT q.code AS question, dq.code AS depends_on, ao.code AS option
+       FROM question_condition qc
+       JOIN question q ON q.id = qc.question_id
+       JOIN questionnaire qn ON qn.id = q.questionnaire_id AND qn.code = 'COMMON' AND qn.status = 'published'
+       JOIN question dq ON dq.id = qc.depends_on_question_id
+       JOIN answer_option ao ON ao.id = qc.option_id
+       ORDER BY q.position, ao.position`)).rows;
+    expect(conditions).toEqual([
+      { question: "REPORTED", depends_on: "OVERALL_SATISFACTION", option: "DISSATISFIED" },
+      { question: "REPORTED", depends_on: "OVERALL_SATISFACTION", option: "VERY_DISSATISFIED" },
+      { question: "REPORT_WHY", depends_on: "REPORTED", option: "NO" },
+    ]);
+    // A condition on an answer of another question is refused.
+    await expect(db.query(
+      `INSERT INTO question_condition (question_id, depends_on_question_id, option_id)
+       SELECT q.id, dq.id, (SELECT id FROM answer_option WHERE code = 'POINTLESS')
+       FROM question q, question dq WHERE q.code = 'REPORT_WHY' AND dq.code = 'OVERALL_SATISFACTION'`,
+    )).rejects.toThrow(/foreign key/);
+  });
+
   it("moved every text to the translation tables (0013), the old table is gone", async () => {
     const row = await one<{ sectors: number; topics: number; questions: number; options: number; prompts: number; old: string | null }>(`
       SELECT (SELECT count(*)::int FROM sector_translation) AS sectors,
@@ -140,7 +162,8 @@ describe("search", () => {
              (SELECT count(*)::int FROM answer_option_translation) AS options,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts,
              to_regclass('translation')::text AS old`);
-    expect(row).toEqual({ sectors: 19, topics: 33, questions: 6, options: 24, prompts: 5, old: null });
+    // Questions and options: those of 0002 and 0012, plus the common ones of 0014 (2 and 7).
+    expect(row).toEqual({ sectors: 19, topics: 33, questions: 8, options: 31, prompts: 5, old: null });
     // The real service of 0004 keeps its French label (then its synonyms) in its search_text.
     expect((await one<{ search_text: string }>(
       "SELECT search_text FROM service WHERE code = 'CIVIL_REGISTRY'"))?.search_text,
