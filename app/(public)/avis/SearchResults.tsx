@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { establishmentDetails } from "../../_components/establishmentDetails";
 import { organizationLogoSrc } from "../../_components/organizationLogo";
 import type { Dictionary } from "../../_i18n";
 import { fill, plural, rich } from "../../_i18n/format";
@@ -20,11 +21,8 @@ const BuildingIcon = () => (
 /** The texts of the results, given by the page. */
 export type SearchTexts = Dictionary["search"];
 
-/** Under the name: municipality and sector, whichever are known (an organisation as a whole has no municipality). */
-const details = (e: EstablishmentSummary) => [e.municipalityName, e.sectorLabel].filter(Boolean).join(", ");
-
 function Row({ establishment, icon }: { establishment: EstablishmentSummary; icon: boolean }) {
-  const under = details(establishment);
+  const under = establishmentDetails(establishment);
   const logo = organizationLogoSrc(establishment.organizationCode);
   return (
     <li>

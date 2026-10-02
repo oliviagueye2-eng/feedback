@@ -105,6 +105,7 @@ describe("search", () => {
       sectorLabel: "Santé",
       scope: "site",
       organizationCode: null,
+      organizationName: null,
     });
   });
 

@@ -35,6 +35,8 @@ export interface EstablishmentSummary {
   scope: EstablishmentScope;
   /** Code of the organisation it belongs to (SENELEC), which also names its logo. */
   organizationCode: string | null;
+  /** Usual name of that organisation (COSAMA), shown under the name of its places. */
+  organizationName: string | null;
 }
 
 export type EstablishmentScope = "site" | "general";

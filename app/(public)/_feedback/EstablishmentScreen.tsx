@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BackLink } from "../../_components/BackLink";
 import { FormValidation } from "../../_components/FormValidation";
+import { establishmentDetails } from "../../_components/establishmentDetails";
 import { organizationLogoSrc } from "../../_components/organizationLogo";
 import { PendingLoader } from "../../_components/PendingLoader";
 import { getDictionary } from "../../_i18n";
@@ -37,10 +38,7 @@ export async function EstablishmentScreen({
   initial?: { serviceId: number | null; visitPeriod: string | null };
 }) {
   const { common, establishment: t } = await getDictionary();
-  // An organisation as a whole has no municipality: only its sector shows.
-  const details = [establishment.municipalityName, establishment.sectorLabel]
-    .filter(Boolean)
-    .join(", ");
+  const details = establishmentDetails(establishment);
   const qrService = qr?.serviceId ? establishment.services.find((s) => s.id === qr.serviceId) : undefined;
   const askReason = !qr?.serviceId && establishment.services.length > 0;
   const askWhen = channel !== "qr";
