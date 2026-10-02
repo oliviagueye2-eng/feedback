@@ -49,7 +49,9 @@ Chaque avis passe par ces étapes, dans cet ordre.
 | 9 | **La proposition** | 6. Créer | Ex. « Qu'est-ce qui aurait rendu votre visite plus simple ? » | Texte libre court | Non | 6 | `answer` (question `text`) | **Écartée pour la santé** (2026-10-01 : l'écran 2b demande déjà un texte libre) |
 | — | **Remerciement** | | « Merci » | | | 7 | `feedback.step`, `feedback.completed_at` (arrondi à l'heure) | Fait |
 
-Les questions des étapes 7 à 9 dépendent du service (questionnaire détaillé du service, sinon du **type d'établissement** (depuis 0018), sinon du secteur, sinon `GENERIC`). Toutes sur une seule page (écran 6), toutes facultatives : on passe une question en n'y répondant pas.
+Les questions des étapes 7 à 9 dépendent du service (questionnaire détaillé du service, sinon du **type d'établissement** (depuis 0018), sinon du secteur, sinon `GENERIC`).
+
+**Règle exclusive (validée le 2026-10-02)** : seul le **premier** questionnaire trouvé dans cet ordre est posé, jamais deux empilés (page courte, pas de doublon, règle simple). Les questions communes (`COMMON`) s'ajoutent toujours, sur leur page, aux usagers mécontents. Conséquence : un questionnaire plus précis (service, type) **reprend lui-même** les questions générales à garder, avec les mêmes codes et les mêmes réponses (comme Impôts, Justice et Emploi reprennent celles de l'Administration), pour que les résultats restent comparables. Un système qui additionnerait secteur, type et service est écarté pour l'instant (pages plus longues, doublons et ordre à gérer) ; à reconsidérer si les services se multiplient. Toutes sur une seule page (écran 6), toutes facultatives : on passe une question en n'y répondant pas.
 
 **Santé** (questionnaire `HEALTH`, migration 0012, validé le 2026-10-01), pour tous les établissements de santé (repli du secteur, aucun service de santé n'étant défini) :
 
