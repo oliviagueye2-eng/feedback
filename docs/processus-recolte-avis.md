@@ -81,6 +81,21 @@ Règle : ne jamais demander dans le questionnaire ce que l'établissement choisi
 
 **Aéroport** (migration 0018) : l'aéroport AIBD est dans le secteur Transport mais ne reçoit pas les questions de bus : type d'établissement « Aéroport » avec son propre questionnaire `AIRPORT`, vide pour l'instant (vraies questions d'aéroport à proposer : attente aux contrôles, bagages…).
 
+**Organisation du transport (validée le 2026-10-02, à construire quand on ajoutera les opérateurs)** :
+
+```
+Qui ?       l'opérateur          = un organisme (Dakar Dem Dikk, BRT, TER, AFTU…), note globale regroupée
+Lequel ?    la ligne ou la gare  = un site de l'opérateur (comme les agences de Senelec), avec son QR code
+Quoi ?      la démarche          = un service : « Un trajet », « Achat d'un ticket ou d'une carte d'abonnement »
+                                   (+ « Autre démarche », déjà proposé à l'écran 1)
+```
+
+- Une ligne n'est **pas** un service : un service est une démarche partagée par plusieurs établissements (« État civil » pour toutes les mairies) ; une ligne n'appartient qu'à un opérateur.
+- **Règle générale** : un service décrit ce que l'usager est venu faire ou a utilisé, **jamais le fait de se plaindre**. « Réclamation » écarté (une réclamation porte sur un trajet ou un achat ; déjà couvert par les thèmes « Pas bien », le texte et « Avez-vous signalé cette situation… ? »). « Objets perdus » écarté (rare, rattaché à un trajet ; « Autre démarche » suffit).
+- Questions : le questionnaire Transport (attente à l'arrêt, véhicule bondé, ticket) vaut pour « Un trajet » ; « Achat d'un ticket ou d'une carte » aura ses propres questions ou aucune (règle exclusive service → type → secteur).
+- L'aéroport suivra la même logique : services enregistrement, contrôles de sécurité, bagages, douane…, avec des questions par service plus tard.
+- À fournir : la liste officielle des lignes de chaque opérateur (numéro, terminus).
+
 **À prévoir pour le transport** :
 - **les lignes** (ligne 1, ligne 23…) : à proposer à l'écran 1 dans « Sur quoi porte votre avis ? », comme services de l'opérateur (comme « État civil » pour une mairie), à partir des listes publiées par les opérateurs (numéro, trajet, terminus), quand on ajoutera les opérateurs de transport. **Pas de liste déroulante** (plusieurs dizaines de lignes par opérateur) : un champ « Numéro de la ligne » (clavier numérique), qui affiche le trajet dès que le numéro correspond (« Ligne 23 : Parcelles Assainies – Palais ») pour vérifier ; lignes à lettres (express, TER…) trouvées aussi par le début du nom ; « Je ne connais pas le numéro » possible (l'avis compte pour l'opérateur) ; sans JavaScript, le serveur vérifie le numéro. Ce champ remplace la liste déroulante seulement pour les établissements qui ont beaucoup de services. **Chemin principal : un QR code dans chaque bus ou à l'arrêt**, qui porte la ligne (un QR code peut déjà porter un service) : rien à taper (recommandation validée le 2026-10-01) ;
 - **cars rapides, Ndiaga Ndiaye, taxis** : pas d'établissement nommé, donc impossible à choisir dans la recherche ; il faudrait décider quel organisme les représente (AFTU pour les minibus Tata ? CETUD, autorité des transports urbains de Dakar ?) : à voir avec l'organisme porteur.
