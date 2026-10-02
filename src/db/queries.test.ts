@@ -275,25 +275,21 @@ describe("feedback", () => {
       .rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
-  it("uses the sector's detailed questionnaire (Administration, 0016) and records it on the feedback", async () => {
+  it("asks the list of the sector (« Services à dossier » for an administration)", async () => {
     // The feedback has no service: the sector comes from the establishment type.
-    const questionnaireFeedback = "8e3f2051-4c6d-4e8f-9091-a2b3c4d5e6f7";
-    await upsertFeedback(questionnaireFeedback, {
+    const fileFeedback = "8e3f2051-4c6d-4e8f-9091-a2b3c4d5e6f7";
+    await upsertFeedback(fileFeedback, {
       channel: "search", establishmentId: ids.pa, language: "fr", visitPeriod: "today",
     });
-    const selected = await getDetailedQuestionnaire(questionnaireFeedback);
-    expect(selected.kind).toBe("sector");
-
-    await saveAnswer(questionnaireFeedback, "GOAL_ACHIEVED", { option: "YES" });
-    const [row] = await rows<{ used: number; expected: number }>(
-      `SELECT f.detailed_questionnaire_id AS used, q.id AS expected
-       FROM feedback f, questionnaire q WHERE f.id = $1 AND q.code = 'ADMINISTRATION'`,
-      [questionnaireFeedback],
-    );
-    expect(row!.used).toBe(row!.expected);
-
-    // Offered after screen 2b, with its number of questions.
-    expect(await nextQuestionPage(questionnaireFeedback, "details")).toBe("sector");
+    const { questions } = await getDetailedQuestionnaire(fileFeedback);
+    expect(questions.map((q) => q.code)).toEqual([
+      "GOAL_ACHIEVED", "VISITS_COUNT", "WAIT_TIME", "DOCUMENTS_KNOWN", "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY",
+    ]);
+    await saveAnswer(fileFeedback, "GOAL_ACHIEVED", { option: "YES" });
+    // A question of another list (the bus stop) cannot be answered here.
+    await expect(saveAnswer(fileFeedback, "STOP_WAIT", { option: "UNDER_10_MIN" }))
+      .rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(await nextQuestionPage(fileFeedback, "details")).toBe("sector");
   });
 
   it("completes a feedback only once the essential question is answered, at the hour", async () => {
@@ -301,7 +297,7 @@ describe("feedback", () => {
     await upsertFeedback(unanswered, {
       channel: "search", establishmentId: ids.dantec, language: "fr", visitPeriod: "today",
     });
-    // Health has its five questions (migration 0012).
+    // Health has its five questions.
     expect((await getQuestionnaireScreen(unanswered, "sector")).questions).toHaveLength(5);
     await expect(completeFeedback(unanswered)).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect((await getEssentialScreen(unanswered)).context.completed).toBe(false);
@@ -324,7 +320,7 @@ describe("feedback", () => {
     await saveAnswer(health, "OVERALL_SATISFACTION", { option: "NEUTRAL" });
     const before = await getQuestionnaireScreen(health, "sector");
     expect(before.questions.map((q) => q.code)).toEqual([
-      "PATIENT", "GOAL_ACHIEVED", "WAIT_TIME", "PRESCRIPTION_AVAILABLE", "RECEIPT_GIVEN",
+      "PATIENT", "CARE_RECEIVED", "WAIT_TIME", "PRESCRIPTION_AVAILABLE", "RECEIPT_GIVEN",
     ]);
     expect(before.questions[2]!.options.map((o) => o.label)[0]).toBe("Moins de 30 minutes");
 
@@ -334,11 +330,6 @@ describe("feedback", () => {
     const after = await getQuestionnaireScreen(health, "sector");
     expect(after.questions.map((q) => q.chosen)).toEqual([null, null, "2_TO_4_H", null, "NO"]);
     expect(after.context.completed).toBe(true);
-    const [row] = await rows<{ code: string }>(
-      "SELECT qn.code FROM feedback f JOIN questionnaire qn ON qn.id = f.detailed_questionnaire_id WHERE f.id = $1",
-      [health],
-    );
-    expect(row?.code).toBe("HEALTH");
 
     await expect(saveQuestionnaire(health, "sector", { WAIT_TIME: "NEVER" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
   });
@@ -358,17 +349,11 @@ describe("feedback", () => {
       ["REPORT_WHY", { dependsOn: "REPORTED", options: ["NO"] }],
     ]);
 
-    // A common answer alone does not record the sector's questionnaire.
     await saveAnswer(unhappy, "REPORTED", { option: "NO" });
-    const used = async () => (await rows<{ code: string | null }>(
-      `SELECT qn.code FROM feedback f LEFT JOIN questionnaire qn ON qn.id = f.detailed_questionnaire_id
-       WHERE f.id = $1`, [unhappy]))[0]?.code;
-    expect(await used()).toBeNull();
 
     // « Pourquoi ? » answered, then « Non » changed to « Oui » on the same page.
     expect(await saveQuestionnaire(unhappy, "sector", { WAIT_TIME: "OVER_4_H" })).toBe("common");
     expect(await saveQuestionnaire(unhappy, "common", { REPORTED: "YES_ANSWERED", REPORT_WHY: "POINTLESS" })).toBeNull();
-    expect(await used()).toBe("HEALTH");
     const answered = async () => (await rows<{ code: string }>(
       `SELECT q.code FROM answer a JOIN question q ON q.id = a.question_id
        WHERE a.feedback_id = $1 ORDER BY q.code`, [unhappy])).map((r) => r.code);
@@ -381,7 +366,7 @@ describe("feedback", () => {
     expect(await answered()).toEqual(["OVERALL_SATISFACTION", "WAIT_TIME"]);
   });
 
-  it("asks each transport service its questions: trip, boat crossing, ticket purchase (0019)", async () => {
+  it("asks each transport service its questions, and nothing without a service", async () => {
     const establishment = async (name: string) =>
       (await rows<{ id: string }>("SELECT id FROM establishment WHERE name = $1", [name]))[0]!.id;
     const service = async (code: string) =>
@@ -396,14 +381,40 @@ describe("feedback", () => {
     };
     expect(await firstQuestion("c3d4e5f6-0000-4000-8000-000000000001", "Dem Dikk", "LAND_TRIP")).toBe("STOP_WAIT");
     expect(await firstQuestion("c3d4e5f6-0000-4000-8000-000000000002", "Dem Dikk", "TICKET_PURCHASE")).toBe("GOAL_ACHIEVED");
-    // No service chosen: the sector's (Transport) for a bus, the type's (maritime) for the ship.
-    expect(await firstQuestion("c3d4e5f6-0000-4000-8000-000000000003", "Dem Dikk", null)).toBe("STOP_WAIT");
+    // No service chosen: the Transport sector has no list, so no question page.
+    expect(await firstQuestion("c3d4e5f6-0000-4000-8000-000000000003", "Dem Dikk", null)).toBeUndefined();
+    expect(await nextQuestionPage("c3d4e5f6-0000-4000-8000-000000000003", "details")).toBeNull();
     expect(await firstQuestion("c3d4e5f6-0000-4000-8000-000000000004", "Aline Sitoë Diatta (bateau Dakar – Ziguinchor)", null))
-      .toBe("DEPARTURE_ON_TIME");
+      .toBeUndefined();
     expect(await firstQuestion("c3d4e5f6-0000-4000-8000-000000000005", "COSAMA", "BOAT_CROSSING")).toBe("DEPARTURE_ON_TIME");
     // Screen 1 offers the operator's services.
     const { services } = await getEstablishment(await establishment("COSAMA"));
     expect(services.map((s) => s.label).sort()).toEqual(["Achat d'un ticket ou d'une carte d'abonnement", "Une traversée en bateau"]);
+  });
+
+  it("adds up the lists of the sector, the type and the service, a question asked once", async () => {
+    // For the test, the hospital type also gets the ticket purchase list.
+    await db.exec(`UPDATE establishment_type SET question_set_id = (SELECT id FROM question_set WHERE code = 'TICKET_PURCHASE')
+                   WHERE code = 'HOSPITAL'`);
+    const both = "d4e5f6a7-0000-4000-8000-000000000001";
+    await upsertFeedback(both, { channel: "search", establishmentId: ids.dantec, language: "fr", visitPeriod: "today" });
+    const { questions } = await getDetailedQuestionnaire(both);
+    // Health's five, then the purchase's (its WAIT_TIME already asked), then the common ones.
+    expect(questions.map((q) => q.code)).toEqual([
+      "PATIENT", "CARE_RECEIVED", "WAIT_TIME", "PRESCRIPTION_AVAILABLE", "RECEIPT_GIVEN",
+      "GOAL_ACHIEVED", "PAYMENT_AS_WISHED", "REPORTED", "REPORT_WHY",
+    ]);
+    await db.exec("UPDATE establishment_type SET question_set_id = NULL WHERE code = 'HOSPITAL'");
+  });
+
+  it("gives GENERIC to an establishment whose sector is unknown", async () => {
+    const [{ id }] = (await rows<{ id: string }>(
+      "INSERT INTO establishment (name, source, raw_input) VALUES ('Boutique de Moussa', 'user', 'Boutique de Moussa') RETURNING id",
+    )) as [{ id: string }];
+    const unknown = "d4e5f6a7-0000-4000-8000-000000000002";
+    await upsertFeedback(unknown, { channel: "search", establishmentId: id, language: "fr", visitPeriod: "today" });
+    expect((await getDetailedQuestionnaire(unknown)).questions.slice(0, 3).map((q) => q.code))
+      .toEqual(["FAIR_PRICE", "RECEIPT_OR_INVOICE", "RECOMMEND"]);
   });
 
   it("replaces the topics touched, each with its sentiment", async () => {

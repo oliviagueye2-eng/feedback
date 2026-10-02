@@ -1,28 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { selectDetailedQuestionnaire } from "./select";
+import { selectQuestionSets } from "./select";
 
-describe("selectDetailedQuestionnaire", () => {
-  it("prefers the service's questionnaire", () => {
-    expect(
-      selectDetailedQuestionnaire({ serviceQuestionnaireId: 3, typeQuestionnaireId: 5, sectorFallbackQuestionnaireId: 7 }),
-    ).toEqual({ kind: "service", id: 3 });
+const none = { sectorKnown: true, sectorSetId: null, typeSetId: null, serviceSetId: null, genericSetId: 9 };
+
+describe("selectQuestionSets", () => {
+  it("adds up the sector's, the type's and the service's lists, from the most general", () => {
+    expect(selectQuestionSets({ ...none, sectorSetId: 1, typeSetId: 2, serviceSetId: 3 })).toEqual([1, 2, 3]);
   });
 
-  it("then the establishment type's (an airport is not asked the bus questions of its sector)", () => {
-    expect(
-      selectDetailedQuestionnaire({ serviceQuestionnaireId: null, typeQuestionnaireId: 5, sectorFallbackQuestionnaireId: 7 }),
-    ).toEqual({ kind: "type", id: 5 });
+  it("skips a level without a list (Transport: only the service's)", () => {
+    expect(selectQuestionSets({ ...none, serviceSetId: 3 })).toEqual([3]);
+    expect(selectQuestionSets(none)).toEqual([]);
   });
 
-  it("falls back to the sector's questionnaire", () => {
-    expect(
-      selectDetailedQuestionnaire({ serviceQuestionnaireId: null, typeQuestionnaireId: null, sectorFallbackQuestionnaireId: 7 }),
-    ).toEqual({ kind: "sector", id: 7 });
+  it("gives GENERIC to an establishment whose sector is unknown", () => {
+    expect(selectQuestionSets({ ...none, sectorKnown: false })).toEqual([9]);
   });
 
-  it("uses the generic questionnaire when nothing is known", () => {
-    expect(
-      selectDetailedQuestionnaire({ serviceQuestionnaireId: null, typeQuestionnaireId: null, sectorFallbackQuestionnaireId: null }),
-    ).toEqual({ kind: "generic", code: "GENERIC" });
+  it("never lists the same list twice", () => {
+    expect(selectQuestionSets({ ...none, sectorSetId: 4, serviceSetId: 4 })).toEqual([4]);
   });
 });

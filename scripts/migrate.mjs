@@ -61,6 +61,19 @@ try {
   const applied = new Set(rows.map((row) => row.name));
   const files = (await readdir(dir)).filter((file) => file.endsWith(".sql")).sort();
 
+  // A database migrated with files that no longer exist was built from an
+  // older history (the migrations were rewritten on 2026-10-02): applying the
+  // new files on top of it would skip some and break others. It has to be
+  // reset first (see README, « Réinitialiser la base »).
+  const unknown = [...applied].filter((name) => !files.includes(name));
+  if (unknown.length > 0) {
+    console.error(
+      `This database was migrated with files that no longer exist (${unknown.join(", ")}).\n` +
+        "Reset it before migrating (README, « Réinitialiser la base »).",
+    );
+    process.exit(1);
+  }
+
   let count = 0;
   for (const file of files) {
     if (applied.has(file)) continue;

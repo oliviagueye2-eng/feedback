@@ -37,9 +37,17 @@ npm run dev                  # http://localhost:3000
 
 **À faire plus tard :** ajouter `CRON_SECRET` dans Vercel. Sans lui, le site fonctionne, mais la tâche de nuit est refusée (401) et les résultats publiés ne sont jamais recalculés. À faire avant d'avoir de vrais avis.
 
-#### Premiers établissements
+#### Migrations
 
-La migration `0004_registry_first_establishments.sql` ajoute 19 établissements publics réels (hôpitaux, mairies, universités, DAF, AIBD), vérifiés sur des sources publiques. Ils arrivent dans la base au déploiement, comme les autres migrations. Le référentiel complet sera importé plus tard depuis les sources officielles.
+Quatre fichiers, réécrits proprement le 2026-10-02 avant le lancement : `0001_schema.sql` (tables), `0002_reference_data.sql` (secteurs, thèmes), `0003_registry.sql` (territoire, organismes, établissements réels vérifiés sur des sources publiques, services), `0004_questions.sql` (banque de questions et listes). Désormais, toute modification passe par une **nouvelle** migration numérotée, sans jamais modifier un fichier déjà appliqué.
+
+#### Réinitialiser la base
+
+Nécessaire une seule fois, pour passer de l'ancienne série de migrations (0001 à 0019 du prototype) à la nouvelle : le script de migration refuse une base qui contient des migrations disparues, et le déploiement échoue alors sans rien casser (l'ancienne version reste en ligne). Dans la console Neon, *SQL Editor*, sur la base de production :
+
+1. Vérifier qu'il n'y a pas d'avis à garder : `SELECT count(*) FROM feedback;`
+2. Tout effacer : `DROP SCHEMA public CASCADE; CREATE SCHEMA public;`
+3. Relancer le déploiement (ou pousser sur `main`) : la build recrée tout à partir des quatre migrations.
 
 Configuration dans [`vercel.json`](vercel.json) : région `fra1` (Francfort, la même que la base), et recalcul des résultats publiés chaque nuit à 2 h UTC (`/webapi/internal/refresh-stats`, protégé par `CRON_SECRET`).
 
@@ -52,7 +60,7 @@ Configuration dans [`vercel.json`](vercel.json) : région `fra1` (Francfort, la 
 | `app/webapi/` | Routes de l'API REST, minces : elles appellent `src/domain` |
 | `app/_i18n/` | Textes de l'interface, un fichier par langue (`fr.ts`) ; voir l'architecture technique |
 | `src/domain/` | Logique métier, indépendante de Next.js |
-| `src/db/` | Accès à PostgreSQL. Les **migrations** (`src/db/migrations/`) créent le schéma et les données de référence. Les requêtes restent **à écrire** : chaque fonction répond pour l'instant « non implémenté » (HTTP 501) |
+| `src/db/` | Accès à PostgreSQL. Les **migrations** (`src/db/migrations/`) créent le schéma et les données de référence ; les requêtes sont dans les autres fichiers |
 | `src/lib/` | Utilitaires partagés (normalisation du texte, validation) |
 
 Voir [l'architecture technique](docs/architecture-technique.md) pour les règles de cette organisation.

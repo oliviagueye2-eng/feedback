@@ -10,7 +10,7 @@ import {
 } from "../../lib/validation";
 import { invalidInput, notFound } from "../errors";
 import { questionsNotApplicable, questionsToShow } from "../questionnaire/conditions";
-import { selectDetailedQuestionnaire } from "../questionnaire/select";
+import { selectQuestionSets } from "../questionnaire/select";
 import { VISIT_PERIODS, type Channel, type VisitPeriod } from "../types";
 import { computeVisitMonth, defaultVisitPeriod } from "./visit";
 
@@ -64,14 +64,14 @@ export async function saveAnswer(
   const optionCode = optionalString(input, "option", { max: 64 });
   const textValue = optionalString(input, "text", { max: COMMENT_MAX_LENGTH });
   if (!optionCode && !textValue) throw invalidInput("option or text is required");
-  const sources = await db.findQuestionnaireSources(feedbackId);
+  const sources = await db.findQuestionSetSources(feedbackId);
   if (!sources) throw notFound("Feedback not found");
   await db.upsertAnswer({
     feedbackId,
     questionCode,
     optionCode,
     textValue,
-    detailed: selectDetailedQuestionnaire(sources),
+    setIds: selectQuestionSets(sources),
   });
 }
 
@@ -143,10 +143,10 @@ export async function getDetailsScreen(feedbackId: string) {
 async function loadPageQuestions(feedbackId: string) {
   const [{ context }, sources] = await Promise.all([
     getEssentialScreen(feedbackId),
-    db.findQuestionnaireSources(feedbackId),
+    db.findQuestionSetSources(feedbackId),
   ]);
   if (!sources) throw notFound("Feedback not found");
-  const questions = await db.findDetailedQuestions(feedbackId, selectDetailedQuestionnaire(sources));
+  const questions = await db.findDetailedQuestions(feedbackId, selectQuestionSets(sources));
   const answers: Record<string, string | null> = {
     OVERALL_SATISFACTION: context.essentialOption,
     ...Object.fromEntries(questions.map((q) => [q.code, q.chosen])),
@@ -231,12 +231,15 @@ export async function completeFeedback(feedbackId: string): Promise<void> {
   }
 }
 
-/** Screen 6: which detailed questionnaire to show for this feedback. */
+/**
+ * Screens 6 and 6b for an app: the questions this feedback may be asked after
+ * screen 2b (lists of its sector, type and service, then the common ones),
+ * with their answers, conditions and what was already answered.
+ */
 export async function getDetailedQuestionnaire(feedbackId: string) {
   requireUuid(feedbackId, "id");
-  const sources = await db.findQuestionnaireSources(feedbackId);
-  if (!sources) throw notFound("Feedback not found");
-  return selectDetailedQuestionnaire(sources);
+  const { questions } = await loadPageQuestions(feedbackId);
+  return { questions };
 }
 
 /**

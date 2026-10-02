@@ -6,7 +6,7 @@ Hypothèse technique : PostgreSQL, avec les extensions `pg_trgm` (recherche appr
 
 Le schéma est créé par les migrations SQL de [`src/db/migrations/`](../src/db/migrations/) (`npm run db:migrate`). En cas d'écart entre ce document et les migrations, ce sont les migrations qui font foi.
 
-**Règle des migrations :** tant que la base n'est déployée nulle part, on modifie directement `0001_schema.sql` (schéma) et `0002_reference_data.sql` (données de référence). Après le premier déploiement, toute modification passe par une nouvelle migration numérotée, sans jamais modifier une migration déjà appliquée.
+**Règle des migrations :** les migrations ont été réécrites proprement le 2026-10-02, avant le lancement (`0001_schema.sql`, `0002_reference_data.sql`, `0003_registry.sql`, `0004_questions.sql`, base Neon réinitialisée). Depuis, toute modification passe par une nouvelle migration numérotée, sans jamais modifier une migration déjà appliquée.
 
 ## Convention de nommage
 
@@ -65,7 +65,7 @@ Les tables se répartissent en quatre blocs :
 | Bloc | Tables | Rôle |
 |---|---|---|
 | Référentiel | region, department, municipality, sector, establishment_type, establishment, service, establishment_service, qr_code | Ce que l'usager cherche et évalue |
-| Questionnaires | questionnaire, question, answer_option, topic, topic_sector, tables `*_translation` | Ce qu'on demande à l'usager |
+| Questions | question (banque), answer_option, question_set, question_set_item, question_condition, topic, topic_sector, tables `*_translation` | Ce qu'on demande à l'usager |
 | Collecte | feedback, answer, comment, feedback_topic | Ce que l'usager répond |
 | Exploitation | monthly_stats (vue), search_log, moderation_action | Résultats publiés, amélioration du référentiel |
 
@@ -101,8 +101,8 @@ Domaine général. Partagé par les types d'établissement et par les services.
 | Colonne | Type | Note |
 |---|---|---|
 | id | smallint | |
-| code | text unique | `HEALTH`, `EDUCATION`, `ADMINISTRATION`, `JUSTICE`, `SECURITY`, `TAX`, `ELECTRICITY`, `WATER`, `TRANSPORT`, `SOCIAL`, `FOOD_SERVICE`, `HOSPITALITY`, `REAL_ESTATE`, `RETAIL`, `BANKING_INSURANCE`, `CULTURE`, `SPORT`, `TELECOM`, `TOURISM` (agences de voyages, guides, sites touristiques ; l'hébergement reste en `HOSPITALITY`, les musées en `CULTURE`). `ELECTRICITY` et `WATER` remplacent l'ancien `UTILITIES` « Eau et électricité » (migration 0008). Un secteur n'est ni public ni privé : c'est `establishment.ownership` qui le précise |
-| fallback_questionnaire_id | fk questionnaire | questionnaire utilisé quand on connaît le secteur mais pas le service (sinon GENERIC) |
+| code | text unique | `HEALTH`, `EDUCATION`, `ADMINISTRATION`, `JUSTICE`, `SECURITY`, `TAX`, `ELECTRICITY`, `WATER`, `TRANSPORT`, `SOCIAL`, `FOOD_SERVICE`, `HOSPITALITY`, `REAL_ESTATE`, `RETAIL`, `BANKING_INSURANCE`, `CULTURE`, `SPORT`, `TELECOM`, `TOURISM` (agences de voyages, guides, sites touristiques ; l'hébergement reste en `HOSPITALITY`, les musées en `CULTURE`). `ELECTRICITY` et `WATER` sont deux secteurs (décision du 2026-09-29). Un secteur n'est ni public ni privé : c'est `establishment.ownership` qui le précise |
+| question_set_id | fk question_set | liste de questions du secteur (écran 6), facultative |
 
 Le libellé affiché passe par sa table de traduction (`*_translation`).
 
@@ -114,13 +114,14 @@ Genre de lieu : mairie, centre d'état civil, hôpital, poste de santé, école 
 | id | int | |
 | code | text unique | `TOWN_HALL`, `CIVIL_REGISTRY_CENTER`, `HOSPITAL`, `HEALTH_POST`, `PRIMARY_SCHOOL`… |
 | sector_id | fk sector | |
+| question_set_id | fk question_set | liste de questions du type, ajoutée à celle du secteur (facultative) |
 
 Le libellé affiché passe par sa table de traduction (`*_translation`).
 
 À quoi sert le type :
 1. **Comparer ce qui est comparable.** Les statistiques et les classements publiés comparent un hôpital à d'autres hôpitaux, pas à un poste de santé.
 2. **Afficher un repère dans la recherche.** Sous le nom de l'établissement, on affiche son type (« Poste de santé ») pour lever les ambiguïtés entre lieux aux noms proches.
-3. **Choisir un questionnaire de repli.** Pour un établissement saisi par un usager avec un type mais sans service connu, on utilise un questionnaire adapté au secteur du type plutôt que le questionnaire générique.
+3. **Ajouter des questions propres au type.** Un type peut avoir sa liste de questions, ajoutée à celle du secteur (par exemple, plus tard, des questions d'aéroport).
 4. **Préremplir les services.** À la création d'un établissement dans le référentiel, on peut proposer les services habituels de son type (une mairie propose l'état civil).
 5. **Écran 0c.** Le champ facultatif « Type » que remplit l'usager correspond à `establishment_type`.
 
@@ -190,7 +191,7 @@ Catalogue national des services : état civil (extrait de naissance, mariage…)
 | id | int | |
 | code | text unique | `CIVIL_REGISTRY_BIRTH` |
 | sector_id | fk sector | domaine du service |
-| detailed_questionnaire_id | fk questionnaire | questionnaire propre à ce type de service |
+| question_set_id | fk question_set | liste de questions du service, ajoutée à celles du secteur et du type (facultative) |
 | synonyms | text[] | mots que l'usager peut taper pour désigner ce service (voir plus bas) |
 | search_text | text | libellé français + synonymes, en minuscules et sans accents, rempli automatiquement (index trigramme) |
 
@@ -236,7 +237,7 @@ Un QR code par guichet ou par établissement.
 ---
 
 ### organization
-Organisme qui a plusieurs établissements : Senelec, Sen'Eau, La Poste, opérateurs téléphoniques, caisses sociales, impôts… (migration 0005).
+Organisme qui a plusieurs établissements : Senelec, Sen'Eau, La Poste, opérateurs téléphoniques, caisses sociales, impôts…
 
 | Colonne | Type | Note |
 |---|---|---|
@@ -248,7 +249,7 @@ Organisme qui a plusieurs établissements : Senelec, Sen'Eau, La Poste, opérate
 
 Le nom complet, les sigles et les anciens noms (Free pour Yas, SGBS pour Société Générale) sont aussi des **alias** de l'établissement « en général » : ils le font trouver par la recherche.
 
-Premiers organismes (migration 0006, liste validée le 2026-09-29) : Senelec, Sen'Eau, Orange, Yas, Expresso, La Poste (secteur Télécoms), IPRES, DGID, CBAO, UBA, Société Générale.
+Organismes (listes validées le 2026-09-29 et le 2026-10-02) : Senelec, Sen'Eau, Orange, Yas, Expresso, La Poste (secteur Télécoms), IPRES, DGID, CBAO, UBA, Société Générale ; transport : Dem Dikk (anciennement Dakar Dem Dikk), BRT, TER, AFTU, COSAMA (et son bateau Aline Sitoë Diatta).
 
 Un organisme s'évalue de deux façons :
 - **dans une de ses agences** : un établissement ordinaire (`scope = site`) rattaché à l'organisme ;
@@ -280,40 +281,31 @@ Index à prévoir :
 
 ---
 
-## 5. Questionnaires
+## 5. Questions
 
-### questionnaire
+Réorganisées le 2026-10-02, avant le lancement (validé sur la page « Questionnaires par niveau ») : **une banque de questions**, chaque question écrite une seule fois, et des **listes** de questions rattachées aux niveaux. À l'écran 6, les listes du **secteur**, puis du **type**, puis du **service** s'additionnent, du plus général au plus spécifique. Une question présente dans plusieurs listes est la même question : ses réponses se comparent d'un secteur à l'autre.
+
+**Règle de rangement** : une question se place au niveau le plus général où elle vaut pour tous ceux qui sont en dessous ; si un seul cas ne doit pas l'avoir, on la descend d'un niveau (les questions de bus sont sur le service « Un trajet en bus ou en train », pas sur le secteur Transport). Un niveau sans liste n'ajoute rien.
+
+**Listes spéciales** (trouvées par leur code) : `ESSENTIAL` (écran 2, la satisfaction, pour tous), `COMMON` (écran 6b, « Avez-vous signalé cette situation… ? », seulement aux usagers peu ou pas satisfaits), `GENERIC` (rattachée aux 7 secteurs privés, et utilisée quand le secteur de l'établissement est inconnu).
+
+**Versions** : une question déjà utilisée ne se modifie plus (sauf une formulation qui garde le sens) ; une nouvelle question la remplace dans les listes, et les anciens avis restent lisibles.
+
+### question (la banque)
 | Colonne | Type | Note |
 |---|---|---|
 | id | int | |
-| code | text | `ESSENTIAL`, `CIVIL_REGISTRY`, `GENERIC`… |
-| version | int | |
-| status | enum | `draft`, `published`, `archived` |
-| published_at | timestamptz | |
-
-Trois sortes de questionnaires :
-- **ESSENTIAL** : une seule question, posée à tout le monde et dans tous les secteurs : `OVERALL_SATISFACTION`. Elle est suivie d'un texte libre facultatif dont le libellé dépend de la réponse (voir `answer_option` et `comment`).
-- **Détaillé par service** : relié au service via `service.detailed_questionnaire_id`. C'est là que se trouve `GOAL_ACHIEVED` (« Avez-vous obtenu ce que vous étiez venu(e) chercher ? ») pour les secteurs où la question a du sens (administration, état civil…). Elle n'est pas posée dans un restaurant ou un hôtel.
-- **GENERIC** : utilisé quand le service est inconnu (établissement saisi par l'usager sans type).
-
-### question
-| Colonne | Type | Note |
-|---|---|---|
-| id | int | |
-| questionnaire_id | fk | |
-| code | text | `OVERALL_SATISFACTION`, `GOAL_ACHIEVED`, `WAIT_TIME`… |
+| code | text unique | `OVERALL_SATISFACTION`, `GOAL_ACHIEVED`, `WAIT_TIME`, `CARE_RECEIVED`… |
 | type | enum | `scale_5`, `yes_partial_no`, `single_choice`, `text` |
-| position | smallint | ordre d'affichage |
-| is_required | boolean | |
 
 ### answer_option
 | Colonne | Type | Note |
 |---|---|---|
 | id | int | |
 | question_id | fk | |
-| code | text | `VERY_SATISFIED`, `YES`, `UNDER_15_MIN`… |
-| value | smallint | pour les calculs (1 à 5, etc.) |
-| position | smallint | |
+| code | text | `VERY_SATISFIED`, `YES`, `UNDER_30_MIN`… (unique par question) |
+| value | smallint | ordre pour les résultats (plus = mieux, ou plus long pour une attente) ; vide pour une réponse hors échelle (« Je ne sais pas ») |
+| position | smallint | ordre d'affichage (unique par question) |
 
 Chaque option de `OVERALL_SATISFACTION` a aussi un **libellé de relance** (colonne `follow_up_prompt` de `answer_option_translation`). Il était affiché au-dessus du texte libre de l'écran 2b ; depuis le 2026-09-30 (option D), ce texte libre a un libellé unique, « Détail de votre expérience », et les libellés de relance ne sont plus affichés (gardés pour un usage futur) :
 
@@ -322,6 +314,48 @@ Chaque option de `OVERALL_SATISFACTION` a aussi un **libellé de relance** (colo
 | `VERY_SATISFIED`, `SATISFIED` | Qu'est-ce qui vous a plu ? |
 | `NEUTRAL` | Qu'est-ce qui aurait pu être mieux ? |
 | `DISSATISFIED`, `VERY_DISSATISFIED` | Que s'est-il passé ? |
+
+### question_set (les listes)
+| Colonne | Type | Note |
+|---|---|---|
+| id | smallint | |
+| code | text unique | `ESSENTIAL`, `COMMON`, `FILE_SERVICES`, `HEALTH`, `LAND_TRIP`, `GENERIC`… |
+
+Rattachée par `sector.question_set_id`, `establishment_type.question_set_id` ou `service.question_set_id` ; une même liste peut servir à plusieurs niveaux (« Services à dossier » pour l'Administration, les Impôts, la Justice et l'Emploi ; `GENERIC` pour les 7 secteurs privés).
+
+### question_set_item
+| Colonne | Type | Note |
+|---|---|---|
+| question_set_id | fk question_set | supprimé avec la liste |
+| question_id | fk question | |
+| position | smallint | ordre dans la liste (unique par liste) |
+
+Clé `(question_set_id, question_id)`. Si une question figure dans plusieurs listes d'un même avis, elle n'est posée qu'une fois, à sa première place.
+
+### question_condition
+« Dans cette liste, cette question ne s'affiche que si telle question a reçu l'une de ces réponses. » Une ligne par réponse acceptée ; un élément sans ligne s'affiche toujours. Par élément de liste, et non par question : « Prévenu(e) avant les coupures ? » dépend du nombre de coupures dans la liste Électricité, et des jours sans eau dans la liste Eau.
+
+| Colonne | Type |
+|---|---|
+| question_set_id, question_id | fk question_set_item (supprimée avec l'élément) |
+| depends_on_question_id | la question dont on dépend (`OVERALL_SATISFACTION` ou une question placée avant) |
+| option_id | fk answer_option de `depends_on_question_id` (vérifié par la clé) |
+
+Clé `(question_set_id, question_id, option_id)`. Règle d'affichage et de nettoyage dans `src/domain/questionnaire/conditions.ts` : si la question dont on dépend est sur la même page, la question apparaît dès que la réponse est touchée (CSS `:has()`, sans JavaScript ; sinon elle reste visible avec « (si vous avez répondu « Non ») ») ; à la fin de l'avis, les réponses dont la condition n'est plus remplie sont effacées.
+
+### Contenu actuel
+34 questions dans la banque, 13 listes (`src/db/migrations/0004_questions.sql`, généré à partir d'une seule description ; détail lisible dans `docs/processus-recolte-avis.md`) :
+
+| Liste | Rattachée à |
+|---|---|
+| `ESSENTIAL` | tous les avis (écran 2) |
+| `COMMON` | tous les avis, si peu ou pas satisfait(e) (écran 6b) |
+| `FILE_SERVICES` | secteurs Administration et état civil, Impôts et domaines, Justice, Emploi et protection sociale |
+| `HEALTH`, `BANKING_INSURANCE`, `EDUCATION`, `ELECTRICITY`, `WATER`, `TELECOM` | le secteur du même nom |
+| `LAND_TRIP`, `BOAT_CROSSING`, `TICKET_PURCHASE` | les services du transport du même nom |
+| `GENERIC` | secteurs Commerce, Culture, Hôtellerie, Immobilier, Restauration, Sport, Tourisme, et secteur inconnu |
+
+Sans liste : secteur Sécurité (en attente de l'organisme porteur), secteur Transport, type Aéroport, service État civil.
 
 ### topic
 Thèmes proposés après la question essentielle (écran 2b), sous « Comment ça s'est passé ? ». Pour chaque thème, l'usager peut toucher « Bien » ou « Pas bien », ou ne rien toucher (option D, 2026-09-30) : une visite mitigée se dit (bon accueil, attente trop longue).
@@ -333,7 +367,7 @@ Thèmes proposés après la question essentielle (écran 2b), sous « Comment ç
 | position | smallint | ordre d'affichage |
 | is_active | boolean | |
 
-Liste revue le 2026-09-30 (migration `0010_topics_by_sector.sql`). **Thèmes communs**, affichés partout :
+Liste revue le 2026-09-30. **Thèmes communs**, affichés partout :
 
 | code | Libellé (dans `topic_translation`) |
 |---|---|
@@ -382,24 +416,8 @@ Quels thèmes afficher selon le secteur. Un thème **sans ligne** dans cette tab
 | topic_id | fk |
 | sector_id | fk |
 
-### establishment_type.detailed_questionnaire_id
-Questionnaire propre au type d'établissement (migration 0018), entre celui du service et celui du secteur : service → type → secteur → `GENERIC`. Première utilisation : le type « Aéroport » (questionnaire `AIRPORT` vide), pour que l'aéroport AIBD ne reçoive pas les questions de bus du secteur Transport.
-
-### question_condition
-« Cette question ne s'affiche que si telle question a reçu l'une de ces réponses » (migration 0014). Une ligne par réponse acceptée ; une question sans ligne s'affiche toujours. La réponse doit appartenir à la question dont on dépend (clé étrangère vers `answer_option (id, question_id)`).
-
-| Colonne | Type |
-|---|---|
-| question_id | fk question (supprimée avec elle) |
-| depends_on_question_id | fk question (ESSENTIAL ou une question placée avant) |
-| option_id | fk answer_option de `depends_on_question_id` |
-
-Clé `(question_id, option_id)`. Règle d'affichage et de nettoyage dans `src/domain/questionnaire/conditions.ts` : si la question dont on dépend est sur la même page, la question apparaît dès que la réponse est touchée (CSS `:has()`, sans JavaScript ; sinon elle reste visible avec « (si vous avez répondu « Non ») ») ; à la fin de l'avis, les réponses dont la condition n'est plus remplie sont effacées.
-
-**Questionnaire `COMMON`** : relié à aucun secteur ni service, chargé pour tous les avis (comme `ESSENTIAL`), ses questions viennent après celles du secteur à l'écran 6. Ses réponses ne renseignent pas `feedback.detailed_questionnaire_id` (qui reste celui du secteur ou du service).
-
 ### Tables de traduction (`*_translation`)
-Une table par table traduite (migration 0013, 2026-10-01 ; elle remplace la table unique `translation`, dont le lien n'était pas vérifié par la base). Chaque table a une clé étrangère vers la ligne traduite (la traduction est supprimée avec elle) et une ligne par langue.
+Une table par table traduite (décision du 2026-10-01, plutôt qu'une table unique dont le lien n'aurait pas été vérifié par la base). Chaque table a une clé étrangère vers la ligne traduite (la traduction est supprimée avec elle) et une ligne par langue.
 
 | Table | Clé | Colonnes de texte |
 |---|---|---|
@@ -428,7 +446,6 @@ Un avis : le passage d'un usager, de la première réponse à la fin.
 | channel | enum | `qr`, `search`, `link` |
 | language | text | langue choisie |
 | step | enum | `essential`, `detailed`, `completed` |
-| detailed_questionnaire_id | fk | version utilisée pour la partie détaillée |
 | visit_period | enum | `today`, `under_week`, `under_month`, `over_month` : réponse à « À quand remonte votre expérience ? » (anciennement « Quand êtes-vous venu(e) ? »). Vaut `today` automatiquement pour une arrivée par QR code |
 | visit_month | date | mois de la visite, calculé à l'enregistrement à partir de `visit_period` et `started_at` (ex. 2026-03-01). Ne change plus ensuite |
 | started_at | timestamptz | arrondi à l'heure pour limiter la réidentification |
@@ -461,7 +478,7 @@ Le texte libre demandé juste après la question essentielle (écran 2b). Il rem
 | hidden_reason | text | ex. donnée personnelle, injure |
 
 ### feedback_topic
-Thèmes touchés par l'usager, une ligne par thème, avec leur sens (migration `0011_topic_sentiment.sql`). Les thèmes enregistrés avant cette migration ont reçu le sens qu'ils avaient à l'écran : `positive` après « Très satisfait » ou « Satisfait », `negative` sinon.
+Thèmes touchés par l'usager, une ligne par thème, avec leur sens (`positive` pour « Bien », `negative` pour « Pas bien », obligatoire).
 
 | Colonne | Type | Note |
 |---|---|---|
@@ -523,11 +540,11 @@ Historique des actions des agents : validation ou fusion d'un établissement sai
 | 0c. Non répertorié | establishment_type, municipality | establishment (`pending_review`) |
 | QR code scanné | qr_code, establishment | |
 | 1. Établissement identifié | establishment, establishment_service | feedback (création, dont `visit_period` et `visit_month`) |
-| 2. Question essentielle | questionnaire ESSENTIAL | answer |
+| 2. Question essentielle | liste ESSENTIAL | answer |
 | 2b. Thèmes et texte libre | topic, topic_sector, topic_translation | feedback_topic, comment |
-| 3 à 5. Enregistrement, confirmation, choix | | feedback.step |
-| 6. Questionnaire détaillé | service → questionnaire (ou GENERIC) | answer |
-| 7. Remerciement | | feedback.completed_at |
+| 6. Questions du niveau | listes du secteur, du type et du service (ou GENERIC) | answer |
+| 6b. Signalement | liste COMMON | answer |
+| 7. Remerciement | | feedback.step, feedback.completed_at |
 
 ---
 

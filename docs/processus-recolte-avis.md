@@ -40,86 +40,73 @@ Chaque avis passe par ces étapes, dans cet ordre.
 | 5 | **Les aspects** | 4. Analyser | « Comment ça s'est passé ? » | Pour chaque thème du secteur : « Bien », « Pas bien » ou rien ; « Autre » à préciser | Non | 2b | `feedback_topic` (avec `sentiment`) | Fait |
 | 6 | **Le récit** | 2. Comprendre | « Détail de votre expérience » (aide : points positifs, points négatifs, suggestions d'amélioration) | Texte libre, 500 caractères | Non | 2b | `comment` (relu avant publication) | Fait |
 
-### Partie détaillée (enchaînée après l'écran 2b quand un questionnaire est publié, sans écran de choix)
+### Partie détaillée (enchaînée après l'écran 2b quand des questions s'appliquent, sans écran de choix)
 
 | # | Étape | Bloom | Question posée à l'usager | Réponse | Obligatoire | Écran | Donnée enregistrée | État |
 |---|---|---|---|---|---|---|---|---|
-| 7 | **Le résultat de la démarche** | 3. Appliquer | « Avez-vous obtenu ce que vous étiez venu(e) chercher ? » | Oui / en partie / non | Non | 6 | `answer` (`GOAL_ACHIEVED`) | Fait pour la santé ; à rédiger ailleurs (secteurs où la question a du sens) |
-| 8 | **Les faits mesurables** | 3. Appliquer | Selon le secteur, ex. « Combien de temps avez-vous attendu ? » | Choix fermés (tranches) | Non | 6 | `answer` (`WAIT_TIME`…) | Fait pour la santé ; à rédiger ailleurs |
-| 9 | **La proposition** | 6. Créer | Ex. « Qu'est-ce qui aurait rendu votre visite plus simple ? » | Texte libre court | Non | 6 | `answer` (question `text`) | **Écartée pour la santé** (2026-10-01 : l'écran 2b demande déjà un texte libre) |
+| 7 | **Le résultat de la démarche** | 3. Appliquer | « Avez-vous obtenu ce que vous étiez venu(e) chercher ? » (santé : « Avez-vous reçu les soins… ? ») | Oui / en partie / non | Non | 6 | `answer` (`GOAL_ACHIEVED`, `CARE_RECEIVED`) | Fait là où la question a du sens |
+| 8 | **Les faits mesurables** | 3. Appliquer | Selon le secteur, ex. « Combien de temps avez-vous attendu avant d'être reçu(e) ? » | Choix fermés (tranches) | Non | 6 | `answer` (`WAIT_TIME`…) | Fait |
+| 9 | **La proposition** | 6. Créer | Ex. « Qu'est-ce qui aurait rendu votre visite plus simple ? » | Texte libre court | Non | 6 | `answer` (question `text`) | **Écartée** (2026-10-01 : l'écran 2b demande déjà un texte libre) |
 | — | **Remerciement** | | « Merci » | | | 7 | `feedback.step`, `feedback.completed_at` (arrondi à l'heure) | Fait |
 
-Les questions des étapes 7 à 9 dépendent du service (questionnaire détaillé du service, sinon du **type d'établissement** (depuis 0018), sinon du secteur, sinon `GENERIC`).
+**Organisation des questions (refaite le 2026-10-02 avant la mise en ligne, « solution 3 »)** :
 
-**Règle exclusive (validée le 2026-10-02)** : seul le **premier** questionnaire trouvé dans cet ordre est posé, jamais deux empilés (page courte, pas de doublon, règle simple). Les questions communes (`COMMON`) s'ajoutent toujours, sur leur page, aux usagers mécontents. Conséquence : un questionnaire plus précis (service, type) **reprend lui-même** les questions générales à garder, avec les mêmes codes et les mêmes réponses (comme Impôts, Justice et Emploi reprennent celles de l'Administration), pour que les résultats restent comparables. Un système qui additionnerait secteur, type et service est écarté pour l'instant (pages plus longues, doublons et ordre à gérer) ; à reconsidérer si les services se multiplient. Toutes sur une seule page (écran 6), toutes facultatives : on passe une question en n'y répondant pas.
+- **Une banque de questions** : chaque question est écrite une seule fois (34 questions), avec ses réponses. Une question posée dans plusieurs secteurs est la même question (même code, mêmes réponses), donc ses résultats se comparent d'un secteur à l'autre.
+- **Des listes** : une liste est une sélection ordonnée de questions de la banque. Une liste peut être rattachée à un **secteur**, à un **type d'établissement** ou à un **service**.
+- **Les listes s'additionnent**, du plus général au plus précis : celle du secteur, puis celle du type, puis celle du service. Une question présente dans deux listes n'est posée qu'une fois, à sa première place. Tout est sur une seule page (écran 6), tout est facultatif : on passe une question en n'y répondant pas. Sans aucune liste, l'écran 6 est sauté.
+- **`GENERIC`** : la liste des 7 secteurs privés, posée aussi quand le secteur de l'établissement est inconnu.
+- **Conditions** : une question peut ne s'afficher qu'après certaines réponses (« Prévenu(e) avant les coupures ? » seulement s'il y a eu des coupures). Elle apparaît dès que la réponse est touchée, sans JavaScript. Une réponse qui ne s'applique plus est effacée à la fin de l'avis.
+- Règle : ne jamais demander ce que l'établissement choisi dit déjà (moyen de transport, secteur…).
 
-**Santé** (questionnaire `HEALTH`, migration 0012, validé le 2026-10-01), pour tous les établissements de santé (repli du secteur, aucun service de santé n'étant défini) :
+Source unique : `src/db/migrations/0004_questions.sql` (générée à partir d'une seule description pour éviter les erreurs de recopie). Détail des tables : `docs/architecture-base-de-donnees.md`, section 5.
 
-| Code | Question | Réponses |
+**Contenu validé le 2026-10-02** (numéros de la page de validation) :
+
+| Liste | Rattachée à | Questions |
 |---|---|---|
-| `PATIENT` | Pour qui êtes-vous venu(e) ? | Pour moi / Pour mon enfant / Pour un autre proche |
-| `GOAL_ACHIEVED` | Avez-vous reçu les soins pour lesquels vous étiez venu(e) ? | Oui / En partie / Non |
-| `WAIT_TIME` | Combien de temps avez-vous attendu avant d'être reçu(e) ? | Moins de 30 minutes / 30 minutes à 1 heure / 1 à 2 heures / 2 à 4 heures / Plus de 4 heures |
-| `PRESCRIPTION_AVAILABLE` | Les médicaments ou examens prescrits étaient-ils disponibles sur place ? | Oui, tous / Une partie / Non, aucun / Rien n'a été prescrit |
-| `RECEIPT_GIVEN` | Vous a-t-on donné un reçu pour ce que vous avez payé ? (formulation de 0015) | Oui, pour tout / Pour une partie / Non / Je n'ai rien payé |
+| `ESSENTIAL` | tous (écran 2) | 1 Êtes-vous satisfait(e) du service reçu ? |
+| `COMMON` | tous, écran 6b, si mécontent | 2 Avez-vous signalé cette situation à l'établissement (accueil, service client, direction…) ? ; 3 Pourquoi ? (si « Non ») |
+| `FILE_SERVICES` | secteurs Administration et état civil, Impôts et domaines, Justice, Emploi et protection sociale | 4 Avez-vous obtenu ce que vous étiez venu(e) chercher ? ; 6 Combien de fois êtes-vous venu(e) pour cette démarche ? ; 5 Combien de temps avez-vous attendu avant d'être reçu(e) ? ; 7 Saviez-vous à l'avance quels papiers apporter ? ; 8 Vous a-t-on donné un reçu pour ce que vous avez payé ? |
+| `HEALTH` | secteur Santé | 11 Pour qui êtes-vous venu(e) ? ; 12 Avez-vous reçu les soins pour lesquels vous étiez venu(e) ? ; 5 attente ; 13 Les médicaments ou examens prescrits étaient-ils disponibles sur place ? ; 8 reçu |
+| `BANKING_INSURANCE` | secteur Banques et assurances | 4 démarche obtenue ; 5 attente ; 9 Les frais vous ont-ils été expliqués clairement ? |
+| `EDUCATION` | secteur Éducation | 14 Vous êtes : ; 15 Les cours ont-ils eu lieu comme prévu ces dernières semaines ? ; 16 Combien d'élèves y a-t-il dans la classe ? ; 17 Les toilettes et l'eau fonctionnent-elles ? ; 8 reçu |
+| `ELECTRICITY` | secteur Électricité | 18 Votre avis porte surtout sur : ; 19 Combien de coupures avez-vous eues ce mois-ci ? ; 21 Avez-vous été prévenu(e) avant les coupures ? (si coupures) ; 22 Avez-vous un compteur Woyofal (prépayé) ? |
+| `WATER` | secteur Eau | 18 sujet ; 20 Combien de jours sans eau ce mois-ci ? ; 21 prévenu(e) (si jours sans eau) |
+| `TELECOM` | secteur Télécoms | 23 Votre avis porte surtout sur : ; 24 À quelle fréquence perdez-vous le réseau ? |
+| `LAND_TRIP` | service « Un trajet en bus ou en train » | 25 Combien de temps avez-vous attendu à l'arrêt ou en gare ? ; 26 Le véhicule était-il bondé ? ; 27 Vous a-t-on donné un ticket pour votre trajet ? |
+| `BOAT_CROSSING` | service « Une traversée en bateau » | 28 Le bateau est-il parti à l'heure prévue ? ; 29 L'embarquement s'est-il bien passé ? ; 30 Aviez-vous une place correspondant à votre billet (siège, couchette, cabine) ? ; 31 Les consignes de sécurité (gilets, exercices) ont-elles été présentées ? |
+| `TICKET_PURCHASE` | service « Achat d'un ticket ou d'une carte d'abonnement » | 4 démarche obtenue ; 5 attente ; 10 Avez-vous pu payer comme vous le souhaitiez (espèces, paiement mobile…) ? |
+| `GENERIC` | secteurs Commerce, Culture, Hôtellerie, Immobilier, Restauration, Sport, Tourisme ; secteur inconnu | 32 Le prix vous a-t-il semblé juste ? ; 33 Vous a-t-on donné un reçu ou une facture ? ; 34 Recommanderiez-vous cet établissement à un proche ? |
 
-Écarté : « Vous a-t-on demandé de payer en dehors de la caisse ? » (trop sensible sans l'accord de l'organisme porteur).
+Sans liste pour l'instant : secteur **Sécurité** (en attente de l'organisme porteur), secteur **Transport** (aucune question ne vaut pour tous les moyens de transport : les questions viennent du service), type **Aéroport** (questions d'aéroport à proposer : attente aux contrôles, bagages…), service **État civil** (n'ajoute rien aux questions des services à dossier). L'aéroport AIBD reçoit donc seulement les questions communes s'il est mécontent.
 
-**Administration et état civil** (questionnaire `ADMINISTRATION`, migration 0016, validé le 2026-10-01), pour tous les établissements du secteur (repli du secteur, « État civil » des mairies compris). Mêmes codes et mêmes réponses que la santé quand la question est la même, pour comparer les secteurs :
+Écarté : « Vous a-t-on demandé de payer en dehors de la caisse ? » (trop sensible sans l'accord de l'organisme porteur) ; « Par peur des conséquences » (réponse à « Pourquoi ? »).
 
-| Code | Question | Réponses |
-|---|---|---|
-| `GOAL_ACHIEVED` | Avez-vous obtenu ce que vous étiez venu(e) chercher ? | Oui / En partie / Non |
-| `VISITS_COUNT` | Combien de fois êtes-vous venu(e) pour cette démarche ? | 1 fois / 2 fois / 3 fois ou plus |
-| `WAIT_TIME` | Combien de temps avez-vous attendu avant d'être reçu(e) ? | *mêmes tranches que la santé* |
-| `DOCUMENTS_KNOWN` | Saviez-vous à l'avance quels papiers apporter ? | Oui / En partie / Non |
-| `RECEIPT_GIVEN` | Vous a-t-on donné un reçu pour ce que vous avez payé ? | Oui, pour tout / Pour une partie / Non / Je n'ai rien payé |
-
-**Autres secteurs** (migration 0017, **validés le 2026-10-01 tels que proposés**, sauf la Sécurité, en attente de l'organisme porteur : questionnaire vide, pas de page de questions de secteur) : Impôts et domaines, Justice, Emploi et protection sociale : même base que l'Administration ; Sécurité : attente, nombre de venues, document remis (à valider avec l'organisme porteur) ; Éducation : vous êtes (élève, parent, autre), cours tenus, effectif de la classe, toilettes et eau, reçu ; Électricité et Eau : sujet de l'avis, nombre de coupures (ou de jours sans eau), prévenu avant la coupure (si coupures), compteur Woyofal (électricité) ; Télécoms : sujet de l'avis, fréquence des pertes de réseau ; Transport : attente à l'arrêt, véhicule bondé, ticket (« quel transport ? » retiré le 2026-10-01 : l'établissement évalué, Dakar Dem Dikk, BRT, TER…, le dit déjà) ; Banques et assurances : démarche obtenue, attente, frais expliqués ; secteurs privés (commerce, hôtellerie, restauration, tourisme, culture, sport, immobilier) et établissements sans secteur : questionnaire `GENERIC`, publié (prix juste, reçu ou facture, recommanderiez-vous). Détail des codes et des réponses : `src/db/migrations/0017_sector_questionnaires.sql` (généré à partir d'une seule description pour éviter les erreurs de recopie).
-
-Règle : ne jamais demander dans le questionnaire ce que l'établissement choisi dit déjà (moyen de transport, secteur…).
-
-**Aéroport** (migration 0018) : l'aéroport AIBD est dans le secteur Transport mais ne reçoit pas les questions de bus : type d'établissement « Aéroport » avec son propre questionnaire `AIRPORT`, vide pour l'instant (vraies questions d'aéroport à proposer : attente aux contrôles, bagages…).
-
-**Organisation du transport (validée le 2026-10-02 ; opérateurs, services et questions construits par la migration 0019)** :
+**Organisation du transport (validée le 2026-10-02)** :
 
 ```
-Qui ?       l'opérateur          = un organisme (Dakar Dem Dikk, BRT, TER, AFTU…), note globale regroupée
+Qui ?       l'opérateur          = un organisme (Dem Dikk, BRT, TER, AFTU, COSAMA), note globale regroupée
 Lequel ?    la ligne ou la gare  = un site de l'opérateur (comme les agences de Senelec), avec son QR code
-Quoi ?      la démarche          = un service : « Un trajet », « Achat d'un ticket ou d'une carte d'abonnement »
-                                   (+ « Autre démarche », déjà proposé à l'écran 1)
+Quoi ?      la démarche          = un service : « Un trajet en bus ou en train », « Une traversée en bateau »,
+                                   « Achat d'un ticket ou d'une carte d'abonnement » (+ « Autre démarche »)
 ```
 
 - Une ligne n'est **pas** un service : un service est une démarche partagée par plusieurs établissements (« État civil » pour toutes les mairies) ; une ligne n'appartient qu'à un opérateur.
-- **Règle générale** : un service décrit ce que l'usager est venu faire ou a utilisé, **jamais le fait de se plaindre**. « Réclamation » écarté (une réclamation porte sur un trajet ou un achat ; déjà couvert par les thèmes « Pas bien », le texte et « Avez-vous signalé cette situation… ? »). « Objets perdus » écarté (rare, rattaché à un trajet ; « Autre démarche » suffit).
-- Questions : le questionnaire Transport (attente à l'arrêt, véhicule bondé, ticket) vaut pour « Un trajet » ; « Achat d'un ticket ou d'une carte » aura ses propres questions ou aucune (règle exclusive service → type → secteur).
-- L'aéroport suivra la même logique : services enregistrement, contrôles de sécurité, bagages, douane…, avec des questions par service plus tard.
-- À fournir : la liste officielle des lignes de chaque opérateur (numéro, terminus).
-
-**Construit (migration 0019)** : organismes **Dem Dikk** (Dakar Dem Dikk, devenu Dem Dikk S.A. le 11 septembre 2026), **BRT** (Dakar Mobilité), **TER** (SETER), **AFTU** (minibus Tata), **COSAMA**, chacun avec sa fiche « en général » ; site de la COSAMA : **Aline Sitoë Diatta (bateau Dakar – Ziguinchor)** (le *Diambogne* et l'*Aguène* non ajoutés, à sa demande). Un **service par mode** (option B, choisie le 2026-10-02 ; découper le transport en trois secteurs reste possible plus tard) :
-
-| Service | Proposé par | Questions |
-|---|---|---|
-| Un trajet en bus ou en train | Dem Dikk, BRT, TER, AFTU | celles du Transport (attente à l'arrêt, véhicule bondé, ticket) |
-| Une traversée en bateau | COSAMA | Le bateau est-il parti à l'heure prévue ? (À l'heure / Moins d'1 heure de retard / Plus d'1 heure de retard / Départ annulé ou reporté) ; L'embarquement s'est-il bien passé ? (Oui / En partie / Non) ; Aviez-vous une place correspondant à votre billet (siège, couchette, cabine) ? (Oui / Non) ; Les consignes de sécurité (gilets, exercices) ont-elles été présentées ? (Oui / Non / Je ne sais pas) |
-| Achat d'un ticket ou d'une carte d'abonnement | les cinq | Avez-vous obtenu ce que vous étiez venu(e) chercher ? ; Combien de temps avez-vous attendu avant d'être servi(e) ? (mêmes tranches que les guichets) ; Avez-vous pu payer comme vous le souhaitiez (espèces, paiement mobile…) ? (Oui / Non) |
-
-Questions du bateau et de l'achat : proposées par moi, laissées à mon choix par elle (« pas de préférence »), à revoir si besoin. Type « Compagnie maritime » (questions de la traversée) pour la COSAMA et son bateau : sans service choisi, pas de questions de bus. « Un vol » : à faire avec la première compagnie aérienne.
+- **Règle générale** : un service décrit ce que l'usager est venu faire ou a utilisé, **jamais le fait de se plaindre**. « Réclamation » écarté (une réclamation porte sur un trajet ou un achat ; déjà couvert par les thèmes « Pas bien », le texte et « Avez-vous signalé cette situation… ? »). « Objets perdus » écarté (rare ; « Autre démarche » suffit).
+- Organismes : **Dem Dikk** (Dakar Dem Dikk, devenu Dem Dikk S.A. le 11 septembre 2026), **BRT** (Dakar Mobilité), **TER** (SETER), **AFTU** (minibus Tata), **COSAMA**, chacun avec sa fiche « en général » ; site de la COSAMA : **Aline Sitoë Diatta (bateau Dakar – Ziguinchor)** (le *Diambogne* et l'*Aguène* non ajoutés, à sa demande). Un **service par mode** (option B ; découper le transport en trois secteurs reste possible plus tard). Questions du bateau et de l'achat : proposées par moi, laissées à mon choix par elle (« pas de préférence »), à revoir si besoin. « Un vol » : à faire avec la première compagnie aérienne.
 
 **À prévoir pour le transport** :
-- **les lignes** (ligne 1, ligne 23…) : à proposer à l'écran 1 dans « Sur quoi porte votre avis ? », comme services de l'opérateur (comme « État civil » pour une mairie), à partir des listes publiées par les opérateurs (numéro, trajet, terminus), quand on ajoutera les opérateurs de transport. **Pas de liste déroulante** (plusieurs dizaines de lignes par opérateur) : un champ « Numéro de la ligne » (clavier numérique), qui affiche le trajet dès que le numéro correspond (« Ligne 23 : Parcelles Assainies – Palais ») pour vérifier ; lignes à lettres (express, TER…) trouvées aussi par le début du nom ; « Je ne connais pas le numéro » possible (l'avis compte pour l'opérateur) ; sans JavaScript, le serveur vérifie le numéro. Ce champ remplace la liste déroulante seulement pour les établissements qui ont beaucoup de services. **Chemin principal : un QR code dans chaque bus ou à l'arrêt**, qui porte la ligne (un QR code peut déjà porter un service) : rien à taper (recommandation validée le 2026-10-01) ;
-- **cars rapides, Ndiaga Ndiaye, taxis** : pas d'établissement nommé, donc impossible à choisir dans la recherche ; il faudrait décider quel organisme les représente (AFTU pour les minibus Tata ? CETUD, autorité des transports urbains de Dakar ?) : à voir avec l'organisme porteur.
+- **les lignes** (ligne 1, ligne 23…) : à proposer à l'écran 1 dans « Sur quoi porte votre avis ? », à partir des listes publiées par les opérateurs (numéro, trajet, terminus). **Pas de liste déroulante** (plusieurs dizaines de lignes par opérateur) : un champ « Numéro de la ligne » (clavier numérique), qui affiche le trajet dès que le numéro correspond (« Ligne 23 : Parcelles Assainies – Palais ») pour vérifier ; lignes à lettres (express, TER…) trouvées aussi par le début du nom ; « Je ne connais pas le numéro » possible (l'avis compte pour l'opérateur) ; sans JavaScript, le serveur vérifie le numéro. **Chemin principal : un QR code dans chaque bus ou à l'arrêt**, qui porte la ligne : rien à taper (recommandation validée le 2026-10-01) ;
+- **cars rapides, Ndiaga Ndiaye, taxis** : pas d'établissement nommé ; il faudrait décider quel organisme les représente (AFTU ? CETUD ?) : à voir avec l'organisme porteur.
 
-Le « sujet de l'avis » proposé pour l'électricité, l'eau et les télécoms (coupure, facture, mobile money…) pourrait de même devenir des services à l'écran 1 ; gardé dans le questionnaire pour l'instant, plus simple.
+Le « sujet de l'avis » de l'électricité, l'eau et les télécoms (coupure, facture, mobile money…) pourrait de même devenir des services à l'écran 1 ; gardé dans les questions pour l'instant, plus simple.
 
-**Questions communes** (questionnaire `COMMON`, migration 0014, validé le 2026-10-01) : dans tous les secteurs, **sur leur propre page (écran 6b, `/donner/{id}/questionnaire/commun`) après celle du secteur**, pour que « cette situation » ne soit pas lue comme le sujet de la question précédente, et **seulement après « Peu satisfait(e) » ou « Pas du tout satisfait(e) »**. Un usager peu satisfait d'un secteur sans questionnaire propre va directement de l'écran 2b à l'écran 6b ; un usager satisfait ne la voit pas.
+**Questions communes** (`COMMON`) : dans tous les secteurs, **sur leur propre page (écran 6b, `/donner/{id}/questionnaire/commun`) après l'écran 6**, pour que « cette situation » ne soit pas lue comme le sujet de la question précédente, et **seulement après « Peu satisfait(e) » ou « Pas du tout satisfait(e) »**. Un usager mécontent sans questions à l'écran 6 va directement de l'écran 2b à l'écran 6b ; un usager satisfait ne la voit pas.
 
 | Code | Question | Réponses | Affichée si |
 |---|---|---|---|
-| `REPORTED` | Avez-vous signalé cette situation à l'établissement (accueil, service client, direction…) ? (formulation de 0015) | Oui, et on m'a répondu / Oui, mais sans réponse / J'ai essayé, sans réussir à les joindre / Non | satisfaction = peu ou pas du tout satisfait(e) |
+| `REPORTED` | Avez-vous signalé cette situation à l'établissement (accueil, service client, direction…) ? | Oui, et on m'a répondu / Oui, mais sans réponse / J'ai essayé, sans réussir à les joindre / Non | satisfaction = peu ou pas du tout satisfait(e) |
 | `REPORT_WHY` | Pourquoi ? | Je ne savais pas à qui m'adresser / Je pensais que ça ne servirait à rien / Autre raison | `REPORTED` = Non (apparaît dès que « Non » est touché) |
-
-Écarté : « Par peur des conséquences ». Une réponse qui ne s'applique plus (devenu satisfait, ou « Non » changé en « Oui ») est effacée à la fin de l'avis.
 
 ---
 
@@ -158,6 +145,5 @@ Un ordre strictement conforme à Bloom placerait « Êtes-vous satisfait(e) ? »
 
 ## 5. Décisions à prendre
 
-1. **Étape 9 (Créer)** : ajouter une question de proposition à la fin des questionnaires détaillés ? Libellé à choisir.
-2. **Étapes 7 et 8** : rédiger les questionnaires détaillés, en commençant par les secteurs prioritaires (santé, administration, éducation).
-3. **Seuil de publication** : 10 avis par mois et par établissement, à confirmer.
+1. **Questions encore à rédiger** : Sécurité (avec l'organisme porteur), Aéroport.
+2. **Seuil de publication** : 10 avis par mois et par établissement, à confirmer.

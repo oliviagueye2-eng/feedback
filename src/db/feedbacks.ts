@@ -5,7 +5,7 @@
  */
 import { invalidInput, notFound } from "../domain/errors";
 import type { QuestionCondition } from "../domain/questionnaire/conditions";
-import type { QuestionnaireSources, SelectedQuestionnaire } from "../domain/questionnaire/select";
+import type { QuestionSetSources } from "../domain/questionnaire/select";
 import type { Channel, VisitPeriod } from "../domain/types";
 import { query } from "./client";
 
@@ -21,11 +21,9 @@ export interface FeedbackRow {
   startedAt: Date;
 }
 
-/** Latest published version of a questionnaire, found by its code. */
-const PUBLISHED = (code: string) => `(
-  SELECT id FROM questionnaire
-  WHERE code = '${code}' AND status = 'published'
-  ORDER BY version DESC LIMIT 1)`;
+/** A special list of questions, found by its code (ESSENTIAL, COMMON, GENERIC). */
+const QUESTION_SET = (code: "ESSENTIAL" | "COMMON" | "GENERIC") =>
+  `(SELECT id FROM question_set WHERE code = '${code}')`;
 
 /**
  * Only establishments that accept feedback (active or pending review).
@@ -65,28 +63,26 @@ export async function upsertFeedback(row: FeedbackRow): Promise<void> {
 }
 
 /**
- * The question is looked up by its code in the essential questionnaire, then
- * in the detailed questionnaire chosen for this feedback, then in COMMON. The first detailed
- * answer records which questionnaire was used (feedback.detailed_questionnaire_id).
+ * Saves one answer. The question is looked up by its code among the questions
+ * this feedback may answer: the lists of its page (setIds: sector, type,
+ * service), the essential question and the common ones.
  */
 export async function upsertAnswer(input: {
   feedbackId: string;
   questionCode: string;
   optionCode: string | null;
   textValue: string | null;
-  detailed: SelectedQuestionnaire;
+  setIds: number[];
 }): Promise<void> {
-  const detailedId = input.detailed.kind === "generic" ? PUBLISHED("GENERIC") : "$2::int";
-  // Looked up in ESSENTIAL, then the detailed questionnaire, then COMMON.
-  const questions = await query<{ id: number; questionnaire_id: number; type: string; is_detailed: boolean }>(
-    `SELECT q.id, q.questionnaire_id, q.type,
-            q.questionnaire_id IS NOT DISTINCT FROM ${detailedId} AS is_detailed
+  const questions = await query<{ id: number; type: string }>(
+    `SELECT q.id, q.type
      FROM question q
+     JOIN question_set_item i ON i.question_id = q.id
      WHERE q.code = $1
-       AND q.questionnaire_id IN (${PUBLISHED("ESSENTIAL")}, ${detailedId}, ${PUBLISHED("COMMON")})
-     ORDER BY q.questionnaire_id = ${PUBLISHED("ESSENTIAL")} DESC, is_detailed DESC
+       AND (i.question_set_id = ANY($2::smallint[])
+            OR i.question_set_id IN (${QUESTION_SET("ESSENTIAL")}, ${QUESTION_SET("COMMON")}))
      LIMIT 1`,
-    input.detailed.kind === "generic" ? [input.questionCode] : [input.questionCode, input.detailed.id],
+    [input.questionCode, input.setIds],
   );
   const question = questions[0];
   if (!question) throw notFound("Question not found");
@@ -113,15 +109,6 @@ export async function upsertAnswer(input: {
        answered_at = now()`,
     [input.feedbackId, question.id, optionId, question.type === "text" ? input.textValue : null],
   );
-
-  // Only the sector's (or service's) questionnaire is recorded, not COMMON.
-  if (question.is_detailed) {
-    await query(
-      `UPDATE feedback SET detailed_questionnaire_id = $2
-       WHERE id = $1 AND detailed_questionnaire_id IS NULL`,
-      [input.feedbackId, question.questionnaire_id],
-    );
-  }
 }
 
 /**
@@ -197,8 +184,7 @@ export async function upsertComment(input: {
      SELECT $1, ao.id, $3
      FROM answer_option ao
      JOIN question q ON q.id = ao.question_id
-     WHERE q.code = 'OVERALL_SATISFACTION' AND q.questionnaire_id = ${PUBLISHED("ESSENTIAL")}
-       AND ao.code = $2
+     WHERE q.code = 'OVERALL_SATISFACTION' AND ao.code = $2
      ON CONFLICT (feedback_id) DO UPDATE SET
        prompt_option_id = EXCLUDED.prompt_option_id,
        text = EXCLUDED.text,
@@ -247,30 +233,37 @@ export async function findCommentText(feedbackId: string): Promise<string | null
 }
 
 /**
- * Where to find the detailed questionnaire: the feedback's service, else the
- * establishment's type, else its sector (the service's, the establishment
- * type's, or the one the user chose). Only published questionnaires count.
+ * The lists of questions attached to the feedback's levels: its sector (the
+ * service's, else the establishment type's, else the establishment's), its
+ * establishment type and its service; and GENERIC, for a sector unknown.
  */
-export async function findQuestionnaireSources(feedbackId: string): Promise<QuestionnaireSources | null> {
-  const rows = await query<{ service_q: number | null; type_q: number | null; sector_q: number | null }>(
-    `SELECT sq.id AS service_q, tq.id AS type_q, fq.id AS sector_q
+export async function findQuestionSetSources(feedbackId: string): Promise<QuestionSetSources | null> {
+  const rows = await query<{
+    sector_known: boolean;
+    sector_set: number | null;
+    type_set: number | null;
+    service_set: number | null;
+    generic_set: number | null;
+  }>(
+    `SELECT sec.id IS NOT NULL AS sector_known, sec.question_set_id AS sector_set,
+            et.question_set_id AS type_set, s.question_set_id AS service_set,
+            ${QUESTION_SET("GENERIC")} AS generic_set
      FROM feedback f
      JOIN establishment e ON e.id = f.establishment_id
      LEFT JOIN service s ON s.id = f.service_id
      LEFT JOIN establishment_type et ON et.id = e.type_id
      LEFT JOIN sector sec ON sec.id = coalesce(s.sector_id, et.sector_id, e.sector_id)
-     LEFT JOIN questionnaire sq ON sq.id = s.detailed_questionnaire_id AND sq.status = 'published'
-     LEFT JOIN questionnaire tq ON tq.id = et.detailed_questionnaire_id AND tq.status = 'published'
-     LEFT JOIN questionnaire fq ON fq.id = sec.fallback_questionnaire_id AND fq.status = 'published'
      WHERE f.id = $1`,
     [feedbackId],
   );
   const row = rows[0];
   if (!row) return null;
   return {
-    serviceQuestionnaireId: row.service_q,
-    typeQuestionnaireId: row.type_q,
-    sectorFallbackQuestionnaireId: row.sector_q,
+    sectorKnown: row.sector_known,
+    sectorSetId: row.sector_set,
+    typeSetId: row.type_set,
+    serviceSetId: row.service_set,
+    genericSetId: row.generic_set,
   };
 }
 
@@ -342,15 +335,16 @@ export interface EssentialQuestion {
   options: { code: string; label: string; followUpPrompt: string | null }[];
 }
 
-/** Screen 2: the essential question of the published questionnaire, in French. */
+/** Screen 2: the essential question (list ESSENTIAL), in French. */
 export async function findEssentialQuestion(): Promise<EssentialQuestion | null> {
   const rows = await query<{ question: string; code: string; label: string; prompt: string | null }>(
     `SELECT qt.label AS question, ao.code, ot.label, ot.follow_up_prompt AS prompt
-     FROM question q
+     FROM question_set_item i
+     JOIN question q ON q.id = i.question_id
      JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
      JOIN answer_option ao ON ao.question_id = q.id
      JOIN answer_option_translation ot ON ot.answer_option_id = ao.id AND ot.language = 'fr'
-     WHERE q.code = 'OVERALL_SATISFACTION' AND q.questionnaire_id = ${PUBLISHED("ESSENTIAL")}
+     WHERE i.question_set_id = ${QUESTION_SET("ESSENTIAL")} AND q.code = 'OVERALL_SATISFACTION'
      ORDER BY ao.position`,
   );
   if (rows.length === 0) return null;
@@ -413,25 +407,36 @@ export interface DetailedQuestion {
   chosen: string | null;
   /** Shown only if the question it depends on got one of these answers. */
   conditions: QuestionCondition[];
-  /** A common question (questionnaire COMMON), shown on its own page. */
+  /** A common question (list COMMON), shown on its own page. */
   common: boolean;
 }
 
 /**
- * Screens 6 and 6b: the questions of the chosen detailed questionnaire, then
- * the common ones (questionnaire COMMON, linked to no sector: always loaded), in
- * French and in order, with what this feedback already answered and their
- * conditions. Only questions with options (no free text for now).
+ * The page's items: the lists given in order (sector, type, service), then
+ * COMMON. A question in several of them keeps its first place (and the
+ * conditions of that list).
  */
-export async function findDetailedQuestions(
-  feedbackId: string,
-  selected: SelectedQuestionnaire,
-): Promise<DetailedQuestion[]> {
-  const generic = selected.kind === "generic";
-  // The questions of the page; $n is the detailed questionnaire's id (unless GENERIC).
-  const pageQuestions = (n: number) =>
-    `q.questionnaire_id IN (${generic ? PUBLISHED(selected.code) : `$${n}::int`}, ${PUBLISHED("COMMON")})`;
-  const questionnaireParam = generic ? [] : [selected.id];
+const PAGE_ITEMS = `
+  WITH page AS (
+    SELECT s.id, s.ord FROM unnest($1::smallint[]) WITH ORDINALITY AS s (id, ord)
+    UNION ALL
+    SELECT id, 1000 FROM question_set WHERE code = 'COMMON'
+  ),
+  items AS (
+    SELECT DISTINCT ON (i.question_id) i.question_set_id, i.question_id, i.position, p.ord,
+           p.ord = 1000 AS common
+    FROM page p JOIN question_set_item i ON i.question_set_id = p.id
+    ORDER BY i.question_id, p.ord
+  )`;
+
+/**
+ * Screens 6 and 6b: the questions of the lists attached to the feedback's
+ * levels (setIds, from the most general to the most specific), then the
+ * common ones, in French and in order, with what this feedback already
+ * answered and their conditions. Only questions with options (no free text
+ * for now).
+ */
+export async function findDetailedQuestions(feedbackId: string, setIds: number[]): Promise<DetailedQuestion[]> {
   const [rows, conditions] = await Promise.all([
     query<{
       id: number;
@@ -443,26 +448,27 @@ export async function findDetailedQuestions(
       chosen: boolean;
       common: boolean;
     }>(
-      `SELECT q.id, q.code, q.type, qt.label, ao.code AS option_code, ot.label AS option_label,
-              q.questionnaire_id = ${PUBLISHED("COMMON")} AS common,
-              EXISTS (SELECT 1 FROM answer a WHERE a.feedback_id = $1 AND a.option_id = ao.id) AS chosen
-       FROM question q
+      `${PAGE_ITEMS}
+       SELECT q.id, q.code, q.type, qt.label, ao.code AS option_code, ot.label AS option_label, it.common,
+              EXISTS (SELECT 1 FROM answer a WHERE a.feedback_id = $2 AND a.option_id = ao.id) AS chosen
+       FROM items it
+       JOIN question q ON q.id = it.question_id
        JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
        JOIN answer_option ao ON ao.question_id = q.id
        JOIN answer_option_translation ot ON ot.answer_option_id = ao.id AND ot.language = 'fr'
-       WHERE ${pageQuestions(2)}
-       ORDER BY q.questionnaire_id = ${PUBLISHED("COMMON")}, q.position, ao.position`,
-      [feedbackId, ...questionnaireParam],
+       ORDER BY it.ord, it.position, ao.position`,
+      [setIds, feedbackId],
     ),
     query<{ code: string; depends_on: string; option_code: string }>(
-      `SELECT q.code, dq.code AS depends_on, ao.code AS option_code
-       FROM question_condition qc
+      `${PAGE_ITEMS}
+       SELECT q.code, dq.code AS depends_on, ao.code AS option_code
+       FROM items it
+       JOIN question_condition qc ON qc.question_set_id = it.question_set_id AND qc.question_id = it.question_id
        JOIN question q ON q.id = qc.question_id
        JOIN question dq ON dq.id = qc.depends_on_question_id
        JOIN answer_option ao ON ao.id = qc.option_id
-       WHERE ${pageQuestions(1)}
        ORDER BY dq.code, ao.position`,
-      questionnaireParam,
+      [setIds],
     ),
   ]);
   const questions: DetailedQuestion[] = [];

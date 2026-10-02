@@ -83,22 +83,86 @@ describe("reference data", () => {
     expect(await topicsFor("HEALTH")).toHaveLength(13);
   });
 
-  it("gives health its published detailed questionnaire, every option labelled", async () => {
-    const questions = (await db.query<{ code: string; label: string; options: number; labelled: number }>(
-      `SELECT q.code, qt.label, count(ao.id)::int AS options, count(ot.label)::int AS labelled
-       FROM sector s
-       JOIN questionnaire qn ON qn.id = s.fallback_questionnaire_id AND qn.status = 'published'
-       JOIN question q ON q.questionnaire_id = qn.id
-       JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
-       JOIN answer_option ao ON ao.question_id = q.id
-       LEFT JOIN answer_option_translation ot ON ot.answer_option_id = ao.id AND ot.language = 'fr'
-       WHERE s.code = 'HEALTH'
-       GROUP BY q.code, qt.label, q.position ORDER BY q.position`)).rows;
-    expect(questions.map((q) => [q.code, q.options])).toEqual([
-      ["PATIENT", 3], ["GOAL_ACHIEVED", 3], ["WAIT_TIME", 5], ["PRESCRIPTION_AVAILABLE", 4], ["RECEIPT_GIVEN", 4],
+  it("has the bank of 34 questions, each written once, every text in French", async () => {
+    const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
+      SELECT (SELECT count(*)::int FROM question) AS questions,
+             (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
+              WHERE t.label IS NULL) AS sectors,
+             (SELECT count(*)::int FROM topic p LEFT JOIN topic_translation t ON t.topic_id = p.id AND t.language = 'fr'
+              WHERE t.label IS NULL) AS topics,
+             (SELECT count(*)::int FROM question q
+              LEFT JOIN question_translation t ON t.question_id = q.id AND t.language = 'fr' WHERE t.label IS NULL)
+           + (SELECT count(*)::int FROM answer_option o
+              LEFT JOIN answer_option_translation t ON t.answer_option_id = o.id AND t.language = 'fr' WHERE t.label IS NULL)
+             AS texts,
+             (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
+    // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
+    expect(row).toEqual({ questions: 34, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+  });
+
+  it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
+    const attached = async (table: "sector" | "service" | "establishment_type") =>
+      Object.fromEntries((await db.query<{ code: string; list: string | null }>(
+        `SELECT x.code, qs.code AS list FROM ${table} x LEFT JOIN question_set qs ON qs.id = x.question_set_id`,
+      )).rows.map((r) => [r.code, r.list]));
+    expect(await attached("sector")).toEqual({
+      ADMINISTRATION: "FILE_SERVICES", TAX: "FILE_SERVICES", JUSTICE: "FILE_SERVICES", SOCIAL: "FILE_SERVICES",
+      HEALTH: "HEALTH", BANKING_INSURANCE: "BANKING_INSURANCE", EDUCATION: "EDUCATION",
+      ELECTRICITY: "ELECTRICITY", WATER: "WATER", TELECOM: "TELECOM",
+      RETAIL: "GENERIC", CULTURE: "GENERIC", HOSPITALITY: "GENERIC", REAL_ESTATE: "GENERIC",
+      FOOD_SERVICE: "GENERIC", SPORT: "GENERIC", TOURISM: "GENERIC",
+      SECURITY: null, TRANSPORT: null,
+    });
+    expect(await attached("service")).toEqual({
+      CIVIL_REGISTRY: null, LAND_TRIP: "LAND_TRIP", BOAT_CROSSING: "BOAT_CROSSING", TICKET_PURCHASE: "TICKET_PURCHASE",
+    });
+    expect(await attached("establishment_type")).toEqual({ AIRPORT: null });
+  });
+
+  it("puts the same question, not a copy, in every list that asks it", async () => {
+    const lists = (await db.query<{ list: string }>(
+      `SELECT qs.code AS list FROM question_set_item i
+       JOIN question_set qs ON qs.id = i.question_set_id JOIN question q ON q.id = i.question_id
+       WHERE q.code = 'WAIT_TIME' ORDER BY qs.code`)).rows.map((r) => r.list);
+    expect(lists).toEqual(["BANKING_INSURANCE", "FILE_SERVICES", "HEALTH", "TICKET_PURCHASE"]);
+    const order = (await db.query<{ code: string }>(
+      `SELECT q.code FROM question_set_item i
+       JOIN question_set qs ON qs.id = i.question_set_id JOIN question q ON q.id = i.question_id
+       WHERE qs.code = 'HEALTH' ORDER BY i.position`)).rows.map((r) => r.code);
+    expect(order).toEqual(["PATIENT", "CARE_RECEIVED", "WAIT_TIME", "PRESCRIPTION_AVAILABLE", "RECEIPT_GIVEN"]);
+  });
+
+  it("shows a question only after the answers its list requires", async () => {
+    const conditions = (await db.query<{ list: string; question: string; depends_on: string; option: string }>(
+      `SELECT qs.code AS list, q.code AS question, dq.code AS depends_on, ao.code AS option
+       FROM question_condition qc
+       JOIN question_set qs ON qs.id = qc.question_set_id
+       JOIN question q ON q.id = qc.question_id
+       JOIN question dq ON dq.id = qc.depends_on_question_id
+       JOIN answer_option ao ON ao.id = qc.option_id
+       ORDER BY qs.code, q.code, ao.position`)).rows.map((r) => `${r.list}: ${r.question} ← ${r.depends_on} ${r.option}`);
+    expect(conditions).toEqual([
+      "COMMON: REPORTED ← OVERALL_SATISFACTION DISSATISFIED",
+      "COMMON: REPORTED ← OVERALL_SATISFACTION VERY_DISSATISFIED",
+      "COMMON: REPORT_WHY ← REPORTED NO",
+      "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT 1_TO_3",
+      "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT 4_TO_10",
+      "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT OVER_10",
+      "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER 1_TO_3",
+      "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER 4_TO_10",
+      "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER OVER_10",
     ]);
-    expect(questions.every((q) => q.labelled === q.options)).toBe(true);
-    expect(questions[0]!.label).toBe("Pour qui êtes-vous venu(e) ?");
+    // A condition on an answer of another question is refused.
+    await expect(db.query(
+      `INSERT INTO question_condition (question_set_id, question_id, depends_on_question_id, option_id)
+       SELECT qs.id, q.id, dq.id, (SELECT id FROM answer_option WHERE code = 'POINTLESS')
+       FROM question_set qs, question q, question dq
+       WHERE qs.code = 'COMMON' AND q.code = 'REPORT_WHY' AND dq.code = 'OVERALL_SATISFACTION'`,
+    )).rejects.toThrow(/foreign key/);
+    // A real service keeps its French label (then its synonyms) in its search_text.
+    expect((await one<{ search_text: string }>(
+      "SELECT search_text FROM service WHERE code = 'CIVIL_REGISTRY'"))?.search_text,
+    ).toMatch(/^etat civil extrait de naissance /);
   });
 });
 
@@ -130,118 +194,6 @@ describe("search", () => {
     expect((await one<{ search_text: string }>(
       "SELECT search_text FROM service WHERE id = $1", [id]))?.search_text,
     ).toBe("etat civil extrait de naissance");
-  });
-
-  it("gives Administration its five questions, comparable with health's where they are the same", async () => {
-    const questions = (await db.query<{ code: string; options: string }>(
-      `SELECT q.code, string_agg(ao.code, ',' ORDER BY ao.position) AS options
-       FROM sector s
-       JOIN questionnaire qn ON qn.id = s.fallback_questionnaire_id AND qn.status = 'published'
-       JOIN question q ON q.questionnaire_id = qn.id
-       JOIN answer_option ao ON ao.question_id = q.id
-       JOIN answer_option_translation ot ON ot.answer_option_id = ao.id AND ot.language = 'fr'
-       JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
-       WHERE s.code = $1
-       GROUP BY q.code, q.position ORDER BY q.position`, ["ADMINISTRATION"])).rows;
-    expect(questions.map((q) => q.code)).toEqual([
-      "GOAL_ACHIEVED", "VISITS_COUNT", "WAIT_TIME", "DOCUMENTS_KNOWN", "RECEIPT_GIVEN",
-    ]);
-    // The wait has the same answers in health and administration.
-    const wait = (await one<{ same: boolean }>(
-      `SELECT count(DISTINCT x.options) = 1 AS same FROM (
-         SELECT string_agg(ao.code, ',' ORDER BY ao.position) AS options
-         FROM question q JOIN questionnaire qn ON qn.id = q.questionnaire_id
-         JOIN answer_option ao ON ao.question_id = q.id
-         WHERE q.code = 'WAIT_TIME' AND qn.code IN ('HEALTH', 'ADMINISTRATION')
-         GROUP BY qn.code) x`))!;
-    expect(wait.same).toBe(true);
-  });
-
-  it("gives every sector its questions (0017): GENERIC for the private ones, none yet for security", async () => {
-    const counts = Object.fromEntries((await db.query<{ code: string; questions: number }>(
-      `SELECT s.code, count(q.id)::int AS questions
-       FROM sector s
-       LEFT JOIN questionnaire qn ON qn.id = s.fallback_questionnaire_id AND qn.status = 'published'
-       LEFT JOIN question q ON q.questionnaire_id = qn.id
-       GROUP BY s.code`)).rows.map((r) => [r.code, r.questions]));
-    expect(counts).toMatchObject({
-      HEALTH: 5, ADMINISTRATION: 5, TAX: 5, JUSTICE: 5, SOCIAL: 5, EDUCATION: 5,
-      ELECTRICITY: 4, WATER: 3, TELECOM: 2, TRANSPORT: 3, BANKING_INSURANCE: 3, SECURITY: 0,
-    });
-    // The airport AIBD (Transport) has its type's questionnaire (0018), empty: no bus questions.
-    expect((await one<{ type: string; questions: number }>(
-      `SELECT et.code AS type, count(q.id)::int AS questions
-       FROM establishment e JOIN establishment_type et ON et.id = e.type_id
-       JOIN questionnaire qn ON qn.id = et.detailed_questionnaire_id AND qn.status = 'published'
-       LEFT JOIN question q ON q.questionnaire_id = qn.id
-       WHERE e.name = 'Aéroport international Blaise Diagne' GROUP BY et.code`))).toEqual({ type: "AIRPORT", questions: 0 });
-    // The private sectors have no questionnaire of their own: GENERIC, now published.
-    for (const sector of ["RETAIL", "HOSPITALITY", "FOOD_SERVICE", "TOURISM", "CULTURE", "SPORT", "REAL_ESTATE"]) {
-      expect(counts[sector]).toBe(0);
-    }
-    expect((await one<{ n: number }>(
-      `SELECT count(q.id)::int AS n FROM questionnaire qn JOIN question q ON q.questionnaire_id = qn.id
-       WHERE qn.code = 'GENERIC' AND qn.status = 'published'`))?.n).toBe(3);
-    // The wait at the counter has the same answers wherever it is asked.
-    expect((await one<{ variants: number }>(
-      `SELECT count(DISTINCT options)::int AS variants FROM (
-         SELECT string_agg(ao.code || '=' || ot.label, ',' ORDER BY ao.position) AS options
-         FROM question q JOIN answer_option ao ON ao.question_id = q.id
-         JOIN answer_option_translation ot ON ot.answer_option_id = ao.id AND ot.language = 'fr'
-         WHERE q.code = 'WAIT_TIME' GROUP BY q.id) x`))?.variants).toBe(1);
-    // « Prévenu(e) avant la coupure ? » only after at least one cut.
-    expect((await db.query<{ option: string }>(
-      `SELECT ao.code AS option FROM question_condition qc
-       JOIN question q ON q.id = qc.question_id JOIN questionnaire qn ON qn.id = q.questionnaire_id
-       JOIN answer_option ao ON ao.id = qc.option_id
-       WHERE qn.code = 'ELECTRICITY' AND q.code = 'CUT_NOTICE' ORDER BY ao.position`)).rows.map((r) => r.option))
-      .toEqual(["1_TO_3", "4_TO_10", "OVER_10"]);
-  });
-
-  it("has the common questions, shown only after a dissatisfied answer, « Pourquoi ? » after « Non »", async () => {
-    const conditions = (await db.query<{ question: string; depends_on: string; option: string }>(
-      `SELECT q.code AS question, dq.code AS depends_on, ao.code AS option
-       FROM question_condition qc
-       JOIN question q ON q.id = qc.question_id
-       JOIN questionnaire qn ON qn.id = q.questionnaire_id AND qn.code = 'COMMON' AND qn.status = 'published'
-       JOIN question dq ON dq.id = qc.depends_on_question_id
-       JOIN answer_option ao ON ao.id = qc.option_id
-       ORDER BY q.position, ao.position`)).rows;
-    expect(conditions).toEqual([
-      { question: "REPORTED", depends_on: "OVERALL_SATISFACTION", option: "DISSATISFIED" },
-      { question: "REPORTED", depends_on: "OVERALL_SATISFACTION", option: "VERY_DISSATISFIED" },
-      { question: "REPORT_WHY", depends_on: "REPORTED", option: "NO" },
-    ]);
-    // Wording of 0015: « cette situation », on its own page.
-    expect((await one<{ label: string }>(
-      `SELECT qt.label FROM question_translation qt JOIN question q ON q.id = qt.question_id
-       WHERE q.code = 'REPORTED' AND qt.language = 'fr'`))?.label).toMatch(/^Avez-vous signalé cette situation/);
-    // A condition on an answer of another question is refused.
-    await expect(db.query(
-      `INSERT INTO question_condition (question_id, depends_on_question_id, option_id)
-       SELECT q.id, dq.id, (SELECT id FROM answer_option WHERE code = 'POINTLESS')
-       FROM question q, question dq WHERE q.code = 'REPORT_WHY' AND dq.code = 'OVERALL_SATISFACTION'`,
-    )).rejects.toThrow(/foreign key/);
-  });
-
-  it("moved every text to the translation tables (0013), the old table is gone", async () => {
-    // Every question and every answer has its French text; the 5 follow-up prompts came along.
-    const row = await one<{ sectors: number; topics: number; questions: number; options: number; prompts: number; old: string | null }>(`
-      SELECT (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
-              WHERE t.label IS NULL) AS sectors,
-             (SELECT count(*)::int FROM topic p LEFT JOIN topic_translation t ON t.topic_id = p.id AND t.language = 'fr'
-              WHERE t.label IS NULL) AS topics,
-             (SELECT count(*)::int FROM question q LEFT JOIN question_translation t ON t.question_id = q.id AND t.language = 'fr'
-              WHERE t.label IS NULL) AS questions,
-             (SELECT count(*)::int FROM answer_option o LEFT JOIN answer_option_translation t ON t.answer_option_id = o.id AND t.language = 'fr'
-              WHERE t.label IS NULL) AS options,
-             (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts,
-             to_regclass('translation')::text AS old`);
-    expect(row).toEqual({ sectors: 0, topics: 0, questions: 0, options: 0, prompts: 5, old: null });
-    // The real service of 0004 keeps its French label (then its synonyms) in its search_text.
-    expect((await one<{ search_text: string }>(
-      "SELECT search_text FROM service WHERE code = 'CIVIL_REGISTRY'"))?.search_text,
-    ).toMatch(/^etat civil extrait de naissance /);
   });
 
   it("refuses a text for a row that does not exist, and removes it with its row", async () => {
