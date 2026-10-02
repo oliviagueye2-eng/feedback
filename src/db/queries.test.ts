@@ -389,6 +389,12 @@ describe("feedback", () => {
     await firstQuestion(aibd, "Aéroport international Blaise Diagne", null);
     expect((await getQuestionnaireScreen(aibd, "sector")).questions.map((q) => q.code))
       .toEqual(["WAYFINDING", "CHECKS_WAIT", "SEAT_TO_WAIT", "TOILETS", "TRANSPORT_ACCESS"]);
+    // Air Sénégal (0006): a flight, « Informé(e) ? » only after a delay.
+    const flight = "c3d4e5f6-0000-4000-8000-000000000007";
+    await firstQuestion(flight, "Air Sénégal", "FLIGHT");
+    expect((await getQuestionnaireScreen(flight, "sector")).questions.map((q) => q.code))
+      .toEqual(["DEPARTURE_ON_TIME", "DELAY_INFORMED", "BOARDING", "LUGGAGE"]);
+    expect((await getQuestionnaireScreen(flight, "sector")).questions[0]?.label).toBe("Êtes-vous parti(e) à l'heure prévue ?");
     // Screen 1 offers the operator's services.
     const { services } = await getEstablishment(await establishment("COSAMA"));
     expect(services.map((s) => s.label).sort()).toEqual(["Achat d'un ticket ou d'une carte d'abonnement", "Une traversée en bateau"]);

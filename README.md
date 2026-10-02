@@ -39,7 +39,7 @@ npm run dev                  # http://localhost:3000
 
 #### Migrations
 
-Quatre fichiers, réécrits proprement le 2026-10-02 avant le lancement : `0001_schema.sql` (tables), `0002_reference_data.sql` (secteurs, thèmes), `0003_registry.sql` (territoire, organismes, établissements réels vérifiés sur des sources publiques, services), `0004_questions.sql` (banque de questions et listes). Puis `0005_establishment_types.sql` (types d'établissement de la Santé, de l'Administration et de l'Éducation). Désormais, toute modification passe par une **nouvelle** migration numérotée, sans jamais modifier un fichier déjà appliqué.
+Quatre fichiers, réécrits proprement le 2026-10-02 avant le lancement : `0001_schema.sql` (tables), `0002_reference_data.sql` (secteurs, thèmes), `0003_registry.sql` (territoire, organismes, établissements réels vérifiés sur des sources publiques, services), `0004_questions.sql` (banque de questions et listes). Puis `0005_establishment_types.sql` (types d'établissement, questions des lieux de passage) et `0006_air_senegal.sql` (première compagnie aérienne). Désormais, toute modification passe par une **nouvelle** migration numérotée, sans jamais modifier un fichier déjà appliqué.
 
 #### Réinitialiser la base
 
