@@ -6,7 +6,7 @@ Hypothèse technique : PostgreSQL, avec les extensions `pg_trgm` (recherche appr
 
 Le schéma est créé par les migrations SQL de [`src/db/migrations/`](../src/db/migrations/) (`npm run db:migrate`). En cas d'écart entre ce document et les migrations, ce sont les migrations qui font foi.
 
-**Règle des migrations :** les migrations ont été réécrites proprement le 2026-10-02, avant le lancement (`0001_schema.sql`, `0002_reference_data.sql`, `0003_registry.sql`, `0004_questions.sql`, base Neon réinitialisée). Depuis, toute modification passe par une nouvelle migration numérotée, sans jamais modifier une migration déjà appliquée.
+**Règle des migrations :** les migrations ont été réécrites proprement le 2026-10-02, avant le lancement (`0001_schema.sql`, `0002_reference_data.sql`, `0003_registry.sql`, `0004_questions.sql`, base Neon réinitialisée). Depuis, toute modification passe par une nouvelle migration (`0005_establishment_types.sql` : types d'établissement), numérotée, sans jamais modifier une migration déjà appliquée.
 
 ## Convention de nommage
 
@@ -117,6 +117,17 @@ Genre de lieu : mairie, centre d'état civil, hôpital, poste de santé, école 
 | question_set_id | fk question_set | liste de questions du type, ajoutée à celle du secteur (facultative) |
 
 Le libellé affiché passe par sa table de traduction (`*_translation`).
+
+**Un seul type par établissement** (pour comparer ce qui est comparable). Types validés le 2026-10-02 (migration `0005`) :
+
+| Secteur | Types |
+|---|---|
+| Santé | Hôpital, Centre de santé, Poste de santé, Clinique (avec lits : séjour, opération, accouchement), Cabinet médical ou dentaire (consultation seulement), Laboratoire d'analyses, Centre d'imagerie médicale, Pharmacie |
+| Administration | Mairie, Centre d'état civil (centre secondaire, séparé de la mairie), Préfecture, Sous-préfecture, Centre de carte d'identité ou de passeport |
+| Éducation | Case des tout-petits ou école maternelle, École élémentaire, Collège (CEM), Lycée, Groupe scolaire (plusieurs niveaux), Université, École ou institut d'enseignement supérieur, Centre de formation professionnelle, Daara, Inspection d'académie, Inspection de l'éducation et de la formation (IEF) |
+| Transport | Aéroport |
+
+Écartés : Case de santé ; Gouvernance et Conseil départemental (pas de guichet courant pour l'usager) ; École franco-arabe (elle prend le type de son niveau, « franco-arabe » va dans ses alias). Les 18 lieux publics de `0003` ont reçu leur type (hôpitaux, mairies, DAF, universités, lycée). Les autres secteurs restent à faire.
 
 À quoi sert le type :
 1. **Comparer ce qui est comparable.** Les statistiques et les classements publiés comparent un hôpital à d'autres hôpitaux, pas à un poste de santé.

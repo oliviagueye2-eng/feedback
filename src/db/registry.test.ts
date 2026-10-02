@@ -31,6 +31,29 @@ describe("first establishments of the registry", () => {
     expect(rows[0]).toEqual({ n: 20, active_public: 19 });
   });
 
+  it("has the validated types of Health, Administration and Education (0005)", async () => {
+    const { rows } = await db.query<{ sector: string; n: number }>(`
+      SELECT s.code AS sector, count(*)::int AS n
+      FROM establishment_type t JOIN sector s ON s.id = t.sector_id
+      JOIN establishment_type_translation tt ON tt.establishment_type_id = t.id AND tt.language = 'fr'
+      GROUP BY s.code ORDER BY s.code`);
+    expect(rows).toEqual([
+      { sector: "ADMINISTRATION", n: 5 },
+      { sector: "EDUCATION", n: 11 },
+      { sector: "HEALTH", n: 8 },
+      { sector: "TRANSPORT", n: 1 },
+    ]);
+  });
+
+  it("gives a type of its own sector to every public place", async () => {
+    const { rows } = await db.query<{ name: string }>(`
+      SELECT e.name FROM establishment e
+      LEFT JOIN establishment_type t ON t.id = e.type_id
+      WHERE e.scope = 'site' AND e.organization_id IS NULL
+        AND (t.id IS NULL OR t.sector_id <> e.sector_id)`);
+    expect(rows).toEqual([]);
+  });
+
   it("has the sixteen organisations, each rated in general", async () => {
     const { rows } = await db.query<{ organizations: number; general: number }>(`
       SELECT (SELECT count(*)::int FROM organization) AS organizations,

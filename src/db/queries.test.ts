@@ -51,11 +51,7 @@ beforeAll(async () => {
       ('GY', 'Grand-Yoff'), ('PA', 'Parcelles Assainies'), ('FN', 'Fann-Point E-Amitié')) AS v (code, name)
     WHERE d.code = 'DK1';
 
-    INSERT INTO establishment_type (code, sector_id)
-    SELECT v.code, s.id FROM (VALUES
-      ('CIVIL_REGISTRY_CENTER', 'ADMINISTRATION'), ('HOSPITAL', 'HEALTH')) AS v (code, sector)
-    JOIN sector s ON s.code = v.sector;
-
+    -- Types CIVIL_REGISTRY_CENTER and HOSPITAL come from migration 0005.
     INSERT INTO service (code, sector_id, synonyms)
     SELECT 'CIVIL_REGISTRY_BIRTH', id, '{extrait de naissance}' FROM sector WHERE code = 'ADMINISTRATION';
     INSERT INTO service_translation (service_id, language, label)
