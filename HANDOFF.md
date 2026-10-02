@@ -7,7 +7,7 @@ Dernière mise à jour : 2026-10-02, fin de session (types d'établissement, que
 
 ## Reprise rapide (prochaine session)
 
-- **En ligne** : `main` contient tout le travail du 2026-10-02 (fusion de `claude/zen-babbage-njn8h8`), migrations **0001 à 0006** appliquées sur Neon au build de production (statut Vercel : voir la ligne « Dernier déploiement » ci-dessous). Site : https://feedback-pink-sigma.vercel.app (le conteneur ne peut pas l'ouvrir : `*.vercel.app` et `*.neon.tech` refusés par le proxy ; pour Neon, lui donner les requêtes SQL à lancer dans la console, branche **Primary**, base **neondb**).
+- **En ligne** : `main` contient tout le travail du 2026-10-02 (fusion de `claude/zen-babbage-njn8h8`), migrations **0001 à 0006** appliquées sur Neon au build de production (**dernier déploiement : commit `5226ca8`, statut Vercel « success »**, 2026-10-02). Site : https://feedback-pink-sigma.vercel.app (le conteneur ne peut pas l'ouvrir : `*.vercel.app` et `*.neon.tech` refusés par le proxy ; pour Neon, lui donner les requêtes SQL à lancer dans la console, branche **Primary**, base **neondb**).
 - **Migrations** : `0001_schema.sql`, `0002_reference_data.sql`, `0003_registry.sql`, `0004_questions.sql`, `0005_establishment_types.sql`, `0006_air_senegal.sql`. **Toutes déployées** : toute modification passe par une **nouvelle migration** `0007_…` (lui demander avant). `0004_questions.sql` a été générée par un script Python disparu avec la session : ne pas la régénérer.
 - **Questions** : banque (`question`, `answer_option` + traductions, **42 questions**) ; listes (`question_set`, `question_set_item`, `question_condition`) rattachées par `question_set_id` à `sector`, `establishment_type`, `service`, **additionnées** (secteur, puis type, puis service ; une question en double posée une fois). Choix : `selectQuestionSets` (`src/domain/questionnaire/select.ts`), `findDetailedQuestions` (`src/db/feedbacks.ts`). Contenu complet : `docs/processus-recolte-avis.md` ; tables : `docs/architecture-base-de-donnees.md`, section 5.
 - **Fait le 2026-10-02 (après la refonte)** :
@@ -119,7 +119,7 @@ Le dépôt `oliviagueye2-eng/allo-pro-sn` est un **autre projet**, sans rapport 
 
 ### Hébergement (prototype en ligne)
 - **Vercel** (dépôt connecté, région `fra1`) + **Neon** (projet `floral-credit-39387239`, région Frankfurt, PostgreSQL 17 conseillé). Variables `DATABASE_URL` (poolée) et `DATABASE_URL_UNPOOLED` (directe) configurées en « Secret ».
-- Les migrations tournent au build de **production** uniquement (`npm run vercel-build`) ; **0001 à 0004 appliquées sur Neon** (commit `8829aa7`, 2026-10-02, refonte des questions), puis **0005 et 0006** à la fusion de fin de session du 2026-10-02. **Dernier déploiement** : voir « Reprise rapide ». Site : https://feedback-pink-sigma.vercel.app (non joignable depuis le conteneur : `*.vercel.app` refusé par le proxy).
+- Les migrations tournent au build de **production** uniquement (`npm run vercel-build`) ; **0001 à 0004 appliquées sur Neon** (commit `8829aa7`, 2026-10-02, refonte des questions), puis **0005 et 0006** à la fusion de fin de session du 2026-10-02. **Dernier déploiement** : commit `5226ca8`, statut Vercel « success ». Site : https://feedback-pink-sigma.vercel.app (non joignable depuis le conteneur : `*.vercel.app` refusé par le proxy).
 - `vercel.json` : cron quotidien 2 h UTC sur `/webapi/internal/refresh-stats`.
 - Production nationale : hébergement souverain au Sénégal ou cloud européen, en conteneur (non fait).
 
