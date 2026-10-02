@@ -15,7 +15,7 @@
  */
 export const fr = {
   meta: {
-    title: "Avis des usagers",
+    title: "NeexNaxari, plateforme citoyenne de satisfaction des usagers",
     description: "Donnez votre avis sur un établissement : anonyme, gratuit, environ une minute.",
   },
 
@@ -33,8 +33,8 @@ export const fr = {
   },
 
   header: {
-    state: "République du Sénégal",
-    siteName: "Avis des usagers",
+    siteName: "NeexNaxari",
+    tagline: "Chaque voix compte",
     navLabel: "Navigation principale",
     howItWorks: "Comment ça marche",
   },
@@ -51,6 +51,8 @@ export const fr = {
   },
 
   home: {
+    /** What the site is, above the ticket. */
+    platform: "Plateforme citoyenne de satisfaction des usagers",
     photoAlt: "Bus du BRT à Dakar",
     photoCaption: "Bus du BRT, Dakar",
     ticketLabel: "Ticket usager",

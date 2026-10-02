@@ -12,8 +12,13 @@ const atkinson = Atkinson_Hyperlegible({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { meta } = await getDictionary();
-  return { title: meta.title, description: meta.description };
+  const { meta, header } = await getDictionary();
+  return {
+    title: meta.title,
+    description: meta.description,
+    // Preview shown when the link is shared (WhatsApp, Facebook…).
+    openGraph: { title: meta.title, description: meta.description, siteName: header.siteName, locale: "fr_SN", type: "website" },
+  };
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

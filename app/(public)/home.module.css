@@ -8,6 +8,14 @@
   padding: 0 0 26px;
 }
 
+/* What the site is, above the photo (phones) or the ticket (computers). */
+.platform {
+  margin-block: 0;
+  padding-block: 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
 /* ---- Photo ---- */
 
 .photo {
@@ -356,6 +364,14 @@
 
   .queue {
     margin-top: 0;
+  }
+
+  /* In the top padding of the hero, over the faded side of the photo. */
+  .platform {
+    position: relative;
+    margin-top: -46px;
+    padding-block: 0 24px;
+    font-size: 16px;
   }
 
   .ticketWrap {

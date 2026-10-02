@@ -12,7 +12,7 @@ import styles from "./intro.module.css";
  * data-intro, set before the page is painted by introScript (root layout).
  * Arrivals by QR code never see it: they land on /e/{code}, not on the home page.
  */
-export function IntroSplash({ t }: { t: Dictionary["intro"] & Pick<Dictionary["header"], "state" | "siteName"> }) {
+export function IntroSplash({ t }: { t: Dictionary["intro"] & Pick<Dictionary["header"], "siteName" | "tagline"> }) {
   const splash = useRef<HTMLDivElement>(null);
 
   // Once gone, the splash stays gone, even when coming back to the home page.
@@ -36,8 +36,8 @@ export function IntroSplash({ t }: { t: Dictionary["intro"] & Pick<Dictionary["h
         ))}
       </svg>
       <p className={styles.name}>
-        <small>{t.state}</small>
         <strong>{t.siteName}</strong>
+        <small>{t.tagline}</small>
       </p>
     </div>
   );

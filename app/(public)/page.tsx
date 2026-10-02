@@ -15,10 +15,11 @@ export default async function HomePage() {
   const { common, header, home: t, intro } = await getDictionary();
   return (
     <>
-      <IntroSplash t={{ ...intro, state: header.state, siteName: header.siteName }} />
+      <IntroSplash t={{ ...intro, siteName: header.siteName, tagline: header.tagline }} />
       <SiteHeader />
       <main>
         <section className={styles.hero}>
+          <p className={`container ${styles.platform}`}>{t.platform}</p>
           <figure className={styles.photo}>
             {/* eslint-disable-next-line @next/next/no-img-element -- already compressed (43 KB), shown at once */}
             <img src="/images/accueil-brt.jpg" alt={t.photoAlt} width={736} height={491} />

@@ -18,8 +18,8 @@ export async function SiteHeader() {
             {/* eslint-disable-next-line @next/next/no-img-element -- small SVG, nothing to optimize */}
             <img className="site-logo" src="/brand/logo.svg" alt="" width={40} height={42} />
             <span className="site-name">
-              <small>{t.state}</small>
               <strong>{t.siteName}</strong>
+              <small>{t.tagline}</small>
             </span>
           </Link>
           <nav className="site-nav" aria-label={t.navLabel}>
