@@ -14,7 +14,7 @@ Dernière mise à jour : 2026-10-02 (refonte des questions en banque + listes ad
 - **Tests** : 108 Vitest ; base locale PostgreSQL 16 dans `/opt/pgtest` (port 5499) si le conteneur l'a encore, sinon PGlite suffit pour `npm test`.
 - **Questions ouvertes à lui reposer** :
   1. **Option B** : services hérités de l'organisme (table `organization_service`), pour que les futures lignes et gares reçoivent « Un trajet », « Achat d'un ticket… » de leur opérateur sans les rattacher une par une ;
-  2. afficher « COSAMA » sous le nom du bateau à l'écran 1 ?
+  2. ~~afficher « COSAMA » sous le nom du bateau~~ : fait le 2026-10-02 (commit `daaff70`, pas encore dans `main`) : sous le nom d'un lieu d'un organisme, le nom de l'organisme, puis commune et secteur (`app/_components/establishmentDetails.ts`), dans la recherche et à l'écran 1. **Gardé tel quel, à revoir plus tard** : « bateau » donne le bateau **et** la fiche « COSAMA en général », car celle-ci offre le service « Une traversée en bateau » (mots « bateau », « ferry ») et porte elle-même ces mots. Quand il y aura plusieurs bateaux ou des lignes de bus, proposer la règle : pour une recherche de service, ne pas montrer la fiche « en général » d'un organisme qui a des lieux offrant ce service (et retirer « bateau, ferry, liaison maritime » des mots de COSAMA, migration `0005`).
   3. questions Sécurité (avec l'organisme porteur) et Aéroport (attente aux contrôles, bagages…) ;
   4. liste des types d'établissement (point 1 des prochaines étapes).
 - **Prochaine étape technique** : à choisir avec elle (la file d'envoi hors connexion est passée en *nice to have* le 2026-10-02).
