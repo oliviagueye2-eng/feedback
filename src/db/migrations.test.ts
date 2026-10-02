@@ -116,8 +116,9 @@ describe("reference data", () => {
     expect(await attached("service")).toEqual({
       CIVIL_REGISTRY: null, LAND_TRIP: "LAND_TRIP", BOAT_CROSSING: "BOAT_CROSSING", TICKET_PURCHASE: "TICKET_PURCHASE",
     });
-    // No type has a list of its own yet (types of 0005 included).
-    expect(Object.values(await attached("establishment_type")).every((list) => list === null)).toBe(true);
+    // Only the driving licence centre has a list of its own (0005).
+    expect(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null))
+      .toEqual([["DRIVING_LICENCE_CENTER", "FILE_SERVICES"]]);
   });
 
   it("puts the same question, not a copy, in every list that asks it", async () => {

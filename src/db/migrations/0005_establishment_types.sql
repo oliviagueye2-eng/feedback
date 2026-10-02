@@ -169,3 +169,10 @@ FROM (VALUES
 ) AS v (name, type)
 JOIN establishment_type t ON t.code = v.type
 WHERE e.name = v.name AND e.organization_id IS NULL;
+
+-- The Transport sector has no list of its own: the driving licence and
+-- registration centre gets the list of the services with a file (validated
+-- on 2026-10-02).
+UPDATE establishment_type
+SET question_set_id = (SELECT id FROM question_set WHERE code = 'FILE_SERVICES')
+WHERE code = 'DRIVING_LICENCE_CENTER';
