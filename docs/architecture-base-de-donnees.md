@@ -382,6 +382,9 @@ Quels thèmes afficher selon le secteur. Un thème **sans ligne** dans cette tab
 | topic_id | fk |
 | sector_id | fk |
 
+### establishment_type.detailed_questionnaire_id
+Questionnaire propre au type d'établissement (migration 0018), entre celui du service et celui du secteur : service → type → secteur → `GENERIC`. Première utilisation : le type « Aéroport » (questionnaire `AIRPORT` vide), pour que l'aéroport AIBD ne reçoive pas les questions de bus du secteur Transport.
+
 ### question_condition
 « Cette question ne s'affiche que si telle question a reçu l'une de ces réponses » (migration 0014). Une ligne par réponse acceptée ; une question sans ligne s'affiche toujours. La réponse doit appartenir à la question dont on dépend (clé étrangère vers `answer_option (id, question_id)`).
 

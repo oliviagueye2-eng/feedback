@@ -168,6 +168,13 @@ describe("search", () => {
       HEALTH: 5, ADMINISTRATION: 5, TAX: 5, JUSTICE: 5, SOCIAL: 5, EDUCATION: 5,
       ELECTRICITY: 4, WATER: 3, TELECOM: 2, TRANSPORT: 3, BANKING_INSURANCE: 3, SECURITY: 0,
     });
+    // The airport AIBD (Transport) has its type's questionnaire (0018), empty: no bus questions.
+    expect((await one<{ type: string; questions: number }>(
+      `SELECT et.code AS type, count(q.id)::int AS questions
+       FROM establishment e JOIN establishment_type et ON et.id = e.type_id
+       JOIN questionnaire qn ON qn.id = et.detailed_questionnaire_id AND qn.status = 'published'
+       LEFT JOIN question q ON q.questionnaire_id = qn.id
+       WHERE e.name = 'Aéroport international Blaise Diagne' GROUP BY et.code`))).toEqual({ type: "AIRPORT", questions: 0 });
     // The private sectors have no questionnaire of their own: GENERIC, now published.
     for (const sector of ["RETAIL", "HOSPITALITY", "FOOD_SERVICE", "TOURISM", "CULTURE", "SPORT", "REAL_ESTATE"]) {
       expect(counts[sector]).toBe(0);

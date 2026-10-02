@@ -259,7 +259,7 @@ INSERT INTO question (questionnaire_id, code, type, position) VALUES
 INSERT INTO question_translation (question_id, language, label) VALUES
   ((SELECT id FROM question WHERE questionnaire_id = (SELECT id FROM questionnaire WHERE code = 'ELECTRICITY' AND version = 1) AND code = 'SUBJECT'), 'fr', 'Votre avis porte surtout sur :'),
   ((SELECT id FROM question WHERE questionnaire_id = (SELECT id FROM questionnaire WHERE code = 'ELECTRICITY' AND version = 1) AND code = 'CUTS_COUNT'), 'fr', 'Combien de coupures avez-vous eues ce mois-ci ?'),
-  ((SELECT id FROM question WHERE questionnaire_id = (SELECT id FROM questionnaire WHERE code = 'ELECTRICITY' AND version = 1) AND code = 'CUT_NOTICE'), 'fr', 'Avez-vous été prévenu(e) avant la coupure ?'),
+  ((SELECT id FROM question WHERE questionnaire_id = (SELECT id FROM questionnaire WHERE code = 'ELECTRICITY' AND version = 1) AND code = 'CUT_NOTICE'), 'fr', 'Avez-vous été prévenu(e) avant les coupures ?'),
   ((SELECT id FROM question WHERE questionnaire_id = (SELECT id FROM questionnaire WHERE code = 'ELECTRICITY' AND version = 1) AND code = 'PREPAID_METER'), 'fr', 'Avez-vous un compteur Woyofal (prépayé) ?');
 
 INSERT INTO answer_option (question_id, code, value, position) VALUES
@@ -309,7 +309,7 @@ INSERT INTO question (questionnaire_id, code, type, position) VALUES
 INSERT INTO question_translation (question_id, language, label) VALUES
   ((SELECT id FROM question WHERE questionnaire_id = (SELECT id FROM questionnaire WHERE code = 'WATER' AND version = 1) AND code = 'SUBJECT'), 'fr', 'Votre avis porte surtout sur :'),
   ((SELECT id FROM question WHERE questionnaire_id = (SELECT id FROM questionnaire WHERE code = 'WATER' AND version = 1) AND code = 'DAYS_WITHOUT_WATER'), 'fr', 'Combien de jours sans eau ce mois-ci ?'),
-  ((SELECT id FROM question WHERE questionnaire_id = (SELECT id FROM questionnaire WHERE code = 'WATER' AND version = 1) AND code = 'CUT_NOTICE'), 'fr', 'Avez-vous été prévenu(e) avant la coupure ?');
+  ((SELECT id FROM question WHERE questionnaire_id = (SELECT id FROM questionnaire WHERE code = 'WATER' AND version = 1) AND code = 'CUT_NOTICE'), 'fr', 'Avez-vous été prévenu(e) avant les coupures ?');
 
 INSERT INTO answer_option (question_id, code, value, position) VALUES
   ((SELECT id FROM question WHERE questionnaire_id = (SELECT id FROM questionnaire WHERE code = 'WATER' AND version = 1) AND code = 'SUBJECT'), 'CUT', NULL, 1),

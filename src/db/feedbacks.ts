@@ -5,7 +5,7 @@
  */
 import { invalidInput, notFound } from "../domain/errors";
 import type { QuestionCondition } from "../domain/questionnaire/conditions";
-import type { SelectedQuestionnaire } from "../domain/questionnaire/select";
+import type { QuestionnaireSources, SelectedQuestionnaire } from "../domain/questionnaire/select";
 import type { Channel, VisitPeriod } from "../domain/types";
 import { query } from "./client";
 
@@ -247,29 +247,31 @@ export async function findCommentText(feedbackId: string): Promise<string | null
 }
 
 /**
- * Where to find the detailed questionnaire: the feedback's service, else its
- * sector (the service's, the establishment type's, or the one the user chose). Only published
- * questionnaires count.
+ * Where to find the detailed questionnaire: the feedback's service, else the
+ * establishment's type, else its sector (the service's, the establishment
+ * type's, or the one the user chose). Only published questionnaires count.
  */
-export async function findQuestionnaireSources(feedbackId: string): Promise<{
-  serviceQuestionnaireId: number | null;
-  sectorFallbackQuestionnaireId: number | null;
-} | null> {
-  const rows = await query<{ service_q: number | null; sector_q: number | null }>(
-    `SELECT sq.id AS service_q, fq.id AS sector_q
+export async function findQuestionnaireSources(feedbackId: string): Promise<QuestionnaireSources | null> {
+  const rows = await query<{ service_q: number | null; type_q: number | null; sector_q: number | null }>(
+    `SELECT sq.id AS service_q, tq.id AS type_q, fq.id AS sector_q
      FROM feedback f
      JOIN establishment e ON e.id = f.establishment_id
      LEFT JOIN service s ON s.id = f.service_id
      LEFT JOIN establishment_type et ON et.id = e.type_id
      LEFT JOIN sector sec ON sec.id = coalesce(s.sector_id, et.sector_id, e.sector_id)
      LEFT JOIN questionnaire sq ON sq.id = s.detailed_questionnaire_id AND sq.status = 'published'
+     LEFT JOIN questionnaire tq ON tq.id = et.detailed_questionnaire_id AND tq.status = 'published'
      LEFT JOIN questionnaire fq ON fq.id = sec.fallback_questionnaire_id AND fq.status = 'published'
      WHERE f.id = $1`,
     [feedbackId],
   );
   const row = rows[0];
   if (!row) return null;
-  return { serviceQuestionnaireId: row.service_q, sectorFallbackQuestionnaireId: row.sector_q };
+  return {
+    serviceQuestionnaireId: row.service_q,
+    typeQuestionnaireId: row.type_q,
+    sectorFallbackQuestionnaireId: row.sector_q,
+  };
 }
 
 export interface FeedbackContext {
