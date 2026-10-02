@@ -1,5 +1,6 @@
--- Establishment types of the Health, Administration, Education, Justice,
--- Security, Tax, Social and Transport sectors, validated on 2026-10-02. One type per
+-- Establishment types, validated on 2026-10-02: Health, Administration,
+-- Education, Justice, Security, Tax, Social, Transport, then Retail, Culture,
+-- Sport and Tourism. One type per
 -- establishment: a school covering several levels is a « Groupe scolaire »; a
 -- French-Arabic school takes the type of its level (« franco-arabe » belongs
 -- in its aliases). Not kept:
@@ -11,7 +12,9 @@
 -- organisation, a sector mixing very different places) or to ask questions
 -- of its own. Hence none for Electricity, Water, Telecoms (the organisation
 -- groups its agencies), nor for bus lines, railway stations or ships
--- (operators and services already cover them).
+-- (operators and services already cover them), nor for Food service,
+-- Hospitality, Real estate, Banking and insurance (similar places, or grouped
+-- by their organisation; hotels may get a star rating later).
 
 INSERT INTO establishment_type (code, sector_id)
 SELECT v.code, s.id
@@ -60,7 +63,20 @@ FROM (VALUES
   ('SOCIAL_ACTION_OFFICE', 'SOCIAL'),
   ('SOCIAL_REINTEGRATION_CENTER', 'SOCIAL'),
   ('BUS_STATION', 'TRANSPORT'),
-  ('DRIVING_LICENCE_CENTER', 'TRANSPORT')
+  ('DRIVING_LICENCE_CENTER', 'TRANSPORT'),
+  ('MARKET', 'RETAIL'),
+  ('SUPERMARKET', 'RETAIL'),
+  ('NEIGHBOURHOOD_SHOP', 'RETAIL'),
+  ('FUEL_STATION', 'RETAIL'),
+  ('MUSEUM', 'CULTURE'),
+  ('LIBRARY', 'CULTURE'),
+  ('CULTURAL_CENTER', 'CULTURE'),
+  ('CINEMA_OR_THEATRE', 'CULTURE'),
+  ('STADIUM_OR_ARENA', 'SPORT'),
+  ('GYM', 'SPORT'),
+  ('SWIMMING_POOL', 'SPORT'),
+  ('TRAVEL_AGENCY', 'TOURISM'),
+  ('TOURIST_SITE', 'TOURISM')
 ) AS v (code, sector)
 JOIN sector s ON s.code = v.sector;
 
@@ -111,7 +127,20 @@ FROM (VALUES
   ('SOCIAL_ACTION_OFFICE', 'Service de l''action sociale'),
   ('SOCIAL_REINTEGRATION_CENTER', 'Centre de promotion et de réinsertion sociale'),
   ('BUS_STATION', 'Gare routière'),
-  ('DRIVING_LICENCE_CENTER', 'Centre des permis et cartes grises')
+  ('DRIVING_LICENCE_CENTER', 'Centre des permis et cartes grises'),
+  ('MARKET', 'Marché'),
+  ('SUPERMARKET', 'Supermarché'),
+  ('NEIGHBOURHOOD_SHOP', 'Boutique de quartier'),
+  ('FUEL_STATION', 'Station-service'),
+  ('MUSEUM', 'Musée'),
+  ('LIBRARY', 'Bibliothèque'),
+  ('CULTURAL_CENTER', 'Centre culturel'),
+  ('CINEMA_OR_THEATRE', 'Cinéma ou salle de spectacle'),
+  ('STADIUM_OR_ARENA', 'Stade ou arène'),
+  ('GYM', 'Salle de sport'),
+  ('SWIMMING_POOL', 'Piscine'),
+  ('TRAVEL_AGENCY', 'Agence de voyages'),
+  ('TOURIST_SITE', 'Site touristique')
 ) AS v (code, label)
 JOIN establishment_type t ON t.code = v.code;
 

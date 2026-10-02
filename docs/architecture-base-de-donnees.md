@@ -136,9 +136,14 @@ Exemples écartés par la règle : « Agence commerciale » (Senelec regroupe d�
 | Impôts et domaines | Centre des services fiscaux, Service des domaines, Service du cadastre, Conservation foncière, Bureau des douanes, Perception du Trésor |
 | Emploi et protection sociale | Agence de sécurité sociale ou de retraite, Inspection du travail, Service de l'emploi, Service de l'action sociale, Centre de promotion et de réinsertion sociale |
 | Transport | Aéroport, Gare routière, Centre des permis et cartes grises |
+| Commerce | Marché (même géré par la mairie), Supermarché, Boutique de quartier, Station-service ; les autres boutiques sans type |
+| Culture | Musée, Bibliothèque, Centre culturel, Cinéma ou salle de spectacle |
+| Sport | Stade ou arène (lutte comprise), Salle de sport, Piscine |
+| Tourisme | Agence de voyages, Site touristique (pas les guides : des personnes) |
 | Électricité, Eau, Télécoms | aucun : l'organisme (Senelec, Orange…) regroupe déjà ses agences |
+| Restauration, Hôtellerie, Immobilier, Banques et assurances | aucun : lieux semblables, ou regroupés par leur organisme ; pour les hôtels, une catégorie en étoiles plus tard ; pas de type pour les points de mobile money (on évalue Wave ou Orange Money en général) |
 
-Écartés : Case de santé ; établissement pénitentiaire (à voir avec l'organisme porteur) ; Gouvernance et Conseil départemental (pas de guichet courant pour l'usager) ; École franco-arabe (elle prend le type de son niveau, « franco-arabe » va dans ses alias). Les 18 lieux publics de `0003` ont reçu leur type (hôpitaux, mairies, DAF, universités, lycée). Les secteurs privés restent à faire, avec la même règle. Le type **n'est pas affiché** sous le nom (redondant avec le nom, écarté le 2026-10-02) : on garde commune et secteur.
+Écartés : Case de santé ; établissement pénitentiaire (à voir avec l'organisme porteur) ; Gouvernance et Conseil départemental (pas de guichet courant pour l'usager) ; École franco-arabe (elle prend le type de son niveau, « franco-arabe » va dans ses alias). Les 18 lieux publics de `0003` ont reçu leur type (hôpitaux, mairies, DAF, universités, lycée). Tous les secteurs sont faits (59 types, Aéroport compris). Le type **n'est pas affiché** sous le nom (redondant avec le nom, écarté le 2026-10-02) : on garde commune et secteur.
 
 À quoi sert le type :
 1. **Comparer ce qui est comparable.** Les statistiques et les classements publiés comparent un hôpital à d'autres hôpitaux, pas à un poste de santé.
