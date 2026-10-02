@@ -83,7 +83,7 @@ describe("reference data", () => {
     expect(await topicsFor("HEALTH")).toHaveLength(13);
   });
 
-  it("has the bank of 41 questions (34 of 0004, 5 of 0005, 2 of 0006), each written once, every text in French", async () => {
+  it("has the bank of 42 questions (34 of 0004, 5 of 0005, 3 of 0006), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -97,7 +97,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 41, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 42, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -151,6 +151,9 @@ describe("reference data", () => {
       "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT 1_TO_3",
       "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT 4_TO_10",
       "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT OVER_10",
+      "FLIGHT: DELAY_CARE ← DEPARTURE_ON_TIME UNDER_1_H_LATE",
+      "FLIGHT: DELAY_CARE ← DEPARTURE_ON_TIME OVER_1_H_LATE",
+      "FLIGHT: DELAY_CARE ← DEPARTURE_ON_TIME CANCELLED",
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME UNDER_1_H_LATE",
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME OVER_1_H_LATE",
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME CANCELLED",

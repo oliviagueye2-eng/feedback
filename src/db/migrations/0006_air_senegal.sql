@@ -44,12 +44,14 @@ WHERE language = 'fr'
 
 INSERT INTO question (code, type) VALUES
   ('DELAY_INFORMED', 'single_choice'),
+  ('DELAY_CARE', 'single_choice'),
   ('LUGGAGE', 'single_choice');
 
 INSERT INTO question_translation (question_id, language, label)
 SELECT q.id, 'fr', v.label
 FROM (VALUES
   ('DELAY_INFORMED', 'Avez-vous été informé(e) du retard ou de l''annulation ?'),
+  ('DELAY_CARE', 'Avez-vous été pris(e) en charge pendant l''attente (repas, hôtel, autre vol) ?'),
   ('LUGGAGE', 'Avez-vous récupéré vos bagages complets et en bon état ?')
 ) AS v (code, label)
 JOIN question q ON q.code = v.code;
@@ -60,6 +62,10 @@ FROM (VALUES
   ('DELAY_INFORMED', 'YES_IN_TIME', 3, 1),
   ('DELAY_INFORMED', 'YES_LATE', 2, 2),
   ('DELAY_INFORMED', 'NO', 1, 3),
+  ('DELAY_CARE', 'YES', 3, 1),
+  ('DELAY_CARE', 'PARTLY', 2, 2),
+  ('DELAY_CARE', 'NO', 1, 3),
+  ('DELAY_CARE', 'NOT_NEEDED', NULL, 4),
   ('LUGGAGE', 'YES', 3, 1),
   ('LUGGAGE', 'PARTLY', 2, 2),
   ('LUGGAGE', 'NO', 1, 3),
@@ -73,6 +79,10 @@ FROM (VALUES
   ('DELAY_INFORMED', 'YES_IN_TIME', 'Oui, à temps'),
   ('DELAY_INFORMED', 'YES_LATE', 'Oui, mais tard'),
   ('DELAY_INFORMED', 'NO', 'Non'),
+  ('DELAY_CARE', 'YES', 'Oui'),
+  ('DELAY_CARE', 'PARTLY', 'En partie'),
+  ('DELAY_CARE', 'NO', 'Non'),
+  ('DELAY_CARE', 'NOT_NEEDED', 'Ce n''était pas nécessaire'),
   ('LUGGAGE', 'YES', 'Oui'),
   ('LUGGAGE', 'PARTLY', 'En partie'),
   ('LUGGAGE', 'NO', 'Non'),
@@ -88,18 +98,20 @@ SELECT qs.id, q.id, v.position
 FROM (VALUES
   ('DEPARTURE_ON_TIME', 1),
   ('DELAY_INFORMED', 2),
-  ('BOARDING', 3),
-  ('LUGGAGE', 4)
+  ('DELAY_CARE', 3),
+  ('BOARDING', 4),
+  ('LUGGAGE', 5)
 ) AS v (question, position)
 JOIN question_set qs ON qs.code = 'FLIGHT'
 JOIN question q ON q.code = v.question;
 
--- « Informé(e) ? » only after a delay or a cancellation.
+-- « Informé(e) ? » and « Pris(e) en charge ? » only after a delay or a
+-- cancellation.
 INSERT INTO question_condition (question_set_id, question_id, depends_on_question_id, option_id)
 SELECT qs.id, q.id, dq.id, ao.id
 FROM question_set qs, question q, question dq
 JOIN answer_option ao ON ao.question_id = dq.id
-WHERE qs.code = 'FLIGHT' AND q.code = 'DELAY_INFORMED' AND dq.code = 'DEPARTURE_ON_TIME'
+WHERE qs.code = 'FLIGHT' AND q.code IN ('DELAY_INFORMED', 'DELAY_CARE') AND dq.code = 'DEPARTURE_ON_TIME'
   AND ao.code IN ('UNDER_1_H_LATE', 'OVER_1_H_LATE', 'CANCELLED');
 
 UPDATE service s
