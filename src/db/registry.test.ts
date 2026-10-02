@@ -38,9 +38,9 @@ describe("first establishments of the registry", () => {
       JOIN establishment_type_translation tt ON tt.establishment_type_id = t.id AND tt.language = 'fr'
       GROUP BY s.code ORDER BY s.code`);
     expect(rows).toEqual([
-      { sector: "ADMINISTRATION", n: 5 },
+      { sector: "ADMINISTRATION", n: 7 },
       { sector: "CULTURE", n: 4 },
-      { sector: "EDUCATION", n: 11 },
+      { sector: "EDUCATION", n: 9 },
       { sector: "HEALTH", n: 8 },
       { sector: "JUSTICE", n: 5 },
       { sector: "RETAIL", n: 4 },
@@ -51,6 +51,13 @@ describe("first establishments of the registry", () => {
       { sector: "TOURISM", n: 2 },
       { sector: "TRANSPORT", n: 3 },
     ]);
+  });
+
+  it("asks health places what they came for, care, medicines or a test (0005)", async () => {
+    const { rows } = await db.query<{ label: string }>(`
+      SELECT t.label FROM question_translation t JOIN question q ON q.id = t.question_id
+      WHERE q.code = 'CARE_RECEIVED' AND t.language = 'fr'`);
+    expect(rows[0]?.label).toBe("Avez-vous reçu ce pour quoi vous étiez venu(e) (soins, médicaments, examen) ?");
   });
 
   it("gives a type of its own sector to every public place", async () => {

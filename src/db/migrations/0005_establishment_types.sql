@@ -41,8 +41,10 @@ FROM (VALUES
   ('HIGHER_EDUCATION_SCHOOL', 'EDUCATION'),
   ('VOCATIONAL_TRAINING_CENTER', 'EDUCATION'),
   ('DAARA', 'EDUCATION'),
-  ('ACADEMY_INSPECTORATE', 'EDUCATION'),
-  ('EDUCATION_INSPECTORATE', 'EDUCATION'),
+  -- The education inspectorates are offices for paperwork (transfer,
+  -- certificate): in Administration, with its questions, not the classroom ones.
+  ('ACADEMY_INSPECTORATE', 'ADMINISTRATION'),
+  ('EDUCATION_INSPECTORATE', 'ADMINISTRATION'),
   ('COURT', 'JUSTICE'),
   ('JUSTICE_HOUSE', 'JUSTICE'),
   ('NOTARY_OFFICE', 'JUSTICE'),
@@ -176,3 +178,10 @@ WHERE e.name = v.name AND e.organization_id IS NULL;
 UPDATE establishment_type
 SET question_set_id = (SELECT id FROM question_set WHERE code = 'FILE_SERVICES')
 WHERE code = 'DRIVING_LICENCE_CENTER';
+
+-- One wording for every health place: a pharmacy, a laboratory or an imaging
+-- centre gives medicines or tests, not care (validated on 2026-10-02).
+UPDATE question_translation
+SET label = 'Avez-vous reçu ce pour quoi vous étiez venu(e) (soins, médicaments, examen) ?'
+WHERE language = 'fr'
+  AND question_id = (SELECT id FROM question WHERE code = 'CARE_RECEIVED');

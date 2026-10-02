@@ -129,13 +129,13 @@ Exemples écartés par la règle : « Agence commerciale » (Senelec regroupe d�
 | Secteur | Types |
 |---|---|
 | Santé | Hôpital, Centre de santé, Poste de santé, Clinique (avec lits : séjour, opération, accouchement), Cabinet médical ou dentaire (consultation seulement), Laboratoire d'analyses, Centre d'imagerie médicale, Pharmacie |
-| Administration | Mairie, Centre d'état civil (centre secondaire, séparé de la mairie), Préfecture, Sous-préfecture, Centre de carte d'identité ou de passeport |
-| Éducation | Case des tout-petits ou école maternelle, École élémentaire, Collège (CEM), Lycée, Groupe scolaire (plusieurs niveaux), Université, École ou institut d'enseignement supérieur, Centre de formation professionnelle, Daara, Inspection d'académie, Inspection de l'éducation et de la formation (IEF) |
+| Administration | Mairie, Centre d'état civil (centre secondaire, séparé de la mairie), Préfecture, Sous-préfecture, Centre de carte d'identité ou de passeport, Inspection d'académie, Inspection de l'éducation et de la formation (IEF) (des bureaux de démarches : questions des services à dossier, pas celles de la classe) |
+| Éducation | Case des tout-petits ou école maternelle, École élémentaire, Collège (CEM), Lycée, Groupe scolaire (plusieurs niveaux), Université, École ou institut d'enseignement supérieur, Centre de formation professionnelle, Daara |
 | Justice | Tribunal ou cour (tous les niveaux : le nom dit lequel), Maison de justice, Étude de notaire, Étude d'huissier, Cabinet d'avocat |
 | Sécurité | Commissariat de police, Poste de police, Brigade de gendarmerie |
 | Impôts et domaines | Centre des services fiscaux, Service des domaines, Service du cadastre, Conservation foncière, Bureau des douanes, Perception du Trésor |
 | Emploi et protection sociale | Agence de sécurité sociale ou de retraite, Inspection du travail, Service de l'emploi, Service de l'action sociale, Centre de promotion et de réinsertion sociale |
-| Transport | Aéroport, Gare routière, Centre des permis et cartes grises |
+| Transport | Aéroport, Gare routière, Centre des permis et cartes grises (avec la liste des services à dossier, le secteur Transport n'en ayant pas) |
 | Commerce | Marché (même géré par la mairie), Supermarché, Boutique de quartier, Station-service ; les autres boutiques sans type |
 | Culture | Musée, Bibliothèque, Centre culturel, Cinéma ou salle de spectacle |
 | Sport | Stade ou arène (lutte comprise), Salle de sport, Piscine |
