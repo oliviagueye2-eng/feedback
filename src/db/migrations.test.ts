@@ -83,7 +83,7 @@ describe("reference data", () => {
     expect(await topicsFor("HEALTH")).toHaveLength(13);
   });
 
-  it("has the bank of 34 questions, each written once, every text in French", async () => {
+  it("has the bank of 39 questions (34 of 0004, 5 of 0005), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -97,7 +97,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 34, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 39, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -116,9 +116,9 @@ describe("reference data", () => {
     expect(await attached("service")).toEqual({
       CIVIL_REGISTRY: null, LAND_TRIP: "LAND_TRIP", BOAT_CROSSING: "BOAT_CROSSING", TICKET_PURCHASE: "TICKET_PURCHASE",
     });
-    // Only the driving licence centre has a list of its own (0005).
-    expect(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null))
-      .toEqual([["DRIVING_LICENCE_CENTER", "FILE_SERVICES"]]);
+    // Types with a list of their own (0005).
+    expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))
+      .toEqual({ AIRPORT: "AIRPORT", BUS_STATION: "BUS_STATION", DRIVING_LICENCE_CENTER: "FILE_SERVICES" });
   });
 
   it("puts the same question, not a copy, in every list that asks it", async () => {

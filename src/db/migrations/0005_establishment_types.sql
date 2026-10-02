@@ -185,3 +185,98 @@ UPDATE question_translation
 SET label = 'Avez-vous reçu ce pour quoi vous étiez venu(e) (soins, médicaments, examen) ?'
 WHERE language = 'fr'
   AND question_id = (SELECT id FROM question WHERE code = 'CARE_RECEIVED');
+
+-- Questions of the places of passage (validated on 2026-10-02, short
+-- version): facts about what the manager of the place controls. What depends
+-- on the airline or the carrier (luggage, price, departure) is left to them.
+-- Accessibility and cleanliness of the premises are already themes of screen
+-- 2b; the overall quality is the essential question.
+INSERT INTO question (code, type) VALUES
+  ('WAYFINDING', 'yes_partial_no'),
+  ('CHECKS_WAIT', 'single_choice'),
+  ('SEAT_TO_WAIT', 'yes_partial_no'),
+  ('TOILETS', 'single_choice'),
+  ('TRANSPORT_ACCESS', 'yes_partial_no');
+
+INSERT INTO question_translation (question_id, language, label)
+SELECT q.id, 'fr', v.label
+FROM (VALUES
+  ('WAYFINDING', 'Avez-vous trouvé facilement votre chemin (panneaux, annonces, indications) ?'),
+  ('CHECKS_WAIT', 'Combien de temps avez-vous attendu aux contrôles (police, sécurité, douane) ?'),
+  ('SEAT_TO_WAIT', 'Avez-vous trouvé une place assise pour attendre ?'),
+  ('TOILETS', 'Les toilettes étaient-elles propres et en état de marche ?'),
+  ('TRANSPORT_ACCESS', 'Avez-vous trouvé facilement un transport pour venir ou repartir ?')
+) AS v (code, label)
+JOIN question q ON q.code = v.code;
+
+INSERT INTO answer_option (question_id, code, value, position)
+SELECT q.id, v.option, v.value, v.position
+FROM (VALUES
+  ('WAYFINDING', 'YES', 3, 1),
+  ('WAYFINDING', 'PARTLY', 2, 2),
+  ('WAYFINDING', 'NO', 1, 3),
+  ('CHECKS_WAIT', 'UNDER_15_MIN', 1, 1),
+  ('CHECKS_WAIT', '15_TO_30_MIN', 2, 2),
+  ('CHECKS_WAIT', '30_MIN_TO_1_H', 3, 3),
+  ('CHECKS_WAIT', 'OVER_1_H', 4, 4),
+  ('SEAT_TO_WAIT', 'YES', 3, 1),
+  ('SEAT_TO_WAIT', 'PARTLY', 2, 2),
+  ('SEAT_TO_WAIT', 'NO', 1, 3),
+  ('TOILETS', 'YES', 3, 1),
+  ('TOILETS', 'PARTLY', 2, 2),
+  ('TOILETS', 'NO', 1, 3),
+  ('TOILETS', 'NOT_USED', NULL, 4),
+  ('TRANSPORT_ACCESS', 'YES', 3, 1),
+  ('TRANSPORT_ACCESS', 'PARTLY', 2, 2),
+  ('TRANSPORT_ACCESS', 'NO', 1, 3)
+) AS v (question, option, value, position)
+JOIN question q ON q.code = v.question;
+
+INSERT INTO answer_option_translation (answer_option_id, language, label)
+SELECT o.id, 'fr', v.label
+FROM (VALUES
+  ('WAYFINDING', 'YES', 'Oui'),
+  ('WAYFINDING', 'PARTLY', 'Avec difficulté'),
+  ('WAYFINDING', 'NO', 'Non'),
+  ('CHECKS_WAIT', 'UNDER_15_MIN', 'Moins de 15 minutes'),
+  ('CHECKS_WAIT', '15_TO_30_MIN', '15 à 30 minutes'),
+  ('CHECKS_WAIT', '30_MIN_TO_1_H', '30 minutes à 1 heure'),
+  ('CHECKS_WAIT', 'OVER_1_H', 'Plus d''1 heure'),
+  ('SEAT_TO_WAIT', 'YES', 'Oui'),
+  ('SEAT_TO_WAIT', 'PARTLY', 'Avec difficulté'),
+  ('SEAT_TO_WAIT', 'NO', 'Non'),
+  ('TOILETS', 'YES', 'Oui'),
+  ('TOILETS', 'PARTLY', 'En partie'),
+  ('TOILETS', 'NO', 'Non'),
+  ('TOILETS', 'NOT_USED', 'Je n''y suis pas allé(e)'),
+  ('TRANSPORT_ACCESS', 'YES', 'Oui'),
+  ('TRANSPORT_ACCESS', 'PARTLY', 'Avec difficulté'),
+  ('TRANSPORT_ACCESS', 'NO', 'Non')
+) AS v (question, option, label)
+JOIN question q ON q.code = v.question
+JOIN answer_option o ON o.question_id = q.id AND o.code = v.option;
+
+-- One list per type (a type has one list); the questions shared by both are
+-- the same questions of the bank, so their answers compare.
+INSERT INTO question_set (code) VALUES ('AIRPORT'), ('BUS_STATION');
+
+INSERT INTO question_set_item (question_set_id, question_id, position)
+SELECT qs.id, q.id, v.position
+FROM (VALUES
+  ('AIRPORT', 'WAYFINDING', 1),
+  ('AIRPORT', 'CHECKS_WAIT', 2),
+  ('AIRPORT', 'SEAT_TO_WAIT', 3),
+  ('AIRPORT', 'TOILETS', 4),
+  ('AIRPORT', 'TRANSPORT_ACCESS', 5),
+  ('BUS_STATION', 'WAYFINDING', 1),
+  ('BUS_STATION', 'SEAT_TO_WAIT', 2),
+  ('BUS_STATION', 'TOILETS', 3),
+  ('BUS_STATION', 'TRANSPORT_ACCESS', 4)
+) AS v (list, question, position)
+JOIN question_set qs ON qs.code = v.list
+JOIN question q ON q.code = v.question;
+
+UPDATE establishment_type t
+SET question_set_id = qs.id
+FROM question_set qs
+WHERE (t.code, qs.code) IN (('AIRPORT', 'AIRPORT'), ('BUS_STATION', 'BUS_STATION'));

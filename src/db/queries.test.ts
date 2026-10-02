@@ -384,6 +384,11 @@ describe("feedback", () => {
     expect(await firstQuestion("c3d4e5f6-0000-4000-8000-000000000004", "Aline Sitoë Diatta (bateau Dakar – Ziguinchor)", null))
       .toBeUndefined();
     expect(await firstQuestion("c3d4e5f6-0000-4000-8000-000000000005", "COSAMA", "BOAT_CROSSING")).toBe("DEPARTURE_ON_TIME");
+    // The airport gets the questions of its type (0005).
+    const aibd = "c3d4e5f6-0000-4000-8000-000000000006";
+    await firstQuestion(aibd, "Aéroport international Blaise Diagne", null);
+    expect((await getQuestionnaireScreen(aibd, "sector")).questions.map((q) => q.code))
+      .toEqual(["WAYFINDING", "CHECKS_WAIT", "SEAT_TO_WAIT", "TOILETS", "TRANSPORT_ACCESS"]);
     // Screen 1 offers the operator's services.
     const { services } = await getEstablishment(await establishment("COSAMA"));
     expect(services.map((s) => s.label).sort()).toEqual(["Achat d'un ticket ou d'une carte d'abonnement", "Une traversée en bateau"]);
