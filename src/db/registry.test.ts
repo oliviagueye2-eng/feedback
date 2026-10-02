@@ -22,19 +22,21 @@ afterAll(async () => {
 });
 
 describe("first establishments of the registry", () => {
-  it("has the nineteen places, all active and public", async () => {
+  it("has the twenty places, all active, public but COSAMA's ship", async () => {
     const { rows } = await db.query<{ n: number; active_public: number }>(`
       SELECT count(*)::int AS n,
              count(*) FILTER (WHERE status = 'active' AND ownership = 'public')::int AS active_public
       FROM establishment WHERE scope = 'site'`);
-    expect(rows[0]).toEqual({ n: 19, active_public: 19 });
+    // 19 public places (0004) and the ship Aline Sitoë Diatta (0019, private operator).
+    expect(rows[0]).toEqual({ n: 20, active_public: 19 });
   });
 
-  it("has the eleven organisations, each rated in general", async () => {
+  it("has the sixteen organisations, each rated in general", async () => {
     const { rows } = await db.query<{ organizations: number; general: number }>(`
       SELECT (SELECT count(*)::int FROM organization) AS organizations,
              (SELECT count(*)::int FROM establishment WHERE scope = 'general') AS general`);
-    expect(rows[0]).toEqual({ organizations: 11, general: 11 });
+    // 11 of 0006 and the 5 transport operators of 0019.
+    expect(rows[0]).toEqual({ organizations: 16, general: 16 });
   });
 
   it("finds an organisation by its usual name, full name or former name", async () => {
@@ -68,7 +70,8 @@ describe("first establishments of the registry", () => {
   });
 
   it("with 3 or 4 letters, only names with a word starting with them (Sénégal ignored)", async () => {
-    expect(await names("sen")).toEqual(["Sen'Eau", "Senelec"]);
+    // Displayed names first; COSAMA (« sénégalais ») and TER (« SENTER ») by an alias only.
+    expect(await names("sen")).toEqual(["Sen'Eau", "Senelec", "COSAMA", "TER"]);
     expect(await names("ucad")).toEqual(["Université Cheikh Anta Diop de Dakar"]);
     expect(await names("snl")).toEqual([]);
   });

@@ -381,6 +381,31 @@ describe("feedback", () => {
     expect(await answered()).toEqual(["OVERALL_SATISFACTION", "WAIT_TIME"]);
   });
 
+  it("asks each transport service its questions: trip, boat crossing, ticket purchase (0019)", async () => {
+    const establishment = async (name: string) =>
+      (await rows<{ id: string }>("SELECT id FROM establishment WHERE name = $1", [name]))[0]!.id;
+    const service = async (code: string) =>
+      (await rows<{ id: number }>("SELECT id FROM service WHERE code = $1", [code]))[0]!.id;
+    const firstQuestion = async (feedback: string, establishmentName: string, serviceCode: string | null) => {
+      await upsertFeedback(feedback, {
+        channel: "search", establishmentId: await establishment(establishmentName), language: "fr", visitPeriod: "today",
+        serviceId: serviceCode ? await service(serviceCode) : null,
+      });
+      await saveAnswer(feedback, "OVERALL_SATISFACTION", { option: "SATISFIED" });
+      return (await getQuestionnaireScreen(feedback, "sector")).questions[0]?.code;
+    };
+    expect(await firstQuestion("c3d4e5f6-0000-4000-8000-000000000001", "Dem Dikk", "LAND_TRIP")).toBe("STOP_WAIT");
+    expect(await firstQuestion("c3d4e5f6-0000-4000-8000-000000000002", "Dem Dikk", "TICKET_PURCHASE")).toBe("GOAL_ACHIEVED");
+    // No service chosen: the sector's (Transport) for a bus, the type's (maritime) for the ship.
+    expect(await firstQuestion("c3d4e5f6-0000-4000-8000-000000000003", "Dem Dikk", null)).toBe("STOP_WAIT");
+    expect(await firstQuestion("c3d4e5f6-0000-4000-8000-000000000004", "Aline Sitoë Diatta (bateau Dakar – Ziguinchor)", null))
+      .toBe("DEPARTURE_ON_TIME");
+    expect(await firstQuestion("c3d4e5f6-0000-4000-8000-000000000005", "COSAMA", "BOAT_CROSSING")).toBe("DEPARTURE_ON_TIME");
+    // Screen 1 offers the operator's services.
+    const { services } = await getEstablishment(await establishment("COSAMA"));
+    expect(services.map((s) => s.label).sort()).toEqual(["Achat d'un ticket ou d'une carte d'abonnement", "Une traversée en bateau"]);
+  });
+
   it("replaces the topics touched, each with its sentiment", async () => {
     await saveTopics(feedbackId, {
       topics: [

@@ -81,7 +81,7 @@ Règle : ne jamais demander dans le questionnaire ce que l'établissement choisi
 
 **Aéroport** (migration 0018) : l'aéroport AIBD est dans le secteur Transport mais ne reçoit pas les questions de bus : type d'établissement « Aéroport » avec son propre questionnaire `AIRPORT`, vide pour l'instant (vraies questions d'aéroport à proposer : attente aux contrôles, bagages…).
 
-**Organisation du transport (validée le 2026-10-02, à construire quand on ajoutera les opérateurs)** :
+**Organisation du transport (validée le 2026-10-02 ; opérateurs, services et questions construits par la migration 0019)** :
 
 ```
 Qui ?       l'opérateur          = un organisme (Dakar Dem Dikk, BRT, TER, AFTU…), note globale regroupée
@@ -95,6 +95,16 @@ Quoi ?      la démarche          = un service : « Un trajet », « Achat d'un 
 - Questions : le questionnaire Transport (attente à l'arrêt, véhicule bondé, ticket) vaut pour « Un trajet » ; « Achat d'un ticket ou d'une carte » aura ses propres questions ou aucune (règle exclusive service → type → secteur).
 - L'aéroport suivra la même logique : services enregistrement, contrôles de sécurité, bagages, douane…, avec des questions par service plus tard.
 - À fournir : la liste officielle des lignes de chaque opérateur (numéro, terminus).
+
+**Construit (migration 0019)** : organismes **Dem Dikk** (Dakar Dem Dikk, devenu Dem Dikk S.A. le 11 septembre 2026), **BRT** (Dakar Mobilité), **TER** (SETER), **AFTU** (minibus Tata), **COSAMA**, chacun avec sa fiche « en général » ; site de la COSAMA : **Aline Sitoë Diatta (bateau Dakar – Ziguinchor)** (le *Diambogne* et l'*Aguène* non ajoutés, à sa demande). Un **service par mode** (option B, choisie le 2026-10-02 ; découper le transport en trois secteurs reste possible plus tard) :
+
+| Service | Proposé par | Questions |
+|---|---|---|
+| Un trajet en bus ou en train | Dem Dikk, BRT, TER, AFTU | celles du Transport (attente à l'arrêt, véhicule bondé, ticket) |
+| Une traversée en bateau | COSAMA | Le bateau est-il parti à l'heure prévue ? (À l'heure / Moins d'1 heure de retard / Plus d'1 heure de retard / Départ annulé ou reporté) ; L'embarquement s'est-il bien passé ? (Oui / En partie / Non) ; Aviez-vous une place correspondant à votre billet (siège, couchette, cabine) ? (Oui / Non) ; Les consignes de sécurité (gilets, exercices) ont-elles été présentées ? (Oui / Non / Je ne sais pas) |
+| Achat d'un ticket ou d'une carte d'abonnement | les cinq | Avez-vous obtenu ce que vous étiez venu(e) chercher ? ; Combien de temps avez-vous attendu avant d'être servi(e) ? (mêmes tranches que les guichets) ; Avez-vous pu payer comme vous le souhaitiez (espèces, paiement mobile…) ? (Oui / Non) |
+
+Questions du bateau et de l'achat : proposées par moi, laissées à mon choix par elle (« pas de préférence »), à revoir si besoin. Type « Compagnie maritime » (questions de la traversée) pour la COSAMA et son bateau : sans service choisi, pas de questions de bus. « Un vol » : à faire avec la première compagnie aérienne.
 
 **À prévoir pour le transport** :
 - **les lignes** (ligne 1, ligne 23…) : à proposer à l'écran 1 dans « Sur quoi porte votre avis ? », comme services de l'opérateur (comme « État civil » pour une mairie), à partir des listes publiées par les opérateurs (numéro, trajet, terminus), quand on ajoutera les opérateurs de transport. **Pas de liste déroulante** (plusieurs dizaines de lignes par opérateur) : un champ « Numéro de la ligne » (clavier numérique), qui affiche le trajet dès que le numéro correspond (« Ligne 23 : Parcelles Assainies – Palais ») pour vérifier ; lignes à lettres (express, TER…) trouvées aussi par le début du nom ; « Je ne connais pas le numéro » possible (l'avis compte pour l'opérateur) ; sans JavaScript, le serveur vérifie le numéro. Ce champ remplace la liste déroulante seulement pour les établissements qui ont beaucoup de services. **Chemin principal : un QR code dans chaque bus ou à l'arrêt**, qui porte la ligne (un QR code peut déjà porter un service) : rien à taper (recommandation validée le 2026-10-01) ;
