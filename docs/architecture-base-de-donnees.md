@@ -125,9 +125,13 @@ Le libellé affiché passe par sa table de traduction (`*_translation`).
 | Santé | Hôpital, Centre de santé, Poste de santé, Clinique (avec lits : séjour, opération, accouchement), Cabinet médical ou dentaire (consultation seulement), Laboratoire d'analyses, Centre d'imagerie médicale, Pharmacie |
 | Administration | Mairie, Centre d'état civil (centre secondaire, séparé de la mairie), Préfecture, Sous-préfecture, Centre de carte d'identité ou de passeport |
 | Éducation | Case des tout-petits ou école maternelle, École élémentaire, Collège (CEM), Lycée, Groupe scolaire (plusieurs niveaux), Université, École ou institut d'enseignement supérieur, Centre de formation professionnelle, Daara, Inspection d'académie, Inspection de l'éducation et de la formation (IEF) |
+| Justice | Tribunal ou cour (tous les niveaux : le nom dit lequel), Maison de justice, Étude de notaire, Étude d'huissier, Cabinet d'avocat |
+| Sécurité | Commissariat de police, Poste de police, Brigade de gendarmerie |
+| Impôts et domaines | Centre des services fiscaux, Service des domaines, Service du cadastre, Conservation foncière, Bureau des douanes, Perception du Trésor |
+| Emploi et protection sociale | Agence de sécurité sociale ou de retraite, Inspection du travail, Service de l'emploi, Service de l'action sociale, Centre de promotion et de réinsertion sociale |
 | Transport | Aéroport |
 
-Écartés : Case de santé ; Gouvernance et Conseil départemental (pas de guichet courant pour l'usager) ; École franco-arabe (elle prend le type de son niveau, « franco-arabe » va dans ses alias). Les 18 lieux publics de `0003` ont reçu leur type (hôpitaux, mairies, DAF, universités, lycée). Les autres secteurs restent à faire.
+Écartés : Case de santé ; établissement pénitentiaire (à voir avec l'organisme porteur) ; Gouvernance et Conseil départemental (pas de guichet courant pour l'usager) ; École franco-arabe (elle prend le type de son niveau, « franco-arabe » va dans ses alias). Les 18 lieux publics de `0003` ont reçu leur type (hôpitaux, mairies, DAF, universités, lycée). Les secteurs Électricité, Eau, Télécoms, Transport et les secteurs privés restent à faire. Le type **n'est pas affiché** sous le nom (redondant avec le nom, écarté le 2026-10-02) : on garde commune et secteur.
 
 À quoi sert le type :
 1. **Comparer ce qui est comparable.** Les statistiques et les classements publiés comparent un hôpital à d'autres hôpitaux, pas à un poste de santé.

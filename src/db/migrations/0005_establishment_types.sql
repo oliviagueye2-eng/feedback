@@ -1,9 +1,12 @@
--- Establishment types of the Health, Administration and Education sectors,
--- validated on 2026-10-02. One type per establishment: a school covering
--- several levels is a « Groupe scolaire »; a French-Arabic school takes the
--- type of its level (« franco-arabe » belongs in its aliases). Not kept:
+-- Establishment types of the Health, Administration, Education, Justice,
+-- Security, Tax and Social sectors, validated on 2026-10-02. One type per
+-- establishment: a school covering several levels is a « Groupe scolaire »; a
+-- French-Arabic school takes the type of its level (« franco-arabe » belongs
+-- in its aliases). Not kept:
 -- « Case de santé », « Gouvernance », « Conseil départemental » (no usual
--- counter for users), « École franco-arabe ».
+-- counter for users), « École franco-arabe », prisons (to be discussed with
+-- the organisation running the platform). Courts of every level are one type:
+-- the user's experience at the registry is the same, and the name says which.
 
 INSERT INTO establishment_type (code, sector_id)
 SELECT v.code, s.id
@@ -31,7 +34,26 @@ FROM (VALUES
   ('VOCATIONAL_TRAINING_CENTER', 'EDUCATION'),
   ('DAARA', 'EDUCATION'),
   ('ACADEMY_INSPECTORATE', 'EDUCATION'),
-  ('EDUCATION_INSPECTORATE', 'EDUCATION')
+  ('EDUCATION_INSPECTORATE', 'EDUCATION'),
+  ('COURT', 'JUSTICE'),
+  ('JUSTICE_HOUSE', 'JUSTICE'),
+  ('NOTARY_OFFICE', 'JUSTICE'),
+  ('BAILIFF_OFFICE', 'JUSTICE'),
+  ('LAW_FIRM', 'JUSTICE'),
+  ('POLICE_STATION', 'SECURITY'),
+  ('POLICE_POST', 'SECURITY'),
+  ('GENDARMERIE_BRIGADE', 'SECURITY'),
+  ('TAX_OFFICE', 'TAX'),
+  ('STATE_PROPERTY_OFFICE', 'TAX'),
+  ('CADASTRE_OFFICE', 'TAX'),
+  ('LAND_REGISTRY', 'TAX'),
+  ('CUSTOMS_OFFICE', 'TAX'),
+  ('TREASURY_OFFICE', 'TAX'),
+  ('SOCIAL_SECURITY_OFFICE', 'SOCIAL'),
+  ('LABOUR_INSPECTORATE', 'SOCIAL'),
+  ('EMPLOYMENT_OFFICE', 'SOCIAL'),
+  ('SOCIAL_ACTION_OFFICE', 'SOCIAL'),
+  ('SOCIAL_REINTEGRATION_CENTER', 'SOCIAL')
 ) AS v (code, sector)
 JOIN sector s ON s.code = v.sector;
 
@@ -61,7 +83,26 @@ FROM (VALUES
   ('VOCATIONAL_TRAINING_CENTER', 'Centre de formation professionnelle'),
   ('DAARA', 'Daara'),
   ('ACADEMY_INSPECTORATE', 'Inspection d''académie'),
-  ('EDUCATION_INSPECTORATE', 'Inspection de l''éducation et de la formation (IEF)')
+  ('EDUCATION_INSPECTORATE', 'Inspection de l''éducation et de la formation (IEF)'),
+  ('COURT', 'Tribunal ou cour'),
+  ('JUSTICE_HOUSE', 'Maison de justice'),
+  ('NOTARY_OFFICE', 'Étude de notaire'),
+  ('BAILIFF_OFFICE', 'Étude d''huissier'),
+  ('LAW_FIRM', 'Cabinet d''avocat'),
+  ('POLICE_STATION', 'Commissariat de police'),
+  ('POLICE_POST', 'Poste de police'),
+  ('GENDARMERIE_BRIGADE', 'Brigade de gendarmerie'),
+  ('TAX_OFFICE', 'Centre des services fiscaux'),
+  ('STATE_PROPERTY_OFFICE', 'Service des domaines'),
+  ('CADASTRE_OFFICE', 'Service du cadastre'),
+  ('LAND_REGISTRY', 'Conservation foncière'),
+  ('CUSTOMS_OFFICE', 'Bureau des douanes'),
+  ('TREASURY_OFFICE', 'Perception du Trésor'),
+  ('SOCIAL_SECURITY_OFFICE', 'Agence de sécurité sociale ou de retraite'),
+  ('LABOUR_INSPECTORATE', 'Inspection du travail'),
+  ('EMPLOYMENT_OFFICE', 'Service de l''emploi'),
+  ('SOCIAL_ACTION_OFFICE', 'Service de l''action sociale'),
+  ('SOCIAL_REINTEGRATION_CENTER', 'Centre de promotion et de réinsertion sociale')
 ) AS v (code, label)
 JOIN establishment_type t ON t.code = v.code;
 

@@ -31,7 +31,7 @@ describe("first establishments of the registry", () => {
     expect(rows[0]).toEqual({ n: 20, active_public: 19 });
   });
 
-  it("has the validated types of Health, Administration and Education (0005)", async () => {
+  it("has the validated types of the public sectors (0005)", async () => {
     const { rows } = await db.query<{ sector: string; n: number }>(`
       SELECT s.code AS sector, count(*)::int AS n
       FROM establishment_type t JOIN sector s ON s.id = t.sector_id
@@ -41,6 +41,10 @@ describe("first establishments of the registry", () => {
       { sector: "ADMINISTRATION", n: 5 },
       { sector: "EDUCATION", n: 11 },
       { sector: "HEALTH", n: 8 },
+      { sector: "JUSTICE", n: 5 },
+      { sector: "SECURITY", n: 3 },
+      { sector: "SOCIAL", n: 5 },
+      { sector: "TAX", n: 6 },
       { sector: "TRANSPORT", n: 1 },
     ]);
   });
