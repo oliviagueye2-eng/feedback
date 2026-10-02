@@ -1,5 +1,5 @@
 -- Establishment types of the Health, Administration, Education, Justice,
--- Security, Tax and Social sectors, validated on 2026-10-02. One type per
+-- Security, Tax, Social and Transport sectors, validated on 2026-10-02. One type per
 -- establishment: a school covering several levels is a « Groupe scolaire »; a
 -- French-Arabic school takes the type of its level (« franco-arabe » belongs
 -- in its aliases). Not kept:
@@ -7,6 +7,11 @@
 -- counter for users), « École franco-arabe », prisons (to be discussed with
 -- the organisation running the platform). Courts of every level are one type:
 -- the user's experience at the registry is the same, and the name says which.
+-- Rule: a type exists only to group places not grouped otherwise (no common
+-- organisation, a sector mixing very different places) or to ask questions
+-- of its own. Hence none for Electricity, Water, Telecoms (the organisation
+-- groups its agencies), nor for bus lines, railway stations or ships
+-- (operators and services already cover them).
 
 INSERT INTO establishment_type (code, sector_id)
 SELECT v.code, s.id
@@ -53,7 +58,9 @@ FROM (VALUES
   ('LABOUR_INSPECTORATE', 'SOCIAL'),
   ('EMPLOYMENT_OFFICE', 'SOCIAL'),
   ('SOCIAL_ACTION_OFFICE', 'SOCIAL'),
-  ('SOCIAL_REINTEGRATION_CENTER', 'SOCIAL')
+  ('SOCIAL_REINTEGRATION_CENTER', 'SOCIAL'),
+  ('BUS_STATION', 'TRANSPORT'),
+  ('DRIVING_LICENCE_CENTER', 'TRANSPORT')
 ) AS v (code, sector)
 JOIN sector s ON s.code = v.sector;
 
@@ -102,7 +109,9 @@ FROM (VALUES
   ('LABOUR_INSPECTORATE', 'Inspection du travail'),
   ('EMPLOYMENT_OFFICE', 'Service de l''emploi'),
   ('SOCIAL_ACTION_OFFICE', 'Service de l''action sociale'),
-  ('SOCIAL_REINTEGRATION_CENTER', 'Centre de promotion et de réinsertion sociale')
+  ('SOCIAL_REINTEGRATION_CENTER', 'Centre de promotion et de réinsertion sociale'),
+  ('BUS_STATION', 'Gare routière'),
+  ('DRIVING_LICENCE_CENTER', 'Centre des permis et cartes grises')
 ) AS v (code, label)
 JOIN establishment_type t ON t.code = v.code;
 

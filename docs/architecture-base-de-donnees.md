@@ -118,7 +118,13 @@ Genre de lieu : mairie, centre d'état civil, hôpital, poste de santé, école 
 
 Le libellé affiché passe par sa table de traduction (`*_translation`).
 
-**Un seul type par établissement** (pour comparer ce qui est comparable). Types validés le 2026-10-02 (migration `0005`) :
+**Un seul type par établissement** (pour comparer ce qui est comparable).
+
+**Règle (validée le 2026-10-02) : un type n'existe que s'il apporte quelque chose** que ni le secteur, ni l'organisme, ni le service n'apportent déjà :
+1. regrouper des lieux qui ne le sont pas autrement, pour les comparer (pas d'organisme commun, secteur qui mélange des lieux très différents : hôpital et pharmacie) ;
+2. ou poser des questions propres à ce genre de lieu.
+
+Exemples écartés par la règle : « Agence commerciale » (Senelec regroupe déjà ses agences), « Ligne de bus », « Gare ferroviaire », « Bateau » (l'opérateur regroupe, les services « Un trajet », « Une traversée » posent les questions). Types validés le 2026-10-02 (migration `0005`) :
 
 | Secteur | Types |
 |---|---|
@@ -129,9 +135,10 @@ Le libellé affiché passe par sa table de traduction (`*_translation`).
 | Sécurité | Commissariat de police, Poste de police, Brigade de gendarmerie |
 | Impôts et domaines | Centre des services fiscaux, Service des domaines, Service du cadastre, Conservation foncière, Bureau des douanes, Perception du Trésor |
 | Emploi et protection sociale | Agence de sécurité sociale ou de retraite, Inspection du travail, Service de l'emploi, Service de l'action sociale, Centre de promotion et de réinsertion sociale |
-| Transport | Aéroport |
+| Transport | Aéroport, Gare routière, Centre des permis et cartes grises |
+| Électricité, Eau, Télécoms | aucun : l'organisme (Senelec, Orange…) regroupe déjà ses agences |
 
-Écartés : Case de santé ; établissement pénitentiaire (à voir avec l'organisme porteur) ; Gouvernance et Conseil départemental (pas de guichet courant pour l'usager) ; École franco-arabe (elle prend le type de son niveau, « franco-arabe » va dans ses alias). Les 18 lieux publics de `0003` ont reçu leur type (hôpitaux, mairies, DAF, universités, lycée). Les secteurs Électricité, Eau, Télécoms, Transport et les secteurs privés restent à faire. Le type **n'est pas affiché** sous le nom (redondant avec le nom, écarté le 2026-10-02) : on garde commune et secteur.
+Écartés : Case de santé ; établissement pénitentiaire (à voir avec l'organisme porteur) ; Gouvernance et Conseil départemental (pas de guichet courant pour l'usager) ; École franco-arabe (elle prend le type de son niveau, « franco-arabe » va dans ses alias). Les 18 lieux publics de `0003` ont reçu leur type (hôpitaux, mairies, DAF, universités, lycée). Les secteurs privés restent à faire, avec la même règle. Le type **n'est pas affiché** sous le nom (redondant avec le nom, écarté le 2026-10-02) : on garde commune et secteur.
 
 À quoi sert le type :
 1. **Comparer ce qui est comparable.** Les statistiques et les classements publiés comparent un hôpital à d'autres hôpitaux, pas à un poste de santé.

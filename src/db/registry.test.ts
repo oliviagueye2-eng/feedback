@@ -45,7 +45,7 @@ describe("first establishments of the registry", () => {
       { sector: "SECURITY", n: 3 },
       { sector: "SOCIAL", n: 5 },
       { sector: "TAX", n: 6 },
-      { sector: "TRANSPORT", n: 1 },
+      { sector: "TRANSPORT", n: 3 },
     ]);
   });
 
