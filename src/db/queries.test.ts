@@ -241,6 +241,20 @@ describe("feedback", () => {
     expect(answers).toEqual([{ code: "DISSATISFIED" }]);
   });
 
+  it("asks the essential question again after screen 1 is sent again, not once the feedback is complete", async () => {
+    const id = "7d2e1f40-3b5c-4d7e-8f90-a1b2c3d4e5f6";
+    const body = { channel: "search", establishmentId: ids.gy, language: "fr", visitPeriod: "today" };
+    const essential = async () => (await getEssentialScreen(id)).context.essentialOption ?? null;
+    await upsertFeedback(id, body);
+    await saveAnswer(id, "OVERALL_SATISFACTION", { option: "SATISFIED" });
+    await upsertFeedback(id, body);
+    expect(await essential()).toBeNull();
+    await saveAnswer(id, "OVERALL_SATISFACTION", { option: "SATISFIED" });
+    await completeFeedback(id);
+    await upsertFeedback(id, body);
+    expect(await essential()).toBe("SATISFIED");
+  });
+
   it("gives screen 2 the context and the essential question, in order", async () => {
     const { context, question } = await getEssentialScreen(feedbackId);
     expect(context).toEqual({

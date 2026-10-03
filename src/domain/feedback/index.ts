@@ -20,7 +20,10 @@ export const OTHER_TOPIC_CODE = "OTHER";
 export const TOPIC_SENTIMENTS = ["positive", "negative", "not_concerned"] as const;
 const CHANNELS: readonly Channel[] = ["qr", "search", "link"];
 
-/** Screen 1: creates the feedback, or updates it when the phone sends it again. */
+/**
+ * Screen 1: creates the feedback, or updates it when the phone sends it again
+ * (the answer to the essential question is then cleared).
+ */
 export async function upsertFeedback(
   id: string,
   body: unknown,
@@ -51,6 +54,8 @@ export async function upsertFeedback(
     visitMonth: visitPeriod ? computeVisitMonth(visitPeriod, now) : null,
     startedAt,
   });
+  // Back on screen 1 the visit may have changed: the satisfaction is asked again.
+  await db.clearEssentialAnswer(id);
 }
 
 /** Screens 2 and 6: one answer, saved as soon as it is given. */
