@@ -490,32 +490,54 @@ describe("feedback", () => {
     expect(screen.comment).toBeNull();
   });
 
-  it("gives a high school its own topics, and leaves the university the Education list (0008)", async () => {
+  it("gives a high school the topics of the visit chosen, and the university the Education list (0009)", async () => {
     const [school] = await rows<{ id: string }>("SELECT id FROM establishment WHERE name = 'Lycée Lamine Guèye'");
+    const services = Object.fromEntries((await rows<{ code: string; id: number }>(
+      "SELECT code, id FROM service WHERE code IN ('SCHOOL_ADMIN', 'SCHOOL_LIFE')",
+    )).map((s) => [s.code, s.id]));
     const [university] = await rows<{ id: string }>(
       `INSERT INTO establishment (name, type_id) SELECT 'Université de test', id FROM establishment_type
        WHERE code = 'UNIVERSITY' RETURNING id`,
     );
-    const topicsOf = async (feedback: string, establishmentId: string) => {
-      await upsertFeedback(feedback, { channel: "search", establishmentId, language: "fr", visitPeriod: "today" });
+    const topicsOf = async (feedback: string, establishmentId: string, serviceId?: number) => {
+      await upsertFeedback(feedback, { channel: "search", establishmentId, serviceId, language: "fr", visitPeriod: "today" });
       return (await getDetailsScreen(feedback)).topics.map((t) => t.label);
     };
-    expect(await topicsOf("f6a7b8c9-0000-4000-8000-000000000004", school!.id)).toEqual([
+    expect(await topicsOf("f6a7b8c9-0000-4000-8000-000000000004", school!.id, services.SCHOOL_ADMIN)).toEqual([
       "Accueil et politesse",
       "Professionnalisme du personnel",
+      "Temps d'attente",
+      "Explications reçues",
       "Simplicité de la démarche (papiers, allers-retours)",
+      "Horaires d'ouverture",
       "Frais payés (montant, reçu)",
       "Propreté et confort",
-      "Accès pour tous (personnes handicapées, âgées)",
+      "Accessibilité aux personnes handicapées ou âgées",
+    ]);
+    expect(await topicsOf("f6a7b8c9-0000-4000-8000-000000000006", school!.id, services.SCHOOL_LIFE)).toEqual([
+      "Professionnalisme du personnel",
+      "Propreté et confort",
+      "Accessibilité aux personnes handicapées ou âgées",
       "Qualité de l'enseignement",
       "Encadrement des élèves",
       "Sécurité dans l'établissement",
       "Tables-bancs, matériel et manuels",
       "Échanges avec les enseignants et la direction",
     ]);
-    const atUniversity = await topicsOf("a7b8c9d0-0000-4000-8000-000000000005", university!.id);
-    expect(atUniversity).toContain("Temps d'attente");
-    expect(atUniversity).not.toContain("Sécurité dans l'établissement");
+    // A university keeps what it had: the counter, the papers, the teaching.
+    expect(await topicsOf("a7b8c9d0-0000-4000-8000-000000000005", university!.id)).toEqual([
+      "Accueil et politesse",
+      "Professionnalisme du personnel",
+      "Temps d'attente",
+      "Explications reçues",
+      "Simplicité de la démarche (papiers, allers-retours)",
+      "Horaires d'ouverture",
+      "Frais payés (montant, reçu)",
+      "Propreté et confort",
+      "Accessibilité aux personnes handicapées ou âgées",
+      "Qualité de l'enseignement",
+      "Encadrement des élèves",
+    ]);
   });
 
   it("adds the lists of the type and of the service to the sector's, never removing one", async () => {

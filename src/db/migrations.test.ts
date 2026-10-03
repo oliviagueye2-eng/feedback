@@ -78,7 +78,7 @@ describe("reference data", () => {
       "Horaires d'ouverture",
       "Frais payés (montant, reçu)",
       "Propreté et confort",
-      "Accès pour tous (personnes handicapées, âgées)",
+      "Accessibilité aux personnes handicapées ou âgées",
     ]);
 
     const electricity = (await topicsFor("ELECTRICITY")).map((t) => t.code);
@@ -94,13 +94,13 @@ describe("reference data", () => {
     expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("OPENING_HOURS");
   });
 
-  it("gives every sector a topic list, and opening hours to the transport places (0008)", async () => {
-    const row = await one<{ without_list: number; places: string[] }>(`
-      SELECT (SELECT count(*)::int FROM sector WHERE topic_set_id IS NULL) AS without_list,
+  it("gives every sector but Education a topic list, and opening hours to the transport places (0008, 0009)", async () => {
+    const row = await one<{ without_list: string[]; places: string[] }>(`
+      SELECT (SELECT array_agg(code) FROM sector WHERE topic_set_id IS NULL) AS without_list,
              (SELECT array_agg(code ORDER BY code) FROM (
                 SELECT code, topic_set_id FROM establishment_type UNION ALL SELECT code, topic_set_id FROM service) x
               WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT_PLACE')) AS places`);
-    expect(row).toEqual({ without_list: 0, places: ["AIRPORT", "BUS_STATION", "PLANE_TICKET", "TICKET_PURCHASE"] });
+    expect(row).toEqual({ without_list: ["EDUCATION"], places: ["AIRPORT", "BUS_STATION", "PLANE_TICKET", "TICKET_PURCHASE"] });
   });
 
   it("has the bank of 42 questions (34 of 0004, 5 of 0005, 3 of 0006), each written once, every text in French", async () => {
@@ -135,7 +135,7 @@ describe("reference data", () => {
     });
     expect(await attached("service")).toEqual({
       CIVIL_REGISTRY: null, LAND_TRIP: "LAND_TRIP", BOAT_CROSSING: "BOAT_CROSSING", TICKET_PURCHASE: "TICKET_PURCHASE",
-      FLIGHT: "FLIGHT", PLANE_TICKET: "TICKET_PURCHASE",
+      FLIGHT: "FLIGHT", PLANE_TICKET: "TICKET_PURCHASE", SCHOOL_ADMIN: null, SCHOOL_LIFE: null,
     });
     // Types with a list of their own (0005).
     expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))
