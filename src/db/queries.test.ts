@@ -543,6 +543,57 @@ describe("feedback", () => {
     ]);
   });
 
+  it("gives the police the topics and questions of the visit chosen, at the station or outside (0010)", async () => {
+    const [police] = await rows<{ id: string }>(
+      "SELECT e.id FROM establishment e JOIN organization o ON o.id = e.organization_id WHERE o.code = 'POLICE_NATIONALE'",
+    );
+    const detail = await getEstablishment(police!.id);
+    expect(detail.services.map((s) => s.label)).toEqual([
+      "Un contrôle ou une intervention sur le terrain",
+      "Une démarche dans les locaux",
+    ]);
+    const service = Object.fromEntries(detail.services.map((s) => [s.code, s.id]));
+    const visit = async (feedback: string, serviceId: number) => {
+      await upsertFeedback(feedback, { channel: "search", establishmentId: police!.id, serviceId, language: "fr", visitPeriod: "today" });
+      return {
+        topics: (await getDetailsScreen(feedback)).topics.map((t) => t.label),
+        questions: (await getDetailedQuestionnaire(feedback)).questions.map((q) => q.code),
+      };
+    };
+    expect(await visit("b8c9d0e1-0000-4000-8000-000000000001", service.POLICE_PREMISES!)).toEqual({
+      topics: [
+        "Politesse du personnel (accueil, respect)",
+        "Compétence du personnel (connaît son travail, traite bien la demande)",
+        "Explications du personnel (claires, complètes)",
+        "Respect des droits",
+        "Temps d'attente",
+        "Délai de traitement du dossier",
+        "Simplicité de la démarche (nombre de papiers nécessaires, allers-retours)",
+        "Suivi et transparence du dossier",
+        "Horaires d'ouverture",
+        "Frais payés (montant, reçu)",
+        "Prise en compte de la demande",
+        "Propreté, entretien et confort",
+        "Accessibilité aux personnes handicapées ou âgées",
+      ],
+      questions: [
+        "POLICE_VISIT_REASON", "GOAL_ACHIEVED", "WAIT_TIME", "VISITS_COUNT", "STATEMENT_RECEIPT", "RECEIPT_GIVEN",
+        "REPORTED", "REPORT_WHY",
+      ],
+    });
+    expect(await visit("b8c9d0e1-0000-4000-8000-000000000002", service.POLICE_FIELD!)).toEqual({
+      topics: [
+        "Politesse du personnel (accueil, respect)",
+        "Compétence du personnel (connaît son travail, traite bien la demande)",
+        "Explications du personnel (claires, complètes)",
+        "Respect des droits",
+        "Délai d'intervention",
+        "Prise en compte de la demande",
+      ],
+      questions: ["FIELD_SITUATION", "REASON_EXPLAINED", "ARRIVAL_TIME", "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY"],
+    });
+  });
+
   it("adds the lists of the type and of the service to the sector's, never removing one", async () => {
     await db.exec(`
       INSERT INTO topic_set (code) VALUES ('TEST_TYPE'), ('TEST_SERVICE');

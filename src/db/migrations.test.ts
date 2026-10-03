@@ -112,13 +112,13 @@ describe("reference data", () => {
       .rows.map((r) => r.code)).toEqual(["BOAT_CROSSING", "FLIGHT", "LAND_TRIP"]);
   });
 
-  it("gives every sector but Education a topic list, and opening hours to the transport places (0008, 0009)", async () => {
+  it("gives every sector a topic list, and opening hours to the transport places (0008, 0009, 0010)", async () => {
     const row = await one<{ without_list: string[]; places: string[] }>(`
       SELECT (SELECT array_agg(code) FROM sector WHERE topic_set_id IS NULL) AS without_list,
              (SELECT array_agg(code ORDER BY code) FROM (
                 SELECT code, topic_set_id FROM establishment_type UNION ALL SELECT code, topic_set_id FROM service) x
               WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT_PLACE')) AS places`);
-    expect(row).toEqual({ without_list: ["EDUCATION"], places: ["AIRPORT", "BUS_STATION", "PLANE_TICKET", "TICKET_PURCHASE"] });
+    expect(row).toEqual({ without_list: null, places: ["AIRPORT", "BUS_STATION", "PLANE_TICKET", "TICKET_PURCHASE"] });
   });
 
   it("puts every topic offered and every question that rates the service in a category (0009)", async () => {
@@ -132,14 +132,14 @@ describe("reference data", () => {
     expect(row).toEqual({
       topics: null,
       questions: [
-        "CLASS_SIZE", "OVERALL_SATISFACTION", "PATIENT", "PREPAID_METER", "RECOMMEND", "REPORTED", "REPORT_WHY",
+        "CLASS_SIZE", "FIELD_SITUATION", "OVERALL_SATISFACTION", "PATIENT", "POLICE_VISIT_REASON", "PREPAID_METER", "RECOMMEND", "REPORTED", "REPORT_WHY",
         "RESPONDENT", "TELECOM_SUBJECT", "UTILITY_SUBJECT",
       ],
       order: true,
     });
   });
 
-  it("has the bank of 42 questions (34 of 0004, 5 of 0005, 3 of 0006), each written once, every text in French", async () => {
+  it("has the bank of 47 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -153,7 +153,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 42, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 47, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -172,6 +172,7 @@ describe("reference data", () => {
     expect(await attached("service")).toEqual({
       CIVIL_REGISTRY: null, LAND_TRIP: "LAND_TRIP", BOAT_CROSSING: "BOAT_CROSSING", TICKET_PURCHASE: "TICKET_PURCHASE",
       FLIGHT: "FLIGHT", PLANE_TICKET: "TICKET_PURCHASE", SCHOOL_ADMIN: null, SCHOOL_LIFE: null,
+      POLICE_PREMISES: "POLICE_PREMISES", POLICE_FIELD: "POLICE_FIELD",
     });
     // Types with a list of their own (0005).
     expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))
@@ -183,7 +184,7 @@ describe("reference data", () => {
       `SELECT qs.code AS list FROM question_set_item i
        JOIN question_set qs ON qs.id = i.question_set_id JOIN question q ON q.id = i.question_id
        WHERE q.code = 'WAIT_TIME' ORDER BY qs.code`)).rows.map((r) => r.list);
-    expect(lists).toEqual(["BANKING_INSURANCE", "FILE_SERVICES", "HEALTH", "TICKET_PURCHASE"]);
+    expect(lists).toEqual(["BANKING_INSURANCE", "FILE_SERVICES", "HEALTH", "POLICE_PREMISES", "TICKET_PURCHASE"]);
     const order = (await db.query<{ code: string }>(
       `SELECT q.code FROM question_set_item i
        JOIN question_set qs ON qs.id = i.question_set_id JOIN question q ON q.id = i.question_id
@@ -213,6 +214,9 @@ describe("reference data", () => {
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME UNDER_1_H_LATE",
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME OVER_1_H_LATE",
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME CANCELLED",
+      "POLICE_FIELD: ARRIVAL_TIME ← FIELD_SITUATION CALL_RESPONSE",
+      "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON COMPLAINT",
+      "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON LOSS",
       "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER 1_TO_3",
       "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER 4_TO_10",
       "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER OVER_10",

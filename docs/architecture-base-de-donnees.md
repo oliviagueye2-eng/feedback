@@ -385,7 +385,7 @@ Clé `(question_set_id, question_id, option_id)`. Règle d'affichage et de netto
 | `LAND_TRIP`, `BOAT_CROSSING`, `TICKET_PURCHASE` | les services du transport du même nom |
 | `GENERIC` | secteurs Commerce, Culture, Hôtellerie, Immobilier, Restauration, Sport, Tourisme, et secteur inconnu |
 
-Sans liste : secteur Sécurité (en attente de l'organisme porteur), secteur Transport, type Aéroport, service État civil.
+Ajoutées depuis : `AIRPORT`, `BUS_STATION` (0005), `FLIGHT` (0006), `POLICE_PREMISES` et `POLICE_FIELD` (0010, services de la police et de la gendarmerie). Sans liste : secteurs Sécurité et Transport (les questions viennent du service), service État civil.
 
 ### topic
 Thèmes proposés après la question essentielle (écran 2b), sous « Comment évaluez-vous les points suivants ? ». Pour chaque thème, l'usager peut toucher « Bien » ou « Pas bien », ou ne rien toucher (option D, 2026-09-30) : une visite mitigée se dit (bon accueil, attente trop longue).
@@ -437,8 +437,8 @@ Libellés (dans `topic_translation`) :
 
 Désactivés le 2026-09-30, gardés pour les avis déjà donnés : `PRICE` (Prix), `ACCESSIBILITY` (Accessibilité), `SAFETY` (Sécurité), `SERVICE_QUALITY` (Qualité du service).
 
-### topic_set et topic_set_item (migrations 0008 et 0009)
-Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_set`), décision du 2026-10-03. Ce qu'un avis affiche est **la somme** de listes, jamais un retrait : la liste `COMMON`, puis celle du secteur de l'avis (`GENERIC` si le secteur est inconnu), celle de son type d'établissement et celle de son service, chacune rattachée par une colonne `topic_set_id` sur `sector`, `establishment_type` et `service`. Un thème présent dans plusieurs listes ne s'affiche qu'une fois, dans l'ordre de `topic.position`. Une liste se partage (`FILE_SERVICES` pour quatre secteurs, `OTHER_EDUCATION` pour cinq types). Une école est évaluée sur l'une de deux visites (0009, 2026-10-03), choisie à l'écran 1 : l'inscription ou une démarche au secrétariat, ou la scolarité ; ses thèmes viennent du service choisi. Remplace `topic_sector` (supprimée), où un thème sans ligne était commun à tous.
+### topic_set et topic_set_item (migrations 0008, 0009 et 0010)
+Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_set`), décision du 2026-10-03. Ce qu'un avis affiche est **la somme** de listes, jamais un retrait : la liste `COMMON`, puis celle du secteur de l'avis (`GENERIC` si le secteur est inconnu), celle de son type d'établissement et celle de son service, chacune rattachée par une colonne `topic_set_id` sur `sector`, `establishment_type` et `service`. Un thème présent dans plusieurs listes ne s'affiche qu'une fois, dans l'ordre de `topic.position`. Une liste se partage (`FILE_SERVICES` pour quatre secteurs, `OTHER_EDUCATION` pour cinq types). Une école est évaluée sur l'une de deux visites (0009, 2026-10-03), choisie à l'écran 1 : l'inscription ou une démarche au secrétariat, ou la scolarité ; ses thèmes viennent du service choisi. De même pour la police et la gendarmerie (0010) : une démarche dans les locaux, ou un contrôle ou une intervention sur le terrain. Remplace `topic_sector` (supprimée), où un thème sans ligne était commun à tous.
 
 | Table | Colonnes |
 |---|---|
@@ -447,17 +447,20 @@ Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_
 
 | Liste | Thèmes | Rattachée à |
 |---|---|---|
-| `COMMON` | Professionnalisme, Propreté, entretien et confort, Accessibilité (Accueil et Frais en sont sortis en 0009 : un élève en classe ne passe pas au guichet) | tout le monde |
+| `COMMON` | Professionnalisme (Accueil et Frais en sont sortis en 0009 : un élève en classe ne passe pas au guichet ; Propreté et Accessibilité en 0010 : un contrôle routier n'a pas de locaux ; ils sont dans toutes les autres listes, sauf `SECURITY` et `POLICE_FIELD`) | tout le monde |
 | `GENERIC` | Accueil et politesse, Temps d'attente, Explications reçues, Horaires, Frais payés | secteurs Culture, Restauration, Hôtellerie, Commerce, Sport, Tourisme ; secteur inconnu |
 | `FILE_SERVICES` | Accueil, Temps d'attente, Explications, Simplicité de la démarche, Horaires, Frais, Délai de traitement, Suivi du dossier | secteurs Administration, Justice, Impôts, Social |
-| `SECURITY` | idem + Prise en compte de la demande, Respect des droits | secteur Sécurité |
+| `SECURITY` | Accueil, Explications, Respect des droits, Prise en compte de la demande (ce que partagent les deux visites, 0010) | secteur Sécurité |
+| `POLICE_PREMISES` | Temps d'attente, Délai de traitement, Simplicité, Suivi du dossier, Horaires, Frais, Propreté, Accessibilité | service « Une démarche dans les locaux » (police, gendarmerie) |
+| `POLICE_FIELD` | Délai d'intervention | service « Un contrôle ou une intervention sur le terrain » (police, gendarmerie) |
+| `EDUCATION` | Propreté, entretien et confort, Accessibilité (0010) | secteur Éducation |
 | `BANKING_INSURANCE` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Délai de traitement, Suivi du dossier, Service client | secteur Banques et assurances |
 | `ELECTRICITY` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Coupures de courant, Délai d'intervention, Factures, Service client | secteur Électricité |
 | `WATER` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Coupures d'eau, Qualité de l'eau, Factures, Service client | secteur Eau |
 | `TELECOM` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Qualité du réseau, Factures, Service client | secteur Télécoms |
 | `HEALTH` | Accueil, Temps d'attente, Explications, Horaires, Frais, Soins reçus, Médicaments et examens, Respect de l'intimité | secteur Santé |
 | `REAL_ESTATE` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais | secteur Immobilier |
-| `OTHER_EDUCATION` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Qualité de l'enseignement, Encadrement des élèves | types Université, École supérieure, Formation professionnelle, Maternelle, Daara (le secteur Éducation n'a pas de liste) |
+| `OTHER_EDUCATION` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Qualité de l'enseignement, Encadrement des élèves | types Université, École supérieure, Formation professionnelle, Maternelle, Daara |
 | `SCHOOL_ADMIN` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais | service « Inscription ou démarche administrative » des écoles |
 | `SCHOOL_LIFE` | Qualité de l'enseignement, Encadrement des élèves, Sécurité dans l'établissement, Tables-bancs et manuels, Échanges avec les enseignants et la direction | service « Les cours et la vie de l'école » des écoles |
 | `TRANSPORT` | Accueil, Explications, Frais, Service client | secteur Transport (opérateurs, aéroport, gares routières) |
