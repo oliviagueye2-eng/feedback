@@ -130,7 +130,8 @@ export default async function ResultsPage({ params }: PageProps<"/resultats/[id]
                         ))}
                     </div>
                     <table className={styles.table}>
-                      <thead>
+                      {/* Each row reads on its own (« 14 avis », « 29 % »): the header is for screen readers only. */}
+                      <thead className="visually-hidden">
                         <tr>
                           <th scope="col">{t.answer}</th>
                           <th scope="col">{t.count}</th>
@@ -148,7 +149,7 @@ export default async function ResultsPage({ params }: PageProps<"/resultats/[id]
                                 {o.label}
                               </span>
                             </th>
-                            <td>{o.count}</td>
+                            <td>{plural(t.feedbackCount, o.count)}</td>
                             <td>{o.percent} %</td>
                           </tr>
                         ))}
