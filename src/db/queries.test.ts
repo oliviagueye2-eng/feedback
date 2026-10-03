@@ -241,6 +241,20 @@ describe("feedback", () => {
     expect(answers).toEqual([{ code: "DISSATISFIED" }]);
   });
 
+  it("asks the essential question again after screen 1 is sent again, not once the feedback is complete", async () => {
+    const id = "7d2e1f40-3b5c-4d7e-8f90-a1b2c3d4e5f6";
+    const body = { channel: "search", establishmentId: ids.gy, language: "fr", visitPeriod: "today" };
+    const essential = async () => (await getEssentialScreen(id)).context.essentialOption ?? null;
+    await upsertFeedback(id, body);
+    await saveAnswer(id, "OVERALL_SATISFACTION", { option: "SATISFIED" });
+    await upsertFeedback(id, body);
+    expect(await essential()).toBeNull();
+    await saveAnswer(id, "OVERALL_SATISFACTION", { option: "SATISFIED" });
+    await completeFeedback(id);
+    await upsertFeedback(id, body);
+    expect(await essential()).toBe("SATISFIED");
+  });
+
   it("gives screen 2 the context and the essential question, in order", async () => {
     const { context, question } = await getEssentialScreen(feedbackId);
     expect(context).toEqual({
@@ -504,14 +518,14 @@ describe("feedback", () => {
     expect(screen.comment).toBeNull();
   });
 
-  it("gives a high school the topics of the visit chosen, and the university the Education list (0009)", async () => {
+  it("gives a high school the topics and questions of the visit chosen, and the university the Education lists (0009, 0014)", async () => {
     const [school] = await rows<{ id: string }>("SELECT id FROM establishment WHERE name = 'Lycée Lamine Guèye'");
     const services = Object.fromEntries((await rows<{ code: string; id: number }>(
       "SELECT code, id FROM service WHERE code IN ('SCHOOL_ADMIN', 'SCHOOL_LIFE')",
     )).map((s) => [s.code, s.id]));
     const [university] = await rows<{ id: string }>(
-      `INSERT INTO establishment (name, type_id) SELECT 'Université de test', id FROM establishment_type
-       WHERE code = 'UNIVERSITY' RETURNING id`,
+      `INSERT INTO establishment (name, type_id) SELECT 'Centre de formation de test', id FROM establishment_type
+       WHERE code = 'VOCATIONAL_TRAINING_CENTER' RETURNING id`,
     );
     const topicsOf = async (feedback: string, establishmentId: string, serviceId?: number) => {
       await upsertFeedback(feedback, { channel: "search", establishmentId, serviceId, language: "fr", visitPeriod: "today" });
@@ -538,7 +552,7 @@ describe("feedback", () => {
       "Sécurité dans l'établissement",
       "Tables-bancs, matériel et manuels",
     ]);
-    // A university keeps what it had: the counter, the papers, the teaching.
+    // A training centre keeps what it had: the counter, the papers, the teaching.
     expect(await topicsOf("a7b8c9d0-0000-4000-8000-000000000005", university!.id)).toEqual([
       "Politesse du personnel (accueil, respect)",
       "Compétence du personnel (connaît son travail, traite bien la demande)",
@@ -552,6 +566,76 @@ describe("feedback", () => {
       "Propreté, entretien et confort",
       "Accessibilité aux personnes handicapées ou âgées",
     ]);
+    // The questions follow the visit too (0014): the classes only for the school year.
+    const questionsOf = async (feedback: string) =>
+      (await getDetailedQuestionnaire(feedback)).questions.map((q) => q.code);
+    expect(await questionsOf("f6a7b8c9-0000-4000-8000-000000000004")).toEqual([
+      "RESPONDENT", "GOAL_ACHIEVED", "VISITS_COUNT", "WAIT_TIME", "DOCUMENTS_KNOWN", "PAID_SOMETHING", "RECEIPT_GIVEN",
+      "REPORTED", "REPORT_WHY",
+    ]);
+    expect(await questionsOf("f6a7b8c9-0000-4000-8000-000000000006")).toEqual([
+      "RESPONDENT", "CLASSES_HELD", "CLASS_SIZE", "FACILITIES", "REPORTED", "REPORT_WHY",
+    ]);
+    expect(await questionsOf("a7b8c9d0-0000-4000-8000-000000000005")).toEqual([
+      "RESPONDENT", "CLASSES_HELD", "CLASS_SIZE", "FACILITIES", "PAID_SOMETHING", "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY",
+    ]);
+  });
+
+  it("gives a university the topics of the visit chosen and the schools' questions (0015)", async () => {
+    const [university] = await rows<{ id: string }>(
+      `INSERT INTO establishment (name, type_id) SELECT 'Université de test', id FROM establishment_type
+       WHERE code = 'UNIVERSITY' RETURNING id`,
+    );
+    const services = Object.fromEntries((await rows<{ code: string; id: number }>(
+      "SELECT code, id FROM service WHERE code IN ('HIGHER_EDUCATION_ADMIN', 'HIGHER_EDUCATION_COURSES')",
+    )).map((s) => [s.code, s.id]));
+    await rows(
+      "INSERT INTO establishment_service (establishment_id, service_id) SELECT $1, unnest($2::int[])",
+      [university!.id, Object.values(services)],
+    );
+    expect((await getEstablishment(university!.id)).services.map((s) => s.label)).toEqual([
+      "Inscription ou démarche administrative",
+      "Les cours et les examens",
+    ]);
+    const visit = async (feedback: string, serviceId: number) => {
+      await upsertFeedback(feedback, { channel: "search", establishmentId: university!.id, serviceId, language: "fr", visitPeriod: "today" });
+      return {
+        topics: (await getDetailsScreen(feedback)).topics.map((t) => t.label),
+        questions: (await getDetailedQuestionnaire(feedback)).questions.map((q) => q.code),
+      };
+    };
+    expect(await visit("c9d0e1f2-0000-4000-8000-000000000001", services.HIGHER_EDUCATION_ADMIN!)).toEqual({
+      topics: [
+        "Politesse du personnel (accueil, respect)",
+        "Compétence du personnel (connaît son travail, traite bien la demande)",
+        "Explications du personnel (claires, complètes)",
+        "Temps d'attente",
+        "Délai de traitement du dossier",
+        "Simplicité de la démarche (nombre de papiers nécessaires, allers-retours)",
+        "Suivi et transparence du dossier",
+        "Horaires d'ouverture",
+        "Frais payés (montant, reçu)",
+        "Propreté, entretien et confort",
+        "Accessibilité aux personnes handicapées ou âgées",
+      ],
+      questions: [
+        "RESPONDENT", "GOAL_ACHIEVED", "VISITS_COUNT", "WAIT_TIME", "DOCUMENTS_KNOWN", "PAID_SOMETHING", "RECEIPT_GIVEN",
+        "REPORTED", "REPORT_WHY",
+      ],
+    });
+    expect(await visit("c9d0e1f2-0000-4000-8000-000000000002", services.HIGHER_EDUCATION_COURSES!)).toEqual({
+      topics: [
+        "Compétence du personnel (connaît son travail, traite bien la demande)",
+        "Encadrement des élèves",
+        "Échanges avec les enseignants et la direction",
+        "Respect du calendrier (examens, publication des notes)",
+        "Qualité de l'enseignement",
+        "Propreté, entretien et confort",
+        "Accessibilité aux personnes handicapées ou âgées",
+        "Sécurité dans l'établissement",
+      ],
+      questions: ["RESPONDENT", "CLASSES_HELD", "CLASS_SIZE", "FACILITIES", "REPORTED", "REPORT_WHY"],
+    });
   });
 
   it("gives the police the topics and questions of the visit chosen: at the station, a check or a call (0010, 0013)", async () => {

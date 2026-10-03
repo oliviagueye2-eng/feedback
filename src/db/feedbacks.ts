@@ -604,6 +604,20 @@ export async function deleteAnswerByCode(feedbackId: string, questionCode: strin
   );
 }
 
+/**
+ * Screen 1 sent again (« Précédent » from screen 2, then « Commencer »): the
+ * essential question starts empty again, unless the feedback is complete.
+ */
+export async function clearEssentialAnswer(feedbackId: string): Promise<void> {
+  await query(
+    `DELETE FROM answer a
+     USING feedback f, question q
+     WHERE a.feedback_id = $1 AND f.id = a.feedback_id AND f.step <> 'completed'
+       AND q.id = a.question_id AND q.code = 'OVERALL_SATISFACTION'`,
+    [feedbackId],
+  );
+}
+
 /** Removes this feedback's answers to these questions (answers that no longer apply). */
 export async function deleteAnswers(feedbackId: string, questionIds: number[]): Promise<void> {
   if (questionIds.length === 0) return;

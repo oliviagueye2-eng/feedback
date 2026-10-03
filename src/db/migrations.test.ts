@@ -172,12 +172,16 @@ describe("reference data", () => {
     });
     expect(await attached("service")).toEqual({
       CIVIL_REGISTRY: null, LAND_TRIP: "LAND_TRIP", BOAT_CROSSING: "BOAT_CROSSING", TICKET_PURCHASE: "TICKET_PURCHASE",
-      FLIGHT: "FLIGHT", PLANE_TICKET: "TICKET_PURCHASE", SCHOOL_ADMIN: null, SCHOOL_LIFE: null,
+      FLIGHT: "FLIGHT", PLANE_TICKET: "TICKET_PURCHASE", SCHOOL_ADMIN: "SCHOOL_ADMIN", SCHOOL_LIFE: "SCHOOL_LIFE",
       POLICE_PREMISES: "POLICE_PREMISES", POLICE_FIELD: "POLICE_FIELD", POLICE_CALL: "POLICE_CALL",
+      HIGHER_EDUCATION_ADMIN: "SCHOOL_ADMIN", HIGHER_EDUCATION_COURSES: "SCHOOL_LIFE",
     });
-    // Types with a list of their own (0005).
+    // Types with a list of their own (0005), and the education places without services (0014, 0015).
     expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))
-      .toEqual({ AIRPORT: "AIRPORT", BUS_STATION: "BUS_STATION", DRIVING_LICENCE_CENTER: "FILE_SERVICES" });
+      .toEqual({
+        AIRPORT: "AIRPORT", BUS_STATION: "BUS_STATION", DRIVING_LICENCE_CENTER: "FILE_SERVICES",
+        VOCATIONAL_TRAINING_CENTER: "OTHER_EDUCATION", PRESCHOOL: "OTHER_EDUCATION", DAARA: "OTHER_EDUCATION",
+      });
   });
 
   it("puts the same question, not a copy, in every list that asks it", async () => {
@@ -185,7 +189,7 @@ describe("reference data", () => {
       `SELECT qs.code AS list FROM question_set_item i
        JOIN question_set qs ON qs.id = i.question_set_id JOIN question q ON q.id = i.question_id
        WHERE q.code = 'WAIT_TIME' ORDER BY qs.code`)).rows.map((r) => r.list);
-    expect(lists).toEqual(["BANKING_INSURANCE", "FILE_SERVICES", "HEALTH", "POLICE_PREMISES", "TICKET_PURCHASE"]);
+    expect(lists).toEqual(["BANKING_INSURANCE", "FILE_SERVICES", "HEALTH", "POLICE_PREMISES", "SCHOOL_ADMIN", "TICKET_PURCHASE"]);
     const order = (await db.query<{ code: string }>(
       `SELECT q.code FROM question_set_item i
        JOIN question_set qs ON qs.id = i.question_set_id JOIN question q ON q.id = i.question_id
@@ -209,7 +213,6 @@ describe("reference data", () => {
       "COMMON: REPORTED ← OVERALL_SATISFACTION DISSATISFIED",
       "COMMON: REPORTED ← OVERALL_SATISFACTION VERY_DISSATISFIED",
       "COMMON: REPORT_WHY ← REPORTED NO",
-      "EDUCATION: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT 1_TO_3",
       "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT 4_TO_10",
       "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT OVER_10",
@@ -222,10 +225,12 @@ describe("reference data", () => {
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME CANCELLED",
       "GENERIC: RECEIPT_OR_INVOICE ← PAID_SOMETHING YES",
       "HEALTH: RECEIPT_GIVEN ← PAID_SOMETHING YES",
+      "OTHER_EDUCATION: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_FIELD: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_PREMISES: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON COMPLAINT",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON LOSS",
+      "SCHOOL_ADMIN: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER 1_TO_3",
       "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER 4_TO_10",
       "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER OVER_10",
@@ -248,7 +253,7 @@ describe("reference data", () => {
        JOIN question_set_item p ON p.question_set_id = i.question_set_id AND p.position = i.position - 1
        JOIN question pq ON pq.id = p.question_id
        WHERE dq.code IN ('PAID_SOMETHING', 'INTERVENTION_AWAITED')`)).rows;
-    expect(before).toHaveLength(7);
+    expect(before).toHaveLength(8);
     expect(before.every((r) => ["PAID_SOMETHING", "INTERVENTION_AWAITED"].includes(r.previous))).toBe(true);
     // A real service keeps its French label (then its synonyms) in its search_text.
     expect((await one<{ search_text: string }>(

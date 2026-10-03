@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../db/feedbacks", () => ({
   upsertFeedback: vi.fn(),
+  clearEssentialAnswer: vi.fn(),
   upsertAnswer: vi.fn(),
   replaceTopics: vi.fn(),
   upsertComment: vi.fn(),
