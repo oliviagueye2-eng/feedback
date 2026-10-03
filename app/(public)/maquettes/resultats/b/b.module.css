@@ -1,0 +1,384 @@
+/* MAQUETTE B « Le relevé » : une fiche comme le ticket de l'accueil. */
+
+.main {
+  background: var(--page);
+}
+
+.page {
+  max-width: 860px;
+  padding-top: 26px;
+  padding-bottom: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.sheet {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--ticket-line);
+  border-radius: 6px;
+}
+
+.sheetMain {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px 6px 0 0;
+  padding: 16px 20px 8px;
+}
+
+.sheetMain > :not(.watermark) {
+  position: relative;
+}
+
+.watermark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 120px;
+  height: 120px;
+  opacity: 0.22;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    var(--flag-green) 0 16%,
+    transparent 16% 22%,
+    var(--flag-yellow) 22% 38%,
+    transparent 38% 44%,
+    var(--flag-red) 44% 60%,
+    transparent 60%
+  );
+}
+
+.sheetHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.sheetHead strong {
+  color: var(--ink);
+  font-size: 15px;
+  text-align: right;
+}
+
+/* Nom à gauche, tampon à droite, sans chevauchement. */
+.identity {
+  position: relative;
+  margin-top: 30px;
+  min-height: 92px;
+}
+
+.sheetMain h1 {
+  margin: 0 0 2px;
+  max-width: calc(100% - 150px);
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.details {
+  margin: 0;
+  max-width: calc(100% - 150px);
+}
+
+/* Le tampon, comme à l'écran « Merci » : il donne la date de publication. */
+.stamp {
+  position: absolute;
+  right: 0;
+  top: 6px;
+  transform: rotate(-9deg);
+  border: 3px solid var(--green);
+  outline: 1.5px solid var(--green);
+  outline-offset: 3px;
+  border-radius: 4px;
+  padding: 6px 12px 5px;
+  color: var(--green);
+  text-align: center;
+  opacity: 0.88;
+  font-weight: 700;
+}
+
+.stamp strong {
+  display: block;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stamp span {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.stampWaiting {
+  color: var(--control);
+  border-color: var(--control);
+  outline-color: var(--control);
+}
+
+.stampWaiting strong {
+  font-size: 15px;
+}
+
+/* ---- Sections ---- */
+
+.section {
+  padding: 22px 0 14px;
+  border-top: 1px solid var(--line);
+  margin-top: 22px;
+}
+
+.section h2 {
+  margin: 0 0 8px;
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+.section p {
+  margin: 0 0 10px;
+}
+
+.headline {
+  font-size: 18px;
+}
+
+.headline strong {
+  font-size: 22px;
+}
+
+/* Barre empilée : un morceau par réponse, séparés de 2 px. */
+.stack {
+  display: flex;
+  gap: 2px;
+  height: 22px;
+  margin: 6px 0 12px;
+}
+
+.stack span:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.stack span:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line-light);
+  text-align: right;
+}
+
+.table thead th {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted);
+  border-bottom-color: var(--line);
+}
+
+.table th:first-child {
+  text-align: left;
+}
+
+.table tbody th {
+  font-weight: 400;
+}
+
+.table td {
+  width: 18%;
+  white-space: nowrap;
+  padding-left: 10px;
+}
+
+.face {
+  width: 22px;
+  height: 22px;
+  vertical-align: -6px;
+  margin-right: 8px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  margin: 0 0 6px;
+  padding: 0;
+  list-style: none;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend i {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+/* ---- Thèmes : barres de part et d'autre d'un axe ---- */
+
+.divergingHead {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.divergingHead span:first-child {
+  text-align: right;
+  padding-right: 10px;
+}
+
+.divergingHead span:last-child {
+  padding-left: 10px;
+}
+
+.diverging {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.diverging li {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  row-gap: 4px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line-light);
+}
+
+.topicLabel {
+  grid-column: 1 / -1;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.sideBad,
+.sideGood {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 18px;
+}
+
+.sideBad {
+  justify-content: flex-end;
+  border-right: 2px solid var(--ink);
+  padding-right: 2px;
+}
+
+.sideGood {
+  padding-left: 2px;
+}
+
+.barBad,
+.barGood {
+  height: 14px;
+}
+
+.barBad {
+  background: var(--satisfaction-5);
+  border-radius: 4px 0 0 4px;
+}
+
+.barGood {
+  background: var(--satisfaction-1);
+  border-radius: 0 4px 4px 0;
+}
+
+.num {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 2ch;
+}
+
+.sideBad .num {
+  text-align: right;
+}
+
+/* ---- Talon ---- */
+
+.tear {
+  height: 24px;
+  background: repeating-linear-gradient(90deg, var(--ticket-line) 0 6px, transparent 6px 12px)
+    center / calc(100% - 36px) 2px no-repeat;
+}
+
+.stub {
+  padding: 8px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.stub p {
+  margin: 0;
+  font-size: 15px;
+}
+
+@media (min-width: 900px) {
+  .page {
+    padding-top: 40px;
+  }
+
+  .sheetMain {
+    padding: 22px 40px 12px;
+  }
+
+  .sheetMain h1 {
+    font-size: 36px;
+  }
+
+  .identity {
+    margin-top: 36px;
+  }
+
+  .stamp strong {
+    font-size: 26px;
+  }
+
+  .diverging li {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .topicLabel {
+    grid-column: auto;
+  }
+
+  .divergingHead {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .divergingHead::before {
+    content: "";
+  }
+
+  .stub {
+    padding: 8px 40px 28px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 28px;
+  }
+
+  .stub .btn {
+    width: auto;
+  }
+}
