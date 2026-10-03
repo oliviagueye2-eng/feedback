@@ -194,6 +194,10 @@ export const fr = {
     stampPublished: "Publié",
     stampWaiting: "En attente",
     stampCount: "{count} avis sur {threshold}",
+    /** Short label as the title, the exact question asked under it (her choice, 2026-10-03). */
+    satisfactionTitle: "Satisfaction",
+    goalTitle: "Démarche aboutie",
+    askedQuestion: "Question posée : « {question} »",
     /** The figure stands apart, in large type, with a short label (her choice, 2026-10-03). */
     satisfiedPercent: "{percent} %",
     satisfiedLabel: "d'usagers satisfaits ou très satisfaits",

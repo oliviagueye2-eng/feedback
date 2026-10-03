@@ -112,7 +112,10 @@ export default async function ResultsPage({ params }: PageProps<"/resultats/[id]
               ) : (
                 <>
                   <section className={styles.section} aria-labelledby="satisfaction">
-                    <h2 id="satisfaction">{results.satisfaction.label}</h2>
+                    <h2 id="satisfaction">{t.satisfactionTitle}</h2>
+                    <p className={`muted ${styles.question}`}>
+                      {fill(t.askedQuestion, { question: results.satisfaction.label })}
+                    </p>
                     <p className={styles.headline}>
                       <strong>{fill(t.satisfiedPercent, { percent: results.satisfiedPercent })}</strong>
                       <span>{t.satisfiedLabel}</span>
@@ -157,7 +160,8 @@ export default async function ResultsPage({ params }: PageProps<"/resultats/[id]
 
                   {results.goals.map((goal) => (
                     <section key={goal.code} className={styles.section} aria-labelledby={`goal-${goal.code}`}>
-                      <h2 id={`goal-${goal.code}`}>{goal.label}</h2>
+                      <h2 id={`goal-${goal.code}`}>{t.goalTitle}</h2>
+                      <p className={`muted ${styles.question}`}>{fill(t.askedQuestion, { question: goal.label })}</p>
                       <div className={styles.stack} aria-hidden="true">
                         {goal.options
                           .filter((o) => o.count > 0)
