@@ -42,6 +42,13 @@ export const fr = {
   footer: {
     privacy: "Aucune donnée personnelle n'est demandée aux usagers.",
     purpose: "Une plateforme au service de la transparence et de la bonne gouvernance.",
+    followUs: "Suivez-nous",
+    /** Read by screen readers on each icon (the page opens in a new tab). */
+    networks: {
+      facebook: "NeexNaxari sur Facebook (nouvel onglet)",
+      instagram: "NeexNaxari sur Instagram (nouvel onglet)",
+      tiktok: "NeexNaxari sur TikTok (nouvel onglet)",
+    },
   },
 
   intro: {

@@ -240,6 +240,35 @@ select:focus-visible {
   line-height: 1.45;
 }
 
+.site-footer-social ul {
+  display: flex;
+  gap: 8px;
+  /* -10px: the first icon lines up with the text, its touch target overflows. */
+  margin: 6px 0 0 -10px;
+  padding: 0;
+  list-style: none;
+}
+
+/* 44 px touch targets around 24 px icons. */
+.site-footer-social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  color: #fff;
+}
+
+/* The default focus ring is the footer's own colour: white here. */
+.site-footer-social a:focus-visible {
+  outline-color: #fff;
+}
+
+.site-footer-social a:hover {
+  background: rgb(255 255 255 / 0.12);
+}
+
 @media (min-width: 900px) {
   .flag {
     height: 6px;

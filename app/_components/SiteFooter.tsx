@@ -1,4 +1,5 @@
 import { getDictionary } from "../_i18n";
+import { SocialLinks } from "./SocialLinks";
 
 export async function SiteFooter() {
   const { footer: t, header } = await getDictionary();
@@ -24,6 +25,7 @@ export async function SiteFooter() {
           <p>{t.privacy}</p>
           <p>{t.purpose}</p>
         </div>
+        <SocialLinks />
       </div>
     </footer>
   );
