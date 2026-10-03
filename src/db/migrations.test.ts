@@ -57,7 +57,7 @@ describe("reference data", () => {
     expect(row).toEqual({ sector: "ADMINISTRATION", question_set: "FILE_SERVICES" });
   });
 
-  it("shows the common list plus the sector's list, « Autre » last (0008)", async () => {
+  it("shows the common list plus the sector's list, without « Autre » (0008)", async () => {
     // A sector alone (no type, no service): the COMMON list plus the sector's list.
     const topicsFor = async (sector: string) =>
       (await db.query<{ code: string; label: string }>(`
@@ -79,17 +79,16 @@ describe("reference data", () => {
       "Frais payés (montant, reçu)",
       "Propreté et confort",
       "Accès pour tous (personnes handicapées, âgées)",
-      "Autre",
     ]);
 
     const electricity = (await topicsFor("ELECTRICITY")).map((t) => t.code);
-    expect(electricity).toHaveLength(14);
-    expect(electricity.slice(9)).toEqual(["POWER_CUTS", "INTERVENTION_TIME", "BILLING", "CUSTOMER_SERVICE", "OTHER"]);
+    expect(electricity).toHaveLength(13);
+    expect(electricity.slice(9)).toEqual(["POWER_CUTS", "INTERVENTION_TIME", "BILLING", "CUSTOMER_SERVICE"]);
     expect((await topicsFor("BANKING_INSURANCE")).map((t) => t.code).slice(9)).toEqual([
-      "PROCESSING_TIME", "CASE_TRACKING", "CUSTOMER_SERVICE", "OTHER",
+      "PROCESSING_TIME", "CASE_TRACKING", "CUSTOMER_SERVICE",
     ]);
     // « Simplicité de la démarche » only where there are papers.
-    expect(await topicsFor("HEALTH")).toHaveLength(12);
+    expect(await topicsFor("HEALTH")).toHaveLength(11);
     expect((await topicsFor("ADMINISTRATION")).map((t) => t.code)).toContain("PROCEDURE");
     // A trip has no opening hours: the transport places add them (TRANSPORT_PLACE).
     expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("OPENING_HOURS");

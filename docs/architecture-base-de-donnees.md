@@ -432,7 +432,7 @@ Libellés (dans `topic_translation`) :
 | `SCHOOL_SAFETY` | Sécurité dans l'établissement (2026-10-03) |
 | `SCHOOL_EQUIPMENT` | Tables-bancs, matériel et manuels (2026-10-03) |
 | `PARENT_COMMUNICATION` | Échanges avec les enseignants et la direction (2026-10-03) |
-| `OTHER` | Autre (toujours en dernier) |
+| `OTHER` | Autre (plus proposé depuis 0008 : seul, il ne dit rien ; gardé pour les avis passés) |
 
 Désactivés le 2026-09-30, gardés pour les avis déjà donnés : `PRICE` (Prix), `ACCESSIBILITY` (Accessibilité), `SAFETY` (Sécurité), `SERVICE_QUALITY` (Qualité du service).
 
@@ -446,7 +446,7 @@ Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_
 
 | Liste | Thèmes | Rattachée à |
 |---|---|---|
-| `COMMON` | Accueil et politesse, Professionnalisme, Frais payés, Propreté et confort, Accès pour tous, Autre | tout le monde |
+| `COMMON` | Accueil et politesse, Professionnalisme, Frais payés, Propreté et confort, Accès pour tous | tout le monde |
 | `GENERIC` | Temps d'attente, Explications reçues, Horaires | secteurs Culture, Restauration, Hôtellerie, Commerce, Sport, Tourisme ; types Université, École supérieure, Formation professionnelle, Maternelle, Daara ; secteur inconnu |
 | `FILE_SERVICES` | Temps d'attente, Explications, Simplicité de la démarche, Horaires, Délai de traitement, Suivi du dossier | secteurs Administration, Justice, Impôts, Social |
 | `SECURITY` | idem + Prise en compte de la demande, Respect des droits | secteur Sécurité |
@@ -530,7 +530,7 @@ Thèmes touchés par l'usager, une ligne par thème, avec leur sens (`positive` 
 | feedback_id | fk | |
 | topic_id | fk | |
 | sentiment | enum | `positive` (« Bien ») ou `negative` (« Pas bien ») |
-| other_text | text | seulement pour le thème `OTHER` : le thème précisé par l'usager en quelques mots (« Parking »), 50 caractères au plus |
+| other_text | text | seulement pour le thème `OTHER` (avis passés, plus proposé depuis 0008) : le thème précisé par l'usager en quelques mots (« Parking »), 50 caractères au plus |
 
 Clé unique `(feedback_id, topic_id)`.
 

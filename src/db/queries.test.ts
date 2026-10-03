@@ -425,7 +425,7 @@ describe("feedback", () => {
     // And the GENERIC topics: the common ones plus those of a counter.
     expect((await getDetailsScreen(unknown)).topics.map((t) => t.code)).toEqual([
       "STAFF", "PROFESSIONALISM", "WAIT_TIME", "INFORMATION", "OPENING_HOURS", "FEES", "CLEANLINESS",
-      "ACCESS_FOR_ALL", "OTHER",
+      "ACCESS_FOR_ALL",
     ]);
   });
 
@@ -433,13 +433,13 @@ describe("feedback", () => {
     await saveTopics(feedbackId, {
       topics: [
         { code: "WAIT_TIME", sentiment: "negative" },
-        { code: "OTHER", sentiment: "negative", otherText: "Parking" },
+        { code: "CLEANLINESS", sentiment: "negative" },
       ],
     });
     await saveTopics(feedbackId, {
       topics: [
         { code: "STAFF", sentiment: "positive" },
-        { code: "OTHER", sentiment: "negative", otherText: "Toilettes" },
+        { code: "FEES", sentiment: "negative" },
       ],
     });
     const topics = await rows(
@@ -448,7 +448,7 @@ describe("feedback", () => {
       [feedbackId],
     );
     expect(topics).toEqual([
-      { code: "OTHER", sentiment: "negative", other_text: "Toilettes" },
+      { code: "FEES", sentiment: "negative", other_text: null },
       { code: "STAFF", sentiment: "positive", other_text: null },
     ]);
   });
@@ -468,11 +468,11 @@ describe("feedback", () => {
     const screen = await getDetailsScreen(feedbackId);
     expect(screen.answer).toMatchObject({ code: "DISSATISFIED", followUpPrompt: "Que s'est-il passé ?" });
     const codes = screen.topics.map((t) => t.code);
-    expect(codes).toHaveLength(12);
-    expect(codes.slice(9)).toEqual(["PROCESSING_TIME", "CASE_TRACKING", "OTHER"]);
+    expect(codes).toHaveLength(11);
+    expect(codes.slice(9)).toEqual(["PROCESSING_TIME", "CASE_TRACKING"]);
     expect(screen.topics.filter((t) => t.sentiment).map((t) => [t.code, t.sentiment, t.otherText])).toEqual([
       ["STAFF", "positive", null],
-      ["OTHER", "negative", "Toilettes"],
+      ["FEES", "negative", null],
     ]);
     expect(screen.comment).toBe("Deux heures d'attente, guichet fermé.");
   });
@@ -512,7 +512,6 @@ describe("feedback", () => {
       "Sécurité dans l'établissement",
       "Tables-bancs, matériel et manuels",
       "Échanges avec les enseignants et la direction",
-      "Autre",
     ]);
     const atUniversity = await topicsOf("a7b8c9d0-0000-4000-8000-000000000005", university!.id);
     expect(atUniversity).toContain("Temps d'attente");
@@ -622,7 +621,7 @@ describe("published results", () => {
     expect(results.goals.map((g) => [g.code, g.total, g.options[0]!.code, g.options[0]!.percent])).toEqual([
       ["CARE_RECEIVED", 10, "YES", 100],
     ]);
-    // « Autre » is never published.
+    // « Autre » (offered before 0008) is never published.
     expect(results.topics.map((t) => [t.code, t.positive, t.negative])).toEqual([
       ["STAFF", 3, 0],
       ["WAIT_TIME", 0, 2],

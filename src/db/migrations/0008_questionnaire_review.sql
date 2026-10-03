@@ -35,7 +35,7 @@ JOIN topic t ON t.code = v.code;
 -- the COMMON list, then the list of its sector, of its establishment type and
 -- of its service (topic_set_id on each, like question_set_id). GENERIC when
 -- the sector is unknown. A topic in several lists shows once, in the order of
--- topic.position (« Autre » last). A list can be shared: SCHOOL is written
+-- topic.position. A list can be shared: SCHOOL is written
 -- once for four types, FILE_SERVICES for four sectors.
 -- Replaces topic_sector (a topic without rows was common to all), with the
 -- same topics as validated: « Simplicité de la démarche » only where there
@@ -64,9 +64,10 @@ INSERT INTO topic_set (code) VALUES
 INSERT INTO topic_set_item (topic_set_id, topic_id)
 SELECT s.id, t.id
 FROM (VALUES
-  -- For everyone.
+  -- For everyone. No « Autre » (validated on 2026-10-03): alone it says
+  -- nothing, and « Détail de votre expérience » takes any other point.
   ('COMMON', 'STAFF'), ('COMMON', 'PROFESSIONALISM'), ('COMMON', 'FEES'),
-  ('COMMON', 'CLEANLINESS'), ('COMMON', 'ACCESS_FOR_ALL'), ('COMMON', 'OTHER'),
+  ('COMMON', 'CLEANLINESS'), ('COMMON', 'ACCESS_FOR_ALL'),
   -- A counter: shops, restaurants, hotels, culture, sport, tourism, the
   -- other education places, and a sector unknown.
   ('GENERIC', 'WAIT_TIME'), ('GENERIC', 'INFORMATION'), ('GENERIC', 'OPENING_HOURS'),
