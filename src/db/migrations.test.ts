@@ -72,7 +72,7 @@ describe("reference data", () => {
 
     expect((await topicsFor("RETAIL")).map((t) => t.label)).toEqual([
       "Accueil et politesse",
-      "Professionnalisme du personnel",
+      "Compétence du personnel (connaît son travail, traite bien la demande)",
       "Explications du personnel (claires, complètes)",
       "Temps d'attente",
       "Horaires d'ouverture",

@@ -403,7 +403,7 @@ Libellés (dans `topic_translation`) :
 | code | Libellé |
 |---|---|
 | `STAFF` | Accueil et politesse |
-| `PROFESSIONALISM` | Professionnalisme du personnel |
+| `PROFESSIONALISM` | Compétence du personnel (connaît son travail, traite bien la demande) (2026-10-03, ex-« Professionnalisme du personnel ») |
 | `WAIT_TIME` | Temps d'attente |
 | `INFORMATION` | Explications du personnel (claires, complètes) (2026-10-03 : ce que l'agent a dit) |
 | `PROCEDURE` | Simplicité de la démarche (nombre de papiers nécessaires, allers-retours) (2026-10-03 : la règle elle-même) |

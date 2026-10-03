@@ -508,7 +508,7 @@ describe("feedback", () => {
     };
     expect(await topicsOf("f6a7b8c9-0000-4000-8000-000000000004", school!.id, services.SCHOOL_ADMIN)).toEqual([
       "Accueil et politesse",
-      "Professionnalisme du personnel",
+      "Compétence du personnel (connaît son travail, traite bien la demande)",
       "Explications du personnel (claires, complètes)",
       "Temps d'attente",
       "Simplicité de la démarche (nombre de papiers nécessaires, allers-retours)",
@@ -518,7 +518,7 @@ describe("feedback", () => {
       "Accessibilité aux personnes handicapées ou âgées",
     ]);
     expect(await topicsOf("f6a7b8c9-0000-4000-8000-000000000006", school!.id, services.SCHOOL_LIFE)).toEqual([
-      "Professionnalisme du personnel",
+      "Compétence du personnel (connaît son travail, traite bien la demande)",
       "Encadrement des élèves",
       "Échanges avec les enseignants et la direction",
       "Qualité de l'enseignement",
@@ -530,7 +530,7 @@ describe("feedback", () => {
     // A university keeps what it had: the counter, the papers, the teaching.
     expect(await topicsOf("a7b8c9d0-0000-4000-8000-000000000005", university!.id)).toEqual([
       "Accueil et politesse",
-      "Professionnalisme du personnel",
+      "Compétence du personnel (connaît son travail, traite bien la demande)",
       "Explications du personnel (claires, complètes)",
       "Encadrement des élèves",
       "Temps d'attente",

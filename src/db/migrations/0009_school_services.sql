@@ -201,3 +201,9 @@ FROM (VALUES
 ) AS v (code, category)
 JOIN evaluation_category c ON c.code = v.category
 WHERE q.code = v.code;
+
+-- « Professionnalisme » was vague next to « Explications du personnel »
+-- (validated on 2026-10-03): the staff is rated on courtesy, communication
+-- and competence, one topic each.
+UPDATE topic_translation SET label = 'Compétence du personnel (connaît son travail, traite bien la demande)'
+WHERE language = 'fr' AND topic_id = (SELECT id FROM topic WHERE code = 'PROFESSIONALISM');
