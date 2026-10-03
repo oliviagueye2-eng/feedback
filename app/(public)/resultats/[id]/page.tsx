@@ -6,7 +6,7 @@ import { SiteFooter } from "../../../_components/SiteFooter";
 import { SiteHeader } from "../../../_components/SiteHeader";
 import { establishmentDetails } from "../../../_components/establishmentDetails";
 import { getDictionary } from "../../../_i18n";
-import { fill, plural, rich } from "../../../_i18n/format";
+import { fill, plural } from "../../../_i18n/format";
 import { getEstablishment } from "@/src/domain/establishment";
 import { DomainError } from "@/src/domain/errors";
 import { getPublishedResults } from "@/src/domain/stats";
@@ -114,8 +114,10 @@ export default async function ResultsPage({ params }: PageProps<"/resultats/[id]
                   <section className={styles.section} aria-labelledby="satisfaction">
                     <h2 id="satisfaction">{results.satisfaction.label}</h2>
                     <p className={styles.headline}>
-                      {rich(fill(t.satisfiedLead, { percent: results.satisfiedPercent, count: results.feedbackCount }))}
+                      <strong>{fill(t.satisfiedPercent, { percent: results.satisfiedPercent })}</strong>
+                      <span>{t.satisfiedLabel}</span>
                     </p>
+                    <p className={`muted ${styles.count}`}>{plural(t.feedbackCount, results.feedbackCount)}</p>
                     <div className={styles.stack} aria-hidden="true">
                       {results.satisfaction.options
                         .filter((o) => o.count > 0)

@@ -194,7 +194,10 @@ export const fr = {
     stampPublished: "Publié",
     stampWaiting: "En attente",
     stampCount: "{count} avis sur {threshold}",
-    satisfiedLead: "<b>{percent} %</b> des usagers sont satisfaits ou très satisfaits, sur {count} avis.",
+    /** The figure stands apart, in large type, with a short label (her choice, 2026-10-03). */
+    satisfiedPercent: "{percent} %",
+    satisfiedLabel: "d'usagers satisfaits ou très satisfaits",
+    feedbackCount: { one: "{count} avis", other: "{count} avis" },
     answer: "Réponse",
     count: "Avis",
     share: "Part",
