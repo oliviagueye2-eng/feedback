@@ -554,13 +554,14 @@ describe("feedback", () => {
     ]);
   });
 
-  it("gives the police the topics and questions of the visit chosen, at the station or outside (0010)", async () => {
+  it("gives the police the topics and questions of the visit chosen: at the station, a check or a call (0010, 0013)", async () => {
     const [police] = await rows<{ id: string }>(
       "SELECT e.id FROM establishment e JOIN organization o ON o.id = e.organization_id WHERE o.code = 'POLICE_NATIONALE'",
     );
     const detail = await getEstablishment(police!.id);
     expect(detail.services.map((s) => s.label)).toEqual([
-      "Un contrôle ou une intervention sur le terrain",
+      "Un contrôle (routier, papiers, barrage)",
+      "Une demande d'intervention (après un appel)",
       "Une démarche dans les locaux",
     ]);
     const service = Object.fromEntries(detail.services.map((s) => [s.code, s.id]));
@@ -598,13 +599,20 @@ describe("feedback", () => {
         "Compétence du personnel (connaît son travail, traite bien la demande)",
         "Explications du personnel (claires, complètes)",
         "Respect des droits",
+        "Prise en compte de la demande",
+      ],
+      questions: ["REASON_EXPLAINED", "PAID_SOMETHING", "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY"],
+    });
+    expect(await visit("b8c9d0e1-0000-4000-8000-000000000005", service.POLICE_CALL!)).toEqual({
+      topics: [
+        "Politesse du personnel (accueil, respect)",
+        "Compétence du personnel (connaît son travail, traite bien la demande)",
+        "Explications du personnel (claires, complètes)",
+        "Respect des droits",
         "Délai d'intervention",
         "Prise en compte de la demande",
       ],
-      questions: [
-        "FIELD_SITUATION", "REASON_EXPLAINED", "ARRIVAL_TIME", "PAID_SOMETHING", "RECEIPT_GIVEN",
-        "REPORTED", "REPORT_WHY",
-      ],
+      questions: ["ARRIVAL_TIME", "REPORTED", "REPORT_WHY"],
     });
   });
 
@@ -656,34 +664,6 @@ describe("feedback", () => {
       [office],
     )).map((r) => r.code);
     expect(answered).toEqual(["FILE_SUBMITTED", "OVERALL_SATISFACTION"]);
-  });
-
-  it("asks the police outside the time to come only after a call, and the payment before the receipt (0012)", async () => {
-    const [gendarmerie] = await rows<{ id: string; service: number }>(
-      `SELECT e.id, s.id AS service FROM establishment e JOIN organization o ON o.id = e.organization_id, service s
-       WHERE o.code = 'GENDARMERIE_NATIONALE' AND s.code = 'POLICE_FIELD'`,
-    );
-    const field = "b8c9d0e1-0000-4000-8000-000000000004";
-    await upsertFeedback(field, {
-      channel: "search", establishmentId: gendarmerie!.id, serviceId: gendarmerie!.service, language: "fr", visitPeriod: "today",
-    });
-    await saveAnswer(field, "OVERALL_SATISFACTION", { option: "DISSATISFIED" });
-    // « Délai d'intervention » is shown to everyone again: « Non concerné » covers a road check.
-    expect((await getDetailsScreen(field)).topics.find((t) => t.code === "INTERVENTION_TIME")?.gate).toBeNull();
-    expect((await getQuestionnaireScreen(field, "sector")).questions.map((q) => [q.code, q.revealedBy?.dependsOn ?? null])).toEqual([
-      ["FIELD_SITUATION", null],
-      ["REASON_EXPLAINED", null],
-      ["ARRIVAL_TIME", "FIELD_SITUATION"],
-      ["PAID_SOMETHING", null],
-      ["RECEIPT_GIVEN", "PAID_SOMETHING"],
-    ]);
-    // A road check: the time to come no longer applies at the end.
-    await saveQuestionnaire(field, "sector", { FIELD_SITUATION: "ROAD_CHECK", ARRIVAL_TIME: "OVER_1_H" });
-    await completeFeedback(field);
-    expect((await rows(
-      `SELECT 1 FROM answer a JOIN question q ON q.id = a.question_id WHERE a.feedback_id = $1 AND q.code = 'ARRIVAL_TIME'`,
-      [field],
-    ))).toEqual([]);
   });
 
   it("adds the lists of the type and of the service to the sector's, never removing one", async () => {
