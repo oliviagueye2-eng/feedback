@@ -100,6 +100,11 @@ describe("reference data", () => {
       SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
       WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT_PLACE') ORDER BY t.position`))
       .rows.map((r) => r.code)).toEqual(["WAIT_TIME", "OPENING_HOURS"]);
+    // A place or a ticket counter is not a trip: no « Ponctualité », no « Sécurité à bord » (0009).
+    expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("PUNCTUALITY");
+    expect((await db.query<{ code: string }>(`
+      SELECT code FROM service WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRIP') ORDER BY code`))
+      .rows.map((r) => r.code)).toEqual(["BOAT_CROSSING", "FLIGHT", "LAND_TRIP"]);
   });
 
   it("gives every sector but Education a topic list, and opening hours to the transport places (0008, 0009)", async () => {

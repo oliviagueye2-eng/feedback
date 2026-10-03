@@ -95,3 +95,20 @@ WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT')
 INSERT INTO topic_set_item (topic_set_id, topic_id)
 SELECT s.id, t.id FROM topic_set s, topic t
 WHERE s.code = 'TRANSPORT_PLACE' AND t.code = 'WAIT_TIME';
+
+-- « Ponctualité » and « Sécurité à bord » rate a trip, not a place nor a
+-- ticket counter (validated on 2026-10-03): they leave the Transport list,
+-- that the airport and the bus stations get, for the trips' own list. Every
+-- operator offers its trip as a service; « Autre démarche » is not a trip.
+INSERT INTO topic_set (code) VALUES ('TRIP');
+
+DELETE FROM topic_set_item
+WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT')
+  AND topic_id IN (SELECT id FROM topic WHERE code IN ('PUNCTUALITY', 'ONBOARD_SAFETY'));
+
+INSERT INTO topic_set_item (topic_set_id, topic_id)
+SELECT s.id, t.id FROM topic_set s, topic t
+WHERE s.code = 'TRIP' AND t.code IN ('PUNCTUALITY', 'ONBOARD_SAFETY');
+
+UPDATE service SET topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRIP')
+WHERE code IN ('FLIGHT', 'LAND_TRIP', 'BOAT_CROSSING');
