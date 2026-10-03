@@ -234,7 +234,7 @@ export const fr = {
       FEES: "Frais",
       BILLING: "Factures",
       CARE_RECEIVED: "Soins",
-      MEDICINE_AVAILABILITY: "Médicaments",
+      MEDICINE_AVAILABILITY: "Disponibilité (médicaments/examens)",
       TEACHING_QUALITY: "Enseignement",
       REQUEST_HANDLING: "Prise en compte",
       POWER_CUTS: "Coupures de courant",
