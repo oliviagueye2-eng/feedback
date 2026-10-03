@@ -217,6 +217,11 @@
   text-align: left;
 }
 
+.table thead th + th {
+  padding-left: 10px;
+  white-space: nowrap;
+}
+
 .table tbody th {
   font-weight: 400;
 }
@@ -239,10 +244,13 @@
   flex-shrink: 0;
 }
 
+/* On one line when it fits (her choice, 2026-10-03). */
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 22px;
+  justify-content: space-between;
+  gap: 4px 12px;
+  font-size: 14px;
   margin: 0 0 6px;
   padding: 0;
   list-style: none;
@@ -251,96 +259,76 @@
 .legend li {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
+  white-space: nowrap;
 }
 
 .legend i {
-  width: 14px;
-  height: 14px;
+  width: 11px;
+  height: 11px;
   border-radius: 3px;
 }
 
-/* ---- Thèmes : barres de part et d'autre d'un axe ---- */
+/* ---- Points forts et points à améliorer : compteurs ---- */
 
-.divergingHead {
+.gauges {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  font-size: 14px;
-  color: var(--muted);
-  margin-top: 6px;
-}
-
-.divergingHead span:first-child {
-  text-align: right;
-  padding-right: 10px;
-}
-
-.divergingHead span:last-child {
-  padding-left: 10px;
-}
-
-.diverging {
-  margin: 0;
+  gap: 10px;
+  margin: 4px 0 0;
   padding: 0;
   list-style: none;
 }
 
-.diverging li {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  row-gap: 4px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--line-light);
+.gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  line-height: 1.2;
 }
 
-.topicLabel {
-  grid-column: 1 / -1;
+.gaugeScale {
+  width: 100%;
+  max-width: 150px;
+  display: block;
+}
+
+.gaugeName {
+  display: block;
+  margin-top: 6px;
   font-weight: 700;
   font-size: 15px;
 }
 
-.sideBad,
-.sideGood {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 18px;
+.gaugeName svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 5px;
+  vertical-align: -2px;
 }
 
-.sideBad {
-  justify-content: flex-end;
-  border-right: 2px solid var(--ink);
-  padding-right: 2px;
+.gauge strong {
+  font-size: 22px;
+  margin-top: 2px;
 }
 
-.sideGood {
-  padding-left: 2px;
+.gaugeGood {
+  color: var(--green-dark);
 }
 
-.barBad,
-.barGood {
-  height: 14px;
+.gaugeBad {
+  color: var(--error);
 }
 
-.barBad {
-  background: var(--satisfaction-5);
-  border-radius: 4px 0 0 4px;
+.gaugeCount {
+  font-size: 13px;
 }
 
-.barGood {
-  background: var(--satisfaction-1);
-  border-radius: 0 4px 4px 0;
-}
+/* ---- Résultat obtenu ---- */
 
-.num {
-  font-size: 14px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  min-width: 2ch;
-}
-
-.sideBad .num {
-  text-align: right;
+.outcome + .outcome {
+  margin-top: 18px;
 }
 
 /* ---- Talon ---- */
@@ -361,6 +349,11 @@
 .stub p {
   margin: 0;
   font-size: 15px;
+}
+
+.methodLink {
+  color: inherit;
+  text-underline-offset: 2px;
 }
 
 @media (min-width: 900px) {
@@ -384,21 +377,13 @@
     font-size: 26px;
   }
 
-  .diverging li {
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
-    align-items: center;
+  .legend {
+    justify-content: flex-start;
+    gap: 6px 24px;
   }
 
-  .topicLabel {
-    grid-column: auto;
-  }
-
-  .divergingHead {
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
-  }
-
-  .divergingHead::before {
-    content: "";
+  .gauges {
+    max-width: 440px;
   }
 
   .stub {
@@ -412,4 +397,11 @@
   .stub :global(.btn) {
     width: auto;
   }
+}
+
+/* ---- Page « Comment sont calculés ces résultats ? » : pas de tampon à côté du titre ---- */
+
+.sheetMain h1.methodTitle {
+  max-width: none;
+  margin-top: 8px;
 }

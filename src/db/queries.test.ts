@@ -587,7 +587,7 @@ describe("feedback", () => {
 });
 
 describe("published results", () => {
-  // On April 15, 2026: January to March are published, October to March are in the table.
+  // On April 15, 2026: January to March are published, compared with October to December.
   const now = new Date("2026-04-15T10:00:00Z");
 
   beforeAll(async () => {
@@ -618,13 +618,21 @@ describe("published results", () => {
       FROM feedback f, question q JOIN answer_option ao ON ao.question_id = q.id
       WHERE f.establishment_id = '${ids.results}' AND f.visit_month = '2026-02-01'
         AND q.code = 'CARE_RECEIVED' AND ao.code = 'YES';
+      -- Nothing prescribed does not apply: 4 answers left, under the threshold.
+      INSERT INTO answer (feedback_id, question_id, option_id)
+      SELECT f.id, q.id, ao.id
+      FROM (SELECT id, row_number() OVER (ORDER BY id) AS n FROM feedback
+            WHERE establishment_id = '${ids.results}' AND visit_month = '2026-02-01') AS f,
+           question q JOIN answer_option ao ON ao.question_id = q.id
+      WHERE q.code = 'PRESCRIPTION_AVAILABLE' AND ao.code = CASE WHEN f.n <= 4 THEN 'ALL' ELSE 'NOTHING_PRESCRIBED' END;
       INSERT INTO feedback_topic (feedback_id, topic_id, sentiment, other_text)
       SELECT f.id, t.id, v.sentiment, v.other_text
       FROM (SELECT id, row_number() OVER (ORDER BY id) AS n FROM feedback
             WHERE establishment_id = '${ids.results}' AND visit_month = '2026-02-01') AS f
-      JOIN (VALUES (1, 'STAFF', 'positive', NULL), (2, 'STAFF', 'positive', NULL), (3, 'STAFF', 'positive', NULL),
-                   (1, 'WAIT_TIME', 'negative', NULL), (2, 'WAIT_TIME', 'negative', NULL),
-                   (1, 'OTHER', 'negative', 'Parking')) AS v (n, code, sentiment, other_text) ON v.n = f.n
+      JOIN (SELECT n, 'STAFF', 'positive', NULL FROM generate_series(1, 10) AS n
+            UNION ALL SELECT n, 'WAIT_TIME', 'negative', NULL FROM generate_series(1, 10) AS n
+            UNION ALL SELECT n, 'PRIVACY', 'positive', NULL FROM generate_series(1, 3) AS n
+            UNION ALL VALUES (1, 'OTHER', 'negative', 'Parking')) AS v (n, code, sentiment, other_text) ON v.n = f.n
       JOIN topic t ON t.code = v.code;
     `);
     await refreshPublishedStats();
@@ -642,22 +650,16 @@ describe("published results", () => {
     ]);
     expect(results.satisfaction.options[0]!.label).toBe("Très satisfait(e)");
     expect(results.satisfiedPercent).toBe(83);
-    // GOAL_ACHIEVED is not asked in health: only CARE_RECEIVED shows.
-    expect(results.goals.map((g) => [g.code, g.total, g.options[0]!.code, g.options[0]!.percent])).toEqual([
+    // GOAL_ACHIEVED is not asked in health; PRESCRIPTION_AVAILABLE has only 4 answers that apply.
+    expect(results.outcomes.map((g) => [g.code, g.total, g.options[0]!.code, g.options[0]!.percent])).toEqual([
       ["CARE_RECEIVED", 10, "YES", 100],
     ]);
-    // « Autre » (offered before 0008) is never published.
-    expect(results.topics.map((t) => [t.code, t.positive, t.negative])).toEqual([
-      ["STAFF", 3, 0],
-      ["WAIT_TIME", 0, 2],
-    ]);
-    expect(results.months).toEqual([
-      { month: "2025-10-01", feedbackCount: 0, satisfiedPercent: null },
-      { month: "2025-11-01", feedbackCount: 0, satisfiedPercent: null },
-      { month: "2025-12-01", feedbackCount: 1, satisfiedPercent: null },
-      { month: "2026-01-01", feedbackCount: 2, satisfiedPercent: null },
-      { month: "2026-02-01", feedbackCount: 10, satisfiedPercent: 100 },
-      { month: "2026-03-01", feedbackCount: 0, satisfiedPercent: null },
+    // 10 « Bien » out of 10: 72 % at worst. PRIVACY has too few ratings; « Autre » is never published.
+    expect(results.strengths).toEqual([{ code: "STAFF", label: expect.any(String), total: 10, percent: 100 }]);
+    expect(results.improvements).toEqual([{ code: "WAIT_TIME", label: "Temps d'attente", total: 10, percent: 0 }]);
+    expect(results.quarters).toEqual([
+      { from: "2025-10-01", last: "2025-12-01", feedbackCount: 1, satisfiedPercent: null },
+      { from: "2026-01-01", last: "2026-03-01", feedbackCount: 12, satisfiedPercent: 83 },
     ]);
   });
 

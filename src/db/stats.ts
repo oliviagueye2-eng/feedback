@@ -114,3 +114,16 @@ export async function findTopicCounts(establishmentId: string, from: string, to:
     [establishmentId, from, to],
   );
 }
+
+/** Codes of the questions of one evaluation category (migration 0009), oldest first. */
+export async function findQuestionCodesOfCategory(categoryCode: string): Promise<string[]> {
+  const rows = await query<{ code: string }>(
+    `SELECT q.code
+     FROM question q
+     JOIN evaluation_category c ON c.id = q.category_id
+     WHERE c.code = $1
+     ORDER BY q.id`,
+    [categoryCode],
+  );
+  return rows.map((r) => r.code);
+}

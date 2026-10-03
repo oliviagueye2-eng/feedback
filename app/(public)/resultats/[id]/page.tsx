@@ -13,14 +13,24 @@ import { getPublishedResults } from "@/src/domain/stats";
 import type { ResultsPeriod } from "@/src/domain/stats/results";
 import { isUuid } from "@/src/lib/validation";
 import { SATISFACTION_LEVEL, SatisfactionFace } from "../../_feedback/SatisfactionFace";
+import { TopicGauge } from "./TopicGauge";
 import styles from "./results.module.css";
 
-/** Colours of yes / partly / no: the ends and the middle of the satisfaction scale. */
-const GOAL_COLOR: Record<string, string> = {
+/** Colours of yes / partly / no (and their variants): the ends and the middle of the satisfaction scale. */
+const OUTCOME_COLOR: Record<string, string> = {
   YES: "var(--satisfaction-1)",
+  ALL: "var(--satisfaction-1)",
   PARTLY: "var(--satisfaction-3)",
+  SOME: "var(--satisfaction-3)",
+  SOME_ABSENCES: "var(--satisfaction-3)",
   NO: "var(--satisfaction-5)",
+  NONE: "var(--satisfaction-5)",
+  MANY_ABSENCES: "var(--satisfaction-5)",
 };
+
+/** Short label under a gauge: the one of the dictionary, or the topic's label without its brackets. */
+const shortLabel = (short: Record<string, string>, code: string, label: string) =>
+  short[code] ?? label.replace(/\s*\(.*\)\s*$/, "");
 
 async function load(id: string) {
   if (!isUuid(id)) notFound();
@@ -44,7 +54,7 @@ const monthName = (month: string, options: Intl.DateTimeFormatOptions) =>
   new Intl.DateTimeFormat("fr-FR", { timeZone: "UTC", ...options }).format(new Date(`${month}T00:00:00Z`));
 
 /** « juillet à septembre 2026 », or « novembre 2026 à janvier 2027 ». */
-function periodText(period: ResultsPeriod, pattern: string) {
+function periodText(period: Pick<ResultsPeriod, "from" | "last">, pattern: string) {
   const sameYear = period.from.slice(0, 4) === period.last.slice(0, 4);
   return fill(pattern, {
     from: monthName(period.from, sameYear ? { month: "long" } : { month: "long", year: "numeric" }),
@@ -56,9 +66,10 @@ const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1
 
 /**
  * Public results of an establishment: a sheet like the home page's ticket,
- * stamped « Publié » with the date of publication (design B, 2026-10-03).
- * Under the threshold, the stamp says « En attente » and only the number of
- * feedbacks shows. Written comments are never published.
+ * stamped « Mis à jour » with the date of publication (design B, version 2,
+ * 2026-10-03). Under the threshold, the stamp says « En attente » and only the
+ * number of feedbacks shows. Written comments are never published, nor the
+ * full list of topics: only the strengths and points to improve.
  */
 export default async function ResultsPage({ params }: PageProps<"/resultats/[id]">) {
   const { id } = await params;
@@ -149,7 +160,7 @@ export default async function ResultsPage({ params }: PageProps<"/resultats/[id]
                                 {o.label}
                               </span>
                             </th>
-                            <td>{plural(t.feedbackCount, o.count)}</td>
+                            <td>{o.count}</td>
                             <td>{o.percent} %</td>
                           </tr>
                         ))}
@@ -157,63 +168,61 @@ export default async function ResultsPage({ params }: PageProps<"/resultats/[id]
                     </table>
                   </section>
 
-                  {results.goals.map((goal) => (
-                    <section key={goal.code} className={styles.section} aria-labelledby={`goal-${goal.code}`}>
-                      <h2 id={`goal-${goal.code}`}>{t.goalTitle}</h2>
-                      <p className={`muted ${styles.question}`}>{goal.label}</p>
-                      <div className={styles.stack} aria-hidden="true">
-                        {goal.options
-                          .filter((o) => o.count > 0)
-                          .map((o) => (
-                            <span key={o.code} style={{ flexGrow: o.count, background: GOAL_COLOR[o.code] ?? "var(--control)" }} />
-                          ))}
-                      </div>
-                      <ul className={styles.legend}>
-                        {goal.options.map((o) => (
-                          <li key={o.code}>
-                            <i style={{ background: GOAL_COLOR[o.code] ?? "var(--control)" }} aria-hidden="true" />
-                            {o.label} <strong>{o.percent} %</strong>
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="muted">{plural(t.answers, goal.total)}</p>
-                    </section>
-                  ))}
-
-                  {results.topics.length > 0 && (
+                  {(results.strengths.length > 0 || results.improvements.length > 0) && (
                     <section className={styles.section} aria-labelledby="themes">
                       <h2 id="themes">{t.topicsTitle}</h2>
-                      <p className="muted">{t.topicsHelp}</p>
-                      <div className={styles.divergingHead} aria-hidden="true">
-                        <span>{t.bad}</span>
-                        <span>{t.good}</span>
-                      </div>
-                      <ul className={styles.diverging}>
-                        {results.topics.map((topic) => {
-                          const max = Math.max(...results.topics.flatMap((x) => [x.positive, x.negative]));
-                          return (
-                            <li key={topic.code}>
-                              <span className={styles.topicLabel}>{topic.label}</span>
-                              <span className="visually-hidden">
-                                {fill(t.topicCounts, { good: topic.positive, bad: topic.negative })}
-                              </span>
-                              <span className={styles.sideBad} aria-hidden="true">
-                                <span className={styles.num}>{topic.negative}</span>
-                                <span className={styles.barBad} style={{ width: `${(topic.negative / max) * 100}%` }} />
-                              </span>
-                              <span className={styles.sideGood} aria-hidden="true">
-                                <span className={styles.barGood} style={{ width: `${(topic.positive / max) * 100}%` }} />
-                                <span className={styles.num}>{topic.positive}</span>
-                              </span>
-                            </li>
-                          );
-                        })}
+                      <p className={`muted ${styles.question}`}>{t.topicsHelp}</p>
+                      <ul className={styles.gauges}>
+                        {[
+                          ...results.strengths.map((topic) => ({ topic, strength: true })),
+                          ...results.improvements.map((topic) => ({ topic, strength: false })),
+                        ].map(({ topic, strength }) => (
+                          <TopicGauge
+                            key={topic.code}
+                            code={topic.code}
+                            label={shortLabel(t.topicShort, topic.code, topic.label)}
+                            kind={strength ? t.strength : t.improvement}
+                            percent={topic.percent}
+                            count={plural(t.feedbackCount, topic.total)}
+                            strength={strength}
+                          />
+                        ))}
                       </ul>
                     </section>
                   )}
 
-                  <section className={styles.section} aria-labelledby="mois">
-                    <h2 id="mois">{t.monthsTitle}</h2>
+                  {results.outcomes.length > 0 && (
+                    <section className={styles.section} aria-labelledby="resultat">
+                      <h2 id="resultat">{t.goalTitle}</h2>
+                      {results.outcomes.map((outcome) => (
+                        <div key={outcome.code} className={styles.outcome}>
+                          <p className={`muted ${styles.question}`}>{outcome.label}</p>
+                          <div className={styles.stack} aria-hidden="true">
+                            {outcome.options
+                              .filter((o) => o.count > 0)
+                              .map((o) => (
+                                <span
+                                  key={o.code}
+                                  style={{ flexGrow: o.count, background: OUTCOME_COLOR[o.code] ?? "var(--control)" }}
+                                />
+                              ))}
+                          </div>
+                          <ul className={styles.legend}>
+                            {outcome.options.map((o) => (
+                              <li key={o.code}>
+                                <i style={{ background: OUTCOME_COLOR[o.code] ?? "var(--control)" }} aria-hidden="true" />
+                                {o.label} <strong>{o.percent} %</strong>
+                              </li>
+                            ))}
+                          </ul>
+                          <p className="muted">{plural(t.feedbackCount, outcome.total)}</p>
+                        </div>
+                      ))}
+                    </section>
+                  )}
+
+                  <section className={styles.section} aria-labelledby="evolution">
+                    <h2 id="evolution">{t.evolutionTitle}</h2>
                     <table className={styles.table}>
                       <thead>
                         <tr>
@@ -223,15 +232,15 @@ export default async function ResultsPage({ params }: PageProps<"/resultats/[id]
                         </tr>
                       </thead>
                       <tbody>
-                        {results.months.map((m) => (
-                          <tr key={m.month}>
-                            <th scope="row">{capitalize(monthName(m.month, { month: "long", year: "numeric" }))}</th>
-                            <td>{m.feedbackCount}</td>
+                        {results.quarters.map((q) => (
+                          <tr key={q.from}>
+                            <th scope="row">{capitalize(periodText(q, t.period))}</th>
+                            <td>{q.feedbackCount}</td>
                             <td>
-                              {m.satisfiedPercent === null ? (
+                              {q.satisfiedPercent === null ? (
                                 <span className="muted">{t.notEnough}</span>
                               ) : (
-                                `${m.satisfiedPercent} %`
+                                `${q.satisfiedPercent} %`
                               )}
                             </td>
                           </tr>
@@ -245,7 +254,14 @@ export default async function ResultsPage({ params }: PageProps<"/resultats/[id]
 
             <div className={styles.tear} aria-hidden="true" />
             <div className={styles.stub}>
-              {results.published && <p className="muted">{fill(t.rules, { threshold: results.threshold })}</p>}
+              {results.published && (
+                <p className="muted">
+                  {t.rules}{" "}
+                  <Link className={styles.methodLink} href="/resultats/calcul">
+                    {t.methodLink}
+                  </Link>
+                </p>
+              )}
               {giveLink}
             </div>
           </article>

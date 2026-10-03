@@ -191,36 +191,87 @@ export const fr = {
     /** Same year: « juillet à septembre 2026 »; otherwise each month has its year. */
     period: "{from} à {last}",
     waitingPeriod: "3 derniers mois",
-    stampPublished: "Publié",
+    /** Day of the last update, the 1st of the month (her choice, 2026-10-03). */
+    stampPublished: "Mis à jour",
     stampWaiting: "En attente",
     stampCount: "{count} avis sur {threshold}",
     /** Short label as the title, the exact question asked under it, alone (her choice, 2026-10-03). */
     satisfactionTitle: "Satisfaction",
-    goalTitle: "Démarche aboutie",
+    goalTitle: "Résultat obtenu",
     /** The figure stands apart, in large type, with a short label (her choice, 2026-10-03). */
     satisfiedPercent: "{percent} %",
-    satisfiedLabel: "d'usagers satisfaits ou très satisfaits",
+    /** « d'avis », not « d'usagers »: the feedbacks are given freely, not a random sample (2026-10-03). */
+    satisfiedLabel: "d'avis satisfaits ou très satisfaits",
     feedbackCount: { one: "{count} avis", other: "{count} avis" },
     answer: "Réponse",
     count: "Avis",
     share: "Part",
-    answers: { one: "{count} réponse à cette question.", other: "{count} réponses à cette question." },
-    topicsTitle: "Ce qui a été bien, ce qui ne l'a pas été",
-    topicsHelp: "Nombre d'usagers qui ont jugé chaque point « Bien » ou « Pas bien ».",
-    good: "Bien",
-    bad: "Pas bien",
-    /** Read by screen readers on each topic's bars. */
-    topicCounts: "{good} « Bien », {bad} « Pas bien »",
-    monthsTitle: "Mois par mois",
-    month: "Mois",
+    topicsTitle: "Points forts et points à améliorer",
+    topicsHelp: "% d'avis positifs",
+    /** Read by screen readers before each gauge. */
+    strength: "Point fort :",
+    improvement: "À améliorer :",
+    /**
+     * Short label of each topic under its gauge. A topic missing here shows its
+     * label without the part in brackets.
+     */
+    topicShort: {
+      STAFF: "Politesse",
+      PROFESSIONALISM: "Compétence",
+      INFORMATION: "Explications",
+      PRIVACY: "Intimité",
+      RIGHTS_RESPECT: "Respect des droits",
+      STUDENT_SUPERVISION: "Encadrement",
+      PARENT_COMMUNICATION: "Échanges",
+      WAIT_TIME: "Attente",
+      PROCESSING_TIME: "Délai du dossier",
+      INTERVENTION_TIME: "Délai d'intervention",
+      PUNCTUALITY: "Ponctualité",
+      PROCEDURE: "Démarche",
+      CASE_TRACKING: "Suivi du dossier",
+      OPENING_HOURS: "Horaires",
+      CUSTOMER_SERVICE: "Service client",
+      FEES: "Frais",
+      BILLING: "Factures",
+      CARE_RECEIVED: "Soins",
+      MEDICINE_AVAILABILITY: "Médicaments",
+      TEACHING_QUALITY: "Enseignement",
+      REQUEST_HANDLING: "Prise en compte",
+      POWER_CUTS: "Coupures de courant",
+      WATER_CUTS: "Coupures d'eau",
+      WATER_QUALITY: "Qualité de l'eau",
+      NETWORK_QUALITY: "Réseau",
+      CLEANLINESS: "Propreté",
+      ACCESS_FOR_ALL: "Accessibilité",
+      ONBOARD_SAFETY: "Sécurité à bord",
+      SCHOOL_SAFETY: "Sécurité",
+      SCHOOL_EQUIPMENT: "Équipement",
+      VEHICLE_CONDITION: "Véhicules",
+    } as Record<string, string>,
+    /** The period before the published one, then the published one (2026-10-03). */
+    evolutionTitle: "Évolution",
+    month: "Période",
     satisfied: "Satisfaits",
     notEnough: "pas assez d'avis",
     emptyTitle: "Pas encore assez d'avis pour publier un résultat.",
     emptyCount: { one: "{count} avis reçu ces 3 derniers mois.", other: "{count} avis reçus ces 3 derniers mois." },
     emptyWhy: "Il en faut au moins {threshold} pour que le résultat soit fiable et que personne ne puisse être reconnu.",
-    rules:
-      "Avis des 3 derniers mois, mis à jour chaque mois. Publié à partir de {threshold} avis. Les avis sont anonymes ; les commentaires écrits ne sont pas publiés.",
+    rules: "Résultats mis à jour chaque mois.",
+    methodLink: "Comment sont calculés ces résultats ?",
     give: "Donner mon avis sur cet établissement",
+  },
+
+  /** « Comment sont calculés ces résultats ? », linked from every results page. */
+  method: {
+    title: "Comment sont calculés les résultats",
+    periodTitle: "Période et mise à jour",
+    period:
+      "Les résultats portent sur les avis des 3 derniers mois complets et sont mis à jour le 1er de chaque mois. Rien n'est publié avant {threshold} avis. Les avis sont anonymes ; les commentaires écrits ne sont pas publiés.",
+    /** Text validated on 2026-10-03, word for word. */
+    highlightsTitle: "Points forts et points à améliorer",
+    highlights:
+      "Un pourcentage calculé sur peu d'avis peut changer beaucoup avec un seul avis de plus. Pour ne pas juger un établissement trop vite, nous tenons compte de cette incertitude : un thème n'est affiché comme point fort que si son résultat reste au-dessus de 60 % même dans le cas le moins favorable, et comme point à améliorer que s'il reste sous 50 % même dans le cas le plus favorable.",
+    highlightsMethod: "(Méthode : intervalle de confiance à 95 %, calculé selon Wilson.)",
   },
 
   admin: {

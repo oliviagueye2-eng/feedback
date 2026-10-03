@@ -1,6 +1,6 @@
 # Publication des résultats : que publier, et comment
 
-Étude du 2026-10-03. **Décisions du 2026-10-03** : design B « Le relevé » avec les pourcentages ; 10 avis sur les 3 derniers mois, mis à jour chaque mois ; commentaires écrits non publiés au lancement ; migration 0007 acceptée. Maquettes : planche `A-resultats-publics.dc.html` du canevas (chiffres fictifs). Page construite : `/resultats/{établissement}` (section 4).
+Étude du 2026-10-03. **Décisions du 2026-10-03** : design B « Le relevé » avec les pourcentages ; 10 avis sur les 3 derniers mois, mis à jour chaque mois ; commentaires écrits non publiés au lancement ; migration 0007 acceptée. Maquettes : planche `A-resultats-publics.dc.html` du canevas (chiffres fictifs). Page construite : `/resultats/{établissement}` (section 4), mise à jour en **version 2** le 2026-10-03 (section 5).
 
 ## 1. Ce qu'on publie
 
@@ -10,8 +10,8 @@
 | Détail des 5 réponses (nombre et part) | Oui, en dessous | Montre une visite mitigée ; permet de vérifier le chiffre principal. |
 | Nombre d'avis et période | Oui, toujours à côté du résultat | Un résultat sans nombre d'avis ne veut rien dire. |
 | « Avez-vous obtenu ce que vous étiez venu(e) chercher ? » | Oui, là où la question est posée | C'est la mesure la plus concrète pour un service public. Pas pour un restaurant (la question n'y est pas posée). |
-| Thèmes « Bien » et « Pas bien » de l'écran 2b | Oui : tous les thèmes cités, du plus « Bien » au plus « Pas bien » (design B) | Dit **pourquoi** les usagers sont satisfaits ou non : c'est ce qui aide un responsable à agir. |
-| Évolution mois par mois | Oui | Montre si les choses s'améliorent. Un mois sous le seuil affiche « pas assez d'avis ». |
+| Thèmes « Bien » et « Pas bien » de l'écran 2b | **Version 2 : seulement 2 points forts et 2 points à améliorer au plus**, ceux que la marge d'erreur confirme (section 5) | Dit **pourquoi** les usagers sont satisfaits ou non. La liste complète est réservée au futur espace établissement (choix A du 2026-10-03). |
+| Évolution | **Version 2 : trimestre précédent et trimestre publié** | Un mois seul a trop peu d'avis : ses variations sont surtout du hasard. Un trimestre sous le seuil affiche « pas assez d'avis ». |
 | Commentaires écrits | **Non au lancement** | Ils doivent être relus avant publication (noms, injures, accusations) : il n'y a pas encore d'outil de modération. Plus tard : quelques extraits relus. |
 | Texte de « Autre » | Jamais | Sert seulement à repérer les thèmes qui manquent (déjà décidé). |
 | Réponses « Avez-vous signalé cette situation ? » | Non sur la page publique | Utile aux organismes, mais pas au grand public. |
@@ -24,7 +24,7 @@
 2. **Période : les 3 derniers mois, mis à jour chaque mois.** Avec « 10 avis par mois », une petite mairie ne serait presque jamais publiée. Trois mois glissants publient plus de lieux, et la promesse de l'accueil (« publiés chaque mois ») reste vraie. L'évolution mois par mois garde le seuil de 10 pour chaque mois.
 3. **Avis comptés** : réponse à la question essentielle, visite de moins d'un mois (déjà la règle), établissement validé (pas `pending_review`).
 4. **Organisme** (Senelec, Dem Dikk…) : une note regroupée (décision déjà prise), puis la liste de ses lieux avec leur résultat. **Pas encore construit** : aujourd'hui la fiche « en général » d'un organisme n'a que ses propres avis.
-5. **Questions de démarche** : « Avez-vous obtenu ce que vous étiez venu(e) chercher ? » et sa version santé (« Avez-vous reçu ce pour quoi vous étiez venu(e) ? ») ne s'affichent que si elles ont au moins 10 réponses sur la période.
+5. **Résultat obtenu** (version 2) : toutes les questions de la catégorie « Résultat obtenu » (migration 0009) posées au lieu, chacune seulement si elle a au moins 10 réponses sur la période. Les réponses « ne s'applique pas » (pas de bagage enregistré, rien de prescrit) ne sont pas comptées.
 
 ## 3. Où on le montre
 
@@ -84,3 +84,16 @@ Rien n'est modifié dans les tables existantes : la migration ajoute seulement t
 
 - **A « Sur 10 usagers »** : dix visages (les mêmes qu'à l'écran 2) et une phrase « 7 usagers sur 10 sont satisfaits ». Fait pour le grand public, y compris les personnes peu à l'aise avec les chiffres. Peu de chiffres, beaucoup de phrases.
 - **B « Le relevé » (retenu le 2026-10-03)** : une fiche comme le ticket de l'accueil, tamponnée « Publié » avec la date. Pourcentages, tableaux, barres « Pas bien / Bien » de part et d'autre d'un axe. Plus complet, pour les responsables et les journalistes.
+
+## 5. Version 2 (2026-10-03)
+
+Décisions d'Olivia du 2026-10-03, après une relecture statistique (`/mnt/project-files/resultats-publics/analyse-statistique-version-2.md`).
+
+| Élément | Règle | Pourquoi |
+|---|---|---|
+| Chiffre principal | « 71 % d'avis satisfaits ou très satisfaits » | Les avis sont volontaires : ce n'est pas un sondage représentatif de tous les usagers. |
+| Points forts et points à améliorer | 2 au plus de chaque, thèmes avec au moins 10 notes. Point fort si même le bas de l'intervalle de confiance à 95 % (Wilson) atteint 60 % ; à améliorer si même le haut reste sous 50 %. Affichés en compteurs (demi-cercle en 3 zones : rouge sous 50 %, jaune de 50 à 60 %, vert au-dessus) | Avec 14 avis, « 36 % » peut valoir de 16 % à 61 % : on n'affiche pas publiquement un reproche que les chiffres ne confirment pas. Le pourcentage affiché reste le pourcentage simple ; la marge sert seulement à décider. |
+| Évolution | Le trimestre précédent et le trimestre publié, pourcentages simples, sans « en hausse » ni « en baisse » | Même période que le reste de la fiche ; 3 fois plus d'avis qu'un mois. |
+| Pied de fiche | « Résultats mis à jour chaque mois. » et le lien « Comment sont calculés ces résultats ? » (`/resultats/calcul`) | La page reste légère ; les règles restent consultables. |
+
+Code : `topicHighlights` et `wilsonInterval` dans `src/domain/stats/results.ts` ; libellés courts des thèmes dans `app/_i18n/fr.ts` (`results.topicShort`), icônes dans `app/(public)/resultats/[id]/TopicGauge.tsx`. L'API `GET /webapi/establishments/{id}/stats` renvoie la même chose que la page : `outcomes`, `strengths`, `improvements` et `quarters` remplacent `goals`, `topics` et `months`.
