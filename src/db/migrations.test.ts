@@ -71,7 +71,7 @@ describe("reference data", () => {
         ORDER BY t.position`, [sector])).rows;
 
     expect((await topicsFor("RETAIL")).map((t) => t.label)).toEqual([
-      "Accueil et politesse",
+      "Politesse du personnel (accueil, respect)",
       "Compétence du personnel (connaît son travail, traite bien la demande)",
       "Explications du personnel (claires, complètes)",
       "Temps d'attente",

@@ -207,3 +207,7 @@ WHERE q.code = v.code;
 -- and competence, one topic each.
 UPDATE topic_translation SET label = 'Compétence du personnel (connaît son travail, traite bien la demande)'
 WHERE language = 'fr' AND topic_id = (SELECT id FROM topic WHERE code = 'PROFESSIONALISM');
+
+-- The three staff topics read alike (validated on 2026-10-03).
+UPDATE topic_translation SET label = 'Politesse du personnel (accueil, respect)'
+WHERE language = 'fr' AND topic_id = (SELECT id FROM topic WHERE code = 'STAFF');

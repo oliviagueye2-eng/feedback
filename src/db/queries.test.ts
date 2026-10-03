@@ -507,7 +507,7 @@ describe("feedback", () => {
       return (await getDetailsScreen(feedback)).topics.map((t) => t.label);
     };
     expect(await topicsOf("f6a7b8c9-0000-4000-8000-000000000004", school!.id, services.SCHOOL_ADMIN)).toEqual([
-      "Accueil et politesse",
+      "Politesse du personnel (accueil, respect)",
       "Compétence du personnel (connaît son travail, traite bien la demande)",
       "Explications du personnel (claires, complètes)",
       "Temps d'attente",
@@ -529,7 +529,7 @@ describe("feedback", () => {
     ]);
     // A university keeps what it had: the counter, the papers, the teaching.
     expect(await topicsOf("a7b8c9d0-0000-4000-8000-000000000005", university!.id)).toEqual([
-      "Accueil et politesse",
+      "Politesse du personnel (accueil, respect)",
       "Compétence du personnel (connaît son travail, traite bien la demande)",
       "Explications du personnel (claires, complètes)",
       "Encadrement des élèves",

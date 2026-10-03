@@ -402,7 +402,7 @@ Libellés (dans `topic_translation`) :
 
 | code | Libellé |
 |---|---|
-| `STAFF` | Accueil et politesse |
+| `STAFF` | Politesse du personnel (accueil, respect) (2026-10-03, ex-« Accueil et politesse ») |
 | `PROFESSIONALISM` | Compétence du personnel (connaît son travail, traite bien la demande) (2026-10-03, ex-« Professionnalisme du personnel ») |
 | `WAIT_TIME` | Temps d'attente |
 | `INFORMATION` | Explications du personnel (claires, complètes) (2026-10-03 : ce que l'agent a dit) |
