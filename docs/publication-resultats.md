@@ -1,6 +1,6 @@
 # Publication des résultats : que publier, et comment
 
-Étude du 2026-10-03. **Décidé le 2026-10-03 : design B « Le relevé », avec les pourcentages.** Le reste (seuil, période, commentaires, migration 0007) attend son accord. Maquettes : `app/(public)/maquettes/resultats/a` et `b` (chiffres fictifs, aucune lecture de la base).
+Étude du 2026-10-03. **Décisions du 2026-10-03** : design B « Le relevé » avec les pourcentages ; 10 avis sur les 3 derniers mois, mis à jour chaque mois ; commentaires écrits non publiés au lancement ; migration 0007 acceptée. Maquettes : planche `A-resultats-publics.dc.html` du canevas (chiffres fictifs). Page construite : `/resultats/{établissement}` (section 4).
 
 ## 1. Ce qu'on publie
 
@@ -10,7 +10,7 @@
 | Détail des 5 réponses (nombre et part) | Oui, en dessous | Montre une visite mitigée ; permet de vérifier le chiffre principal. |
 | Nombre d'avis et période | Oui, toujours à côté du résultat | Un résultat sans nombre d'avis ne veut rien dire. |
 | « Avez-vous obtenu ce que vous étiez venu(e) chercher ? » | Oui, là où la question est posée | C'est la mesure la plus concrète pour un service public. Pas pour un restaurant (la question n'y est pas posée). |
-| Thèmes « Bien » et « Pas bien » de l'écran 2b | Oui : les 3 points forts et les 3 points à améliorer | Dit **pourquoi** les usagers sont satisfaits ou non : c'est ce qui aide un responsable à agir. |
+| Thèmes « Bien » et « Pas bien » de l'écran 2b | Oui : tous les thèmes cités, du plus « Bien » au plus « Pas bien » (design B) | Dit **pourquoi** les usagers sont satisfaits ou non : c'est ce qui aide un responsable à agir. |
 | Évolution mois par mois | Oui | Montre si les choses s'améliorent. Un mois sous le seuil affiche « pas assez d'avis ». |
 | Commentaires écrits | **Non au lancement** | Ils doivent être relus avant publication (noms, injures, accusations) : il n'y a pas encore d'outil de modération. Plus tard : quelques extraits relus. |
 | Texte de « Autre » | Jamais | Sert seulement à repérer les thèmes qui manquent (déjà décidé). |
@@ -18,12 +18,13 @@
 | Questions détaillées (attente, reçu, nombre de venues…) | Plus tard | Beaucoup de questions différentes selon le secteur ; à ajouter une fois le principe validé. |
 | Classement entre établissements | **Non au lancement** | Risque de comparer des lieux qui ne se comparent pas (petit poste de santé et hôpital) ; à voir avec l'organisme porteur. |
 
-## 2. Règles de publication (à valider)
+## 2. Règles de publication (validées le 2026-10-03)
 
 1. **Seuil : 10 avis.** Sous ce nombre, aucun résultat (anonymat et fiabilité). On affiche « Pas encore assez d'avis » avec le nombre reçu et le bouton « Donner mon avis sur cet établissement ».
 2. **Période : les 3 derniers mois, mis à jour chaque mois.** Avec « 10 avis par mois », une petite mairie ne serait presque jamais publiée. Trois mois glissants publient plus de lieux, et la promesse de l'accueil (« publiés chaque mois ») reste vraie. L'évolution mois par mois garde le seuil de 10 pour chaque mois.
 3. **Avis comptés** : réponse à la question essentielle, visite de moins d'un mois (déjà la règle), établissement validé (pas `pending_review`).
-4. **Organisme** (Senelec, Dem Dikk…) : une note regroupée (décision déjà prise), puis la liste de ses lieux avec leur résultat.
+4. **Organisme** (Senelec, Dem Dikk…) : une note regroupée (décision déjà prise), puis la liste de ses lieux avec leur résultat. **Pas encore construit** : aujourd'hui la fiche « en général » d'un organisme n'a que ses propres avis.
+5. **Questions de démarche** : « Avez-vous obtenu ce que vous étiez venu(e) chercher ? » et sa version santé (« Avez-vous reçu ce pour quoi vous étiez venu(e) ? ») ne s'affichent que si elles ont au moins 10 réponses sur la période.
 
 ## 3. Où on le montre
 
@@ -31,11 +32,53 @@
 - Un lien « Voir les résultats » sur l'écran « Merci » (après l'avis, pour ne pas influencer la réponse).
 - Plus tard : une page « Résultats » avec la même recherche que l'accueil, et le lien « Résultats par établissement » prévu dans la maquette d'accueil.
 
-## 4. Ce qu'il faudra construire (après accord)
+## 4. Ce qui est construit, et pourquoi ce choix technique
 
-- **Migration 0007** : la vue `monthly_stats` ne garde aujourd'hui que la moyenne. Il faut y ajouter le nombre de chaque réponse (5 niveaux), les réponses « Oui / En partie / Non », et une vue des thèmes (nombre de « Bien » et « Pas bien »).
-- La page de résultats, ses textes dans `fr.ts`, et ses tests.
-- `CRON_SECRET` dans Vercel (le calcul de nuit est déjà en place).
+### En bref
+
+Chaque nuit, la base fait les comptes : pour chaque établissement, chaque service et chaque mois, combien d'usagers ont choisi chaque réponse, et combien ont dit « Bien » ou « Pas bien » sur chaque thème. La page de résultats additionne ensuite les 3 mois voulus et applique le seuil de 10 avis au moment de l'affichage.
+
+Exemple : la Mairie de Grand Yoff a 15 avis en juillet, 14 en août et 19 en septembre. La base garde ces trois lignes. Le 1er octobre, la page additionne juillet à septembre (48 avis), au-dessus de 10 : le résultat est publié.
+
+### Ce que fait la migration 0007 (`src/db/migrations/0007_published_counts.sql`)
+
+| Objet | Rôle |
+|---|---|
+| `published_feedback` (vue simple) | La liste des avis qui comptent : mois de visite connu (pas « plus d'un mois »), question essentielle répondue ; l'avis d'un établissement fusionné compte pour celui qui le remplace. Écrite une seule fois, utilisée par les deux vues ci-dessous. |
+| `monthly_answer_counts` (vue matérialisée) | Une ligne par établissement, service, mois, question et réponse : le nombre de fois où la réponse a été choisie. Les textes libres ne sont jamais comptés. |
+| `monthly_topic_counts` (vue matérialisée) | Une ligne par établissement, service, mois et thème : nombre de « Bien » et de « Pas bien ». Le thème « Autre » est exclu (ce que l'usager y écrit n'est jamais publié). |
+
+Rien n'est modifié dans les tables existantes : la migration ajoute seulement trois vues. La vue `monthly_stats` (moyenne) reste en place.
+
+### Pourquoi ce choix
+
+1. **Compter une fois par nuit, pas à chaque visite de la page.** Une vue matérialisée est un tableau de résultats que la base recalcule à heure fixe (le calcul de nuit existe déjà, à 2 h). La page lit quelques dizaines de lignes déjà comptées au lieu de parcourir tous les avis : elle reste rapide en 3G, même avec des millions d'avis. C'est la même méthode que `monthly_stats`, déjà en place.
+2. **Garder le mois comme unité, appliquer les règles à la lecture.** La période (3 mois) et le seuil (10 avis) ne sont pas écrits dans la base mais dans le code (`src/domain/stats/results.ts`). Passer à 6 mois ou à 20 avis demain se fait sans migration ni recalcul.
+3. **Une vue générale pour toutes les questions.** Comme chaque question de la banque a le même code et les mêmes réponses dans tous les secteurs, une seule vue compte toutes les réponses. Publier plus tard le temps d'attente ou « Vous a-t-on donné un reçu ? » sera une simple lecture, sans nouvelle migration.
+4. **Des comptes, pas des moyennes.** Avec les nombres de chaque réponse, on peut additionner des mois et des services sans erreur (on ne peut pas faire la moyenne de moyennes), et calculer les pourcentages du tableau.
+5. **L'anonymat protégé par construction.** Sous 10 avis, la page et l'API ne renvoient que le nombre d'avis, jamais le détail. Un établissement pas encore vérifié (`pending_review`) n'a pas de résultats publiés. Les mois sont des mois complets : les chiffres ne bougent pas pendant le mois et un avis du jour ne peut pas être repéré.
+6. **Testé sur les vraies migrations.** Les tests appliquent 0001 à 0007 sur une base en mémoire et vérifient : addition des 3 mois et des services, seuil, établissement non vérifié, « Autre » jamais publié, fusion, pourcentages qui font toujours 100.
+
+### Alternatives écartées
+
+- **Ajouter des colonnes à `monthly_stats`** (une par réponse) : il aurait fallu une migration à chaque nouvelle question publiée, et la supprimer puis la recréer.
+- **Calculer en direct à chaque affichage** : simple, mais de plus en plus lent avec le nombre d'avis, sur le serveur partagé de Neon.
+- **Stocker directement les résultats sur 3 mois** : changer la période aurait demandé une migration et un recalcul complet.
+
+### Fichiers
+
+- `src/db/migrations/0007_published_counts.sql` : les vues.
+- `src/db/stats.ts` : recalcul de nuit des trois vues, lectures des comptes.
+- `src/domain/stats/results.ts` : règles (période, seuil, pourcentages qui font 100 %).
+- `app/(public)/resultats/[id]/` : la page (design B), textes dans `app/_i18n/fr.ts` (`results`).
+- Écran « Merci » : lien « Voir les résultats de cet établissement ».
+- `GET /webapi/establishments/{id}/stats` renvoie les mêmes résultats que la page.
+
+### Reste à faire
+
+- `CRON_SECRET` dans Vercel (le calcul de nuit est protégé par ce secret).
+- Note regroupée d'un organisme (section 2, point 4).
+- Page « Résultats » avec recherche, et lien depuis l'accueil.
 
 ## 5. Les deux propositions de design
 

@@ -1,4 +1,5 @@
-/* MAQUETTE B « Le relevé » : une fiche comme le ticket de l'accueil. */
+/* Public results (design B « Le relevé »): a sheet like the home page's ticket,
+   stamped « Publié » with the date of publication. */
 
 .main {
   background: var(--page);
@@ -85,6 +86,7 @@
 
 /* Le tampon, comme à l'écran « Merci » : il donne la date de publication. */
 .stamp {
+  margin: 0;
   position: absolute;
   right: 0;
   top: 6px;
@@ -201,11 +203,16 @@
   padding-left: 10px;
 }
 
+.answer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .face {
   width: 22px;
   height: 22px;
-  vertical-align: -6px;
-  margin-right: 8px;
+  flex-shrink: 0;
 }
 
 .legend {
@@ -378,7 +385,7 @@
     gap: 28px;
   }
 
-  .stub .btn {
+  .stub :global(.btn) {
     width: auto;
   }
 }

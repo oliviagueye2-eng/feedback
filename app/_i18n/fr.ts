@@ -181,6 +181,40 @@ export const fr = {
     text: "Vos réponses aideront à améliorer ce service.",
     close: "Vous pouvez fermer cette page.",
     stamp: "Merci",
+    seeResults: "Voir les résultats de cet établissement",
+  },
+
+  /** Public results of an establishment (design B « Le relevé », 2026-10-03). */
+  results: {
+    pageTitle: "Résultats : {name}",
+    sheetLabel: "Relevé des avis",
+    /** Same year: « juillet à septembre 2026 »; otherwise each month has its year. */
+    period: "{from} à {last}",
+    waitingPeriod: "3 derniers mois",
+    stampPublished: "Publié",
+    stampWaiting: "En attente",
+    stampCount: "{count} avis sur {threshold}",
+    satisfiedLead: "<b>{percent} %</b> des usagers sont satisfaits ou très satisfaits, sur {count} avis.",
+    answer: "Réponse",
+    count: "Avis",
+    share: "Part",
+    answers: { one: "{count} réponse à cette question.", other: "{count} réponses à cette question." },
+    topicsTitle: "Ce qui a été bien, ce qui ne l'a pas été",
+    topicsHelp: "Nombre d'usagers qui ont jugé chaque point « Bien » ou « Pas bien ».",
+    good: "Bien",
+    bad: "Pas bien",
+    /** Read by screen readers on each topic's bars. */
+    topicCounts: "{good} « Bien », {bad} « Pas bien »",
+    monthsTitle: "Mois par mois",
+    month: "Mois",
+    satisfied: "Satisfaits",
+    notEnough: "pas assez d'avis",
+    emptyTitle: "Pas encore assez d'avis pour publier un résultat.",
+    emptyCount: { one: "{count} avis reçu ces 3 derniers mois.", other: "{count} avis reçus ces 3 derniers mois." },
+    emptyWhy: "Il en faut au moins {threshold} pour que le résultat soit fiable et que personne ne puisse être reconnu.",
+    rules:
+      "Avis des 3 derniers mois, mis à jour chaque mois. Publié à partir de {threshold} avis. Les avis sont anonymes ; les commentaires écrits ne sont pas publiés.",
+    give: "Donner mon avis sur cet établissement",
   },
 
   admin: {

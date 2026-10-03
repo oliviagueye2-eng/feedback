@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BackLink } from "../../../../_components/BackLink";
 import { DomainError } from "@/src/domain/errors";
@@ -49,6 +50,9 @@ export default async function ThanksPage({ params }: PageProps<"/donner/[feedbac
               <span>{today}</span>
             </div>
           </div>
+          <Link href={`/resultats/${context.establishmentId}`} className={styles.thanksResults}>
+            {t.seeResults}
+          </Link>
           <BackLink href="/" label={common.backHome} />
         </div>
       </main>

@@ -16,3 +16,5 @@ export async function refreshPublishedStats(): Promise<{ refreshedAt: string; ab
   await db.refreshMonthlyStats();
   return { refreshedAt: new Date().toISOString(), abandonedDeleted };
 }
+
+export { getPublishedResults, type PublishedResults } from "./results";

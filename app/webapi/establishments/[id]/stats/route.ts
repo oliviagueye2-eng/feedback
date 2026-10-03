@@ -1,4 +1,4 @@
-import { getEstablishmentStats } from "@/src/domain/establishment";
+import { getPublishedResults } from "@/src/domain/stats";
 import { respond } from "../../../_lib/respond";
 
 export async function GET(
@@ -6,5 +6,5 @@ export async function GET(
   ctx: RouteContext<"/webapi/establishments/[id]/stats">,
 ) {
   const { id } = await ctx.params;
-  return respond(() => getEstablishmentStats(id));
+  return respond(() => getPublishedResults(id));
 }

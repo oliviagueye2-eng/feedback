@@ -7,7 +7,7 @@ Dernière mise à jour : 2026-10-02, fin de session (types d'établissement, que
 
 ## Reprise rapide (prochaine session)
 
-- **En ligne** : `main` contient tout le travail du 2026-10-02 (fusion de `claude/zen-babbage-njn8h8`), migrations **0001 à 0006** appliquées sur Neon au build de production (**dernier déploiement : commit `5226ca8`, statut Vercel « success »**, 2026-10-02). Site : https://feedback-pink-sigma.vercel.app (le conteneur ne peut pas l'ouvrir : `*.vercel.app` et `*.neon.tech` refusés par le proxy ; pour Neon, lui donner les requêtes SQL à lancer dans la console, branche **Primary**, base **neondb**).
+- **En ligne** : `main` contient tout le travail du 2026-10-02 (fusion de `claude/zen-babbage-njn8h8`), migrations **0001 à 0006** appliquées (0007 sur la branche des résultats, pas encore en ligne) sur Neon au build de production (**dernier déploiement : commit `5226ca8`, statut Vercel « success »**, 2026-10-02). Site : https://feedback-pink-sigma.vercel.app (le conteneur ne peut pas l'ouvrir : `*.vercel.app` et `*.neon.tech` refusés par le proxy ; pour Neon, lui donner les requêtes SQL à lancer dans la console, branche **Primary**, base **neondb**).
 - **Migrations** : `0001_schema.sql`, `0002_reference_data.sql`, `0003_registry.sql`, `0004_questions.sql`, `0005_establishment_types.sql`, `0006_air_senegal.sql`. **Toutes déployées** : toute modification passe par une **nouvelle migration** `0007_…` (lui demander avant). `0004_questions.sql` a été générée par un script Python disparu avec la session : ne pas la régénérer.
 - **Questions** : banque (`question`, `answer_option` + traductions, **42 questions**) ; listes (`question_set`, `question_set_item`, `question_condition`) rattachées par `question_set_id` à `sector`, `establishment_type`, `service`, **additionnées** (secteur, puis type, puis service ; une question en double posée une fois). Choix : `selectQuestionSets` (`src/domain/questionnaire/select.ts`), `findDetailedQuestions` (`src/db/feedbacks.ts`). Contenu complet : `docs/processus-recolte-avis.md` ; tables : `docs/architecture-base-de-donnees.md`, section 5.
 - **Fait le 2026-10-02 (après la refonte)** :
@@ -25,7 +25,8 @@ Dernière mise à jour : 2026-10-02, fin de session (types d'établissement, que
   2. questions **Sécurité** (police, gendarmerie : avec l'organisme porteur) ;
   3. ~~**Université, école supérieure**~~ : « Combien d'élèves dans la classe ? » **gardée** pour elles (sa décision, 2026-10-03) ;
   4. catégorie en étoiles des hôtels (colonne facultative, plus tard) ;
-  5. seuil de publication (10 avis par mois ?), page « À propos », langues.
+  5. ~~seuil de publication~~ (10 avis sur 3 mois, 2026-10-03), page « À propos », langues.
+- **Résultats publics (2026-10-03, branche `claude/project-thread-wme6d3`, pas encore fusionnée)** : design B « Le relevé » (fiche tamponnée « Publié », pourcentages) choisi par elle ; 10 avis sur les 3 derniers mois complets ; commentaires non publiés ; **migration 0007** acceptée (`monthly_answer_counts`, `monthly_topic_counts`, vue `published_feedback`). Page `/resultats/{id}`, lien depuis l'écran « Merci ». Étude et justification : `docs/publication-resultats.md`. Sans `CRON_SECRET` dans Vercel, les vues ne sont jamais recalculées et toutes les pages restent « En attente ». Reste : note regroupée d'un organisme, page « Résultats » avec recherche.
 - **Prochaine étape technique** : à choisir avec elle. La **file d'envoi hors connexion** est passée en *nice to have* le 2026-10-02.
 - **Notés pour plus tard, ne pas construire sans accord** : file d'envoi hors connexion, liste officielle des lignes de bus et champ « numéro de la ligne », QR codes dans les bus, découpage du transport en trois secteurs, suivi des réclamations.
 

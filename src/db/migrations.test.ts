@@ -297,5 +297,11 @@ describe("collection rules", () => {
       feedback_count: 1,
       avg_satisfaction: "4.00",
     });
+    // The counts behind the results page (0007) follow the merge the same way.
+    await db.exec("REFRESH MATERIALIZED VIEW monthly_answer_counts");
+    const counts = await one<{ establishment_id: string; month: string; answer_count: number }>(
+      "SELECT establishment_id, to_char(month, 'YYYY-MM') AS month, answer_count FROM monthly_answer_counts",
+    );
+    expect(counts).toEqual({ establishment_id: establishmentId, month: "2026-03", answer_count: 1 });
   });
 });

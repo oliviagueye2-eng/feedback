@@ -516,6 +516,14 @@
   line-height: 1.45;
 }
 
+/* « Voir les résultats de cet établissement », under the ticket. */
+.thanksResults {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+}
+
 /* The stamp, in the stub, slightly askew; capitals as on a real stamp. */
 .stamp {
   position: absolute;

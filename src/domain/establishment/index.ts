@@ -11,8 +11,6 @@ export const FUZZY_MIN_LENGTH = 5;
 export const SEARCH_LIMIT = 8;
 /** Screen 0b: at most this many "Vouliez-vous dire" suggestions. */
 export const SUGGESTION_LIMIT = 3;
-/** Below this number of feedbacks in a month, nothing is published (anonymity, representativeness). */
-export const MIN_FEEDBACK_TO_PUBLISH = 10;
 
 /** Screen 0a: autocomplete. Only active establishments are returned. */
 export async function searchEstablishments(
@@ -58,8 +56,4 @@ export async function createUserEstablishment(body: unknown): Promise<{ id: stri
     municipalityInput: optionalString(input, "municipality", { max: 120 }),
   });
   return { id };
-}
-
-export async function getEstablishmentStats(id: string) {
-  return db.findPublishedStats(id, MIN_FEEDBACK_TO_PUBLISH);
 }

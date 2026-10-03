@@ -20,12 +20,6 @@ export interface NewUserEstablishment {
   municipalityInput: string | null;
 }
 
-export interface EstablishmentStats {
-  month: string;
-  feedbackCount: number;
-  avgSatisfaction: number;
-}
-
 interface SummaryRow {
   id: string;
   name: string;
@@ -285,32 +279,4 @@ export async function insertUserEstablishment(
   );
   if (!rows[0]) throw invalidInput("Unknown sector");
   return rows[0].id;
-}
-
-/**
- * Reads monthly_stats for one establishment, most recent month first. The view
- * has one row per service: they are added up here, and a month is published
- * only when it reaches the threshold.
- */
-export async function findPublishedStats(
-  establishmentId: string,
-  minFeedbackCount: number,
-): Promise<EstablishmentStats[]> {
-  const rows = await query<{ month: string; feedback_count: number; avg_satisfaction: number }>(
-    `SELECT to_char(month, 'YYYY-MM-DD') AS month,
-            sum(feedback_count)::int AS feedback_count,
-            round(sum(avg_satisfaction * feedback_count) / sum(feedback_count), 2)::float8
-              AS avg_satisfaction
-     FROM monthly_stats
-     WHERE establishment_id = $1
-     GROUP BY month
-     HAVING sum(feedback_count) >= $2
-     ORDER BY month DESC`,
-    [establishmentId, minFeedbackCount],
-  );
-  return rows.map((row) => ({
-    month: row.month,
-    feedbackCount: row.feedback_count,
-    avgSatisfaction: row.avg_satisfaction,
-  }));
 }

@@ -535,7 +535,17 @@ Recalculée chaque nuit. C'est la source des résultats publiés.
 
 Seuls les avis dont `visit_period` n'est pas `over_month` sont comptés.
 
-Règle de publication : ne rien publier sous un seuil d'avis (par exemple 10 par mois et par établissement), pour protéger l'anonymat et éviter les notes non représentatives.
+Règle de publication (validée le 2026-10-03) : les avis des **3 derniers mois complets**, mis à jour chaque mois, publiés à partir de **10 avis** ; sous ce seuil, seul le nombre d'avis est donné. Établissement `pending_review` : rien de publié. Commentaires écrits : jamais publiés au lancement. Ces règles sont appliquées à la lecture (`src/domain/stats/results.ts`), pas dans la base.
+
+### monthly_answer_counts et monthly_topic_counts (vues matérialisées, migration 0007)
+Recalculées chaque nuit avec `monthly_stats`, à partir de la vue simple `published_feedback` (avis qui comptent : mois de visite connu, question essentielle répondue, établissement fusionné suivi jusqu'à son remplaçant).
+
+| Vue | Une ligne par | Colonnes |
+|---|---|---|
+| monthly_answer_counts | établissement, service (`service_key`, 0 sans service), mois, question, réponse | `answer_count` (textes libres jamais comptés) |
+| monthly_topic_counts | établissement, service, mois, thème (sauf « Autre ») | `positive_count`, `negative_count` |
+
+Source de la page `/resultats/{id}`. Explication du choix : `docs/publication-resultats.md`, section 4.
 
 ### search_log (facultatif)
 Pour améliorer le référentiel : terme tapé (`query`), nombre de résultats (`result_count`), établissement choisi (`selected_establishment_id`) ou saisi (`created_establishment_id`), date (`searched_at`). Aucune donnée d'identification. Utile pour repérer les établissements manquants et les synonymes à ajouter.
@@ -579,7 +589,7 @@ Historique des actions des agents : validation ou fusion d'un établissement sai
 
 1. **Découpage territorial :** faut-il descendre jusqu'au village ou au quartier, ou s'arrêter à la commune ?
 2. **Géolocalisation des établissements :** faut-il des coordonnées GPS (et PostGIS) pour une recherche « près de moi » plus tard ?
-3. **Seuil de publication :** quel nombre minimum d'avis avant de publier une note ?
+3. ~~**Seuil de publication**~~ : 10 avis sur les 3 derniers mois (décidé le 2026-10-03).
 4. **Durée de conservation :** combien de temps garde-t-on les réponses brutes et les commentaires ?
 5. **Langues :** quelles langues au lancement, et qui fournit les traductions ?
 6. **Hébergement :** la loi sénégalaise sur les données personnelles (loi 2008-12, CDP) impose-t-elle un hébergement dans le pays ?

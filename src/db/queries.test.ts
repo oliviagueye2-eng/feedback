@@ -8,7 +8,6 @@ import {
   createUserEstablishment,
   getEstablishment,
   getEstablishmentByQrCode,
-  getEstablishmentStats,
   listSectors,
   searchEstablishments,
 } from "../domain/establishment";
@@ -27,7 +26,7 @@ import {
   saveTopics,
   upsertFeedback,
 } from "../domain/feedback";
-import { refreshPublishedStats } from "../domain/stats";
+import { getPublishedResults, refreshPublishedStats } from "../domain/stats";
 import { useTestDatabase } from "./client";
 import { createTestDatabase } from "./test-database";
 
@@ -487,23 +486,104 @@ describe("feedback", () => {
   });
 });
 
-describe("published stats", () => {
-  it("adds up services and publishes a month only above the threshold", async () => {
+describe("published results", () => {
+  // On April 15, 2026: January to March are published, October to March are in the table.
+  const now = new Date("2026-04-15T10:00:00Z");
+
+  beforeAll(async () => {
+    const [row] = await rows<{ id: string }>(
+      `INSERT INTO establishment (name, type_id)
+       VALUES ('Hôpital des résultats', (SELECT id FROM establishment_type WHERE code = 'HOSPITAL'))
+       RETURNING id`,
+    );
+    ids.results = row!.id;
+  });
+
+  it("adds up the last 3 months and every service, and publishes from 10 feedbacks", async () => {
     await db.exec(`
       INSERT INTO feedback (id, establishment_id, service_id, channel, language, visit_period, visit_month)
-      SELECT gen_random_uuid(), '${ids.dantec}', NULL, 'qr', 'fr', 'today', '2026-02-01'
-      FROM generate_series(1, 10);
+      SELECT gen_random_uuid(), '${ids.results}', NULL, 'qr', 'fr', 'today', v.month::date
+      FROM (VALUES ('2026-02-01'), ('2026-02-01'), ('2026-02-01'), ('2026-02-01'), ('2026-02-01'),
+                   ('2026-02-01'), ('2026-02-01'), ('2026-02-01'), ('2026-02-01'), ('2026-02-01'),
+                   ('2026-01-01'), ('2026-01-01'),
+                   -- Out of the period: April is not complete yet, December is too old.
+                   ('2026-04-01'), ('2025-12-01')) AS v (month);
       INSERT INTO answer (feedback_id, question_id, option_id)
       SELECT f.id, q.id, ao.id
       FROM feedback f, question q JOIN answer_option ao ON ao.question_id = q.id
-      WHERE f.establishment_id = '${ids.dantec}' AND f.visit_month = '2026-02-01' AND q.code = 'OVERALL_SATISFACTION' AND ao.code = 'VERY_SATISFIED';
-      REFRESH MATERIALIZED VIEW monthly_stats;
+      WHERE f.establishment_id = '${ids.results}' AND q.code = 'OVERALL_SATISFACTION'
+        AND ao.code = CASE f.visit_month WHEN '2026-01-01' THEN 'DISSATISFIED' ELSE 'VERY_SATISFIED' END;
+      INSERT INTO answer (feedback_id, question_id, option_id)
+      SELECT f.id, q.id, ao.id
+      FROM feedback f, question q JOIN answer_option ao ON ao.question_id = q.id
+      WHERE f.establishment_id = '${ids.results}' AND f.visit_month = '2026-02-01'
+        AND q.code = 'CARE_RECEIVED' AND ao.code = 'YES';
+      INSERT INTO feedback_topic (feedback_id, topic_id, sentiment, other_text)
+      SELECT f.id, t.id, v.sentiment, v.other_text
+      FROM (SELECT id, row_number() OVER (ORDER BY id) AS n FROM feedback
+            WHERE establishment_id = '${ids.results}' AND visit_month = '2026-02-01') AS f
+      JOIN (VALUES (1, 'STAFF', 'positive', NULL), (2, 'STAFF', 'positive', NULL), (3, 'STAFF', 'positive', NULL),
+                   (1, 'WAIT_TIME', 'negative', NULL), (2, 'WAIT_TIME', 'negative', NULL),
+                   (1, 'OTHER', 'negative', 'Parking')) AS v (n, code, sentiment, other_text) ON v.n = f.n
+      JOIN topic t ON t.code = v.code;
     `);
-    expect(await getEstablishmentStats(ids.dantec!)).toEqual([
-      { month: "2026-02-01", feedbackCount: 10, avgSatisfaction: 5 },
+    await refreshPublishedStats();
+
+    const results = await getPublishedResults(ids.results!, now);
+    if (!results.published) throw new Error("expected published results");
+    expect(results.period).toEqual({ from: "2026-01-01", last: "2026-03-01", publishedOn: "2026-04-01" });
+    expect(results.feedbackCount).toBe(12);
+    expect(results.satisfaction.options.map((o) => [o.code, o.count, o.percent])).toEqual([
+      ["VERY_SATISFIED", 10, 83],
+      ["SATISFIED", 0, 0],
+      ["NEUTRAL", 0, 0],
+      ["DISSATISFIED", 2, 17],
+      ["VERY_DISSATISFIED", 0, 0],
     ]);
-    // One feedback in March for Grand-Yoff: below the threshold.
-    expect(await getEstablishmentStats(ids.gy!)).toEqual([]);
+    expect(results.satisfaction.options[0]!.label).toBe("Très satisfait(e)");
+    expect(results.satisfiedPercent).toBe(83);
+    // GOAL_ACHIEVED is not asked in health: only CARE_RECEIVED shows.
+    expect(results.goals.map((g) => [g.code, g.total, g.options[0]!.code, g.options[0]!.percent])).toEqual([
+      ["CARE_RECEIVED", 10, "YES", 100],
+    ]);
+    // « Autre » is never published.
+    expect(results.topics.map((t) => [t.code, t.positive, t.negative])).toEqual([
+      ["STAFF", 3, 0],
+      ["WAIT_TIME", 0, 2],
+    ]);
+    expect(results.months).toEqual([
+      { month: "2025-10-01", feedbackCount: 0, satisfiedPercent: null },
+      { month: "2025-11-01", feedbackCount: 0, satisfiedPercent: null },
+      { month: "2025-12-01", feedbackCount: 1, satisfiedPercent: null },
+      { month: "2026-01-01", feedbackCount: 2, satisfiedPercent: null },
+      { month: "2026-02-01", feedbackCount: 10, satisfiedPercent: 100 },
+      { month: "2026-03-01", feedbackCount: 0, satisfiedPercent: null },
+    ]);
+  });
+
+  it("gives only the number of feedbacks under the threshold", async () => {
+    // March 10: December to February, 1 + 2 + 10 = 13 feedbacks.
+    expect((await getPublishedResults(ids.results!, new Date("2026-03-10T10:00:00Z"))).published).toBe(true);
+    // June 10: March to May, only the April feedback.
+    expect(await getPublishedResults(ids.results!, new Date("2026-06-10T10:00:00Z"))).toEqual({
+      published: false,
+      period: { from: "2026-03-01", last: "2026-05-01", publishedOn: "2026-06-01" },
+      feedbackCount: 1,
+      threshold: 10,
+    });
+  });
+
+  it("publishes nothing for an establishment not yet validated, and refuses an unknown one", async () => {
+    await db.query("UPDATE establishment SET status = 'pending_review' WHERE id = $1", [ids.results]);
+    try {
+      const results = await getPublishedResults(ids.results!, now);
+      expect(results).toMatchObject({ published: false, feedbackCount: 12 });
+    } finally {
+      await db.query("UPDATE establishment SET status = 'active' WHERE id = $1", [ids.results]);
+    }
+    await expect(getPublishedResults("00000000-0000-4000-8000-000000000000", now)).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
   });
 });
 
