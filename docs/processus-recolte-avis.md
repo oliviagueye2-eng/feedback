@@ -37,7 +37,7 @@ Chaque avis passe par ces étapes, dans cet ordre.
 | 2 | **Quoi ?** Le service | 1. Se souvenir | « Sur quoi porte votre avis ? » | Liste des services de l'établissement, ou « Autre démarche » | Non (déjà connu par le QR code du guichet) | 1 | `service_id` | Fait |
 | 3 | **Quand ?** La période | 1. Se souvenir | « À quand remonte votre expérience ? » | Aujourd'hui / moins d'une semaine / moins d'un mois / plus d'un mois | Oui, sauf QR code (= aujourd'hui) | 1 | `visit_period`, `visit_month` | Fait |
 | 4 | **Le jugement global** | 5. Évaluer | « Êtes-vous satisfait(e) du service reçu ? » | 5 niveaux, un toucher | **Oui** : c'est la réponse qui compte dans les résultats | 2 | `answer` (`OVERALL_SATISFACTION`) | Fait |
-| 5 | **Les aspects** | 4. Analyser | « Comment ça s'est passé ? » | Pour chaque thème du secteur : « Bien », « Pas bien » ou rien ; « Autre » à préciser | Non | 2b | `feedback_topic` (avec `sentiment`) | Fait |
+| 5 | **Les aspects** | 4. Analyser | « Comment évaluez-vous les points suivants ? » | Pour chaque thème du secteur : « Bien », « Pas bien » ou rien ; « Autre » à préciser | Non | 2b | `feedback_topic` (avec `sentiment`) | Fait |
 | 6 | **Le récit** | 2. Comprendre | « Détail de votre expérience » (aide : points positifs, points négatifs, suggestions d'amélioration) | Texte libre, 500 caractères | Non | 2b | `comment` (relu avant publication) | Fait |
 
 ### Partie détaillée (enchaînée après l'écran 2b quand des questions s'appliquent, sans écran de choix)

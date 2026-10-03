@@ -156,7 +156,7 @@ export const fr = {
   details: {
     change: "Modifier",
     error: "Une réponse n'a pas été acceptée. Vérifiez vos réponses, puis appuyez de nouveau sur « Continuer ».",
-    topicsTitle: "Comment ça s'est passé ?",
+    topicsTitle: "Comment évaluez-vous les points suivants ?",
     topicsHint: "(choisissez seulement ce qui vous concerne)",
     good: "Bien",
     bad: "Pas bien",

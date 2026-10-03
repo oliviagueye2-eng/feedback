@@ -388,7 +388,7 @@ Clé `(question_set_id, question_id, option_id)`. Règle d'affichage et de netto
 Sans liste : secteur Sécurité (en attente de l'organisme porteur), secteur Transport, type Aéroport, service État civil.
 
 ### topic
-Thèmes proposés après la question essentielle (écran 2b), sous « Comment ça s'est passé ? ». Pour chaque thème, l'usager peut toucher « Bien » ou « Pas bien », ou ne rien toucher (option D, 2026-09-30) : une visite mitigée se dit (bon accueil, attente trop longue).
+Thèmes proposés après la question essentielle (écran 2b), sous « Comment évaluez-vous les points suivants ? ». Pour chaque thème, l'usager peut toucher « Bien » ou « Pas bien », ou ne rien toucher (option D, 2026-09-30) : une visite mitigée se dit (bon accueil, attente trop longue).
 
 | Colonne | Type | Note |
 |---|---|---|
