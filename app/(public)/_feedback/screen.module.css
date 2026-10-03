@@ -300,8 +300,10 @@
   font-weight: 400;
 }
 
-/* One row per topic: its name, then « Bien » and « Pas bien » (real radio
-   buttons, one group per topic). A touched row gets a darker border. */
+/* One box per topic: its name on the whole width, then « Bien », « Pas bien »
+   and « Non concerné » under it (option B, chosen on mock-ups: three buttons
+   beside the name left it 4 cm on a phone). Real radio buttons, one group per
+   topic. A touched box gets a darker border. */
 .topicRow {
   display: flex;
   flex-direction: column;
@@ -309,14 +311,13 @@
 }
 
 .topicLine {
-  min-height: 56px;
-  padding: 6px 6px 6px 14px;
+  padding: 12px 8px 8px 14px;
   border: 1.5px solid var(--control);
   border-radius: 10px;
   background: #fff;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .topicLine:has(input:checked) {
@@ -324,30 +325,29 @@
 }
 
 .topicLabel {
-  flex-grow: 1;
   font-size: 16px;
   line-height: 1.25;
 }
 
+/* « Non concerné » is the longest word: its column is a little wider. */
 .ratings {
-  display: flex;
+  display: grid;
+  grid-template-columns: 0.9fr 1.05fr 1.35fr;
   gap: 6px;
-  flex-shrink: 0;
 }
 
 .rating {
   position: relative;
-  width: 64px;
-  min-height: 48px;
+  min-height: 44px;
   border: 1.5px solid var(--line);
   border-radius: 8px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  font-size: 13px;
+  gap: 6px;
+  font-size: 14px;
   line-height: 1.1;
+  white-space: nowrap;
   color: var(--muted);
   cursor: pointer;
 }
@@ -369,6 +369,7 @@
 .rating svg {
   width: 20px;
   height: 20px;
+  flex-shrink: 0;
 }
 
 .thumbDown {
@@ -389,6 +390,92 @@
   font-weight: 700;
 }
 
+/* « Non concerné »: quieter than the two others (dashed, grey), and grey when
+   chosen too, never green or red: it says nothing about the service. */
+.ratingNeutral {
+  border-style: dashed;
+  border-color: var(--control-light);
+}
+
+.ratingNeutral:has(input:checked) {
+  border: 2px solid var(--control);
+  background: var(--hero);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* A yes/no question asked in the place of a topic (« Avez-vous payé quelque
+   chose ? »), and the topics it opens, set in under it. */
+.gateGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gateLine {
+  padding: 8px 8px 8px 14px;
+  border: 1.5px solid var(--control);
+  border-radius: 10px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gateLabel {
+  flex-grow: 1;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.gateOptions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.gateOption {
+  position: relative;
+  width: 64px;
+  min-height: 44px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.gateOption input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.gateOption:has(input:focus-visible) {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.gateOption:has(input:checked) {
+  border: 2px solid var(--ink);
+  background: var(--hero);
+  font-weight: 700;
+}
+
+.gated {
+  margin-left: 4px;
+  padding-left: 8px;
+  border-left: 3px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .otherField {
   font: inherit;
   font-size: 17px;
@@ -400,8 +487,9 @@
   color: var(--ink);
 }
 
-/* The « Autre » field appears once « Autre » is marked (stays visible where :has() is unknown). */
-.topicRow:not(:has(input[type="radio"]:checked)) .otherField {
+/* The « Autre » field appears once « Autre » is marked « Bien » or « Pas bien »
+   (stays visible where :has() is unknown). */
+.topicRow:not(:has(input[value="positive"]:checked, input[value="negative"]:checked)) .otherField {
   display: none;
 }
 

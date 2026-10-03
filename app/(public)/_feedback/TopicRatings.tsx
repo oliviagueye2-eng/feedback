@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import type { TopicChoice, TopicSentiment } from "@/src/db/feedbacks";
+import { useState, type ReactNode } from "react";
+import type { TopicChoice, TopicGate, TopicSentiment } from "@/src/db/feedbacks";
 import styles from "./screen.module.css";
 
 const ThumbIcon = ({ down = false }: { down?: boolean }) => (
@@ -19,12 +19,32 @@ const ThumbIcon = ({ down = false }: { down?: boolean }) => (
   </svg>
 );
 
+/** « Non concerné »: a circle with a dash, quieter than the thumbs. */
+const NotConcernedIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M8 12h8" />
+  </svg>
+);
+
+const RATING_CLASS: Record<TopicSentiment, string | undefined> = {
+  positive: styles.ratingGood,
+  negative: styles.ratingBad,
+  not_concerned: styles.ratingNeutral,
+};
+
 /**
- * Screen 2b, option D: each topic can be marked « Bien » or « Pas bien », or
- * left untouched. Touching the chosen answer again removes it. Real radio
- * buttons (one group per topic, named "topic:CODE"): without JavaScript the
- * form still works, only the removal needs it. « Autre » opens a short field
- * once it is marked.
+ * Screen 2b, option D: each topic can be marked « Bien », « Pas bien » or
+ * « Non concerné », or left untouched. Touching the chosen answer again
+ * removes it. Real radio buttons (one group per topic, named "topic:CODE"):
+ * without JavaScript the form still works, only the removal needs it.
+ * « Autre » opens a short field once it is marked.
+ *
+ * A topic shown only after an answer (« Frais payés » after « Oui » to « Avez-
+ * vous payé quelque chose ? ») comes under its question, asked in the place of
+ * the first of its topics ("q:CODE"). The topics stay hidden until that answer
+ * is touched, where the browser knows :has(); elsewhere they stay visible and
+ * the server ignores them without it.
  */
 export function TopicRatings({
   topics,
@@ -36,20 +56,25 @@ export function TopicRatings({
   otherCode: string;
   otherMaxLength: number;
   /** Texts given by the page. */
-  t: { good: string; bad: string; otherLabel: string; otherPlaceholder: string };
+  t: { good: string; bad: string; notConcerned: string; otherLabel: string; otherPlaceholder: string };
 }) {
   const [chosen, setChosen] = useState<Record<string, TopicSentiment | null>>(() =>
     Object.fromEntries(topics.map((topic) => [topic.code, topic.sentiment])),
   );
+  const [answers, setAnswers] = useState<Record<string, string | null>>(() =>
+    Object.fromEntries(topics.flatMap((topic) => (topic.gate ? [[topic.gate.code, topic.gate.chosen]] : []))),
+  );
 
-  // A click on the answer already chosen clears the topic.
+  // A click on the answer already chosen clears the topic (or the question).
   const toggle = (code: string, sentiment: TopicSentiment) =>
     setChosen((current) => ({ ...current, [code]: current[code] === sentiment ? null : sentiment }));
+  const answer = (code: string, option: string) =>
+    setAnswers((current) => ({ ...current, [code]: current[code] === option ? null : option }));
 
-  return topics.map((topic) => {
+  const topicRow = (topic: TopicChoice) => {
     const labelId = `topic-${topic.code}`;
-    const choice = (sentiment: TopicSentiment, text: string) => (
-      <label className={`${styles.rating} ${sentiment === "positive" ? styles.ratingGood : styles.ratingBad}`}>
+    const choice = (sentiment: TopicSentiment, text: string, icon: ReactNode) => (
+      <label className={`${styles.rating} ${RATING_CLASS[sentiment]}`}>
         <input
           type="radio"
           name={`topic:${topic.code}`}
@@ -58,7 +83,7 @@ export function TopicRatings({
           onChange={() => {}}
           onClick={() => toggle(topic.code, sentiment)}
         />
-        <ThumbIcon down={sentiment === "negative"} />
+        {icon}
         <span>{text}</span>
       </label>
     );
@@ -69,8 +94,9 @@ export function TopicRatings({
             {topic.label}
           </span>
           <span className={styles.ratings}>
-            {choice("positive", t.good)}
-            {choice("negative", t.bad)}
+            {choice("positive", t.good, <ThumbIcon />)}
+            {choice("negative", t.bad, <ThumbIcon down />)}
+            {choice("not_concerned", t.notConcerned, <NotConcernedIcon />)}
           </span>
         </div>
         {topic.code === otherCode && (
@@ -86,5 +112,47 @@ export function TopicRatings({
         )}
       </div>
     );
+  };
+
+  const gateBlock = (gate: TopicGate, gated: TopicChoice[]) => {
+    const labelId = `gate-${gate.code}`;
+    const opened = gate.opensWith.map((o) => `input[name="q:${gate.code}"][value="${o}"]:checked`).join(", ");
+    return (
+      <div key={`gate:${gate.code}`} className={styles.gateGroup} data-gate={gate.code}>
+        <style>{`@supports selector(:has(*)) { [data-gate="${gate.code}"]:not(:has(${opened})) [data-gated] { display: none; } }`}</style>
+        <div className={styles.gateLine} role="radiogroup" aria-labelledby={labelId}>
+          <span id={labelId} className={styles.gateLabel}>
+            {gate.label}
+          </span>
+          <span className={styles.gateOptions}>
+            {gate.options.map((option) => (
+              <label key={option.code} className={styles.gateOption}>
+                <input
+                  type="radio"
+                  name={`q:${gate.code}`}
+                  value={option.code}
+                  checked={answers[gate.code] === option.code}
+                  onChange={() => {}}
+                  onClick={() => answer(gate.code, option.code)}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </span>
+        </div>
+        <div className={styles.gated} data-gated="">
+          {gated.map(topicRow)}
+        </div>
+      </div>
+    );
+  };
+
+  // Each question once, in the place of the first of its topics, with all of them under it.
+  const asked = new Set<string>();
+  return topics.flatMap((topic) => {
+    if (!topic.gate) return [topicRow(topic)];
+    if (asked.has(topic.gate.code)) return [];
+    asked.add(topic.gate.code);
+    return [gateBlock(topic.gate, topics.filter((other) => other.gate?.code === topic.gate!.code))];
   });
 }

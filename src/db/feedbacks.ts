@@ -65,7 +65,9 @@ export async function upsertFeedback(row: FeedbackRow): Promise<void> {
 /**
  * Saves one answer. The question is looked up by its code among the questions
  * this feedback may answer: the lists of its page (setIds: sector, type,
- * service), the essential question and the common ones.
+ * service), the essential question, the common ones, and the questions that
+ * open a topic of its screen 2b (« Avez-vous payé quelque chose ? »).
+ * Inactive options (« Je n'ai rien payé » since 0011) are refused.
  */
 export async function upsertAnswer(input: {
   feedbackId: string;
@@ -77,12 +79,15 @@ export async function upsertAnswer(input: {
   const questions = await query<{ id: number; type: string }>(
     `SELECT q.id, q.type
      FROM question q
-     JOIN question_set_item i ON i.question_id = q.id
      WHERE q.code = $1
-       AND (i.question_set_id = ANY($2::smallint[])
-            OR i.question_set_id IN (${QUESTION_SET("ESSENTIAL")}, ${QUESTION_SET("COMMON")}))
-     LIMIT 1`,
-    [input.questionCode, input.setIds],
+       AND (EXISTS (SELECT 1 FROM question_set_item i
+                    WHERE i.question_id = q.id
+                      AND (i.question_set_id = ANY($2::smallint[])
+                           OR i.question_set_id IN (${QUESTION_SET("ESSENTIAL")}, ${QUESTION_SET("COMMON")})))
+            OR q.id IN (SELECT tc.depends_on_question_id
+                        FROM (${topicsForFeedback("$3")}) t
+                        JOIN topic_condition tc ON tc.topic_id = t.id))`,
+    [input.questionCode, input.setIds, input.feedbackId],
   );
   const question = questions[0];
   if (!question) throw notFound("Question not found");
@@ -93,7 +98,7 @@ export async function upsertAnswer(input: {
   } else {
     if (!input.optionCode) throw invalidInput("option is required for this question");
     const options = await query<{ id: number }>(
-      "SELECT id FROM answer_option WHERE question_id = $1 AND code = $2",
+      "SELECT id FROM answer_option WHERE question_id = $1 AND code = $2 AND is_active",
       [question.id, input.optionCode],
     );
     if (!options[0]) throw invalidInput("Unknown option for this question");
@@ -118,7 +123,7 @@ export async function upsertAnswer(input: {
  * service. The sector is the visit reason's, else the establishment type's,
  * else the establishment's. A topic in several lists comes once.
  */
-const TOPICS_FOR_FEEDBACK = `
+const topicsForFeedback = (feedbackParam: string) => `
   SELECT t.* FROM topic t
   WHERE t.is_active
     AND EXISTS (
@@ -129,7 +134,7 @@ const TOPICS_FOR_FEEDBACK = `
       LEFT JOIN establishment_type et ON et.id = e.type_id
       LEFT JOIN sector sec ON sec.id = coalesce(s.sector_id, et.sector_id, e.sector_id)
       JOIN topic_set_item i ON i.topic_id = t.id
-      WHERE f.id = $1
+      WHERE f.id = ${feedbackParam}
         AND i.topic_set_id IN (
           (SELECT id FROM topic_set WHERE code = 'COMMON'),
           coalesce(sec.topic_set_id, CASE WHEN sec.id IS NULL THEN (SELECT id FROM topic_set WHERE code = 'GENERIC') END),
@@ -141,7 +146,10 @@ const TOPICS_FOR_FEEDBACK = `
  * A topic that is not (or no longer) offered for this feedback is ignored, the
  * others are kept: e.g. screen 2b shown again from the phone's memory after
  * the visit reason moved the feedback to another sector, or a topic turned off
- * in between. The user sees no error for it.
+ * in between. So is a topic whose question did not get the answer that opens
+ * it (hidden on the screen, e.g. « Frais payés » after « Non » to « Avez-vous
+ * payé quelque chose ? »): save the answers of screen 2b first. The user sees
+ * no error for it.
  */
 export async function replaceTopics(input: {
   feedbackId: string;
@@ -150,7 +158,15 @@ export async function replaceTopics(input: {
   const known = new Set(
     (
       await query<{ code: string }>(
-        `SELECT code FROM (${TOPICS_FOR_FEEDBACK}) t WHERE code = ANY($2::text[])`,
+        `SELECT t.code FROM (${topicsForFeedback("$1")}) t
+         WHERE t.code = ANY($2::text[])
+           AND NOT EXISTS (
+             SELECT 1 FROM topic_condition tc
+             WHERE tc.topic_id = t.id
+               AND NOT EXISTS (
+                 SELECT 1 FROM answer a
+                 JOIN topic_condition ok ON ok.topic_id = t.id AND ok.option_id = a.option_id
+                 WHERE a.feedback_id = $1 AND a.question_id = tc.depends_on_question_id))`,
         [input.feedbackId, input.topics.map((t) => t.code)],
       )
     ).map((row) => row.code),
@@ -209,8 +225,19 @@ export async function deleteComment(feedbackId: string): Promise<void> {
   await query("DELETE FROM comment WHERE feedback_id = $1", [feedbackId]);
 }
 
-/** « Bien » or « Pas bien », for one topic of screen 2b. */
-export type TopicSentiment = "positive" | "negative";
+/** « Bien », « Pas bien » or « Non concerné », for one topic of screen 2b. */
+export type TopicSentiment = "positive" | "negative" | "not_concerned";
+
+/** The yes/no question asked in the place of a topic, which shows it after « Oui ». */
+export interface TopicGate {
+  code: string;
+  label: string;
+  options: { code: string; label: string }[];
+  /** The answers that show the topic. */
+  opensWith: string[];
+  /** What this feedback answered, null when nothing. */
+  chosen: string | null;
+}
 
 export interface TopicChoice {
   code: string;
@@ -219,19 +246,61 @@ export interface TopicChoice {
   sentiment: TopicSentiment | null;
   /** Only for "Autre": what the user wrote. */
   otherText: string | null;
+  /** Shown only after an answer to this question; null when always shown. */
+  gate: TopicGate | null;
 }
 
 /** Screen 2b: the topics to show, in order, with what the user already touched. */
 export async function findTopicChoices(feedbackId: string): Promise<TopicChoice[]> {
-  const rows = await query<{ code: string; label: string; sentiment: TopicSentiment | null; other_text: string | null }>(
-    `SELECT t.code, tr.label, ft.sentiment, ft.other_text
-     FROM (${TOPICS_FOR_FEEDBACK}) t
-     JOIN topic_translation tr ON tr.topic_id = t.id AND tr.language = 'fr'
-     LEFT JOIN feedback_topic ft ON ft.feedback_id = $1 AND ft.topic_id = t.id
-     ORDER BY t.position`,
-    [feedbackId],
-  );
-  return rows.map((r) => ({ code: r.code, label: r.label, sentiment: r.sentiment, otherText: r.other_text }));
+  const [rows, gates] = await Promise.all([
+    query<{ code: string; label: string; sentiment: TopicSentiment | null; other_text: string | null }>(
+      `SELECT t.code, tr.label, ft.sentiment, ft.other_text
+       FROM (${topicsForFeedback("$1")}) t
+       JOIN topic_translation tr ON tr.topic_id = t.id AND tr.language = 'fr'
+       LEFT JOIN feedback_topic ft ON ft.feedback_id = $1 AND ft.topic_id = t.id
+       ORDER BY t.position`,
+      [feedbackId],
+    ),
+    query<{
+      topic: string;
+      code: string;
+      label: string;
+      option_code: string;
+      option_label: string;
+      opens: boolean;
+      chosen: boolean;
+    }>(
+      `SELECT t.code AS topic, q.code, qt.label, ao.code AS option_code, ot.label AS option_label,
+              EXISTS (SELECT 1 FROM topic_condition ok WHERE ok.topic_id = t.id AND ok.option_id = ao.id) AS opens,
+              EXISTS (SELECT 1 FROM answer a WHERE a.feedback_id = $1 AND a.option_id = ao.id) AS chosen
+       FROM (${topicsForFeedback("$1")}) t
+       JOIN (SELECT DISTINCT topic_id, depends_on_question_id FROM topic_condition) tc ON tc.topic_id = t.id
+       JOIN question q ON q.id = tc.depends_on_question_id
+       JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
+       JOIN answer_option ao ON ao.question_id = q.id AND ao.is_active
+       JOIN answer_option_translation ot ON ot.answer_option_id = ao.id AND ot.language = 'fr'
+       ORDER BY t.code, ao.position`,
+      [feedbackId],
+    ),
+  ]);
+  const gateOf = new Map<string, TopicGate>();
+  for (const row of gates) {
+    let gate = gateOf.get(row.topic);
+    if (!gate) {
+      gate = { code: row.code, label: row.label, options: [], opensWith: [], chosen: null };
+      gateOf.set(row.topic, gate);
+    }
+    gate.options.push({ code: row.option_code, label: row.option_label });
+    if (row.opens) gate.opensWith.push(row.option_code);
+    if (row.chosen) gate.chosen = row.option_code;
+  }
+  return rows.map((r) => ({
+    code: r.code,
+    label: r.label,
+    sentiment: r.sentiment,
+    otherText: r.other_text,
+    gate: gateOf.get(r.code) ?? null,
+  }));
 }
 
 /** Screen 2b: the free text already written, to show it when coming back. */
@@ -462,7 +531,7 @@ export async function findDetailedQuestions(feedbackId: string, setIds: number[]
        FROM items it
        JOIN question q ON q.id = it.question_id
        JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
-       JOIN answer_option ao ON ao.question_id = q.id
+       JOIN answer_option ao ON ao.question_id = q.id AND ao.is_active
        JOIN answer_option_translation ot ON ot.answer_option_id = ao.id AND ot.language = 'fr'
        ORDER BY it.ord, it.position, ao.position`,
       [setIds, feedbackId],
@@ -509,6 +578,30 @@ export async function findDetailedQuestions(feedbackId: string, setIds: number[]
     condition.options.push(row.option_code);
   }
   return questions;
+}
+
+/**
+ * Codes of the questions screen 2b asks for this feedback: those that open one
+ * of its topics. Screen 6 does not ask them again.
+ */
+export async function findTopicGateCodes(feedbackId: string): Promise<string[]> {
+  const rows = await query<{ code: string }>(
+    `SELECT DISTINCT q.code
+     FROM (${topicsForFeedback("$1")}) t
+     JOIN topic_condition tc ON tc.topic_id = t.id
+     JOIN question q ON q.id = tc.depends_on_question_id
+     ORDER BY q.code`,
+    [feedbackId],
+  );
+  return rows.map((r) => r.code);
+}
+
+/** Removes this feedback's answer to one question (screen 2b: a yes/no touched again, so cleared). */
+export async function deleteAnswerByCode(feedbackId: string, questionCode: string): Promise<void> {
+  await query(
+    "DELETE FROM answer WHERE feedback_id = $1 AND question_id = (SELECT id FROM question WHERE code = $2)",
+    [feedbackId, questionCode],
+  );
 }
 
 /** Removes this feedback's answers to these questions (answers that no longer apply). */

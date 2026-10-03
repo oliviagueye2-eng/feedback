@@ -132,14 +132,15 @@ describe("reference data", () => {
     expect(row).toEqual({
       topics: null,
       questions: [
-        "CLASS_SIZE", "FIELD_SITUATION", "OVERALL_SATISFACTION", "PATIENT", "POLICE_VISIT_REASON", "PREPAID_METER", "RECOMMEND", "REPORTED", "REPORT_WHY",
+        "CLASS_SIZE", "FIELD_SITUATION", "FILE_SUBMITTED", "INTERVENTION_AWAITED", "OVERALL_SATISFACTION",
+        "PAID_SOMETHING", "PATIENT", "POLICE_VISIT_REASON", "PREPAID_METER", "RECOMMEND", "REPORTED", "REPORT_WHY",
         "RESPONDENT", "TELECOM_SUBJECT", "UTILITY_SUBJECT",
       ],
       order: true,
     });
   });
 
-  it("has the bank of 47 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010), each written once, every text in French", async () => {
+  it("has the bank of 50 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -153,7 +154,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 47, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 50, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -189,7 +190,9 @@ describe("reference data", () => {
       `SELECT q.code FROM question_set_item i
        JOIN question_set qs ON qs.id = i.question_set_id JOIN question q ON q.id = i.question_id
        WHERE qs.code = 'HEALTH' ORDER BY i.position`)).rows.map((r) => r.code);
-    expect(order).toEqual(["PATIENT", "CARE_RECEIVED", "WAIT_TIME", "PRESCRIPTION_AVAILABLE", "RECEIPT_GIVEN"]);
+    expect(order).toEqual([
+      "PATIENT", "CARE_RECEIVED", "WAIT_TIME", "PRESCRIPTION_AVAILABLE", "PAID_SOMETHING", "RECEIPT_GIVEN",
+    ]);
   });
 
   it("shows a question only after the answers its list requires", async () => {
@@ -202,19 +205,26 @@ describe("reference data", () => {
        JOIN answer_option ao ON ao.id = qc.option_id
        ORDER BY qs.code, q.code, ao.position`)).rows.map((r) => `${r.list}: ${r.question} ← ${r.depends_on} ${r.option}`);
     expect(conditions).toEqual([
+      "BANKING_INSURANCE: FEES_EXPLAINED ← PAID_SOMETHING YES",
       "COMMON: REPORTED ← OVERALL_SATISFACTION DISSATISFIED",
       "COMMON: REPORTED ← OVERALL_SATISFACTION VERY_DISSATISFIED",
       "COMMON: REPORT_WHY ← REPORTED NO",
+      "EDUCATION: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT 1_TO_3",
       "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT 4_TO_10",
       "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT OVER_10",
+      "FILE_SERVICES: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "FLIGHT: DELAY_CARE ← DEPARTURE_ON_TIME UNDER_1_H_LATE",
       "FLIGHT: DELAY_CARE ← DEPARTURE_ON_TIME OVER_1_H_LATE",
       "FLIGHT: DELAY_CARE ← DEPARTURE_ON_TIME CANCELLED",
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME UNDER_1_H_LATE",
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME OVER_1_H_LATE",
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME CANCELLED",
-      "POLICE_FIELD: ARRIVAL_TIME ← FIELD_SITUATION CALL_RESPONSE",
+      "GENERIC: RECEIPT_OR_INVOICE ← PAID_SOMETHING YES",
+      "HEALTH: RECEIPT_GIVEN ← PAID_SOMETHING YES",
+      "POLICE_FIELD: ARRIVAL_TIME ← INTERVENTION_AWAITED YES",
+      "POLICE_FIELD: RECEIPT_GIVEN ← PAID_SOMETHING YES",
+      "POLICE_PREMISES: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON COMPLAINT",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON LOSS",
       "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER 1_TO_3",
@@ -228,10 +238,51 @@ describe("reference data", () => {
        FROM question_set qs, question q, question dq
        WHERE qs.code = 'COMMON' AND q.code = 'REPORT_WHY' AND dq.code = 'OVERALL_SATISFACTION'`,
     )).rejects.toThrow(/foreign key/);
+    // The yes/no question always comes right before the questions it opens (0011).
+    const before = (await db.query<{ list: string; question: string; previous: string }>(
+      `SELECT qs.code AS list, q.code AS question, pq.code AS previous
+       FROM question_condition qc
+       JOIN question_set qs ON qs.id = qc.question_set_id
+       JOIN question q ON q.id = qc.question_id
+       JOIN question dq ON dq.id = qc.depends_on_question_id
+       JOIN question_set_item i ON i.question_set_id = qc.question_set_id AND i.question_id = qc.question_id
+       JOIN question_set_item p ON p.question_set_id = i.question_set_id AND p.position = i.position - 1
+       JOIN question pq ON pq.id = p.question_id
+       WHERE dq.code IN ('PAID_SOMETHING', 'INTERVENTION_AWAITED')`)).rows;
+    expect(before).toHaveLength(8);
+    expect(before.every((r) => ["PAID_SOMETHING", "INTERVENTION_AWAITED"].includes(r.previous))).toBe(true);
     // A real service keeps its French label (then its synonyms) in its search_text.
     expect((await one<{ search_text: string }>(
       "SELECT search_text FROM service WHERE code = 'CIVIL_REGISTRY'"))?.search_text,
     ).toMatch(/^etat civil extrait de naissance /);
+  });
+});
+
+describe("« Non concerné » and the questions that open a topic (0011)", () => {
+  it("opens four topics after « Oui », and no longer offers « Je n'ai rien payé »", async () => {
+    const conditions = (await db.query<{ topic: string; question: string; option: string }>(
+      `SELECT t.code AS topic, q.code AS question, ao.code AS option
+       FROM topic_condition tc
+       JOIN topic t ON t.id = tc.topic_id
+       JOIN question q ON q.id = tc.depends_on_question_id
+       JOIN answer_option ao ON ao.id = tc.option_id
+       ORDER BY t.code`)).rows.map((r) => `${r.topic} ← ${r.question} ${r.option}`);
+    expect(conditions).toEqual([
+      "CASE_TRACKING ← FILE_SUBMITTED YES",
+      "FEES ← PAID_SOMETHING YES",
+      "INTERVENTION_TIME ← INTERVENTION_AWAITED YES",
+      "PROCESSING_TIME ← FILE_SUBMITTED YES",
+    ]);
+    const inactive = (await db.query<{ code: string }>(
+      `SELECT q.code || ' ' || ao.code AS code FROM answer_option ao JOIN question q ON q.id = ao.question_id
+       WHERE NOT ao.is_active ORDER BY 1`)).rows.map((r) => r.code);
+    expect(inactive).toEqual(["RECEIPT_GIVEN NOTHING_PAID", "RECEIPT_OR_INVOICE NOTHING_PAID"]);
+  });
+
+  it("accepts « Non concerné » as a sentiment, and nothing else", async () => {
+    const definition = await one<{ def: string }>(
+      `SELECT pg_get_constraintdef(oid) AS def FROM pg_constraint WHERE conname = 'feedback_topic_sentiment_check'`);
+    expect(definition?.def).toContain("not_concerned");
   });
 });
 

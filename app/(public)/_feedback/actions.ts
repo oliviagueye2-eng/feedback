@@ -11,6 +11,7 @@ import {
   saveAnswer,
   saveComment,
   saveQuestionnaire,
+  saveTopicGates,
   saveTopics,
   upsertFeedback,
   type QuestionPage,
@@ -64,22 +65,33 @@ export async function answerEssential(formData: FormData) {
 /**
  * Screen 2b → the detailed questionnaire (screen 6) when one is published,
  * else the feedback is complete and screen 7 (thanks) follows: the user only
- * sees « Continuer », never a choice between stopping and going on. Saves the topics marked « Bien » or « Pas bien »
- * (fields "topic:CODE") and the free text, both optional (sending nothing is
- * allowed). The text of « Autre » counts only when « Autre » is marked; an
- * emptied comment is removed.
+ * sees « Continuer », never a choice between stopping and going on. Saves
+ * the yes/no answers asked in the place of a topic (fields "q:CODE") first,
+ * then the topics marked « Bien », « Pas bien » or « Non concerné » (fields
+ * "topic:CODE") and the free text, all optional (sending nothing is allowed).
+ * A topic hidden by a « Non » is dropped by saveTopics. The text of « Autre »
+ * counts only when « Autre » is marked « Bien » or « Pas bien »; an emptied
+ * comment is removed.
  */
 export async function saveDetails(formData: FormData) {
   const id = String(formData.get("feedbackId") ?? "");
   const topics = [...formData.entries()]
     .filter(([name]) => name.startsWith("topic:"))
     .map(([name, sentiment]) => ({ code: name.slice("topic:".length), sentiment: String(sentiment) }));
+  const gates = Object.fromEntries(
+    [...formData.entries()]
+      .filter(([name, value]) => name.startsWith("q:") && typeof value === "string" && value !== "")
+      .map(([name, value]) => [name.slice("q:".length), String(value)]),
+  );
   const otherText = String(formData.get("otherText") ?? "").trim();
   const comment = String(formData.get("comment") ?? "").trim();
   try {
+    await saveTopicGates(id, gates);
     await saveTopics(id, {
       topics: topics.map((topic) =>
-        topic.code === OTHER_TOPIC_CODE && otherText ? { ...topic, otherText } : topic,
+        topic.code === OTHER_TOPIC_CODE && otherText && topic.sentiment !== "not_concerned"
+          ? { ...topic, otherText }
+          : topic,
       ),
     });
     if (comment) {
