@@ -57,23 +57,20 @@ describe("reference data", () => {
     expect(row).toEqual({ sector: "ADMINISTRATION", question_set: "FILE_SERVICES" });
   });
 
-  it("shows the nine common topics everywhere, plus each sector's own, « Autre » last", async () => {
-    // Rule of topic_sector: a topic without rows is common (unless a type or a service adds it); with rows, only in those sectors.
+  it("shows the common list plus the sector's list, « Autre » last (0008)", async () => {
+    // A sector alone (no type, no service): the COMMON list plus the sector's list.
     const topicsFor = async (sector: string) =>
       (await db.query<{ code: string; label: string }>(`
         SELECT t.code, tr.label
         FROM topic t
         JOIN topic_translation tr ON tr.topic_id = t.id AND tr.language = 'fr'
-        WHERE t.is_active
-          AND ((NOT EXISTS (SELECT 1 FROM topic_sector ts WHERE ts.topic_id = t.id)
-                AND NOT EXISTS (SELECT 1 FROM topic_establishment_type x WHERE x.topic_id = t.id AND x.shown)
-                AND NOT EXISTS (SELECT 1 FROM topic_service x WHERE x.topic_id = t.id AND x.shown))
-               OR EXISTS (SELECT 1 FROM topic_sector ts JOIN sector s ON s.id = ts.sector_id
-                          WHERE ts.topic_id = t.id AND s.code = $1))
+        WHERE t.is_active AND EXISTS (
+          SELECT 1 FROM topic_set_item i JOIN topic_set ts ON ts.id = i.topic_set_id
+          WHERE i.topic_id = t.id
+            AND (ts.code = 'COMMON' OR ts.id = (SELECT topic_set_id FROM sector WHERE code = $1)))
         ORDER BY t.position`, [sector])).rows;
 
-    const common = await topicsFor("RETAIL");
-    expect(common.map((t) => t.label)).toEqual([
+    expect((await topicsFor("RETAIL")).map((t) => t.label)).toEqual([
       "Accueil et politesse",
       "Professionnalisme du personnel",
       "Temps d'attente",
@@ -91,17 +88,20 @@ describe("reference data", () => {
     expect((await topicsFor("BANKING_INSURANCE")).map((t) => t.code).slice(9)).toEqual([
       "PROCESSING_TIME", "CASE_TRACKING", "CUSTOMER_SERVICE", "OTHER",
     ]);
-    // « Simplicité de la démarche » only where there are papers (0008).
+    // « Simplicité de la démarche » only where there are papers.
     expect(await topicsFor("HEALTH")).toHaveLength(12);
     expect((await topicsFor("ADMINISTRATION")).map((t) => t.code)).toContain("PROCEDURE");
+    // A trip has no opening hours: the transport places add them (TRANSPORT_PLACE).
+    expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("OPENING_HOURS");
   });
 
-  it("removes « Horaires d'ouverture » for a trip, not for the place selling tickets (0008)", async () => {
-    const row = await one<{ removed: string[] }>(`
-      SELECT array_agg(s.code ORDER BY s.code) AS removed
-      FROM topic_service ts JOIN topic t ON t.id = ts.topic_id JOIN service s ON s.id = ts.service_id
-      WHERE t.code = 'OPENING_HOURS' AND NOT ts.shown`);
-    expect(row).toEqual({ removed: ["BOAT_CROSSING", "FLIGHT", "LAND_TRIP"] });
+  it("gives every sector a topic list, and opening hours to the transport places (0008)", async () => {
+    const row = await one<{ without_list: number; places: string[] }>(`
+      SELECT (SELECT count(*)::int FROM sector WHERE topic_set_id IS NULL) AS without_list,
+             (SELECT array_agg(code ORDER BY code) FROM (
+                SELECT code, topic_set_id FROM establishment_type UNION ALL SELECT code, topic_set_id FROM service) x
+              WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT_PLACE')) AS places`);
+    expect(row).toEqual({ without_list: 0, places: ["AIRPORT", "BUS_STATION", "PLANE_TICKET", "TICKET_PURCHASE"] });
   });
 
   it("has the bank of 42 questions (34 of 0004, 5 of 0005, 3 of 0006), each written once, every text in French", async () => {

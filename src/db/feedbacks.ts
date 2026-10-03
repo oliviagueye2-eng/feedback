@@ -112,29 +112,29 @@ export async function upsertAnswer(input: {
 }
 
 /**
- * Active topics shown for feedback $1. The most specific level that names a
- * topic decides: its service (topic_service), else its establishment type
- * (topic_establishment_type), else its sector: the common topics (no row in
- * topic_sector, and not added by a type or a service) and those of the sector. The sector is the visit reason's,
- * else the establishment type's, else the establishment's.
+ * Active topics shown for feedback $1: the sum of the topic lists of its
+ * levels, like the questions. The COMMON list, then the list of its sector
+ * (GENERIC when the sector is unknown), of its establishment type and of its
+ * service. The sector is the visit reason's, else the establishment type's,
+ * else the establishment's. A topic in several lists comes once.
  */
 const TOPICS_FOR_FEEDBACK = `
-  SELECT t.* FROM topic t,
-    (SELECT f.service_id, e.type_id, coalesce(s.sector_id, et.sector_id, e.sector_id) AS sector_id
-     FROM feedback f
-     JOIN establishment e ON e.id = f.establishment_id
-     LEFT JOIN service s ON s.id = f.service_id
-     LEFT JOIN establishment_type et ON et.id = e.type_id
-     WHERE f.id = $1) ctx
+  SELECT t.* FROM topic t
   WHERE t.is_active
-    AND coalesce(
-      (SELECT tsv.shown FROM topic_service tsv WHERE tsv.topic_id = t.id AND tsv.service_id = ctx.service_id),
-      (SELECT tet.shown FROM topic_establishment_type tet
-       WHERE tet.topic_id = t.id AND tet.establishment_type_id = ctx.type_id),
-      (NOT EXISTS (SELECT 1 FROM topic_sector ts WHERE ts.topic_id = t.id)
-       AND NOT EXISTS (SELECT 1 FROM topic_establishment_type x WHERE x.topic_id = t.id AND x.shown)
-       AND NOT EXISTS (SELECT 1 FROM topic_service x WHERE x.topic_id = t.id AND x.shown))
-        OR EXISTS (SELECT 1 FROM topic_sector ts WHERE ts.topic_id = t.id AND ts.sector_id = ctx.sector_id))`;
+    AND EXISTS (
+      SELECT 1
+      FROM feedback f
+      JOIN establishment e ON e.id = f.establishment_id
+      LEFT JOIN service s ON s.id = f.service_id
+      LEFT JOIN establishment_type et ON et.id = e.type_id
+      LEFT JOIN sector sec ON sec.id = coalesce(s.sector_id, et.sector_id, e.sector_id)
+      JOIN topic_set_item i ON i.topic_id = t.id
+      WHERE f.id = $1
+        AND i.topic_set_id IN (
+          (SELECT id FROM topic_set WHERE code = 'COMMON'),
+          coalesce(sec.topic_set_id, CASE WHEN sec.id IS NULL THEN (SELECT id FROM topic_set WHERE code = 'GENERIC') END),
+          et.topic_set_id,
+          s.topic_set_id))`;
 
 /**
  * Replaces all topics of a feedback. Codes must be unique (checked in src/domain).

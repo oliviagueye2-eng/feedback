@@ -14,7 +14,7 @@ Analyse du 2026-10-03, faite sur les données de référence des migrations 0001
 | Étage | Ce que voit l'usager | D'où ça vient |
 |---|---|---|
 | 1. Question essentielle | « Êtes-vous satisfait(e) du service reçu ? », 5 réponses | liste `ESSENTIAL`, pour tout le monde |
-| 2. Thèmes (écran 2b) | « Comment ça s'est passé ? » : pour chaque thème, « Bien », « Pas bien » ou rien | 9 thèmes communs + ceux du secteur de l'avis (`topic_sector`). **Un seul secteur** : celui du service, sinon du type, sinon de l'établissement |
+| 2. Thèmes (écran 2b) | « Comment ça s'est passé ? » : pour chaque thème, « Bien », « Pas bien » ou rien | (avant la migration 0008) 9 thèmes communs + ceux du secteur de l'avis (`topic_sector`). **Un seul secteur** : celui du service, sinon du type, sinon de l'établissement. **Depuis 0008** : somme de listes, comme les questions (commune + secteur + type + service) |
 | 3. Questions détaillées (écran 6) | 2 à 5 questions de fait | **plusieurs listes additionnées** : celle du secteur, celle du type d'établissement et celle du service (`question_set_item`) ; `GENERIC` quand le secteur n'a pas de liste à lui |
 | 3b. Questions communes (écran 6b) | « Avez-vous signalé cette situation ? » puis « Pourquoi ? » | liste `COMMON`, seulement après « Peu » ou « Pas du tout satisfait(e) » |
 
@@ -148,7 +148,7 @@ Mise en œuvre : une table `evaluation_category` et une colonne `category_id` su
 ## 7. Recommandations, par ordre d'importance
 
 1. **Ranger le centre des permis dans le secteur Administration** (4.2). Petite migration, corrige des thèmes absurdes. **Validé le 2026-10-03, fait dans la migration 0008 (branche).**
-2. **Rendre les thèmes communs moins universels** (4.1) : « Simplicité de la démarche » seulement pour les services à dossier ; « Horaires » et « Propreté des locaux » pas pour les trajets ni les réseaux. Il suffit d'ajouter des lignes `topic_sector` (le thème cesse alors d'être commun) : migration de données, sans changement de code. **Validé le 2026-10-03, fait dans la migration 0008 (branche)** : « Simplicité de la démarche » limité à 11 secteurs, « Horaires d'ouverture » retiré pour les vols, traversées et trajets (thèmes par service, option B), « Propreté et confort » sans « des locaux ».
+2. **Rendre les thèmes communs moins universels** (4.1) : « Simplicité de la démarche » seulement pour les services à dossier ; « Horaires » et « Propreté des locaux » pas pour les trajets ni les réseaux. Il suffit d'ajouter des lignes `topic_sector` (le thème cesse alors d'être commun) : migration de données, sans changement de code. **Validé le 2026-10-03, fait dans la migration 0008 (branche)** : « Simplicité de la démarche » limité à 11 secteurs, « Horaires d'ouverture » retiré pour les vols, traversées et trajets (listes de thèmes par secteur, type et service, comme les questions), « Propreté et confort » sans « des locaux ».
 3. **Supprimer les doublons thème / question** (3.2, option A) : retirer du formulaire les thèmes qui répètent une question de fait du même lieu.
 4. **Conditionner les questions des réseaux** au sujet choisi (4.4) : des lignes `question_condition`, sans changement de code.
 5. **Ajouter les catégories d'évaluation** (6) : une migration, puis un résultat par catégorie sur la page publique.

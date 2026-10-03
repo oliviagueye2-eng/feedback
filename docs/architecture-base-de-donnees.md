@@ -56,8 +56,11 @@ erDiagram
     FEEDBACK ||--o| COMMENT : "may have"
     FEEDBACK ||--o{ FEEDBACK_TOPIC : "tagged with"
     TOPIC ||--o{ FEEDBACK_TOPIC : "chosen in"
-    TOPIC ||--o{ TOPIC_SECTOR : "shown for"
-    SECTOR ||--o{ TOPIC_SECTOR : "shows"
+    TOPIC_SET ||--o{ TOPIC_SET_ITEM : contains
+    TOPIC ||--o{ TOPIC_SET_ITEM : "listed in"
+    TOPIC_SET |o--o{ SECTOR : "topics of"
+    TOPIC_SET |o--o{ ESTABLISHMENT_TYPE : "topics of"
+    TOPIC_SET |o--o{ SERVICE : "topics of"
 ```
 
 Les tables se répartissent en quatre blocs :
@@ -65,7 +68,7 @@ Les tables se répartissent en quatre blocs :
 | Bloc | Tables | Rôle |
 |---|---|---|
 | Référentiel | region, department, municipality, sector, establishment_type, establishment, service, establishment_service, qr_code | Ce que l'usager cherche et évalue |
-| Questions | question (banque), answer_option, question_set, question_set_item, question_condition, topic, topic_sector, tables `*_translation` | Ce qu'on demande à l'usager |
+| Questions | question (banque), answer_option, question_set, question_set_item, question_condition, topic, topic_set, topic_set_item, tables `*_translation` | Ce qu'on demande à l'usager |
 | Collecte | feedback, answer, comment, feedback_topic | Ce que l'usager répond |
 | Exploitation | monthly_stats (vue), search_log, moderation_action | Résultats publiés, amélioration du référentiel |
 
@@ -394,67 +397,69 @@ Thèmes proposés après la question essentielle (écran 2b), sous « Comment ç
 | position | smallint | ordre d'affichage |
 | is_active | boolean | |
 
-Liste revue le 2026-09-30. **Thèmes communs**, affichés partout :
+Libellés (dans `topic_translation`) :
 
-| code | Libellé (dans `topic_translation`) |
+| code | Libellé |
 |---|---|
 | `STAFF` | Accueil et politesse |
 | `PROFESSIONALISM` | Professionnalisme du personnel |
 | `WAIT_TIME` | Temps d'attente |
 | `INFORMATION` | Explications reçues |
+| `PROCEDURE` | Simplicité de la démarche (papiers, allers-retours) |
 | `OPENING_HOURS` | Horaires d'ouverture |
 | `FEES` | Frais payés (montant, reçu) |
 | `CLEANLINESS` | Propreté et confort (« des locaux » retiré le 2026-10-03 : convient aussi aux véhicules) |
 | `ACCESS_FOR_ALL` | Accès pour tous (personnes handicapées, âgées) |
+| `CARE_RECEIVED` | Soins reçus |
+| `MEDICINE_AVAILABILITY` | Médicaments et examens disponibles |
+| `PRIVACY` | Respect de l'intimité |
+| `TEACHING_QUALITY` | Qualité de l'enseignement |
+| `STUDENT_SUPERVISION` | Encadrement des élèves |
+| `PUNCTUALITY` | Ponctualité |
+| `ONBOARD_SAFETY` | Sécurité à bord |
+| `VEHICLE_CONDITION` | État des véhicules |
+| `POWER_CUTS` | Coupures de courant |
+| `WATER_CUTS` | Coupures d'eau |
+| `WATER_QUALITY` | Qualité de l'eau |
+| `NETWORK_QUALITY` | Qualité du réseau |
+| `INTERVENTION_TIME` | Délai d'intervention |
+| `BILLING` | Factures (exactes et faciles à comprendre) |
+| `REQUEST_HANDLING` | Prise en compte de la demande |
+| `RIGHTS_RESPECT` | Respect des droits |
+| `PROCESSING_TIME` | Délai de traitement du dossier |
+| `CASE_TRACKING` | Suivi et transparence du dossier |
+| `CUSTOMER_SERVICE` | Service client et réclamations |
+| `SCHOOL_SAFETY` | Sécurité dans l'établissement (2026-10-03) |
+| `SCHOOL_EQUIPMENT` | Tables-bancs, matériel et manuels (2026-10-03) |
+| `PARENT_COMMUNICATION` | Communication avec les parents (2026-10-03) |
 | `OTHER` | Autre (toujours en dernier) |
-
-**Thèmes d'un secteur**, affichés après les thèmes communs, seulement dans ces secteurs (`topic_sector`) :
-
-| code | Libellé | Secteurs |
-|---|---|---|
-| `CARE_RECEIVED` | Soins reçus | Santé |
-| `MEDICINE_AVAILABILITY` | Médicaments et examens disponibles | Santé |
-| `PRIVACY` | Respect de l'intimité | Santé |
-| `TEACHING_QUALITY` | Qualité de l'enseignement | Éducation |
-| `STUDENT_SUPERVISION` | Encadrement des élèves | Éducation |
-| `PUNCTUALITY` | Ponctualité | Transport |
-| `ONBOARD_SAFETY` | Sécurité à bord | Transport |
-| `VEHICLE_CONDITION` | État des véhicules | Transport |
-| `POWER_CUTS` | Coupures de courant | Électricité |
-| `WATER_CUTS` | Coupures d'eau | Eau |
-| `WATER_QUALITY` | Qualité de l'eau | Eau |
-| `NETWORK_QUALITY` | Qualité du réseau | Télécoms |
-| `INTERVENTION_TIME` | Délai d'intervention | Électricité |
-| `BILLING` | Factures (exactes et faciles à comprendre) | Électricité, Eau, Télécoms |
-| `REQUEST_HANDLING` | Prise en compte de la demande | Sécurité |
-| `RIGHTS_RESPECT` | Respect des droits | Sécurité |
-| `PROCEDURE` | Simplicité de la démarche (papiers, allers-retours) | Administration, Justice, Impôts, Social, Sécurité, Banques et assurances, Électricité, Eau, Télécoms, Éducation, Immobilier (commun jusqu'au 2026-10-03, migration 0008) |
-| `PROCESSING_TIME` | Délai de traitement du dossier | Administration, Justice, Impôts, Social, Sécurité, Banques et assurances |
-| `CASE_TRACKING` | Suivi et transparence du dossier | Administration, Justice, Impôts, Social, Sécurité, Banques et assurances |
-| `CUSTOMER_SERVICE` | Service client et réclamations | Transport, Électricité, Eau, Télécoms, Banques et assurances |
-| `SCHOOL_SAFETY` | Sécurité dans l'établissement | Écoles (par type, voir `topic_establishment_type`) |
-| `SCHOOL_EQUIPMENT` | Tables-bancs, matériel et manuels | Écoles (par type) |
-| `PARENT_COMMUNICATION` | Communication avec les parents | Écoles (par type) |
 
 Désactivés le 2026-09-30, gardés pour les avis déjà donnés : `PRICE` (Prix), `ACCESSIBILITY` (Accessibilité), `SAFETY` (Sécurité), `SERVICE_QUALITY` (Qualité du service).
 
-### topic_sector
-Quels thèmes afficher selon le secteur. Un thème **sans ligne** dans cette table est commun : il s'affiche dans tous les secteurs. Un thème **avec des lignes** ne s'affiche que dans ces secteurs. Le secteur retenu est celui du service choisi, sinon celui du type d'établissement, sinon celui de l'établissement. Un type ou un service peut ensuite ajouter ou retirer un thème (tables ci-dessous).
-
-| Colonne | Type |
-|---|---|
-| topic_id | fk |
-| sector_id | fk |
-
-### topic_establishment_type et topic_service (migration 0008)
-Comme pour les questions, un type d'établissement ou un service peut **ajouter** un thème (`shown = true`) ou en **retirer** un (`shown = false`) par rapport à la liste du secteur (option B, validée le 2026-10-03). Le niveau le plus précis qui cite le thème décide : le service, sinon le type, sinon le secteur (`topic_sector`). Exemple : le service « Un vol » retire « Horaires d'ouverture » ; le type « Lycée » ajoute un thème qui lui est propre.
+### topic_set et topic_set_item (migration 0008)
+Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_set`), décision du 2026-10-03. Ce qu'un avis affiche est **la somme** de listes, jamais un retrait : la liste `COMMON`, puis celle du secteur de l'avis (`GENERIC` si le secteur est inconnu), celle de son type d'établissement et celle de son service, chacune rattachée par une colonne `topic_set_id` sur `sector`, `establishment_type` et `service`. Un thème présent dans plusieurs listes ne s'affiche qu'une fois, dans l'ordre de `topic.position`. Une liste se partage (`SCHOOL` pour quatre types, `FILE_SERVICES` pour quatre secteurs). Remplace `topic_sector` (supprimée), où un thème sans ligne était commun à tous.
 
 | Table | Colonnes |
 |---|---|
-| `topic_establishment_type` | `topic_id` fk, `establishment_type_id` fk, `shown` boolean ; clé `(topic_id, establishment_type_id)` |
-| `topic_service` | `topic_id` fk, `service_id` fk, `shown` boolean ; clé `(topic_id, service_id)` |
+| `topic_set` | `id`, `code` unique |
+| `topic_set_item` | `topic_set_id` fk, `topic_id` fk ; clé `(topic_set_id, topic_id)` |
 
-Contenu validé le 2026-10-03 : les services « Un vol », « Une traversée en bateau » et « Un trajet en bus ou en train » retirent « Horaires d'ouverture ». Écoles (lycée, collège, école primaire, groupe scolaire), validé le 2026-10-03 : « Temps d'attente », « Horaires d'ouverture » et « Explications reçues » retirés ; « Sécurité dans l'établissement », « Tables-bancs, matériel et manuels » et « Communication avec les parents » ajoutés. Université, maternelle et daara gardent la liste Éducation. Un thème ajouté par un type ou un service (`shown = true`) n'est jamais commun, même sans ligne dans `topic_sector`.
+| Liste | Thèmes | Rattachée à |
+|---|---|---|
+| `COMMON` | Accueil et politesse, Professionnalisme, Frais payés, Propreté et confort, Accès pour tous, Autre | tout le monde |
+| `GENERIC` | Temps d'attente, Explications reçues, Horaires | secteurs Culture, Restauration, Hôtellerie, Commerce, Sport, Tourisme ; types Université, École supérieure, Formation professionnelle, Maternelle, Daara ; secteur inconnu |
+| `FILE_SERVICES` | Temps d'attente, Explications, Simplicité de la démarche, Horaires, Délai de traitement, Suivi du dossier | secteurs Administration, Justice, Impôts, Social |
+| `SECURITY` | idem + Prise en compte de la demande, Respect des droits | secteur Sécurité |
+| `BANKING_INSURANCE` | Temps d'attente, Explications, Simplicité, Horaires, Délai de traitement, Suivi du dossier, Service client | secteur Banques et assurances |
+| `ELECTRICITY` | Temps d'attente, Explications, Simplicité, Horaires, Coupures de courant, Délai d'intervention, Factures, Service client | secteur Électricité |
+| `WATER` | Temps d'attente, Explications, Simplicité, Horaires, Coupures d'eau, Qualité de l'eau, Factures, Service client | secteur Eau |
+| `TELECOM` | Temps d'attente, Explications, Simplicité, Horaires, Qualité du réseau, Factures, Service client | secteur Télécoms |
+| `HEALTH` | Temps d'attente, Explications, Horaires, Soins reçus, Médicaments et examens, Respect de l'intimité | secteur Santé |
+| `REAL_ESTATE` | Temps d'attente, Explications, Simplicité, Horaires | secteur Immobilier |
+| `EDUCATION` | Simplicité de la démarche, Qualité de l'enseignement, Encadrement des élèves | secteur Éducation |
+| `SCHOOL` | Sécurité dans l'établissement, Tables-bancs et manuels, Communication avec les parents | types Lycée, Collège, École primaire, Groupe scolaire |
+| `TRANSPORT` | Temps d'attente, Explications, Ponctualité, Sécurité à bord, État des véhicules, Service client | secteur Transport |
+| `TRANSPORT_PLACE` | Horaires d'ouverture | types Aéroport, Gare routière ; services Achat de ticket, Achat de billet d'avion |
 
 ### Tables de traduction (`*_translation`)
 Une table par table traduite (décision du 2026-10-01, plutôt qu'une table unique dont le lien n'aurait pas été vérifié par la base). Chaque table a une clé étrangère vers la ligne traduite (la traduction est supprimée avec elle) et une ligne par langue.
@@ -591,7 +596,7 @@ Historique des actions des agents : validation ou fusion d'un établissement sai
 | QR code scanné | qr_code, establishment | |
 | 1. Établissement identifié | establishment, establishment_service | feedback (création, dont `visit_period` et `visit_month`) |
 | 2. Question essentielle | liste ESSENTIAL | answer |
-| 2b. Thèmes et texte libre | topic, topic_sector, topic_translation | feedback_topic, comment |
+| 2b. Thèmes et texte libre | topic, topic_set, topic_set_item, topic_translation | feedback_topic, comment |
 | 6. Questions du niveau | listes du secteur, du type et du service (ou GENERIC) | answer |
 | 6b. Signalement | liste COMMON | answer |
 | 7. Remerciement | | feedback.step, feedback.completed_at |

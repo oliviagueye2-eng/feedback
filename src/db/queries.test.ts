@@ -414,7 +414,7 @@ describe("feedback", () => {
     await db.exec("UPDATE establishment_type SET question_set_id = NULL WHERE code = 'HOSPITAL'");
   });
 
-  it("gives GENERIC to an establishment whose sector is unknown", async () => {
+  it("gives GENERIC questions and topics to an establishment whose sector is unknown", async () => {
     const [{ id }] = (await rows<{ id: string }>(
       "INSERT INTO establishment (name, source, raw_input) VALUES ('Boutique de Moussa', 'user', 'Boutique de Moussa') RETURNING id",
     )) as [{ id: string }];
@@ -422,6 +422,11 @@ describe("feedback", () => {
     await upsertFeedback(unknown, { channel: "search", establishmentId: id, language: "fr", visitPeriod: "today" });
     expect((await getDetailedQuestionnaire(unknown)).questions.slice(0, 3).map((q) => q.code))
       .toEqual(["FAIR_PRICE", "RECEIPT_OR_INVOICE", "RECOMMEND"]);
+    // And the GENERIC topics: the common ones plus those of a counter.
+    expect((await getDetailsScreen(unknown)).topics.map((t) => t.code)).toEqual([
+      "STAFF", "PROFESSIONALISM", "WAIT_TIME", "INFORMATION", "OPENING_HOURS", "FEES", "CLEANLINESS",
+      "ACCESS_FOR_ALL", "OTHER",
+    ]);
   });
 
   it("replaces the topics touched, each with its sentiment", async () => {
@@ -514,36 +519,45 @@ describe("feedback", () => {
     expect(atUniversity).not.toContain("Sécurité dans l'établissement");
   });
 
-  it("lets a type or a service add or remove a topic, the service deciding last", async () => {
+  it("adds the lists of the type and of the service to the sector's, never removing one", async () => {
     await db.exec(`
-      INSERT INTO topic_establishment_type (topic_id, establishment_type_id, shown)
-      SELECT t.id, et.id, v.shown FROM (VALUES ('OPENING_HOURS', false), ('WATER_QUALITY', true)) AS v (code, shown)
-      JOIN topic t ON t.code = v.code, establishment_type et WHERE et.code = 'CIVIL_REGISTRY_CENTER';
-      INSERT INTO topic_service (topic_id, service_id, shown)
-      SELECT t.id, s.id, true FROM topic t, service s
-      WHERE t.code = 'OPENING_HOURS' AND s.code = 'CIVIL_REGISTRY_BIRTH';
+      INSERT INTO topic_set (code) VALUES ('TEST_TYPE'), ('TEST_SERVICE');
+      INSERT INTO topic_set_item (topic_set_id, topic_id)
+      SELECT s.id, t.id FROM (VALUES ('TEST_TYPE', 'WATER_QUALITY'), ('TEST_SERVICE', 'PRIVACY'),
+                                     ('TEST_SERVICE', 'STAFF')) AS v (list, topic)
+      JOIN topic_set s ON s.code = v.list JOIN topic t ON t.code = v.topic;
+      UPDATE establishment_type SET topic_set_id = (SELECT id FROM topic_set WHERE code = 'TEST_TYPE')
+      WHERE code = 'CIVIL_REGISTRY_CENTER';
+      UPDATE service SET topic_set_id = (SELECT id FROM topic_set WHERE code = 'TEST_SERVICE')
+      WHERE code = 'CIVIL_REGISTRY_BIRTH';
     `);
     try {
-      // No service: the type removes « Horaires d'ouverture » and adds « Qualité de l'eau ».
+      // No service: common + Administration + the type's list.
       const byType = (await getDetailsScreen(feedbackId)).topics.map((t) => t.code);
-      expect(byType).not.toContain("OPENING_HOURS");
       expect(byType).toContain("WATER_QUALITY");
+      expect(byType).toContain("PROCESSING_TIME");
+      expect(byType).not.toContain("PRIVACY");
 
-      // With the service: it shows « Horaires d'ouverture » again, over the type.
+      // With the service: its list is added too; « Accueil », already common, comes once.
       const withService = "e5f6a7b8-0000-4000-8000-000000000003";
       const [service] = await rows<{ id: number }>("SELECT id FROM service WHERE code = 'CIVIL_REGISTRY_BIRTH'");
       await upsertFeedback(withService, {
         channel: "search", establishmentId: ids.gy, language: "fr", visitPeriod: "today", serviceId: service!.id,
       });
       const byService = (await getDetailsScreen(withService)).topics.map((t) => t.code);
-      expect(byService).toContain("OPENING_HOURS");
-      expect(byService).toContain("WATER_QUALITY");
+      expect(byService).toEqual(expect.arrayContaining(["WATER_QUALITY", "PRIVACY", "PROCESSING_TIME"]));
+      expect(byService.filter((c) => c === "STAFF")).toHaveLength(1);
 
-      // A topic removed for this feedback is not saved.
-      await saveTopics(feedbackId, { topics: [{ code: "OPENING_HOURS", sentiment: "negative" }] });
+      // A topic of no list of this feedback is not saved.
+      await saveTopics(feedbackId, { topics: [{ code: "PRIVACY", sentiment: "negative" }] });
       expect((await getDetailsScreen(feedbackId)).topics.filter((t) => t.sentiment)).toEqual([]);
     } finally {
-      await db.exec("DELETE FROM topic_establishment_type; DELETE FROM topic_service;");
+      await db.exec(`
+        UPDATE establishment_type SET topic_set_id = NULL WHERE code = 'CIVIL_REGISTRY_CENTER';
+        UPDATE service SET topic_set_id = NULL WHERE code = 'CIVIL_REGISTRY_BIRTH';
+        DELETE FROM topic_set_item WHERE topic_set_id IN (SELECT id FROM topic_set WHERE code LIKE 'TEST_%');
+        DELETE FROM topic_set WHERE code LIKE 'TEST_%';
+      `);
     }
   });
 });
