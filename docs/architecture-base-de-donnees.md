@@ -459,8 +459,8 @@ Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_
 | `OTHER_EDUCATION` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Qualité de l'enseignement, Encadrement des élèves | types Université, École supérieure, Formation professionnelle, Maternelle, Daara (le secteur Éducation n'a pas de liste) |
 | `SCHOOL_ADMIN` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais | service « Inscription ou démarche administrative » des écoles |
 | `SCHOOL_LIFE` | Qualité de l'enseignement, Encadrement des élèves, Sécurité dans l'établissement, Tables-bancs et manuels, Échanges avec les enseignants et la direction | service « Les cours et la vie de l'école » des écoles |
-| `TRANSPORT` | Accueil, Temps d'attente, Explications, Frais, Ponctualité, Sécurité à bord, Service client | secteur Transport |
-| `TRANSPORT_PLACE` | Horaires d'ouverture | types Aéroport, Gare routière ; services Achat de ticket, Achat de billet d'avion |
+| `TRANSPORT` | Accueil, Explications, Frais, Ponctualité, Sécurité à bord, Service client (ni Temps d'attente, que dit Ponctualité, ni Horaires) | secteur Transport |
+| `TRANSPORT_PLACE` | Temps d'attente, Horaires d'ouverture | types Aéroport, Gare routière ; services Achat de ticket, Achat de billet d'avion |
 
 ### Tables de traduction (`*_translation`)
 Une table par table traduite (décision du 2026-10-01, plutôt qu'une table unique dont le lien n'aurait pas été vérifié par la base). Chaque table a une clé étrangère vers la ligne traduite (la traduction est supprimée avec elle) et une ligne par langue.

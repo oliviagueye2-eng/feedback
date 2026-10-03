@@ -85,3 +85,13 @@ WHERE language = 'fr' AND topic_id = (SELECT id FROM topic WHERE code = 'CLEANLI
 DELETE FROM topic_set_item
 WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT')
   AND topic_id = (SELECT id FROM topic WHERE code = 'VEHICLE_CONDITION');
+
+-- A trip has « Ponctualité »: « Temps d'attente » said the same (validated on
+-- 2026-10-03). The transport places and the ticket counters keep it.
+DELETE FROM topic_set_item
+WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT')
+  AND topic_id = (SELECT id FROM topic WHERE code = 'WAIT_TIME');
+
+INSERT INTO topic_set_item (topic_set_id, topic_id)
+SELECT s.id, t.id FROM topic_set s, topic t
+WHERE s.code = 'TRANSPORT_PLACE' AND t.code = 'WAIT_TIME';

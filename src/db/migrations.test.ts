@@ -94,6 +94,12 @@ describe("reference data", () => {
     expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("OPENING_HOURS");
     // « Propreté, entretien et confort » says the state of a plane too (0009).
     expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("VEHICLE_CONDITION");
+    // A trip has « Ponctualité », not « Temps d'attente »; a transport place keeps it (0009).
+    expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("WAIT_TIME");
+    expect((await db.query<{ code: string }>(`
+      SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
+      WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT_PLACE') ORDER BY t.position`))
+      .rows.map((r) => r.code)).toEqual(["WAIT_TIME", "OPENING_HOURS"]);
   });
 
   it("gives every sector but Education a topic list, and opening hours to the transport places (0008, 0009)", async () => {
