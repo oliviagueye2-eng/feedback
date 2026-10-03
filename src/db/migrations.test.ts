@@ -77,7 +77,7 @@ describe("reference data", () => {
       "Explications reçues",
       "Horaires d'ouverture",
       "Frais payés (montant, reçu)",
-      "Propreté et confort",
+      "Propreté, entretien et confort",
       "Accessibilité aux personnes handicapées ou âgées",
     ]);
 
@@ -92,6 +92,8 @@ describe("reference data", () => {
     expect((await topicsFor("ADMINISTRATION")).map((t) => t.code)).toContain("PROCEDURE");
     // A trip has no opening hours: the transport places add them (TRANSPORT_PLACE).
     expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("OPENING_HOURS");
+    // « Propreté, entretien et confort » says the state of a plane too (0009).
+    expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("VEHICLE_CONDITION");
   });
 
   it("gives every sector but Education a topic list, and opening hours to the transport places (0008, 0009)", async () => {

@@ -511,12 +511,12 @@ describe("feedback", () => {
       "Simplicité de la démarche (papiers, allers-retours)",
       "Horaires d'ouverture",
       "Frais payés (montant, reçu)",
-      "Propreté et confort",
+      "Propreté, entretien et confort",
       "Accessibilité aux personnes handicapées ou âgées",
     ]);
     expect(await topicsOf("f6a7b8c9-0000-4000-8000-000000000006", school!.id, services.SCHOOL_LIFE)).toEqual([
       "Professionnalisme du personnel",
-      "Propreté et confort",
+      "Propreté, entretien et confort",
       "Accessibilité aux personnes handicapées ou âgées",
       "Qualité de l'enseignement",
       "Encadrement des élèves",
@@ -533,7 +533,7 @@ describe("feedback", () => {
       "Simplicité de la démarche (papiers, allers-retours)",
       "Horaires d'ouverture",
       "Frais payés (montant, reçu)",
-      "Propreté et confort",
+      "Propreté, entretien et confort",
       "Accessibilité aux personnes handicapées ou âgées",
       "Qualité de l'enseignement",
       "Encadrement des élèves",

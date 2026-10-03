@@ -75,3 +75,13 @@ FROM establishment e
 JOIN establishment_type et ON et.id = e.type_id
   AND et.code IN ('HIGH_SCHOOL', 'MIDDLE_SCHOOL', 'PRIMARY_SCHOOL', 'SCHOOL_GROUP')
 JOIN service s ON s.code IN ('SCHOOL_ADMIN', 'SCHOOL_LIFE');
+
+-- « Propreté, entretien et confort » (validated on 2026-10-03) also says the
+-- state of a bus, a boat or a plane, so « État des véhicules », a word that
+-- did not fit a plane or a boat, is no longer offered for the trips.
+UPDATE topic_translation SET label = 'Propreté, entretien et confort'
+WHERE language = 'fr' AND topic_id = (SELECT id FROM topic WHERE code = 'CLEANLINESS');
+
+DELETE FROM topic_set_item
+WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT')
+  AND topic_id = (SELECT id FROM topic WHERE code = 'VEHICLE_CONDITION');

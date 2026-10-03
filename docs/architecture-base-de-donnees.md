@@ -408,7 +408,7 @@ Libellés (dans `topic_translation`) :
 | `PROCEDURE` | Simplicité de la démarche (papiers, allers-retours) |
 | `OPENING_HOURS` | Horaires d'ouverture |
 | `FEES` | Frais payés (montant, reçu) |
-| `CLEANLINESS` | Propreté et confort (« des locaux » retiré le 2026-10-03 : convient aussi aux véhicules) |
+| `CLEANLINESS` | Propreté, entretien et confort (2026-10-03 : convient aussi à un bus, un bateau ou un avion, et dit leur état) |
 | `ACCESS_FOR_ALL` | Accessibilité aux personnes handicapées ou âgées (ex-« Accès pour tous », 2026-10-03) |
 | `CARE_RECEIVED` | Soins reçus |
 | `MEDICINE_AVAILABILITY` | Médicaments et examens disponibles |
@@ -417,7 +417,7 @@ Libellés (dans `topic_translation`) :
 | `STUDENT_SUPERVISION` | Encadrement des élèves |
 | `PUNCTUALITY` | Ponctualité |
 | `ONBOARD_SAFETY` | Sécurité à bord |
-| `VEHICLE_CONDITION` | État des véhicules |
+| `VEHICLE_CONDITION` | État des véhicules (plus proposé depuis 0009 : « Propreté, entretien et confort » le dit) |
 | `POWER_CUTS` | Coupures de courant |
 | `WATER_CUTS` | Coupures d'eau |
 | `WATER_QUALITY` | Qualité de l'eau |
@@ -446,7 +446,7 @@ Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_
 
 | Liste | Thèmes | Rattachée à |
 |---|---|---|
-| `COMMON` | Professionnalisme, Propreté et confort, Accessibilité (Accueil et Frais en sont sortis en 0009 : un élève en classe ne passe pas au guichet) | tout le monde |
+| `COMMON` | Professionnalisme, Propreté, entretien et confort, Accessibilité (Accueil et Frais en sont sortis en 0009 : un élève en classe ne passe pas au guichet) | tout le monde |
 | `GENERIC` | Accueil et politesse, Temps d'attente, Explications reçues, Horaires, Frais payés | secteurs Culture, Restauration, Hôtellerie, Commerce, Sport, Tourisme ; secteur inconnu |
 | `FILE_SERVICES` | Accueil, Temps d'attente, Explications, Simplicité de la démarche, Horaires, Frais, Délai de traitement, Suivi du dossier | secteurs Administration, Justice, Impôts, Social |
 | `SECURITY` | idem + Prise en compte de la demande, Respect des droits | secteur Sécurité |
@@ -459,7 +459,7 @@ Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_
 | `OTHER_EDUCATION` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Qualité de l'enseignement, Encadrement des élèves | types Université, École supérieure, Formation professionnelle, Maternelle, Daara (le secteur Éducation n'a pas de liste) |
 | `SCHOOL_ADMIN` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais | service « Inscription ou démarche administrative » des écoles |
 | `SCHOOL_LIFE` | Qualité de l'enseignement, Encadrement des élèves, Sécurité dans l'établissement, Tables-bancs et manuels, Échanges avec les enseignants et la direction | service « Les cours et la vie de l'école » des écoles |
-| `TRANSPORT` | Accueil, Temps d'attente, Explications, Frais, Ponctualité, Sécurité à bord, État des véhicules, Service client | secteur Transport |
+| `TRANSPORT` | Accueil, Temps d'attente, Explications, Frais, Ponctualité, Sécurité à bord, Service client | secteur Transport |
 | `TRANSPORT_PLACE` | Horaires d'ouverture | types Aéroport, Gare routière ; services Achat de ticket, Achat de billet d'avion |
 
 ### Tables de traduction (`*_translation`)
