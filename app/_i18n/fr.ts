@@ -224,7 +224,7 @@ export const fr = {
       STUDENT_SUPERVISION: "Encadrement",
       PARENT_COMMUNICATION: "Échanges",
       WAIT_TIME: "Attente",
-      PROCESSING_TIME: "Délai du dossier",
+      PROCESSING_TIME: "Délai de traitement",
       INTERVENTION_TIME: "Délai d'intervention",
       PUNCTUALITY: "Ponctualité",
       PROCEDURE: "Démarche",
