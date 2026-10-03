@@ -2,7 +2,8 @@
 -- the Education list stayed on the sector, so the enrolment or a paper at the
 -- office asked about the classes, the class size and the toilets. The sector
 -- keeps who answers; the classes go to « Les cours et la vie de l'école », the
--- payment to « Inscription ou démarche administrative ». The other education
+-- payment to « Inscription ou démarche administrative », which also gets the
+-- questions of the administrative offices (validated on 2026-10-03). The other education
 -- places (university, preschool, daara…) keep exactly the questions they had,
 -- in the same order, through a list on their type.
 INSERT INTO question_set (code) VALUES ('OTHER_EDUCATION'), ('SCHOOL_ADMIN'), ('SCHOOL_LIFE');
@@ -15,8 +16,12 @@ FROM (VALUES
   ('OTHER_EDUCATION', 'FACILITIES', 3),
   ('OTHER_EDUCATION', 'PAID_SOMETHING', 4),
   ('OTHER_EDUCATION', 'RECEIPT_GIVEN', 5),
-  ('SCHOOL_ADMIN', 'PAID_SOMETHING', 1),
-  ('SCHOOL_ADMIN', 'RECEIPT_GIVEN', 2),
+  ('SCHOOL_ADMIN', 'GOAL_ACHIEVED', 1),
+  ('SCHOOL_ADMIN', 'VISITS_COUNT', 2),
+  ('SCHOOL_ADMIN', 'WAIT_TIME', 3),
+  ('SCHOOL_ADMIN', 'DOCUMENTS_KNOWN', 4),
+  ('SCHOOL_ADMIN', 'PAID_SOMETHING', 5),
+  ('SCHOOL_ADMIN', 'RECEIPT_GIVEN', 6),
   ('SCHOOL_LIFE', 'CLASSES_HELD', 1),
   ('SCHOOL_LIFE', 'CLASS_SIZE', 2),
   ('SCHOOL_LIFE', 'FACILITIES', 3)

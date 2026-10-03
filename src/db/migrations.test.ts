@@ -189,7 +189,7 @@ describe("reference data", () => {
       `SELECT qs.code AS list FROM question_set_item i
        JOIN question_set qs ON qs.id = i.question_set_id JOIN question q ON q.id = i.question_id
        WHERE q.code = 'WAIT_TIME' ORDER BY qs.code`)).rows.map((r) => r.list);
-    expect(lists).toEqual(["BANKING_INSURANCE", "FILE_SERVICES", "HEALTH", "POLICE_PREMISES", "TICKET_PURCHASE"]);
+    expect(lists).toEqual(["BANKING_INSURANCE", "FILE_SERVICES", "HEALTH", "POLICE_PREMISES", "SCHOOL_ADMIN", "TICKET_PURCHASE"]);
     const order = (await db.query<{ code: string }>(
       `SELECT q.code FROM question_set_item i
        JOIN question_set qs ON qs.id = i.question_set_id JOIN question q ON q.id = i.question_id

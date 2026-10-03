@@ -556,7 +556,8 @@ describe("feedback", () => {
     const questionsOf = async (feedback: string) =>
       (await getDetailedQuestionnaire(feedback)).questions.map((q) => q.code);
     expect(await questionsOf("f6a7b8c9-0000-4000-8000-000000000004")).toEqual([
-      "RESPONDENT", "PAID_SOMETHING", "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY",
+      "RESPONDENT", "GOAL_ACHIEVED", "VISITS_COUNT", "WAIT_TIME", "DOCUMENTS_KNOWN", "PAID_SOMETHING", "RECEIPT_GIVEN",
+      "REPORTED", "REPORT_WHY",
     ]);
     expect(await questionsOf("f6a7b8c9-0000-4000-8000-000000000006")).toEqual([
       "RESPONDENT", "CLASSES_HELD", "CLASS_SIZE", "FACILITIES", "REPORTED", "REPORT_WHY",
