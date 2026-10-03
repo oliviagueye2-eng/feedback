@@ -17,7 +17,7 @@ import { computeVisitMonth, defaultVisitPeriod } from "./visit";
 export const COMMENT_MAX_LENGTH = 500;
 export const OTHER_TOPIC_MAX_LENGTH = 50;
 export const OTHER_TOPIC_CODE = "OTHER";
-export const TOPIC_SENTIMENTS = ["positive", "negative"] as const;
+export const TOPIC_SENTIMENTS = ["positive", "negative", "not_concerned"] as const;
 const CHANNELS: readonly Channel[] = ["qr", "search", "link"];
 
 /** Screen 1: creates the feedback, or updates it when the phone sends it again. */
@@ -76,8 +76,12 @@ export async function saveAnswer(
 }
 
 /**
- * Screen 2b: the topics touched, each « Bien » (positive) or « Pas bien »
- * (negative). "Autre" may carry a short text naming the topic.
+ * Screen 2b: the topics touched, each « Bien » (positive), « Pas bien »
+ * (negative) or « Non concerné » (not_concerned, never counted in the
+ * results). "Autre" may carry a short text naming the topic. A topic shown
+ * only after an answer (« Frais payés » after « Oui » to « Avez-vous payé
+ * quelque chose ? ») is ignored without it: save the answers first
+ * (saveTopicGates).
  */
 export async function saveTopics(feedbackId: string, body: unknown): Promise<void> {
   requireUuid(feedbackId, "id");
@@ -97,6 +101,25 @@ export async function saveTopics(feedbackId: string, body: unknown): Promise<voi
     throw invalidInput("Each topic can be given only once");
   }
   await db.replaceTopics({ feedbackId, topics });
+}
+
+/**
+ * Screen 2b: the answers to the yes/no questions asked in the place of a topic
+ * (question code → option code). A question of the screen left without an
+ * answer is cleared (touched again); a question the screen does not ask is
+ * refused.
+ */
+export async function saveTopicGates(feedbackId: string, answers: Record<string, string>): Promise<void> {
+  requireUuid(feedbackId, "id");
+  const codes = await db.findTopicGateCodes(feedbackId);
+  if (Object.keys(answers).some((code) => !codes.includes(code))) {
+    throw invalidInput("Unknown question for screen 2b");
+  }
+  for (const code of codes) {
+    const option = answers[code];
+    if (option) await saveAnswer(feedbackId, code, { option });
+    else await db.deleteAnswerByCode(feedbackId, code);
+  }
 }
 
 /** Screen 2b: free text. promptOption is the essential answer given when it was written. */
@@ -138,12 +161,14 @@ export async function getDetailsScreen(feedbackId: string) {
 
 /**
  * The questions of screen 6 for this feedback (detailed questionnaire, then
- * the common ones) and its answers by question code, essential answer included.
+ * the common ones), its answers by question code, essential answer included,
+ * and the questions screen 2b already asked (askedBefore: never asked again).
  */
 async function loadPageQuestions(feedbackId: string) {
-  const [{ context }, sources] = await Promise.all([
+  const [{ context }, sources, askedBefore] = await Promise.all([
     getEssentialScreen(feedbackId),
     db.findQuestionSetSources(feedbackId),
+    db.findTopicGateCodes(feedbackId),
   ]);
   if (!sources) throw notFound("Feedback not found");
   const questions = await db.findDetailedQuestions(feedbackId, selectQuestionSets(sources));
@@ -151,7 +176,7 @@ async function loadPageQuestions(feedbackId: string) {
     OVERALL_SATISFACTION: context.essentialOption,
     ...Object.fromEntries(questions.map((q) => [q.code, q.chosen])),
   };
-  return { context, questions, answers };
+  return { context, questions, answers, askedBefore };
 }
 
 /**
@@ -162,11 +187,19 @@ async function loadPageQuestions(feedbackId: string) {
 export type QuestionPage = "sector" | "common";
 const QUESTION_PAGES: QuestionPage[] = ["sector", "common"];
 
-/** The questions a page shows for this feedback (the common ones only to the users not satisfied). */
+/**
+ * The questions a page shows for this feedback (the common ones only to the
+ * users not satisfied). Those screen 2b already asked are left out; their
+ * answers still show or hide the others.
+ */
 const shownOn = (
   page: QuestionPage,
-  { questions, answers }: Awaited<ReturnType<typeof loadPageQuestions>>,
-) => questionsToShow(questions.filter((q) => q.common === (page === "common")), answers);
+  { questions, answers, askedBefore }: Awaited<ReturnType<typeof loadPageQuestions>>,
+) =>
+  questionsToShow(
+    questions.filter((q) => q.common === (page === "common") && !askedBefore.includes(q.code)),
+    answers,
+  );
 
 /**
  * The page of questions that comes after screen 2b ("details") or after a
@@ -234,12 +267,13 @@ export async function completeFeedback(feedbackId: string): Promise<void> {
 /**
  * Screens 6 and 6b for an app: the questions this feedback may be asked after
  * screen 2b (lists of its sector, type and service, then the common ones),
- * with their answers, conditions and what was already answered.
+ * with their answers, conditions and what was already answered; askedBefore:
+ * those screen 2b already asks, not to be shown again.
  */
 export async function getDetailedQuestionnaire(feedbackId: string) {
   requireUuid(feedbackId, "id");
-  const { questions } = await loadPageQuestions(feedbackId);
-  return { questions };
+  const { questions, askedBefore } = await loadPageQuestions(feedbackId);
+  return { questions, askedBefore };
 }
 
 /**

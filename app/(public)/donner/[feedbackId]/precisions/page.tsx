@@ -12,8 +12,10 @@ import { frenchSpaces } from "../../../../_i18n/typography";
 import styles from "../../../_feedback/screen.module.css";
 
 /**
- * Screen 2b: for each topic of the feedback's sector, « Bien » or « Pas bien »
- * (option D; « Autre » with a short text), then an optional free text.
+ * Screen 2b: for each topic of the feedback's sector, « Bien », « Pas bien » or
+ * « Non concerné » (option D; « Autre » with a short text), some topics behind
+ * a yes/no question (« Avez-vous payé quelque chose ? »), then an optional
+ * free text.
  * Everything is optional: « Continuer » with nothing touched is
  * fine. Coming back shows what was already touched and written.
  */
@@ -58,13 +60,19 @@ export default async function DetailsPage({ params, searchParams }: PageProps<"/
 
           <fieldset className={styles.topics}>
             <legend className={styles.question}>
-              {t.topicsTitle} <span className="muted">{t.topicsHint}</span>
+              {t.topicsTitle}
             </legend>
             <TopicRatings
               topics={topics}
               otherCode={OTHER_TOPIC_CODE}
               otherMaxLength={OTHER_TOPIC_MAX_LENGTH}
-              t={{ good: t.good, bad: t.bad, otherLabel: t.otherLabel, otherPlaceholder: t.otherPlaceholder }}
+              t={{
+                good: t.good,
+                bad: t.bad,
+                notConcerned: t.notConcerned,
+                otherLabel: t.otherLabel,
+                otherPlaceholder: t.otherPlaceholder,
+              }}
             />
           </fieldset>
 

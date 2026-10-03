@@ -373,6 +373,19 @@ Clé `(question_set_id, question_id)`. Si une question figure dans plusieurs lis
 
 Clé `(question_set_id, question_id, option_id)`. Règle d'affichage et de nettoyage dans `src/domain/questionnaire/conditions.ts` : si la question dont on dépend est sur la même page, la question apparaît dès que la réponse est touchée (CSS `:has()`, sans JavaScript ; sinon elle reste visible avec « (si vous avez répondu « Non ») ») ; à la fin de l'avis, les réponses dont la condition n'est plus remplie sont effacées.
 
+### topic_condition (migration 0011)
+« Ce thème de l'écran 2b ne s'affiche qu'après telle réponse à telle question. » Une ligne par réponse acceptée, une seule question par thème (index unique `(topic_id, depends_on_question_id)`) ; un thème sans ligne s'affiche toujours. Par thème et non par liste : un thème veut dire la même chose partout.
+
+| Colonne | Type |
+|---|---|
+| topic_id | fk topic |
+| depends_on_question_id | la question Oui / Non posée à la place du thème |
+| option_id | fk answer_option de `depends_on_question_id` (vérifié par la clé) |
+
+Contenu : `INTERVENTION_AWAITED` = Oui ouvre « Délai d'intervention » ; `PAID_SOMETHING` = Oui ouvre « Frais payés » ; `FILE_SUBMITTED` = Oui ouvre « Délai de traitement du dossier » et « Suivi et transparence du dossier ». L'écran 2b pose la question à la place du premier de ses thèmes et range ses thèmes juste dessous ; la réponse est une `answer` ordinaire. Un thème caché (réponse « Non » ou pas de réponse) n'est pas enregistré (`replaceTopics`). L'écran 6 ne repose pas une question déjà posée à l'écran 2b (`findTopicGateCodes`) ; là où aucun thème ne l'ouvre (contrôle sur le terrain, vie de l'école), « Avez-vous payé quelque chose ? » est posée à l'écran 6 juste avant le reçu. Les questions du reçu (`RECEIPT_GIVEN`, `RECEIPT_OR_INVOICE`), des frais expliqués (`FEES_EXPLAINED`) et du temps d'arrivée des agents (`ARRIVAL_TIME`) dépendent de ces mêmes réponses (`question_condition`).
+
+`answer_option.is_active` (0011) : une réponse retirée (« Je n'ai rien payé » des deux questions du reçu) n'est plus proposée ni acceptée, et reste lisible dans les avis déjà donnés.
+
 ### Contenu actuel
 34 questions dans la banque, 13 listes (`src/db/migrations/0004_questions.sql`, généré à partir d'une seule description ; détail lisible dans `docs/processus-recolte-avis.md`) :
 
@@ -544,13 +557,13 @@ Le texte libre demandé juste après la question essentielle (écran 2b). Il rem
 | hidden_reason | text | ex. donnée personnelle, injure |
 
 ### feedback_topic
-Thèmes touchés par l'usager, une ligne par thème, avec leur sens (`positive` pour « Bien », `negative` pour « Pas bien », obligatoire).
+Thèmes touchés par l'usager, une ligne par thème, avec leur sens (`positive` pour « Bien », `negative` pour « Pas bien », `not_concerned` pour « Non concerné » depuis 0011, obligatoire).
 
 | Colonne | Type | Note |
 |---|---|---|
 | feedback_id | fk | |
 | topic_id | fk | |
-| sentiment | enum | `positive` (« Bien ») ou `negative` (« Pas bien ») |
+| sentiment | enum | `positive` (« Bien »), `negative` (« Pas bien ») ou `not_concerned` (« Non concerné » : gardé pour savoir quels thèmes ne parlent pas aux usagers, jamais compté dans les résultats publiés, qui ne comptent que Bien et Pas bien) |
 | other_text | text | seulement pour le thème `OTHER` (avis passés, plus proposé depuis 0008) : le thème précisé par l'usager en quelques mots (« Parking »), 50 caractères au plus |
 
 Clé unique `(feedback_id, topic_id)`.

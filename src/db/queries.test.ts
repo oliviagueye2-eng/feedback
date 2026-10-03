@@ -23,6 +23,7 @@ import {
   saveAnswer,
   saveComment,
   saveQuestionnaire,
+  saveTopicGates,
   saveTopics,
   upsertFeedback,
 } from "../domain/feedback";
@@ -279,7 +280,8 @@ describe("feedback", () => {
     });
     const { questions } = await getDetailedQuestionnaire(fileFeedback);
     expect(questions.map((q) => q.code)).toEqual([
-      "GOAL_ACHIEVED", "VISITS_COUNT", "WAIT_TIME", "DOCUMENTS_KNOWN", "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY",
+      "GOAL_ACHIEVED", "VISITS_COUNT", "WAIT_TIME", "DOCUMENTS_KNOWN", "PAID_SOMETHING", "RECEIPT_GIVEN", "REPORTED",
+      "REPORT_WHY",
     ]);
     await saveAnswer(fileFeedback, "GOAL_ACHIEVED", { option: "YES" });
     // A question of another list (the bus stop) cannot be answered here.
@@ -293,8 +295,8 @@ describe("feedback", () => {
     await upsertFeedback(unanswered, {
       channel: "search", establishmentId: ids.dantec, language: "fr", visitPeriod: "today",
     });
-    // Health has its five questions.
-    expect((await getQuestionnaireScreen(unanswered, "sector")).questions).toHaveLength(5);
+    // Health has its five questions; the receipt waits for « Oui » to the payment, asked on screen 2b (0011).
+    expect((await getQuestionnaireScreen(unanswered, "sector")).questions).toHaveLength(4);
     await expect(completeFeedback(unanswered)).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect((await getEssentialScreen(unanswered)).context.completed).toBe(false);
 
@@ -314,11 +316,15 @@ describe("feedback", () => {
     const health = "b2c3d4e5-0000-4000-8000-000000000001";
     await upsertFeedback(health, { channel: "search", establishmentId: ids.dantec, language: "fr", visitPeriod: "today" });
     await saveAnswer(health, "OVERALL_SATISFACTION", { option: "NEUTRAL" });
+    await saveTopicGates(health, { PAID_SOMETHING: "YES" });
     const before = await getQuestionnaireScreen(health, "sector");
     expect(before.questions.map((q) => q.code)).toEqual([
       "PATIENT", "CARE_RECEIVED", "WAIT_TIME", "PRESCRIPTION_AVAILABLE", "RECEIPT_GIVEN",
     ]);
     expect(before.questions[2]!.options.map((o) => o.label)[0]).toBe("Moins de 30 minutes");
+    // Paid: « Je n'ai rien payé » is no longer offered, nor accepted (0011).
+    expect(before.questions[4]!.options.map((o) => o.code)).toEqual(["FOR_ALL", "FOR_SOME", "NO"]);
+    await expect(saveAnswer(health, "RECEIPT_GIVEN", { option: "NOTHING_PAID" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
 
     // Two answered, three skipped.
     // Satisfied enough: no common page after the sector's, the feedback ends.
@@ -336,7 +342,7 @@ describe("feedback", () => {
     await saveAnswer(unhappy, "OVERALL_SATISFACTION", { option: "VERY_DISSATISFIED" });
     expect(await nextQuestionPage(unhappy, "details")).toBe("sector");
     expect(await nextQuestionPage(unhappy, "sector")).toBe("common");
-    expect((await getQuestionnaireScreen(unhappy, "sector")).questions).toHaveLength(5);
+    expect((await getQuestionnaireScreen(unhappy, "sector")).questions).toHaveLength(4);
     // The common questions on their own page, « Précédent » back to the sector's.
     const common = await getQuestionnaireScreen(unhappy, "common");
     expect(common.previous).toBe("sector");
@@ -408,7 +414,7 @@ describe("feedback", () => {
     const { questions } = await getDetailedQuestionnaire(both);
     // Health's five, then the purchase's (its WAIT_TIME already asked), then the common ones.
     expect(questions.map((q) => q.code)).toEqual([
-      "PATIENT", "CARE_RECEIVED", "WAIT_TIME", "PRESCRIPTION_AVAILABLE", "RECEIPT_GIVEN",
+      "PATIENT", "CARE_RECEIVED", "WAIT_TIME", "PRESCRIPTION_AVAILABLE", "PAID_SOMETHING", "RECEIPT_GIVEN",
       "GOAL_ACHIEVED", "PAYMENT_AS_WISHED", "REPORTED", "REPORT_WHY",
     ]);
     await db.exec("UPDATE establishment_type SET question_set_id = NULL WHERE code = 'HOSPITAL'");
@@ -420,8 +426,8 @@ describe("feedback", () => {
     )) as [{ id: string }];
     const unknown = "d4e5f6a7-0000-4000-8000-000000000002";
     await upsertFeedback(unknown, { channel: "search", establishmentId: id, language: "fr", visitPeriod: "today" });
-    expect((await getDetailedQuestionnaire(unknown)).questions.slice(0, 3).map((q) => q.code))
-      .toEqual(["FAIR_PRICE", "RECEIPT_OR_INVOICE", "RECOMMEND"]);
+    expect((await getDetailedQuestionnaire(unknown)).questions.slice(0, 4).map((q) => q.code))
+      .toEqual(["FAIR_PRICE", "PAID_SOMETHING", "RECEIPT_OR_INVOICE", "RECOMMEND"]);
     // And the GENERIC topics: the common ones plus those of a counter.
     expect((await getDetailsScreen(unknown)).topics.map((t) => t.code)).toEqual([
       "STAFF", "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS", "FEES", "CLEANLINESS",
@@ -430,6 +436,8 @@ describe("feedback", () => {
   });
 
   it("replaces the topics touched, each with its sentiment", async () => {
+    // « Frais payés » and the file's topics are offered after « Oui » (0011).
+    await saveTopicGates(feedbackId, { PAID_SOMETHING: "YES", FILE_SUBMITTED: "YES" });
     await saveTopics(feedbackId, {
       topics: [
         { code: "WAIT_TIME", sentiment: "negative" },
@@ -440,6 +448,7 @@ describe("feedback", () => {
       topics: [
         { code: "STAFF", sentiment: "positive" },
         { code: "FEES", sentiment: "negative" },
+        { code: "ACCESS_FOR_ALL", sentiment: "not_concerned" },
       ],
     });
     const topics = await rows(
@@ -448,6 +457,7 @@ describe("feedback", () => {
       [feedbackId],
     );
     expect(topics).toEqual([
+      { code: "ACCESS_FOR_ALL", sentiment: "not_concerned", other_text: null },
       { code: "FEES", sentiment: "negative", other_text: null },
       { code: "STAFF", sentiment: "positive", other_text: null },
     ]);
@@ -476,6 +486,7 @@ describe("feedback", () => {
     expect(screen.topics.filter((t) => t.sentiment).map((t) => [t.code, t.sentiment, t.otherText])).toEqual([
       ["STAFF", "positive", null],
       ["FEES", "negative", null],
+      ["ACCESS_FOR_ALL", "not_concerned", null],
     ]);
     expect(screen.comment).toBe("Deux heures d'attente, guichet fermé.");
   });
@@ -577,8 +588,8 @@ describe("feedback", () => {
         "Accessibilité aux personnes handicapées ou âgées",
       ],
       questions: [
-        "POLICE_VISIT_REASON", "GOAL_ACHIEVED", "WAIT_TIME", "VISITS_COUNT", "STATEMENT_RECEIPT", "RECEIPT_GIVEN",
-        "REPORTED", "REPORT_WHY",
+        "POLICE_VISIT_REASON", "GOAL_ACHIEVED", "WAIT_TIME", "VISITS_COUNT", "STATEMENT_RECEIPT", "PAID_SOMETHING",
+        "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY",
       ],
     });
     expect(await visit("b8c9d0e1-0000-4000-8000-000000000002", service.POLICE_FIELD!)).toEqual({
@@ -590,8 +601,74 @@ describe("feedback", () => {
         "Délai d'intervention",
         "Prise en compte de la demande",
       ],
-      questions: ["FIELD_SITUATION", "REASON_EXPLAINED", "ARRIVAL_TIME", "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY"],
+      questions: [
+        "FIELD_SITUATION", "REASON_EXPLAINED", "INTERVENTION_AWAITED", "ARRIVAL_TIME", "PAID_SOMETHING", "RECEIPT_GIVEN",
+        "REPORTED", "REPORT_WHY",
+      ],
     });
+  });
+
+  it("asks a yes/no question in the place of a topic, and never again on screen 6 (0011)", async () => {
+    const [gendarmerie] = await rows<{ id: string; service: number }>(
+      `SELECT e.id, s.id AS service FROM establishment e JOIN organization o ON o.id = e.organization_id, service s
+       WHERE o.code = 'GENDARMERIE_NATIONALE' AND s.code = 'POLICE_FIELD'`,
+    );
+    const field = "b8c9d0e1-0000-4000-8000-000000000003";
+    await upsertFeedback(field, {
+      channel: "search", establishmentId: gendarmerie!.id, serviceId: gendarmerie!.service, language: "fr", visitPeriod: "today",
+    });
+    await saveAnswer(field, "OVERALL_SATISFACTION", { option: "DISSATISFIED" });
+
+    // Screen 2b: « Délai d'intervention » comes with its question, nothing answered yet.
+    const delay = (await getDetailsScreen(field)).topics.find((t) => t.code === "INTERVENTION_TIME");
+    expect(delay?.gate).toEqual({
+      code: "INTERVENTION_AWAITED",
+      label: "Avez-vous attendu une intervention sur le terrain ?",
+      options: [{ code: "YES", label: "Oui" }, { code: "NO", label: "Non" }],
+      opensWith: ["YES"],
+      chosen: null,
+    });
+    // Only the questions of the screen: the payment opens no topic of a road check.
+    await expect(saveTopicGates(field, { PAID_SOMETHING: "YES" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
+
+    // « Non »: the topic is not kept, and screen 6 skips the time to come.
+    await saveTopicGates(field, { INTERVENTION_AWAITED: "NO" });
+    await saveTopics(field, { topics: [{ code: "INTERVENTION_TIME", sentiment: "negative" }] });
+    expect((await getDetailsScreen(field)).topics.filter((t) => t.sentiment)).toEqual([]);
+    const screen6 = async () =>
+      (await getQuestionnaireScreen(field, "sector")).questions.map((q) => [q.code, q.revealedBy?.dependsOn ?? null]);
+    // The question already asked is not shown again; the payment is asked here, before the receipt.
+    expect(await screen6()).toEqual([
+      ["FIELD_SITUATION", null],
+      ["REASON_EXPLAINED", null],
+      ["PAID_SOMETHING", null],
+      ["RECEIPT_GIVEN", "PAID_SOMETHING"],
+    ]);
+    expect((await getDetailedQuestionnaire(field)).askedBefore).toEqual(["INTERVENTION_AWAITED"]);
+
+    // « Oui »: the topic is kept, and the time to come is asked.
+    await saveTopicGates(field, { INTERVENTION_AWAITED: "YES" });
+    await saveTopics(field, { topics: [{ code: "INTERVENTION_TIME", sentiment: "negative" }] });
+    expect((await getDetailsScreen(field)).topics.filter((t) => t.sentiment).map((t) => t.code)).toEqual(["INTERVENTION_TIME"]);
+    expect((await screen6()).map(([code]) => code)).toEqual([
+      "FIELD_SITUATION", "REASON_EXPLAINED", "ARRIVAL_TIME", "PAID_SOMETHING", "RECEIPT_GIVEN",
+    ]);
+
+    // Touched again (cleared): the answer goes, and so does the topic at its next save.
+    await saveQuestionnaire(field, "sector", { ARRIVAL_TIME: "OVER_1_H", PAID_SOMETHING: "NO" });
+    await saveTopicGates(field, {});
+    await saveTopics(field, { topics: [{ code: "INTERVENTION_TIME", sentiment: "negative" }] });
+    expect((await getDetailsScreen(field)).topics.find((t) => t.code === "INTERVENTION_TIME")).toMatchObject({
+      sentiment: null,
+      gate: { chosen: null },
+    });
+    // At the end, the time to come no longer applies.
+    await completeFeedback(field);
+    const answered = (await rows<{ code: string }>(
+      `SELECT q.code FROM answer a JOIN question q ON q.id = a.question_id WHERE a.feedback_id = $1 ORDER BY q.code`,
+      [field],
+    )).map((r) => r.code);
+    expect(answered).toEqual(["OVERALL_SATISFACTION", "PAID_SOMETHING"]);
   });
 
   it("adds the lists of the type and of the service to the sector's, never removing one", async () => {
