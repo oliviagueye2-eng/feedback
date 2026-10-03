@@ -118,9 +118,9 @@ export default async function ResultsPage({ params }: PageProps<"/resultats/[id]
                     </p>
                     <p className={styles.headline}>
                       <strong>{fill(t.satisfiedPercent, { percent: results.satisfiedPercent })}</strong>
-                      <span>{t.satisfiedLabel}</span>
+                      <span className={`muted ${styles.count}`}>{plural(t.feedbackCount, results.feedbackCount)}</span>
+                      <span className={styles.label}>{t.satisfiedLabel}</span>
                     </p>
-                    <p className={`muted ${styles.count}`}>{plural(t.feedbackCount, results.feedbackCount)}</p>
                     <div className={styles.stack} aria-hidden="true">
                       {results.satisfaction.options
                         .filter((o) => o.count > 0)
