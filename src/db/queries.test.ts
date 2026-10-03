@@ -484,6 +484,39 @@ describe("feedback", () => {
     expect(screen.topics.filter((t) => t.sentiment).map((t) => t.code)).toEqual(["PROCESSING_TIME"]);
     expect(screen.comment).toBeNull();
   });
+
+  it("lets a type or a service add or remove a topic, the service deciding last", async () => {
+    await db.exec(`
+      INSERT INTO topic_establishment_type (topic_id, establishment_type_id, shown)
+      SELECT t.id, et.id, v.shown FROM (VALUES ('OPENING_HOURS', false), ('WATER_QUALITY', true)) AS v (code, shown)
+      JOIN topic t ON t.code = v.code, establishment_type et WHERE et.code = 'CIVIL_REGISTRY_CENTER';
+      INSERT INTO topic_service (topic_id, service_id, shown)
+      SELECT t.id, s.id, true FROM topic t, service s
+      WHERE t.code = 'OPENING_HOURS' AND s.code = 'CIVIL_REGISTRY_BIRTH';
+    `);
+    try {
+      // No service: the type removes « Horaires d'ouverture » and adds « Qualité de l'eau ».
+      const byType = (await getDetailsScreen(feedbackId)).topics.map((t) => t.code);
+      expect(byType).not.toContain("OPENING_HOURS");
+      expect(byType).toContain("WATER_QUALITY");
+
+      // With the service: it shows « Horaires d'ouverture » again, over the type.
+      const withService = "e5f6a7b8-0000-4000-8000-000000000003";
+      const [service] = await rows<{ id: number }>("SELECT id FROM service WHERE code = 'CIVIL_REGISTRY_BIRTH'");
+      await upsertFeedback(withService, {
+        channel: "search", establishmentId: ids.gy, language: "fr", visitPeriod: "today", serviceId: service!.id,
+      });
+      const byService = (await getDetailsScreen(withService)).topics.map((t) => t.code);
+      expect(byService).toContain("OPENING_HOURS");
+      expect(byService).toContain("WATER_QUALITY");
+
+      // A topic removed for this feedback is not saved.
+      await saveTopics(feedbackId, { topics: [{ code: "OPENING_HOURS", sentiment: "negative" }] });
+      expect((await getDetailsScreen(feedbackId)).topics.filter((t) => t.sentiment)).toEqual([]);
+    } finally {
+      await db.exec("DELETE FROM topic_establishment_type; DELETE FROM topic_service;");
+    }
+  });
 });
 
 describe("published results", () => {

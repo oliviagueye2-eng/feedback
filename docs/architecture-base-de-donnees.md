@@ -436,12 +436,22 @@ Liste revue le 2026-09-30. **Thèmes communs**, affichés partout :
 Désactivés le 2026-09-30, gardés pour les avis déjà donnés : `PRICE` (Prix), `ACCESSIBILITY` (Accessibilité), `SAFETY` (Sécurité), `SERVICE_QUALITY` (Qualité du service).
 
 ### topic_sector
-Quels thèmes afficher selon le secteur. Un thème **sans ligne** dans cette table est commun : il s'affiche dans tous les secteurs. Un thème **avec des lignes** ne s'affiche que dans ces secteurs. Le secteur retenu est celui du service choisi, sinon celui de l'établissement.
+Quels thèmes afficher selon le secteur. Un thème **sans ligne** dans cette table est commun : il s'affiche dans tous les secteurs. Un thème **avec des lignes** ne s'affiche que dans ces secteurs. Le secteur retenu est celui du service choisi, sinon celui du type d'établissement, sinon celui de l'établissement. Un type ou un service peut ensuite ajouter ou retirer un thème (tables ci-dessous).
 
 | Colonne | Type |
 |---|---|
 | topic_id | fk |
 | sector_id | fk |
+
+### topic_establishment_type et topic_service (migration 0008)
+Comme pour les questions, un type d'établissement ou un service peut **ajouter** un thème (`shown = true`) ou en **retirer** un (`shown = false`) par rapport à la liste du secteur (option B, validée le 2026-10-03). Le niveau le plus précis qui cite le thème décide : le service, sinon le type, sinon le secteur (`topic_sector`). Exemple : le service « Un vol » retire « Horaires d'ouverture » ; le type « Lycée » ajoute un thème qui lui est propre.
+
+| Table | Colonnes |
+|---|---|
+| `topic_establishment_type` | `topic_id` fk, `establishment_type_id` fk, `shown` boolean ; clé `(topic_id, establishment_type_id)` |
+| `topic_service` | `topic_id` fk, `service_id` fk, `shown` boolean ; clé `(topic_id, service_id)` |
+
+Aucune ligne pour l'instant : le contenu (quel thème ajouter ou retirer, où) est à valider avec Olivia.
 
 ### Tables de traduction (`*_translation`)
 Une table par table traduite (décision du 2026-10-01, plutôt qu'une table unique dont le lien n'aurait pas été vérifié par la base). Chaque table a une clé étrangère vers la ligne traduite (la traduction est supprimée avec elle) et une ligne par langue.

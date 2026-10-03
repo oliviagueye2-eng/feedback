@@ -112,21 +112,27 @@ export async function upsertAnswer(input: {
 }
 
 /**
- * Active topics shown for feedback $1: the common ones (no row in
- * topic_sector) and those of its sector. The sector is the visit reason's,
+ * Active topics shown for feedback $1. The most specific level that names a
+ * topic decides: its service (topic_service), else its establishment type
+ * (topic_establishment_type), else its sector: the common topics (no row in
+ * topic_sector) and those of the sector. The sector is the visit reason's,
  * else the establishment type's, else the establishment's.
  */
 const TOPICS_FOR_FEEDBACK = `
-  SELECT t.* FROM topic t
+  SELECT t.* FROM topic t,
+    (SELECT f.service_id, e.type_id, coalesce(s.sector_id, et.sector_id, e.sector_id) AS sector_id
+     FROM feedback f
+     JOIN establishment e ON e.id = f.establishment_id
+     LEFT JOIN service s ON s.id = f.service_id
+     LEFT JOIN establishment_type et ON et.id = e.type_id
+     WHERE f.id = $1) ctx
   WHERE t.is_active
-    AND (NOT EXISTS (SELECT 1 FROM topic_sector ts WHERE ts.topic_id = t.id)
-         OR EXISTS (
-           SELECT 1 FROM topic_sector ts, feedback f
-           JOIN establishment e ON e.id = f.establishment_id
-           LEFT JOIN service s ON s.id = f.service_id
-           LEFT JOIN establishment_type et ON et.id = e.type_id
-           WHERE f.id = $1 AND ts.topic_id = t.id
-             AND ts.sector_id = coalesce(s.sector_id, et.sector_id, e.sector_id)))`;
+    AND coalesce(
+      (SELECT tsv.shown FROM topic_service tsv WHERE tsv.topic_id = t.id AND tsv.service_id = ctx.service_id),
+      (SELECT tet.shown FROM topic_establishment_type tet
+       WHERE tet.topic_id = t.id AND tet.establishment_type_id = ctx.type_id),
+      NOT EXISTS (SELECT 1 FROM topic_sector ts WHERE ts.topic_id = t.id)
+        OR EXISTS (SELECT 1 FROM topic_sector ts WHERE ts.topic_id = t.id AND ts.sector_id = ctx.sector_id))`;
 
 /**
  * Replaces all topics of a feedback. Codes must be unique (checked in src/domain).
