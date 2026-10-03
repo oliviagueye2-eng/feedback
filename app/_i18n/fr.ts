@@ -40,8 +40,6 @@ export const fr = {
   },
 
   footer: {
-    state: "République du Sénégal",
-    motto: "Un Peuple, Un But, Une Foi",
     privacy: "Aucune donnée personnelle n'est demandée aux usagers.",
     purpose: "Une plateforme au service de la transparence et de la bonne gouvernance.",
   },
