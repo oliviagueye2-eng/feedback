@@ -432,6 +432,9 @@ Liste revue le 2026-09-30. **Thèmes communs**, affichés partout :
 | `PROCESSING_TIME` | Délai de traitement du dossier | Administration, Justice, Impôts, Social, Sécurité, Banques et assurances |
 | `CASE_TRACKING` | Suivi et transparence du dossier | Administration, Justice, Impôts, Social, Sécurité, Banques et assurances |
 | `CUSTOMER_SERVICE` | Service client et réclamations | Transport, Électricité, Eau, Télécoms, Banques et assurances |
+| `SCHOOL_SAFETY` | Sécurité dans l'établissement | Écoles (par type, voir `topic_establishment_type`) |
+| `SCHOOL_EQUIPMENT` | Tables-bancs, matériel et manuels | Écoles (par type) |
+| `PARENT_COMMUNICATION` | Communication avec les parents | Écoles (par type) |
 
 Désactivés le 2026-09-30, gardés pour les avis déjà donnés : `PRICE` (Prix), `ACCESSIBILITY` (Accessibilité), `SAFETY` (Sécurité), `SERVICE_QUALITY` (Qualité du service).
 
@@ -451,7 +454,7 @@ Comme pour les questions, un type d'établissement ou un service peut **ajouter*
 | `topic_establishment_type` | `topic_id` fk, `establishment_type_id` fk, `shown` boolean ; clé `(topic_id, establishment_type_id)` |
 | `topic_service` | `topic_id` fk, `service_id` fk, `shown` boolean ; clé `(topic_id, service_id)` |
 
-Contenu validé le 2026-10-03 : les services « Un vol », « Une traversée en bateau » et « Un trajet en bus ou en train » retirent « Horaires d'ouverture ». Les thèmes propres à un type (ex. Lycée) restent à proposer type par type.
+Contenu validé le 2026-10-03 : les services « Un vol », « Une traversée en bateau » et « Un trajet en bus ou en train » retirent « Horaires d'ouverture ». Écoles (lycée, collège, école primaire, groupe scolaire), validé le 2026-10-03 : « Temps d'attente », « Horaires d'ouverture » et « Explications reçues » retirés ; « Sécurité dans l'établissement », « Tables-bancs, matériel et manuels » et « Communication avec les parents » ajoutés. Université, maternelle et daara gardent la liste Éducation. Un thème ajouté par un type ou un service (`shown = true`) n'est jamais commun, même sans ligne dans `topic_sector`.
 
 ### Tables de traduction (`*_translation`)
 Une table par table traduite (décision du 2026-10-01, plutôt qu'une table unique dont le lien n'aurait pas été vérifié par la base). Chaque table a une clé étrangère vers la ligne traduite (la traduction est supprimée avec elle) et une ligne par langue.

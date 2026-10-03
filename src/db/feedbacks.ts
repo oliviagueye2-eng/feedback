@@ -115,7 +115,7 @@ export async function upsertAnswer(input: {
  * Active topics shown for feedback $1. The most specific level that names a
  * topic decides: its service (topic_service), else its establishment type
  * (topic_establishment_type), else its sector: the common topics (no row in
- * topic_sector) and those of the sector. The sector is the visit reason's,
+ * topic_sector, and not added by a type or a service) and those of the sector. The sector is the visit reason's,
  * else the establishment type's, else the establishment's.
  */
 const TOPICS_FOR_FEEDBACK = `
@@ -131,7 +131,9 @@ const TOPICS_FOR_FEEDBACK = `
       (SELECT tsv.shown FROM topic_service tsv WHERE tsv.topic_id = t.id AND tsv.service_id = ctx.service_id),
       (SELECT tet.shown FROM topic_establishment_type tet
        WHERE tet.topic_id = t.id AND tet.establishment_type_id = ctx.type_id),
-      NOT EXISTS (SELECT 1 FROM topic_sector ts WHERE ts.topic_id = t.id)
+      (NOT EXISTS (SELECT 1 FROM topic_sector ts WHERE ts.topic_id = t.id)
+       AND NOT EXISTS (SELECT 1 FROM topic_establishment_type x WHERE x.topic_id = t.id AND x.shown)
+       AND NOT EXISTS (SELECT 1 FROM topic_service x WHERE x.topic_id = t.id AND x.shown))
         OR EXISTS (SELECT 1 FROM topic_sector ts WHERE ts.topic_id = t.id AND ts.sector_id = ctx.sector_id))`;
 
 /**

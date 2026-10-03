@@ -58,14 +58,16 @@ describe("reference data", () => {
   });
 
   it("shows the nine common topics everywhere, plus each sector's own, « Autre » last", async () => {
-    // Rule of topic_sector: a topic without rows is common; with rows, only in those sectors.
+    // Rule of topic_sector: a topic without rows is common (unless a type or a service adds it); with rows, only in those sectors.
     const topicsFor = async (sector: string) =>
       (await db.query<{ code: string; label: string }>(`
         SELECT t.code, tr.label
         FROM topic t
         JOIN topic_translation tr ON tr.topic_id = t.id AND tr.language = 'fr'
         WHERE t.is_active
-          AND (NOT EXISTS (SELECT 1 FROM topic_sector ts WHERE ts.topic_id = t.id)
+          AND ((NOT EXISTS (SELECT 1 FROM topic_sector ts WHERE ts.topic_id = t.id)
+                AND NOT EXISTS (SELECT 1 FROM topic_establishment_type x WHERE x.topic_id = t.id AND x.shown)
+                AND NOT EXISTS (SELECT 1 FROM topic_service x WHERE x.topic_id = t.id AND x.shown))
                OR EXISTS (SELECT 1 FROM topic_sector ts JOIN sector s ON s.id = ts.sector_id
                           WHERE ts.topic_id = t.id AND s.code = $1))
         ORDER BY t.position`, [sector])).rows;

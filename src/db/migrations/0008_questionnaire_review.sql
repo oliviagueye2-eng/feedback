@@ -49,3 +49,34 @@ WHERE t.code = 'OPENING_HOURS' AND s.code IN ('FLIGHT', 'BOAT_CROSSING', 'LAND_T
 -- 3. « des locaux » dropped: the topic also fits a bus, a boat or a plane.
 UPDATE topic_translation SET label = 'Propreté et confort'
 WHERE language = 'fr' AND topic_id = (SELECT id FROM topic WHERE code = 'CLEANLINESS');
+
+-- Schools (validated on 2026-10-03): high school, middle school, primary
+-- school and school group. Universities, nursery schools and daaras keep the
+-- Education list for now.
+-- Removed: a pupil in class does not wait at a counter, has no opening hours,
+-- and « Explications reçues » is too vague there (replaced by the
+-- communication with parents).
+INSERT INTO topic_establishment_type (topic_id, establishment_type_id, shown)
+SELECT t.id, et.id, false FROM topic t, establishment_type et
+WHERE t.code IN ('WAIT_TIME', 'OPENING_HOURS', 'INFORMATION')
+  AND et.code IN ('HIGH_SCHOOL', 'MIDDLE_SCHOOL', 'PRIMARY_SCHOOL', 'SCHOOL_GROUP');
+
+-- Added: three topics of their own, after the Education ones.
+INSERT INTO topic (code, position) VALUES
+  ('SCHOOL_SAFETY', 39),
+  ('SCHOOL_EQUIPMENT', 40),
+  ('PARENT_COMMUNICATION', 41);
+
+INSERT INTO topic_translation (topic_id, language, label)
+SELECT t.id, 'fr', v.label
+FROM (VALUES
+  ('SCHOOL_SAFETY', 'Sécurité dans l''établissement'),
+  ('SCHOOL_EQUIPMENT', 'Tables-bancs, matériel et manuels'),
+  ('PARENT_COMMUNICATION', 'Communication avec les parents')
+) AS v (code, label)
+JOIN topic t ON t.code = v.code;
+
+INSERT INTO topic_establishment_type (topic_id, establishment_type_id, shown)
+SELECT t.id, et.id, true FROM topic t, establishment_type et
+WHERE t.code IN ('SCHOOL_SAFETY', 'SCHOOL_EQUIPMENT', 'PARENT_COMMUNICATION')
+  AND et.code IN ('HIGH_SCHOOL', 'MIDDLE_SCHOOL', 'PRIMARY_SCHOOL', 'SCHOOL_GROUP');

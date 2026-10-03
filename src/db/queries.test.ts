@@ -485,6 +485,35 @@ describe("feedback", () => {
     expect(screen.comment).toBeNull();
   });
 
+  it("gives a high school its own topics, and leaves the university the Education list (0008)", async () => {
+    const [school] = await rows<{ id: string }>("SELECT id FROM establishment WHERE name = 'Lycée Lamine Guèye'");
+    const [university] = await rows<{ id: string }>(
+      `INSERT INTO establishment (name, type_id) SELECT 'Université de test', id FROM establishment_type
+       WHERE code = 'UNIVERSITY' RETURNING id`,
+    );
+    const topicsOf = async (feedback: string, establishmentId: string) => {
+      await upsertFeedback(feedback, { channel: "search", establishmentId, language: "fr", visitPeriod: "today" });
+      return (await getDetailsScreen(feedback)).topics.map((t) => t.label);
+    };
+    expect(await topicsOf("f6a7b8c9-0000-4000-8000-000000000004", school!.id)).toEqual([
+      "Accueil et politesse",
+      "Professionnalisme du personnel",
+      "Simplicité de la démarche (papiers, allers-retours)",
+      "Frais payés (montant, reçu)",
+      "Propreté et confort",
+      "Accès pour tous (personnes handicapées, âgées)",
+      "Qualité de l'enseignement",
+      "Encadrement des élèves",
+      "Sécurité dans l'établissement",
+      "Tables-bancs, matériel et manuels",
+      "Communication avec les parents",
+      "Autre",
+    ]);
+    const atUniversity = await topicsOf("a7b8c9d0-0000-4000-8000-000000000005", university!.id);
+    expect(atUniversity).toContain("Temps d'attente");
+    expect(atUniversity).not.toContain("Sécurité dans l'établissement");
+  });
+
   it("lets a type or a service add or remove a topic, the service deciding last", async () => {
     await db.exec(`
       INSERT INTO topic_establishment_type (topic_id, establishment_type_id, shown)
