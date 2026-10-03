@@ -92,6 +92,13 @@
       "w": 2072,
       "h": 904,
       "title": "A. Réponses de satisfaction : 3 versions (essai)"
+    },
+    "A-resultats-publics.dc.html": {
+      "x": 5048,
+      "y": 8956,
+      "w": 1916,
+      "h": 2560,
+      "title": "A. Résultats publics : 2 propositions (essai)"
     }
   },
   "createdOnFiles": {
@@ -125,7 +132,8 @@
     "A-reponses-satisfaction.dc.html",
     "B-une-question.dc.html",
     "C-civic-tech.dc.html",
-    "D-conversation.dc.html"
+    "D-conversation.dc.html",
+    "A-resultats-publics.dc.html"
   ],
   "pages": [],
   "title": "Wireframes Satisfaction Usagers SN"

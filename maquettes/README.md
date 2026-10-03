@@ -18,6 +18,7 @@ Ces fichiers ne s'ouvrent pas seuls dans un navigateur : ils ont besoin du moteu
 | `A-loader.dc.html` | Essai (2026-09-30) : options de loader à partir du logo (le logo se construit, les points de la bulle, logo fixe et barre tricolore, points et barre ensemble), avec les règles communes |
 | `A-premiere-visite.dc.html` | Essai (2026-09-30) : animation à la première visite, 2 options (animation dans l'accueil sans rien bloquer ; écran d'ouverture avec « Passer »). Photo et logo stockés dans le canevas (`/_blob/…`) |
 | `A-reponses-satisfaction.dc.html` | Essai (2026-09-30) : réponses de la question essentielle en 3 versions (texte seul, texte et visages, visages en couleurs) |
+| `A-resultats-publics.dc.html` | Essai (2026-10-03) : page publique des résultats d'un établissement, 2 propositions (1 « Sur 10 usagers » : dix visages et une phrase ; 2 « Le relevé » : fiche tamponnée, tableaux et pourcentages), chacune avec l'état « pas encore assez d'avis ». Chiffres fictifs. Étude : `docs/publication-resultats.md` |
 | `B-une-question.dc.html` | Variante B, une question par écran (pour mémoire) |
 | `C-civic-tech.dc.html` | Variante C, civic-tech moderne (pour mémoire) |
 | `D-conversation.dc.html` | Variante D, conversation guidée (pour mémoire) |
