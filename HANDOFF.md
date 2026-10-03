@@ -22,7 +22,7 @@ Dernière mise à jour : 2026-10-02, fin de session (types d'établissement, que
 - **Questions ouvertes à lui reposer** :
   1. **Option B** : services hérités de l'organisme (table `organization_service`), pour que les futures lignes et gares reçoivent « Un trajet », « Achat d'un ticket… » de leur opérateur sans les rattacher une par une ;
   2. questions **Sécurité** (police, gendarmerie : avec l'organisme porteur) ;
-  3. **Université, école supérieure** : la question « Combien d'élèves dans la classe ? » leur est posée (acceptable, on peut la passer) ;
+  3. ~~**Université, école supérieure**~~ : « Combien d'élèves dans la classe ? » **gardée** pour elles (sa décision, 2026-10-03) ;
   4. catégorie en étoiles des hôtels (colonne facultative, plus tard) ;
   5. seuil de publication (10 avis par mois ?), page « À propos », langues.
 - **Prochaine étape technique** : à choisir avec elle. La **file d'envoi hors connexion** est passée en *nice to have* le 2026-10-02.
