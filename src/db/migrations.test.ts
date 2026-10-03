@@ -173,7 +173,7 @@ describe("reference data", () => {
     expect(await attached("service")).toEqual({
       CIVIL_REGISTRY: null, LAND_TRIP: "LAND_TRIP", BOAT_CROSSING: "BOAT_CROSSING", TICKET_PURCHASE: "TICKET_PURCHASE",
       FLIGHT: "FLIGHT", PLANE_TICKET: "TICKET_PURCHASE", SCHOOL_ADMIN: null, SCHOOL_LIFE: null,
-      POLICE_PREMISES: "POLICE_PREMISES", POLICE_FIELD: "POLICE_FIELD",
+      POLICE_PREMISES: "POLICE_PREMISES", POLICE_FIELD: "POLICE_FIELD", POLICE_CALL: "POLICE_CALL",
     });
     // Types with a list of their own (0005).
     expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))
@@ -222,7 +222,6 @@ describe("reference data", () => {
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME CANCELLED",
       "GENERIC: RECEIPT_OR_INVOICE ← PAID_SOMETHING YES",
       "HEALTH: RECEIPT_GIVEN ← PAID_SOMETHING YES",
-      "POLICE_FIELD: ARRIVAL_TIME ← FIELD_SITUATION CALL_RESPONSE",
       "POLICE_FIELD: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_PREMISES: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON COMPLAINT",
