@@ -646,16 +646,27 @@ describe("feedback", () => {
     ]);
     expect((await getDetailedQuestionnaire(field)).askedBefore).toEqual(["INTERVENTION_AWAITED"]);
 
-    // « Oui »: the topic is kept, and the time to come is asked.
+    // « Oui »: the topic is kept, and the time to come is asked, but only after a call for help (0012).
     await saveTopicGates(field, { INTERVENTION_AWAITED: "YES" });
     await saveTopics(field, { topics: [{ code: "INTERVENTION_TIME", sentiment: "negative" }] });
     expect((await getDetailsScreen(field)).topics.filter((t) => t.sentiment).map((t) => t.code)).toEqual(["INTERVENTION_TIME"]);
-    expect((await screen6()).map(([code]) => code)).toEqual([
-      "FIELD_SITUATION", "REASON_EXPLAINED", "ARRIVAL_TIME", "PAID_SOMETHING", "RECEIPT_GIVEN",
+    expect(await screen6()).toEqual([
+      ["FIELD_SITUATION", null],
+      ["REASON_EXPLAINED", null],
+      ["ARRIVAL_TIME", "FIELD_SITUATION"],
+      ["PAID_SOMETHING", null],
+      ["RECEIPT_GIVEN", "PAID_SOMETHING"],
     ]);
+    // A road check: the time to come no longer applies at the end, even after « Oui ».
+    await saveQuestionnaire(field, "sector", { FIELD_SITUATION: "ROAD_CHECK", ARRIVAL_TIME: "OVER_1_H" });
+    await completeFeedback(field);
+    expect((await rows<{ code: string }>(
+      `SELECT q.code FROM answer a JOIN question q ON q.id = a.question_id WHERE a.feedback_id = $1 AND q.code = 'ARRIVAL_TIME'`,
+      [field],
+    ))).toEqual([]);
 
     // Touched again (cleared): the answer goes, and so does the topic at its next save.
-    await saveQuestionnaire(field, "sector", { ARRIVAL_TIME: "OVER_1_H", PAID_SOMETHING: "NO" });
+    await saveQuestionnaire(field, "sector", { FIELD_SITUATION: "CALL_RESPONSE", ARRIVAL_TIME: "OVER_1_H", PAID_SOMETHING: "NO" });
     await saveTopicGates(field, {});
     await saveTopics(field, { topics: [{ code: "INTERVENTION_TIME", sentiment: "negative" }] });
     expect((await getDetailsScreen(field)).topics.find((t) => t.code === "INTERVENTION_TIME")).toMatchObject({
@@ -668,7 +679,7 @@ describe("feedback", () => {
       `SELECT q.code FROM answer a JOIN question q ON q.id = a.question_id WHERE a.feedback_id = $1 ORDER BY q.code`,
       [field],
     )).map((r) => r.code);
-    expect(answered).toEqual(["OVERALL_SATISFACTION", "PAID_SOMETHING"]);
+    expect(answered).toEqual(["FIELD_SITUATION", "OVERALL_SATISFACTION", "PAID_SOMETHING"]);
   });
 
   it("adds the lists of the type and of the service to the sector's, never removing one", async () => {
