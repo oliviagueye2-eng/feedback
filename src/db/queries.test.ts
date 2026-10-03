@@ -510,8 +510,8 @@ describe("feedback", () => {
       "SELECT code, id FROM service WHERE code IN ('SCHOOL_ADMIN', 'SCHOOL_LIFE')",
     )).map((s) => [s.code, s.id]));
     const [university] = await rows<{ id: string }>(
-      `INSERT INTO establishment (name, type_id) SELECT 'Université de test', id FROM establishment_type
-       WHERE code = 'UNIVERSITY' RETURNING id`,
+      `INSERT INTO establishment (name, type_id) SELECT 'Centre de formation de test', id FROM establishment_type
+       WHERE code = 'VOCATIONAL_TRAINING_CENTER' RETURNING id`,
     );
     const topicsOf = async (feedback: string, establishmentId: string, serviceId?: number) => {
       await upsertFeedback(feedback, { channel: "search", establishmentId, serviceId, language: "fr", visitPeriod: "today" });
@@ -538,7 +538,7 @@ describe("feedback", () => {
       "Sécurité dans l'établissement",
       "Tables-bancs, matériel et manuels",
     ]);
-    // A university keeps what it had: the counter, the papers, the teaching.
+    // A training centre keeps what it had: the counter, the papers, the teaching.
     expect(await topicsOf("a7b8c9d0-0000-4000-8000-000000000005", university!.id)).toEqual([
       "Politesse du personnel (accueil, respect)",
       "Compétence du personnel (connaît son travail, traite bien la demande)",
@@ -565,6 +565,63 @@ describe("feedback", () => {
     expect(await questionsOf("a7b8c9d0-0000-4000-8000-000000000005")).toEqual([
       "RESPONDENT", "CLASSES_HELD", "CLASS_SIZE", "FACILITIES", "PAID_SOMETHING", "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY",
     ]);
+  });
+
+  it("gives a university the topics of the visit chosen and the schools' questions (0015)", async () => {
+    const [university] = await rows<{ id: string }>(
+      `INSERT INTO establishment (name, type_id) SELECT 'Université de test', id FROM establishment_type
+       WHERE code = 'UNIVERSITY' RETURNING id`,
+    );
+    const services = Object.fromEntries((await rows<{ code: string; id: number }>(
+      "SELECT code, id FROM service WHERE code IN ('HIGHER_EDUCATION_ADMIN', 'HIGHER_EDUCATION_COURSES')",
+    )).map((s) => [s.code, s.id]));
+    await rows(
+      "INSERT INTO establishment_service (establishment_id, service_id) SELECT $1, unnest($2::int[])",
+      [university!.id, Object.values(services)],
+    );
+    expect((await getEstablishment(university!.id)).services.map((s) => s.label)).toEqual([
+      "Inscription ou démarche administrative",
+      "Les cours et les examens",
+    ]);
+    const visit = async (feedback: string, serviceId: number) => {
+      await upsertFeedback(feedback, { channel: "search", establishmentId: university!.id, serviceId, language: "fr", visitPeriod: "today" });
+      return {
+        topics: (await getDetailsScreen(feedback)).topics.map((t) => t.label),
+        questions: (await getDetailedQuestionnaire(feedback)).questions.map((q) => q.code),
+      };
+    };
+    expect(await visit("c9d0e1f2-0000-4000-8000-000000000001", services.HIGHER_EDUCATION_ADMIN!)).toEqual({
+      topics: [
+        "Politesse du personnel (accueil, respect)",
+        "Compétence du personnel (connaît son travail, traite bien la demande)",
+        "Explications du personnel (claires, complètes)",
+        "Temps d'attente",
+        "Délai de traitement du dossier",
+        "Simplicité de la démarche (nombre de papiers nécessaires, allers-retours)",
+        "Suivi et transparence du dossier",
+        "Horaires d'ouverture",
+        "Frais payés (montant, reçu)",
+        "Propreté, entretien et confort",
+        "Accessibilité aux personnes handicapées ou âgées",
+      ],
+      questions: [
+        "RESPONDENT", "GOAL_ACHIEVED", "VISITS_COUNT", "WAIT_TIME", "DOCUMENTS_KNOWN", "PAID_SOMETHING", "RECEIPT_GIVEN",
+        "REPORTED", "REPORT_WHY",
+      ],
+    });
+    expect(await visit("c9d0e1f2-0000-4000-8000-000000000002", services.HIGHER_EDUCATION_COURSES!)).toEqual({
+      topics: [
+        "Compétence du personnel (connaît son travail, traite bien la demande)",
+        "Encadrement des élèves",
+        "Échanges avec les enseignants et la direction",
+        "Respect du calendrier (examens, publication des notes)",
+        "Qualité de l'enseignement",
+        "Propreté, entretien et confort",
+        "Accessibilité aux personnes handicapées ou âgées",
+        "Sécurité dans l'établissement",
+      ],
+      questions: ["RESPONDENT", "CLASSES_HELD", "CLASS_SIZE", "FACILITIES", "REPORTED", "REPORT_WHY"],
+    });
   });
 
   it("gives the police the topics and questions of the visit chosen: at the station, a check or a call (0010, 0013)", async () => {

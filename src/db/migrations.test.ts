@@ -174,12 +174,12 @@ describe("reference data", () => {
       CIVIL_REGISTRY: null, LAND_TRIP: "LAND_TRIP", BOAT_CROSSING: "BOAT_CROSSING", TICKET_PURCHASE: "TICKET_PURCHASE",
       FLIGHT: "FLIGHT", PLANE_TICKET: "TICKET_PURCHASE", SCHOOL_ADMIN: "SCHOOL_ADMIN", SCHOOL_LIFE: "SCHOOL_LIFE",
       POLICE_PREMISES: "POLICE_PREMISES", POLICE_FIELD: "POLICE_FIELD", POLICE_CALL: "POLICE_CALL",
+      HIGHER_EDUCATION_ADMIN: "SCHOOL_ADMIN", HIGHER_EDUCATION_COURSES: "SCHOOL_LIFE",
     });
-    // Types with a list of their own (0005), and the education places other than the schools (0014).
+    // Types with a list of their own (0005), and the education places without services (0014, 0015).
     expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))
       .toEqual({
         AIRPORT: "AIRPORT", BUS_STATION: "BUS_STATION", DRIVING_LICENCE_CENTER: "FILE_SERVICES",
-        UNIVERSITY: "OTHER_EDUCATION", HIGHER_EDUCATION_SCHOOL: "OTHER_EDUCATION",
         VOCATIONAL_TRAINING_CENTER: "OTHER_EDUCATION", PRESCHOOL: "OTHER_EDUCATION", DAARA: "OTHER_EDUCATION",
       });
   });
