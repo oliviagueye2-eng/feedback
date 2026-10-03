@@ -24,7 +24,7 @@ SELECT t.id, 'fr', v.label
 FROM (VALUES
   ('SCHOOL_SAFETY', 'Sécurité dans l''établissement'),
   ('SCHOOL_EQUIPMENT', 'Tables-bancs, matériel et manuels'),
-  ('PARENT_COMMUNICATION', 'Communication avec les parents')
+  ('PARENT_COMMUNICATION', 'Échanges avec les enseignants et la direction')
 ) AS v (code, label)
 JOIN topic t ON t.code = v.code;
 

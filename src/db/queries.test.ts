@@ -511,7 +511,7 @@ describe("feedback", () => {
       "Encadrement des élèves",
       "Sécurité dans l'établissement",
       "Tables-bancs, matériel et manuels",
-      "Communication avec les parents",
+      "Échanges avec les enseignants et la direction",
       "Autre",
     ]);
     const atUniversity = await topicsOf("a7b8c9d0-0000-4000-8000-000000000005", university!.id);

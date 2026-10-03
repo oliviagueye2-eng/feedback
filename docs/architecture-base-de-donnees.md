@@ -431,7 +431,7 @@ Libellés (dans `topic_translation`) :
 | `CUSTOMER_SERVICE` | Service client et réclamations |
 | `SCHOOL_SAFETY` | Sécurité dans l'établissement (2026-10-03) |
 | `SCHOOL_EQUIPMENT` | Tables-bancs, matériel et manuels (2026-10-03) |
-| `PARENT_COMMUNICATION` | Communication avec les parents (2026-10-03) |
+| `PARENT_COMMUNICATION` | Échanges avec les enseignants et la direction (2026-10-03) |
 | `OTHER` | Autre (toujours en dernier) |
 
 Désactivés le 2026-09-30, gardés pour les avis déjà donnés : `PRICE` (Prix), `ACCESSIBILITY` (Accessibilité), `SAFETY` (Sécurité), `SERVICE_QUALITY` (Qualité du service).
@@ -457,7 +457,7 @@ Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_
 | `HEALTH` | Temps d'attente, Explications, Horaires, Soins reçus, Médicaments et examens, Respect de l'intimité | secteur Santé |
 | `REAL_ESTATE` | Temps d'attente, Explications, Simplicité, Horaires | secteur Immobilier |
 | `EDUCATION` | Simplicité de la démarche, Qualité de l'enseignement, Encadrement des élèves | secteur Éducation |
-| `SCHOOL` | Sécurité dans l'établissement, Tables-bancs et manuels, Communication avec les parents | types Lycée, Collège, École primaire, Groupe scolaire |
+| `SCHOOL` | Sécurité dans l'établissement, Tables-bancs et manuels, Échanges avec les enseignants et la direction | types Lycée, Collège, École primaire, Groupe scolaire |
 | `TRANSPORT` | Temps d'attente, Explications, Ponctualité, Sécurité à bord, État des véhicules, Service client | secteur Transport |
 | `TRANSPORT_PLACE` | Horaires d'ouverture | types Aéroport, Gare routière ; services Achat de ticket, Achat de billet d'avion |
 
