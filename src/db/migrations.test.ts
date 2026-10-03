@@ -222,7 +222,6 @@ describe("reference data", () => {
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME CANCELLED",
       "GENERIC: RECEIPT_OR_INVOICE ← PAID_SOMETHING YES",
       "HEALTH: RECEIPT_GIVEN ← PAID_SOMETHING YES",
-      "POLICE_FIELD: ARRIVAL_TIME ← INTERVENTION_AWAITED YES",
       "POLICE_FIELD: ARRIVAL_TIME ← FIELD_SITUATION CALL_RESPONSE",
       "POLICE_FIELD: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_PREMISES: RECEIPT_GIVEN ← PAID_SOMETHING YES",
@@ -250,7 +249,7 @@ describe("reference data", () => {
        JOIN question_set_item p ON p.question_set_id = i.question_set_id AND p.position = i.position - 1
        JOIN question pq ON pq.id = p.question_id
        WHERE dq.code IN ('PAID_SOMETHING', 'INTERVENTION_AWAITED')`)).rows;
-    expect(before).toHaveLength(8);
+    expect(before).toHaveLength(7);
     expect(before.every((r) => ["PAID_SOMETHING", "INTERVENTION_AWAITED"].includes(r.previous))).toBe(true);
     // A real service keeps its French label (then its synonyms) in its search_text.
     expect((await one<{ search_text: string }>(
@@ -260,7 +259,7 @@ describe("reference data", () => {
 });
 
 describe("« Non concerné » and the questions that open a topic (0011)", () => {
-  it("opens four topics after « Oui », and no longer offers « Je n'ai rien payé »", async () => {
+  it("opens three topics after « Oui » (the intervention's question removed by 0012), and no longer offers « Je n'ai rien payé »", async () => {
     const conditions = (await db.query<{ topic: string; question: string; option: string }>(
       `SELECT t.code AS topic, q.code AS question, ao.code AS option
        FROM topic_condition tc
@@ -271,7 +270,6 @@ describe("« Non concerné » and the questions that open a topic (0011)", () =>
     expect(conditions).toEqual([
       "CASE_TRACKING ← FILE_SUBMITTED YES",
       "FEES ← PAID_SOMETHING YES",
-      "INTERVENTION_TIME ← INTERVENTION_AWAITED YES",
       "PROCESSING_TIME ← FILE_SUBMITTED YES",
     ]);
     const inactive = (await db.query<{ code: string }>(
