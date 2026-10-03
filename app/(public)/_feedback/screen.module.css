@@ -300,10 +300,24 @@
   font-weight: 400;
 }
 
-/* One box per topic: its name on the whole width, then « Bien », « Pas bien »
+/* All the topics on one white sheet, separated by thin rules (« feuille
+   unique », chosen on mock-ups over a box per topic). */
+.topicSheet {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.topicSheet > * + * {
+  border-top: 1px solid var(--line);
+}
+
+/* One line per topic: its name on the whole width, then « Bien », « Pas bien »
    and « Non concerné » under it (option B, chosen on mock-ups: three buttons
    beside the name left it 4 cm on a phone). Real radio buttons, one group per
-   topic. A touched box gets a darker border. */
+   topic. */
 .topicRow {
   display: flex;
   flex-direction: column;
@@ -311,17 +325,10 @@
 }
 
 .topicLine {
-  padding: 12px 8px 8px 14px;
-  border: 1.5px solid var(--control);
-  border-radius: 10px;
-  background: #fff;
+  padding: 14px 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.topicLine:has(input:checked) {
-  border-color: var(--ink);
+  gap: 10px;
 }
 
 .topicLabel {
@@ -333,7 +340,7 @@
 .ratings {
   display: grid;
   grid-template-columns: 0.9fr 1.05fr 1.35fr;
-  gap: 6px;
+  gap: 8px;
 }
 
 .rating {
@@ -345,6 +352,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
+  padding: 0 10px;
   font-size: 14px;
   line-height: 1.1;
   white-space: nowrap;
@@ -374,6 +382,24 @@
 
 .thumbDown {
   transform: rotate(180deg);
+}
+
+/* On a phone the three boxes share less than 300 px: the sign goes above its
+   word, so each word keeps a margin on both sides. A word too long for its
+   box goes on two lines rather than touching the border. */
+@media (max-width: 479px) {
+  .ratings {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr);
+  }
+
+  .rating {
+    min-height: 58px;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 6px;
+    white-space: normal;
+    text-align: center;
+  }
 }
 
 .ratingGood:has(input:checked) {
@@ -409,14 +435,10 @@
 .gateGroup {
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
 .gateLine {
-  padding: 8px 8px 8px 14px;
-  border: 1.5px solid var(--control);
-  border-radius: 10px;
-  background: #fff;
+  padding: 14px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -468,15 +490,20 @@
 }
 
 .gated {
-  margin-left: 4px;
-  padding-left: 8px;
+  margin: 0 14px 14px;
+  padding-left: 10px;
   border-left: 3px solid var(--line);
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
+.gated .topicLine {
+  padding: 4px 0 0;
+}
+
 .otherField {
+  margin: 0 14px 14px;
   font: inherit;
   font-size: 17px;
   min-height: 50px;
