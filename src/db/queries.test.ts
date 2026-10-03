@@ -602,73 +602,88 @@ describe("feedback", () => {
         "Prise en compte de la demande",
       ],
       questions: [
-        "FIELD_SITUATION", "REASON_EXPLAINED", "INTERVENTION_AWAITED", "ARRIVAL_TIME", "PAID_SOMETHING", "RECEIPT_GIVEN",
+        "FIELD_SITUATION", "REASON_EXPLAINED", "ARRIVAL_TIME", "PAID_SOMETHING", "RECEIPT_GIVEN",
         "REPORTED", "REPORT_WHY",
       ],
     });
   });
 
-  it("asks a yes/no question in the place of a topic, and never again on screen 6 (0011)", async () => {
-    const [gendarmerie] = await rows<{ id: string; service: number }>(
-      `SELECT e.id, s.id AS service FROM establishment e JOIN organization o ON o.id = e.organization_id, service s
-       WHERE o.code = 'GENDARMERIE_NATIONALE' AND s.code = 'POLICE_FIELD'`,
-    );
-    const field = "b8c9d0e1-0000-4000-8000-000000000003";
-    await upsertFeedback(field, {
-      channel: "search", establishmentId: gendarmerie!.id, serviceId: gendarmerie!.service, language: "fr", visitPeriod: "today",
-    });
-    await saveAnswer(field, "OVERALL_SATISFACTION", { option: "DISSATISFIED" });
+  it("asks a yes/no question in the place of a topic, and never again on screen 6 (0011, 0012)", async () => {
+    // The Parcelles Assainies centre: Administration, with the file's and the fees' topics.
+    const office = "b8c9d0e1-0000-4000-8000-000000000003";
+    await upsertFeedback(office, { channel: "search", establishmentId: ids.pa, language: "fr", visitPeriod: "today" });
+    await saveAnswer(office, "OVERALL_SATISFACTION", { option: "DISSATISFIED" });
 
-    // Screen 2b: « Délai d'intervention » comes with its question, nothing answered yet.
-    const delay = (await getDetailsScreen(field)).topics.find((t) => t.code === "INTERVENTION_TIME");
-    expect(delay?.gate).toEqual({
-      code: "INTERVENTION_AWAITED",
-      label: "Avez-vous attendu une intervention sur le terrain ?",
+    // Screen 2b: the file's two topics come with one question, nothing answered yet.
+    const topics = (await getDetailsScreen(office)).topics;
+    expect(topics.filter((t) => t.gate?.code === "FILE_SUBMITTED").map((t) => t.code)).toEqual(["PROCESSING_TIME", "CASE_TRACKING"]);
+    expect(topics.find((t) => t.code === "FEES")?.gate).toEqual({
+      code: "PAID_SOMETHING",
+      label: "Avez-vous payé quelque chose ?",
       options: [{ code: "YES", label: "Oui" }, { code: "NO", label: "Non" }],
       opensWith: ["YES"],
       chosen: null,
     });
-    // Only the questions of the screen: the payment opens no topic of a road check.
-    await expect(saveTopicGates(field, { PAID_SOMETHING: "YES" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
+    // Only the questions of the screen (the intervention's is no longer asked, 0012).
+    await expect(saveTopicGates(office, { INTERVENTION_AWAITED: "YES" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
 
-    // « Non »: the topic is not kept, and screen 6 skips the time to come.
-    await saveTopicGates(field, { INTERVENTION_AWAITED: "NO" });
-    await saveTopics(field, { topics: [{ code: "INTERVENTION_TIME", sentiment: "negative" }] });
-    expect((await getDetailsScreen(field)).topics.filter((t) => t.sentiment)).toEqual([]);
+    // « Non »: the topics are not kept, and the receipt is not asked.
+    await saveTopicGates(office, { FILE_SUBMITTED: "NO", PAID_SOMETHING: "NO" });
+    await saveTopics(office, { topics: [{ code: "PROCESSING_TIME", sentiment: "negative" }, { code: "FEES", sentiment: "negative" }] });
+    expect((await getDetailsScreen(office)).topics.filter((t) => t.sentiment)).toEqual([]);
     const screen6 = async () =>
-      (await getQuestionnaireScreen(field, "sector")).questions.map((q) => [q.code, q.revealedBy?.dependsOn ?? null]);
-    // The question already asked is not shown again; the payment is asked here, before the receipt.
+      (await getQuestionnaireScreen(office, "sector")).questions.map((q) => [q.code, q.revealedBy?.dependsOn ?? null]);
+    // The payment, already asked, is not shown again.
     expect(await screen6()).toEqual([
+      ["GOAL_ACHIEVED", null], ["VISITS_COUNT", null], ["WAIT_TIME", null], ["DOCUMENTS_KNOWN", null],
+    ]);
+    expect((await getDetailedQuestionnaire(office)).askedBefore).toEqual(["FILE_SUBMITTED", "PAID_SOMETHING"]);
+
+    // « Oui »: the topics are kept, and the receipt is asked.
+    await saveTopicGates(office, { FILE_SUBMITTED: "YES", PAID_SOMETHING: "YES" });
+    await saveTopics(office, { topics: [{ code: "PROCESSING_TIME", sentiment: "negative" }, { code: "FEES", sentiment: "negative" }] });
+    expect((await getDetailsScreen(office)).topics.filter((t) => t.sentiment).map((t) => t.code)).toEqual(["PROCESSING_TIME", "FEES"]);
+    expect((await screen6()).map(([code]) => code)).toEqual(["GOAL_ACHIEVED", "VISITS_COUNT", "WAIT_TIME", "DOCUMENTS_KNOWN", "RECEIPT_GIVEN"]);
+
+    // Touched again (cleared): the answer goes, and so do the topic and, at the end, the receipt.
+    await saveQuestionnaire(office, "sector", { RECEIPT_GIVEN: "NO" });
+    await saveTopicGates(office, { FILE_SUBMITTED: "YES" });
+    await saveTopics(office, { topics: [{ code: "PROCESSING_TIME", sentiment: "negative" }, { code: "FEES", sentiment: "negative" }] });
+    expect((await getDetailsScreen(office)).topics.find((t) => t.code === "FEES")).toMatchObject({ sentiment: null, gate: { chosen: null } });
+    await completeFeedback(office);
+    const answered = (await rows<{ code: string }>(
+      `SELECT q.code FROM answer a JOIN question q ON q.id = a.question_id WHERE a.feedback_id = $1 ORDER BY q.code`,
+      [office],
+    )).map((r) => r.code);
+    expect(answered).toEqual(["FILE_SUBMITTED", "OVERALL_SATISFACTION"]);
+  });
+
+  it("asks the police outside the time to come only after a call, and the payment before the receipt (0012)", async () => {
+    const [gendarmerie] = await rows<{ id: string; service: number }>(
+      `SELECT e.id, s.id AS service FROM establishment e JOIN organization o ON o.id = e.organization_id, service s
+       WHERE o.code = 'GENDARMERIE_NATIONALE' AND s.code = 'POLICE_FIELD'`,
+    );
+    const field = "b8c9d0e1-0000-4000-8000-000000000004";
+    await upsertFeedback(field, {
+      channel: "search", establishmentId: gendarmerie!.id, serviceId: gendarmerie!.service, language: "fr", visitPeriod: "today",
+    });
+    await saveAnswer(field, "OVERALL_SATISFACTION", { option: "DISSATISFIED" });
+    // « Délai d'intervention » is shown to everyone again: « Non concerné » covers a road check.
+    expect((await getDetailsScreen(field)).topics.find((t) => t.code === "INTERVENTION_TIME")?.gate).toBeNull();
+    expect((await getQuestionnaireScreen(field, "sector")).questions.map((q) => [q.code, q.revealedBy?.dependsOn ?? null])).toEqual([
       ["FIELD_SITUATION", null],
       ["REASON_EXPLAINED", null],
+      ["ARRIVAL_TIME", "FIELD_SITUATION"],
       ["PAID_SOMETHING", null],
       ["RECEIPT_GIVEN", "PAID_SOMETHING"],
     ]);
-    expect((await getDetailedQuestionnaire(field)).askedBefore).toEqual(["INTERVENTION_AWAITED"]);
-
-    // « Oui »: the topic is kept, and the time to come is asked.
-    await saveTopicGates(field, { INTERVENTION_AWAITED: "YES" });
-    await saveTopics(field, { topics: [{ code: "INTERVENTION_TIME", sentiment: "negative" }] });
-    expect((await getDetailsScreen(field)).topics.filter((t) => t.sentiment).map((t) => t.code)).toEqual(["INTERVENTION_TIME"]);
-    expect((await screen6()).map(([code]) => code)).toEqual([
-      "FIELD_SITUATION", "REASON_EXPLAINED", "ARRIVAL_TIME", "PAID_SOMETHING", "RECEIPT_GIVEN",
-    ]);
-
-    // Touched again (cleared): the answer goes, and so does the topic at its next save.
-    await saveQuestionnaire(field, "sector", { ARRIVAL_TIME: "OVER_1_H", PAID_SOMETHING: "NO" });
-    await saveTopicGates(field, {});
-    await saveTopics(field, { topics: [{ code: "INTERVENTION_TIME", sentiment: "negative" }] });
-    expect((await getDetailsScreen(field)).topics.find((t) => t.code === "INTERVENTION_TIME")).toMatchObject({
-      sentiment: null,
-      gate: { chosen: null },
-    });
-    // At the end, the time to come no longer applies.
+    // A road check: the time to come no longer applies at the end.
+    await saveQuestionnaire(field, "sector", { FIELD_SITUATION: "ROAD_CHECK", ARRIVAL_TIME: "OVER_1_H" });
     await completeFeedback(field);
-    const answered = (await rows<{ code: string }>(
-      `SELECT q.code FROM answer a JOIN question q ON q.id = a.question_id WHERE a.feedback_id = $1 ORDER BY q.code`,
+    expect((await rows(
+      `SELECT 1 FROM answer a JOIN question q ON q.id = a.question_id WHERE a.feedback_id = $1 AND q.code = 'ARRIVAL_TIME'`,
       [field],
-    )).map((r) => r.code);
-    expect(answered).toEqual(["OVERALL_SATISFACTION", "PAID_SOMETHING"]);
+    ))).toEqual([]);
   });
 
   it("adds the lists of the type and of the service to the sector's, never removing one", async () => {
