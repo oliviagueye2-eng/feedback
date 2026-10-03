@@ -28,3 +28,24 @@ CREATE TABLE topic_service (
   shown      boolean NOT NULL,
   PRIMARY KEY (topic_id, service_id)
 );
+
+-- Content validated on 2026-10-03 (points 1, 2 and 3).
+
+-- 1. « Simplicité de la démarche (papiers, allers-retours) » only where there
+-- are papers to bring: it stops being a common topic. Answers already given
+-- elsewhere are kept.
+INSERT INTO topic_sector (topic_id, sector_id)
+SELECT t.id, s.id FROM topic t, sector s
+WHERE t.code = 'PROCEDURE'
+  AND s.code IN ('ADMINISTRATION', 'JUSTICE', 'TAX', 'SOCIAL', 'SECURITY', 'BANKING_INSURANCE',
+                 'ELECTRICITY', 'WATER', 'TELECOM', 'EDUCATION', 'REAL_ESTATE');
+
+-- 2. A trip has no opening hours: removed for a flight, a boat crossing and a
+-- bus or train trip. Stations, the airport and ticket purchase keep it.
+INSERT INTO topic_service (topic_id, service_id, shown)
+SELECT t.id, s.id, false FROM topic t, service s
+WHERE t.code = 'OPENING_HOURS' AND s.code IN ('FLIGHT', 'BOAT_CROSSING', 'LAND_TRIP');
+
+-- 3. « des locaux » dropped: the topic also fits a bus, a boat or a plane.
+UPDATE topic_translation SET label = 'Propreté et confort'
+WHERE language = 'fr' AND topic_id = (SELECT id FROM topic WHERE code = 'CLEANLINESS');

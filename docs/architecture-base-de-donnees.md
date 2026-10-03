@@ -402,10 +402,9 @@ Liste revue le 2026-09-30. **Thèmes communs**, affichés partout :
 | `PROFESSIONALISM` | Professionnalisme du personnel |
 | `WAIT_TIME` | Temps d'attente |
 | `INFORMATION` | Explications reçues |
-| `PROCEDURE` | Simplicité de la démarche (papiers, allers-retours) |
 | `OPENING_HOURS` | Horaires d'ouverture |
 | `FEES` | Frais payés (montant, reçu) |
-| `CLEANLINESS` | Propreté et confort des locaux |
+| `CLEANLINESS` | Propreté et confort (« des locaux » retiré le 2026-10-03 : convient aussi aux véhicules) |
 | `ACCESS_FOR_ALL` | Accès pour tous (personnes handicapées, âgées) |
 | `OTHER` | Autre (toujours en dernier) |
 
@@ -429,6 +428,7 @@ Liste revue le 2026-09-30. **Thèmes communs**, affichés partout :
 | `BILLING` | Factures (exactes et faciles à comprendre) | Électricité, Eau, Télécoms |
 | `REQUEST_HANDLING` | Prise en compte de la demande | Sécurité |
 | `RIGHTS_RESPECT` | Respect des droits | Sécurité |
+| `PROCEDURE` | Simplicité de la démarche (papiers, allers-retours) | Administration, Justice, Impôts, Social, Sécurité, Banques et assurances, Électricité, Eau, Télécoms, Éducation, Immobilier (commun jusqu'au 2026-10-03, migration 0008) |
 | `PROCESSING_TIME` | Délai de traitement du dossier | Administration, Justice, Impôts, Social, Sécurité, Banques et assurances |
 | `CASE_TRACKING` | Suivi et transparence du dossier | Administration, Justice, Impôts, Social, Sécurité, Banques et assurances |
 | `CUSTOMER_SERVICE` | Service client et réclamations | Transport, Électricité, Eau, Télécoms, Banques et assurances |
@@ -451,7 +451,7 @@ Comme pour les questions, un type d'établissement ou un service peut **ajouter*
 | `topic_establishment_type` | `topic_id` fk, `establishment_type_id` fk, `shown` boolean ; clé `(topic_id, establishment_type_id)` |
 | `topic_service` | `topic_id` fk, `service_id` fk, `shown` boolean ; clé `(topic_id, service_id)` |
 
-Aucune ligne pour l'instant : le contenu (quel thème ajouter ou retirer, où) est à valider avec Olivia.
+Contenu validé le 2026-10-03 : les services « Un vol », « Une traversée en bateau » et « Un trajet en bus ou en train » retirent « Horaires d'ouverture ». Les thèmes propres à un type (ex. Lycée) restent à proposer type par type.
 
 ### Tables de traduction (`*_translation`)
 Une table par table traduite (décision du 2026-10-01, plutôt qu'une table unique dont le lien n'aurait pas été vérifié par la base). Chaque table a une clé étrangère vers la ligne traduite (la traduction est supprimée avec elle) et une ligne par langue.

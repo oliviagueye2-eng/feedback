@@ -57,7 +57,7 @@ describe("reference data", () => {
     expect(row).toEqual({ sector: "ADMINISTRATION", question_set: "FILE_SERVICES" });
   });
 
-  it("shows the ten common topics everywhere, plus each sector's own, « Autre » last", async () => {
+  it("shows the nine common topics everywhere, plus each sector's own, « Autre » last", async () => {
     // Rule of topic_sector: a topic without rows is common; with rows, only in those sectors.
     const topicsFor = async (sector: string) =>
       (await db.query<{ code: string; label: string }>(`
@@ -76,10 +76,9 @@ describe("reference data", () => {
       "Professionnalisme du personnel",
       "Temps d'attente",
       "Explications reçues",
-      "Simplicité de la démarche (papiers, allers-retours)",
       "Horaires d'ouverture",
       "Frais payés (montant, reçu)",
-      "Propreté et confort des locaux",
+      "Propreté et confort",
       "Accès pour tous (personnes handicapées, âgées)",
       "Autre",
     ]);
@@ -90,7 +89,17 @@ describe("reference data", () => {
     expect((await topicsFor("BANKING_INSURANCE")).map((t) => t.code).slice(9)).toEqual([
       "PROCESSING_TIME", "CASE_TRACKING", "CUSTOMER_SERVICE", "OTHER",
     ]);
-    expect(await topicsFor("HEALTH")).toHaveLength(13);
+    // « Simplicité de la démarche » only where there are papers (0008).
+    expect(await topicsFor("HEALTH")).toHaveLength(12);
+    expect((await topicsFor("ADMINISTRATION")).map((t) => t.code)).toContain("PROCEDURE");
+  });
+
+  it("removes « Horaires d'ouverture » for a trip, not for the place selling tickets (0008)", async () => {
+    const row = await one<{ removed: string[] }>(`
+      SELECT array_agg(s.code ORDER BY s.code) AS removed
+      FROM topic_service ts JOIN topic t ON t.id = ts.topic_id JOIN service s ON s.id = ts.service_id
+      WHERE t.code = 'OPENING_HOURS' AND NOT ts.shown`);
+    expect(row).toEqual({ removed: ["BOAT_CROSSING", "FLIGHT", "LAND_TRIP"] });
   });
 
   it("has the bank of 42 questions (34 of 0004, 5 of 0005, 3 of 0006), each written once, every text in French", async () => {
