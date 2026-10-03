@@ -47,6 +47,16 @@ describe("reference data", () => {
     expect(row).toEqual({ sectors: 19, labelled: 19, old_code: 0 });
   });
 
+  it("files the driving licence centre under Administration, a service with a file", async () => {
+    const row = await one<{ sector: string; question_set: string }>(`
+      SELECT s.code AS sector, qs.code AS question_set
+      FROM establishment_type et
+      JOIN sector s ON s.id = et.sector_id
+      JOIN question_set qs ON qs.id = et.question_set_id
+      WHERE et.code = 'DRIVING_LICENCE_CENTER'`);
+    expect(row).toEqual({ sector: "ADMINISTRATION", question_set: "FILE_SERVICES" });
+  });
+
   it("shows the ten common topics everywhere, plus each sector's own, « Autre » last", async () => {
     // Rule of topic_sector: a topic without rows is common; with rows, only in those sectors.
     const topicsFor = async (sector: string) =>

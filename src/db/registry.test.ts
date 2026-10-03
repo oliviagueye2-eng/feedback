@@ -31,14 +31,14 @@ describe("first establishments of the registry", () => {
     expect(rows[0]).toEqual({ n: 20, active_public: 19 });
   });
 
-  it("has the validated types (0005)", async () => {
+  it("has the validated types (0005, driving licence centre moved to Administration in 0008)", async () => {
     const { rows } = await db.query<{ sector: string; n: number }>(`
       SELECT s.code AS sector, count(*)::int AS n
       FROM establishment_type t JOIN sector s ON s.id = t.sector_id
       JOIN establishment_type_translation tt ON tt.establishment_type_id = t.id AND tt.language = 'fr'
       GROUP BY s.code ORDER BY s.code`);
     expect(rows).toEqual([
-      { sector: "ADMINISTRATION", n: 7 },
+      { sector: "ADMINISTRATION", n: 8 },
       { sector: "CULTURE", n: 4 },
       { sector: "EDUCATION", n: 9 },
       { sector: "HEALTH", n: 8 },
@@ -49,7 +49,7 @@ describe("first establishments of the registry", () => {
       { sector: "SPORT", n: 3 },
       { sector: "TAX", n: 6 },
       { sector: "TOURISM", n: 2 },
-      { sector: "TRANSPORT", n: 3 },
+      { sector: "TRANSPORT", n: 2 },
     ]);
   });
 
