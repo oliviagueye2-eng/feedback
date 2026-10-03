@@ -62,18 +62,20 @@ export default async function DetailsPage({ params, searchParams }: PageProps<"/
             <legend className={styles.question}>
               {t.topicsTitle}
             </legend>
-            <TopicRatings
-              topics={topics}
-              otherCode={OTHER_TOPIC_CODE}
-              otherMaxLength={OTHER_TOPIC_MAX_LENGTH}
-              t={{
-                good: t.good,
-                bad: t.bad,
-                notConcerned: t.notConcerned,
-                otherLabel: t.otherLabel,
-                otherPlaceholder: t.otherPlaceholder,
-              }}
-            />
+            <div className={styles.topicSheet}>
+              <TopicRatings
+                topics={topics}
+                otherCode={OTHER_TOPIC_CODE}
+                otherMaxLength={OTHER_TOPIC_MAX_LENGTH}
+                t={{
+                  good: t.good,
+                  bad: t.bad,
+                  notConcerned: t.notConcerned,
+                  otherLabel: t.otherLabel,
+                  otherPlaceholder: t.otherPlaceholder,
+                }}
+              />
+            </div>
           </fieldset>
 
           <div className={styles.group}>
