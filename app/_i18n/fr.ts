@@ -48,6 +48,7 @@ export const fr = {
       facebook: "NeexNaxari sur Facebook (nouvel onglet)",
       instagram: "NeexNaxari sur Instagram (nouvel onglet)",
       tiktok: "NeexNaxari sur TikTok (nouvel onglet)",
+      x: "NeexNaxari sur X, anciennement Twitter (nouvel onglet)",
     },
   },
 
