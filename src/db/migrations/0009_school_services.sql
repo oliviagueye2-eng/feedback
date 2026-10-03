@@ -112,3 +112,13 @@ WHERE s.code = 'TRIP' AND t.code IN ('PUNCTUALITY', 'ONBOARD_SAFETY');
 
 UPDATE service SET topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRIP')
 WHERE code IN ('FLIGHT', 'LAND_TRIP', 'BOAT_CROSSING');
+
+-- Two topics close in words, not in cause (validated on 2026-10-03): what the
+-- staff explained, and how heavy the procedure itself is.
+UPDATE topic_translation tr SET label = v.label
+FROM (VALUES
+  ('INFORMATION', 'Explications du personnel (claires, complètes)'),
+  ('PROCEDURE', 'Simplicité de la démarche (nombre de papiers nécessaires, allers-retours)')
+) AS v (code, label)
+JOIN topic t ON t.code = v.code
+WHERE tr.topic_id = t.id AND tr.language = 'fr';

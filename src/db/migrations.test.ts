@@ -74,7 +74,7 @@ describe("reference data", () => {
       "Accueil et politesse",
       "Professionnalisme du personnel",
       "Temps d'attente",
-      "Explications reçues",
+      "Explications du personnel (claires, complètes)",
       "Horaires d'ouverture",
       "Frais payés (montant, reçu)",
       "Propreté, entretien et confort",

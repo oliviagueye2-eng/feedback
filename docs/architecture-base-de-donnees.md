@@ -404,8 +404,8 @@ Libellés (dans `topic_translation`) :
 | `STAFF` | Accueil et politesse |
 | `PROFESSIONALISM` | Professionnalisme du personnel |
 | `WAIT_TIME` | Temps d'attente |
-| `INFORMATION` | Explications reçues |
-| `PROCEDURE` | Simplicité de la démarche (papiers, allers-retours) |
+| `INFORMATION` | Explications du personnel (claires, complètes) (2026-10-03 : ce que l'agent a dit) |
+| `PROCEDURE` | Simplicité de la démarche (nombre de papiers nécessaires, allers-retours) (2026-10-03 : la règle elle-même) |
 | `OPENING_HOURS` | Horaires d'ouverture |
 | `FEES` | Frais payés (montant, reçu) |
 | `CLEANLINESS` | Propreté, entretien et confort (2026-10-03 : convient aussi à un bus, un bateau ou un avion, et dit leur état) |
