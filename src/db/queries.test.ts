@@ -504,7 +504,7 @@ describe("feedback", () => {
     expect(screen.comment).toBeNull();
   });
 
-  it("gives a high school the topics of the visit chosen, and the university the Education list (0009)", async () => {
+  it("gives a high school the topics and questions of the visit chosen, and the university the Education lists (0009, 0014)", async () => {
     const [school] = await rows<{ id: string }>("SELECT id FROM establishment WHERE name = 'Lycée Lamine Guèye'");
     const services = Object.fromEntries((await rows<{ code: string; id: number }>(
       "SELECT code, id FROM service WHERE code IN ('SCHOOL_ADMIN', 'SCHOOL_LIFE')",
@@ -551,6 +551,18 @@ describe("feedback", () => {
       "Qualité de l'enseignement",
       "Propreté, entretien et confort",
       "Accessibilité aux personnes handicapées ou âgées",
+    ]);
+    // The questions follow the visit too (0014): the classes only for the school year.
+    const questionsOf = async (feedback: string) =>
+      (await getDetailedQuestionnaire(feedback)).questions.map((q) => q.code);
+    expect(await questionsOf("f6a7b8c9-0000-4000-8000-000000000004")).toEqual([
+      "RESPONDENT", "PAID_SOMETHING", "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY",
+    ]);
+    expect(await questionsOf("f6a7b8c9-0000-4000-8000-000000000006")).toEqual([
+      "RESPONDENT", "CLASSES_HELD", "CLASS_SIZE", "FACILITIES", "REPORTED", "REPORT_WHY",
+    ]);
+    expect(await questionsOf("a7b8c9d0-0000-4000-8000-000000000005")).toEqual([
+      "RESPONDENT", "CLASSES_HELD", "CLASS_SIZE", "FACILITIES", "PAID_SOMETHING", "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY",
     ]);
   });
 
