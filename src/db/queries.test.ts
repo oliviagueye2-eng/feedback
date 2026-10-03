@@ -424,7 +424,7 @@ describe("feedback", () => {
       .toEqual(["FAIR_PRICE", "RECEIPT_OR_INVOICE", "RECOMMEND"]);
     // And the GENERIC topics: the common ones plus those of a counter.
     expect((await getDetailsScreen(unknown)).topics.map((t) => t.code)).toEqual([
-      "STAFF", "PROFESSIONALISM", "WAIT_TIME", "INFORMATION", "OPENING_HOURS", "FEES", "CLEANLINESS",
+      "STAFF", "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS", "FEES", "CLEANLINESS",
       "ACCESS_FOR_ALL",
     ]);
   });
@@ -468,8 +468,11 @@ describe("feedback", () => {
     const screen = await getDetailsScreen(feedbackId);
     expect(screen.answer).toMatchObject({ code: "DISSATISFIED", followUpPrompt: "Que s'est-il passé ?" });
     const codes = screen.topics.map((t) => t.code);
-    expect(codes).toHaveLength(11);
-    expect(codes.slice(9)).toEqual(["PROCESSING_TIME", "CASE_TRACKING"]);
+    // In the order of the categories (0009): the delays and the file follow the staff, before the fees.
+    expect(codes).toEqual([
+      "STAFF", "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "PROCESSING_TIME", "PROCEDURE", "CASE_TRACKING",
+      "OPENING_HOURS", "FEES", "CLEANLINESS", "ACCESS_FOR_ALL",
+    ]);
     expect(screen.topics.filter((t) => t.sentiment).map((t) => [t.code, t.sentiment, t.otherText])).toEqual([
       ["STAFF", "positive", null],
       ["FEES", "negative", null],
@@ -506,8 +509,8 @@ describe("feedback", () => {
     expect(await topicsOf("f6a7b8c9-0000-4000-8000-000000000004", school!.id, services.SCHOOL_ADMIN)).toEqual([
       "Accueil et politesse",
       "Professionnalisme du personnel",
-      "Temps d'attente",
       "Explications du personnel (claires, complètes)",
+      "Temps d'attente",
       "Simplicité de la démarche (nombre de papiers nécessaires, allers-retours)",
       "Horaires d'ouverture",
       "Frais payés (montant, reçu)",
@@ -516,27 +519,27 @@ describe("feedback", () => {
     ]);
     expect(await topicsOf("f6a7b8c9-0000-4000-8000-000000000006", school!.id, services.SCHOOL_LIFE)).toEqual([
       "Professionnalisme du personnel",
+      "Encadrement des élèves",
+      "Échanges avec les enseignants et la direction",
+      "Qualité de l'enseignement",
       "Propreté, entretien et confort",
       "Accessibilité aux personnes handicapées ou âgées",
-      "Qualité de l'enseignement",
-      "Encadrement des élèves",
       "Sécurité dans l'établissement",
       "Tables-bancs, matériel et manuels",
-      "Échanges avec les enseignants et la direction",
     ]);
     // A university keeps what it had: the counter, the papers, the teaching.
     expect(await topicsOf("a7b8c9d0-0000-4000-8000-000000000005", university!.id)).toEqual([
       "Accueil et politesse",
       "Professionnalisme du personnel",
-      "Temps d'attente",
       "Explications du personnel (claires, complètes)",
+      "Encadrement des élèves",
+      "Temps d'attente",
       "Simplicité de la démarche (nombre de papiers nécessaires, allers-retours)",
       "Horaires d'ouverture",
       "Frais payés (montant, reçu)",
+      "Qualité de l'enseignement",
       "Propreté, entretien et confort",
       "Accessibilité aux personnes handicapées ou âgées",
-      "Qualité de l'enseignement",
-      "Encadrement des élèves",
     ]);
   });
 

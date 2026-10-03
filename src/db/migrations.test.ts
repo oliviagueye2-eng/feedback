@@ -73,8 +73,8 @@ describe("reference data", () => {
     expect((await topicsFor("RETAIL")).map((t) => t.label)).toEqual([
       "Accueil et politesse",
       "Professionnalisme du personnel",
-      "Temps d'attente",
       "Explications du personnel (claires, complètes)",
+      "Temps d'attente",
       "Horaires d'ouverture",
       "Frais payés (montant, reçu)",
       "Propreté, entretien et confort",
@@ -83,9 +83,14 @@ describe("reference data", () => {
 
     const electricity = (await topicsFor("ELECTRICITY")).map((t) => t.code);
     expect(electricity).toHaveLength(13);
-    expect(electricity.slice(9)).toEqual(["POWER_CUTS", "INTERVENTION_TIME", "BILLING", "CUSTOMER_SERVICE"]);
-    expect((await topicsFor("BANKING_INSURANCE")).map((t) => t.code).slice(9)).toEqual([
-      "PROCESSING_TIME", "CASE_TRACKING", "CUSTOMER_SERVICE",
+    // In the order of the categories (0009): staff, delays, procedure, cost, quality of the service, premises.
+    expect(electricity).toEqual([
+      "STAFF", "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "INTERVENTION_TIME", "PROCEDURE", "OPENING_HOURS",
+      "CUSTOMER_SERVICE", "FEES", "BILLING", "POWER_CUTS", "CLEANLINESS", "ACCESS_FOR_ALL",
+    ]);
+    expect((await topicsFor("BANKING_INSURANCE")).map((t) => t.code)).toEqual([
+      "STAFF", "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "PROCESSING_TIME", "PROCEDURE", "CASE_TRACKING",
+      "OPENING_HOURS", "CUSTOMER_SERVICE", "FEES", "CLEANLINESS", "ACCESS_FOR_ALL",
     ]);
     // « Simplicité de la démarche » only where there are papers.
     expect(await topicsFor("HEALTH")).toHaveLength(11);
@@ -114,6 +119,24 @@ describe("reference data", () => {
                 SELECT code, topic_set_id FROM establishment_type UNION ALL SELECT code, topic_set_id FROM service) x
               WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT_PLACE')) AS places`);
     expect(row).toEqual({ without_list: ["EDUCATION"], places: ["AIRPORT", "BUS_STATION", "PLANE_TICKET", "TICKET_PURCHASE"] });
+  });
+
+  it("puts every topic offered and every question that rates the service in a category (0009)", async () => {
+    const row = await one<{ topics: string[] | null; questions: string[]; order: boolean }>(`
+      SELECT (SELECT array_agg(t.code) FROM topic t
+              WHERE t.category_id IS NULL AND EXISTS (SELECT 1 FROM topic_set_item i WHERE i.topic_id = t.id)) AS topics,
+             (SELECT array_agg(code ORDER BY code) FROM question WHERE category_id IS NULL) AS questions,
+             -- The screen follows the order of the categories.
+             (SELECT bool_and((c.position - 1) * 10 < t.position AND t.position < c.position * 10)
+              FROM topic t JOIN evaluation_category c ON c.id = t.category_id) AS order`);
+    expect(row).toEqual({
+      topics: null,
+      questions: [
+        "CLASS_SIZE", "OVERALL_SATISFACTION", "PATIENT", "PREPAID_METER", "RECOMMEND", "REPORTED", "REPORT_WHY",
+        "RESPONDENT", "TELECOM_SUBJECT", "UTILITY_SUBJECT",
+      ],
+      order: true,
+    });
   });
 
   it("has the bank of 42 questions (34 of 0004, 5 of 0005, 3 of 0006), each written once, every text in French", async () => {

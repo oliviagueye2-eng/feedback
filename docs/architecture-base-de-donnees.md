@@ -394,8 +394,9 @@ Thèmes proposés après la question essentielle (écran 2b), sous « Comment é
 |---|---|---|
 | id | smallint | |
 | code | text unique | voir la liste ci-dessous |
-| position | smallint | ordre d'affichage |
+| position | smallint | ordre d'affichage : la dizaine suit la catégorie (1-9 Personnel, 11-19 Délais…, 0009) |
 | is_active | boolean | |
+| category_id | smallint fk | catégorie d'évaluation (0009) |
 
 Libellés (dans `topic_translation`) :
 
@@ -462,6 +463,21 @@ Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_
 | `TRANSPORT` | Accueil, Explications, Frais, Service client | secteur Transport (opérateurs, aéroport, gares routières) |
 | `TRIP` | Ponctualité, Sécurité à bord (un trajet, pas un lieu ni un guichet ; pas de Temps d'attente, que dit Ponctualité) | services « Un vol », « Un trajet en bus ou en train », « Une traversée en bateau » |
 | `TRANSPORT_PLACE` | Temps d'attente, Horaires d'ouverture | types Aéroport, Gare routière ; services Achat de ticket, Achat de billet d'avion |
+
+### evaluation_category (migration 0009)
+Catégories d'évaluation, décision du 2026-10-03 : **une seule liste pour les thèmes et les questions** (colonne `category_id` sur `topic` et sur `question`), pour un résultat par catégorie qui additionne le thème « Temps d'attente » et la question « Combien de temps avez-vous attendu ? ». Aucun titre à l'écran : les thèmes s'affichent seulement dans l'ordre des catégories. Libellés dans `evaluation_category_translation`. Rangement complet : `/mnt/project-files/questionnaire/categories.md`.
+
+| Ordre | code | Libellé | Thèmes |
+|---|---|---|---|
+| 1 | `STAFF` | Personnel | Accueil, Professionnalisme, Explications du personnel, Respect de l'intimité, Respect des droits, Encadrement des élèves, Échanges avec les enseignants |
+| 2 | `DELAYS` | Délais | Temps d'attente, Délai de traitement, Délai d'intervention, Ponctualité |
+| 3 | `PROCEDURE` | Démarche et information | Simplicité de la démarche, Suivi du dossier, Horaires, Service client |
+| 4 | `COST` | Coût et transparence | Frais payés, Factures |
+| 5 | `OUTCOME` | Résultat obtenu | Soins reçus, Médicaments et examens, Qualité de l'enseignement, Prise en compte de la demande |
+| 6 | `SERVICE_QUALITY` | Qualité du service | Coupures de courant, Coupures d'eau, Qualité de l'eau, Qualité du réseau |
+| 7 | `PREMISES` | Locaux, équipements et sécurité | Propreté, entretien et confort, Accessibilité, Sécurité à bord, Sécurité dans l'établissement, Tables-bancs |
+
+Sans catégorie : la satisfaction globale, « Recommanderiez-vous… ? » et les questions de profil (`PATIENT`, `RESPONDENT`, `UTILITY_SUBJECT`, `TELECOM_SUBJECT`, `PREPAID_METER`, `CLASS_SIZE`, `REPORTED`, `REPORT_WHY`).
 
 ### Tables de traduction (`*_translation`)
 Une table par table traduite (décision du 2026-10-01, plutôt qu'une table unique dont le lien n'aurait pas été vérifié par la base). Chaque table a une clé étrangère vers la ligne traduite (la traduction est supprimée avec elle) et une ligne par langue.

@@ -122,3 +122,82 @@ FROM (VALUES
 ) AS v (code, label)
 JOIN topic t ON t.code = v.code
 WHERE tr.topic_id = t.id AND tr.language = 'fr';
+
+-- ---------------------------------------------------------------------------
+-- Evaluation categories (validated on 2026-10-03)
+-- ---------------------------------------------------------------------------
+-- One list shared by the topics and the questions, so that a result per
+-- category (« Délais ») adds the topic « Temps d'attente » to the question
+-- « Combien de temps avez-vous attendu ? ». No title on screen: the topics are
+-- only shown in the order of the categories (topic.position renumbered).
+-- Without a category: the overall satisfaction, « Recommanderiez-vous… ? » and
+-- the profile questions (who, about what, class size, reported or not).
+CREATE TABLE evaluation_category (
+  id       smallint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  code     text NOT NULL UNIQUE,
+  position smallint NOT NULL
+);
+
+CREATE TABLE evaluation_category_translation (
+  evaluation_category_id smallint NOT NULL REFERENCES evaluation_category (id) ON DELETE CASCADE,
+  language               text NOT NULL,
+  label                  text NOT NULL,
+  PRIMARY KEY (evaluation_category_id, language)
+);
+
+ALTER TABLE topic ADD COLUMN category_id smallint REFERENCES evaluation_category (id);
+ALTER TABLE question ADD COLUMN category_id smallint REFERENCES evaluation_category (id);
+
+INSERT INTO evaluation_category (code, position) VALUES
+  ('STAFF', 1), ('DELAYS', 2), ('PROCEDURE', 3), ('COST', 4), ('OUTCOME', 5),
+  ('SERVICE_QUALITY', 6), ('PREMISES', 7);
+
+INSERT INTO evaluation_category_translation (evaluation_category_id, language, label)
+SELECT c.id, 'fr', v.label
+FROM (VALUES
+  ('STAFF', 'Personnel'),
+  ('DELAYS', 'Délais'),
+  ('PROCEDURE', 'Démarche et information'),
+  ('COST', 'Coût et transparence'),
+  ('OUTCOME', 'Résultat obtenu'),
+  ('SERVICE_QUALITY', 'Qualité du service'),
+  ('PREMISES', 'Locaux, équipements et sécurité')
+) AS v (code, label)
+JOIN evaluation_category c ON c.code = v.code;
+
+-- Category and new place of each topic: ten per category, in the validated order.
+UPDATE topic t SET category_id = c.id, position = v.position
+FROM (VALUES
+  ('STAFF', 'STAFF', 1), ('PROFESSIONALISM', 'STAFF', 2), ('INFORMATION', 'STAFF', 3),
+  ('PRIVACY', 'STAFF', 4), ('RIGHTS_RESPECT', 'STAFF', 5), ('STUDENT_SUPERVISION', 'STAFF', 6),
+  ('PARENT_COMMUNICATION', 'STAFF', 7),
+  ('WAIT_TIME', 'DELAYS', 11), ('PROCESSING_TIME', 'DELAYS', 12), ('INTERVENTION_TIME', 'DELAYS', 13),
+  ('PUNCTUALITY', 'DELAYS', 14),
+  ('PROCEDURE', 'PROCEDURE', 21), ('CASE_TRACKING', 'PROCEDURE', 22), ('OPENING_HOURS', 'PROCEDURE', 23),
+  ('CUSTOMER_SERVICE', 'PROCEDURE', 24),
+  ('FEES', 'COST', 31), ('BILLING', 'COST', 32),
+  ('CARE_RECEIVED', 'OUTCOME', 41), ('MEDICINE_AVAILABILITY', 'OUTCOME', 42), ('TEACHING_QUALITY', 'OUTCOME', 43),
+  ('REQUEST_HANDLING', 'OUTCOME', 44),
+  ('POWER_CUTS', 'SERVICE_QUALITY', 51), ('WATER_CUTS', 'SERVICE_QUALITY', 52),
+  ('WATER_QUALITY', 'SERVICE_QUALITY', 53), ('NETWORK_QUALITY', 'SERVICE_QUALITY', 54),
+  ('CLEANLINESS', 'PREMISES', 61), ('ACCESS_FOR_ALL', 'PREMISES', 62), ('ONBOARD_SAFETY', 'PREMISES', 63),
+  ('SCHOOL_SAFETY', 'PREMISES', 64), ('SCHOOL_EQUIPMENT', 'PREMISES', 65), ('VEHICLE_CONDITION', 'PREMISES', 66)
+) AS v (code, category, position)
+JOIN evaluation_category c ON c.code = v.category
+WHERE t.code = v.code;
+
+UPDATE question q SET category_id = c.id
+FROM (VALUES
+  ('WAIT_TIME', 'DELAYS'), ('CHECKS_WAIT', 'DELAYS'), ('STOP_WAIT', 'DELAYS'), ('DEPARTURE_ON_TIME', 'DELAYS'),
+  ('DOCUMENTS_KNOWN', 'PROCEDURE'), ('VISITS_COUNT', 'PROCEDURE'), ('WAYFINDING', 'PROCEDURE'),
+  ('DELAY_INFORMED', 'PROCEDURE'), ('DELAY_CARE', 'PROCEDURE'), ('CUT_NOTICE', 'PROCEDURE'),
+  ('RECEIPT_GIVEN', 'COST'), ('RECEIPT_OR_INVOICE', 'COST'), ('FEES_EXPLAINED', 'COST'), ('FAIR_PRICE', 'COST'),
+  ('TICKET_GIVEN', 'COST'), ('PAYMENT_AS_WISHED', 'COST'),
+  ('GOAL_ACHIEVED', 'OUTCOME'), ('CARE_RECEIVED', 'OUTCOME'), ('PRESCRIPTION_AVAILABLE', 'OUTCOME'),
+  ('CLASSES_HELD', 'OUTCOME'), ('LUGGAGE', 'OUTCOME'),
+  ('CUTS_COUNT', 'SERVICE_QUALITY'), ('DAYS_WITHOUT_WATER', 'SERVICE_QUALITY'), ('NETWORK_LOSS', 'SERVICE_QUALITY'),
+  ('TOILETS', 'PREMISES'), ('FACILITIES', 'PREMISES'), ('SEAT_TO_WAIT', 'PREMISES'), ('TRANSPORT_ACCESS', 'PREMISES'),
+  ('CROWDED', 'PREMISES'), ('SEAT_AS_BOOKED', 'PREMISES'), ('BOARDING', 'PREMISES'), ('SAFETY_BRIEFING', 'PREMISES')
+) AS v (code, category)
+JOIN evaluation_category c ON c.code = v.category
+WHERE q.code = v.code;
