@@ -1,6 +1,6 @@
 # Publication des résultats : que publier, et comment
 
-Étude du 2026-10-03. **Rien n'est décidé** : ce document prépare les choix à faire avec la porteuse du projet. Maquettes : `app/(public)/maquettes/resultats/a` et `b` (chiffres fictifs, aucune lecture de la base).
+Étude du 2026-10-03. **Décidé le 2026-10-03 : design B « Le relevé », avec les pourcentages.** Le reste (seuil, période, commentaires, migration 0007) attend son accord. Maquettes : `app/(public)/maquettes/resultats/a` et `b` (chiffres fictifs, aucune lecture de la base).
 
 ## 1. Ce qu'on publie
 
@@ -40,4 +40,4 @@
 ## 5. Les deux propositions de design
 
 - **A « Sur 10 usagers »** : dix visages (les mêmes qu'à l'écran 2) et une phrase « 7 usagers sur 10 sont satisfaits ». Fait pour le grand public, y compris les personnes peu à l'aise avec les chiffres. Peu de chiffres, beaucoup de phrases.
-- **B « Le relevé »** : une fiche comme le ticket de l'accueil, tamponnée « Publié » avec la date. Pourcentages, tableaux, barres « Pas bien / Bien » de part et d'autre d'un axe. Plus complet, pour les responsables et les journalistes.
+- **B « Le relevé » (retenu le 2026-10-03)** : une fiche comme le ticket de l'accueil, tamponnée « Publié » avec la date. Pourcentages, tableaux, barres « Pas bien / Bien » de part et d'autre d'un axe. Plus complet, pour les responsables et les journalistes.
