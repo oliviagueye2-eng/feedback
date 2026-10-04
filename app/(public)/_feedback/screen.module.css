@@ -4,10 +4,15 @@
   width: 100%;
   max-width: 596px;
   margin: 0 auto;
-  padding: 20px 18px 28px;
+  padding: 24px 18px 28px;
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+/* Screen 1 breathes more: each question is its own block. */
+form.screen:has(> .heading) {
+  gap: 32px;
 }
 
 .title {
@@ -16,36 +21,53 @@
   line-height: 1.15;
 }
 
-.identified {
-  position: relative;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.identified > div {
+/* Title and what is being rated: one block, the rated line light and
+   compact so it does not compete with the title. */
+.heading {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  font-size: 15px;
+  gap: 12px;
 }
 
-/* The organisation's logo, at the right of what is being rated. */
-.identifiedLogo {
-  width: 56px;
-  height: 56px;
-  /* Under « Changer ». */
-  margin: 36px 0 0 auto;
+.rated {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px 10px 14px;
+  background: #fff;
+  border-radius: 10px;
+}
+
+.ratedLogo {
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
   object-fit: contain;
 }
 
-.identified strong {
-  font-size: 18px;
+.ratedText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.ratedText strong {
+  font-size: 17px;
+  color: var(--ink);
+}
+
+/* 44 px touch area, centred on the line. */
+.ratedChange {
+  margin-left: auto;
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
 }
 
 /* « Changer » (screen 1) and « Modifier » (screen 2b): top right of their box, on
@@ -61,23 +83,6 @@
   align-items: center;
 }
 
-.check {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--green);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.check svg {
-  width: 16px;
-  height: 16px;
-}
-
 .group {
   display: flex;
   flex-direction: column;
@@ -91,28 +96,28 @@
 .group > label,
 .group > legend {
   padding: 0;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
 }
 
 /* A legend does not take part in the fieldset's gap. */
 .group > legend {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
-/* « Sur quoi porte votre avis ? »: the services on one white sheet with no
-   outline, one line each, separated by faint rules (« feuille légère », as on
-   the topics screen). The whole line is the radio button; the chosen one gets
-   the green tint and a green check on the right. */
-.serviceSheet {
+/* Screen 1's choices (ChoiceSheet): one white sheet with no outline, one
+   line each, separated by faint rules that stop short of its edges
+   (« feuille légère », as on the topics screen). The whole line is the radio
+   button; the chosen one gets the green tint, a green edge and a green check. */
+.choiceSheet {
   background: #fff;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-.service {
+.choice {
   position: relative;
   min-height: 56px;
   padding: 12px 16px;
@@ -125,7 +130,7 @@
   cursor: pointer;
 }
 
-.service + .service::before {
+.choice + .choice::before {
   content: "";
   position: absolute;
   top: 0;
@@ -134,7 +139,7 @@
   border-top: 1px solid var(--line-light);
 }
 
-.service input {
+.choice input {
   position: absolute;
   inset: 0;
   margin: 0;
@@ -143,11 +148,11 @@
 }
 
 /* Empty circle until chosen, so each line reads as a choice, not a link. */
-.serviceMark {
-  width: 26px;
-  height: 26px;
+.choiceMark {
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
-  border: 1.5px solid var(--control);
+  border: 1.5px solid var(--control-light);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -155,28 +160,30 @@
   color: transparent;
 }
 
-.serviceMark svg {
-  width: 15px;
-  height: 15px;
+.choiceMark svg {
+  width: 14px;
+  height: 14px;
 }
 
-.service:has(input:checked) {
+.choice:has(input:checked) {
   background: var(--green-tint);
+  box-shadow: inset 0 0 0 2px var(--green);
+  border-radius: 10px;
   font-weight: 700;
 }
 
-.service:has(input:checked)::before,
-.service:has(input:checked) + .service::before {
+.choice:has(input:checked)::before,
+.choice:has(input:checked) + .choice::before {
   border-top-color: transparent;
 }
 
-.service:has(input:checked) .serviceMark {
+.choice:has(input:checked) .choiceMark {
   border-color: var(--green);
   background: var(--green);
   color: #fff;
 }
 
-.service:has(input:focus-visible) {
+.choice:has(input:focus-visible) {
   outline: 3px solid var(--ink);
   outline-offset: -3px;
 }
