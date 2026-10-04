@@ -149,8 +149,8 @@ Mise en œuvre : une table `evaluation_category` et une colonne `category_id` su
 
 1. **Ranger le centre des permis dans le secteur Administration** (4.2). Petite migration, corrige des thèmes absurdes. **Validé le 2026-10-03, fait dans la migration 0008 (branche).**
 2. **Rendre les thèmes communs moins universels** (4.1) : « Simplicité de la démarche » seulement pour les services à dossier ; « Horaires » et « Propreté des locaux » pas pour les trajets ni les réseaux. Il suffit d'ajouter des lignes `topic_sector` (le thème cesse alors d'être commun) : migration de données, sans changement de code. **Validé le 2026-10-03, fait dans la migration 0008 (branche)** : « Simplicité de la démarche » limité à 11 secteurs, « Horaires d'ouverture » retiré pour les vols, traversées et trajets (listes de thèmes par secteur, type et service, comme les questions), « Propreté et confort » sans « des locaux ».
-3. **Supprimer les doublons thème / question** (3.2, option A) : retirer du formulaire les thèmes qui répètent une question de fait du même lieu.
-4. **Conditionner les questions des réseaux** au sujet choisi (4.4) : des lignes `question_condition`, sans changement de code.
+3. **Supprimer les doublons thème / question** (3.2, option A) : retirer du formulaire les thèmes qui répètent une question de fait du même lieu. **Écarté le 2026-10-04** : le thème est vu avant les questions, y compris par ceux qui s'arrêtent là ; on garde les deux et la page publique montre le fait et l'avis.
+4. **Conditionner les questions des réseaux** au sujet choisi (4.4) : des lignes `question_condition`, sans changement de code. **Validé le 2026-10-04, migration 0018** : coupures après « Une coupure », Woyofal après facture ou branchement, réseau perdu après appels, internet mobile ou à la maison.
 5. **Ajouter les catégories d'évaluation** (6) : une migration, puis un résultat par catégorie sur la page publique.
 6. **Thèmes pour les secteurs marchands** (4.3) : restauration, commerce, hôtellerie… à écrire avec vous.
 7. **Page publique** : thèmes en « % d'avis positifs » avec le nombre d'avis et un seuil de 10 par thème (3.1).

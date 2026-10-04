@@ -537,7 +537,7 @@ describe("feedback", () => {
     expect(screen.comment).toBeNull();
   });
 
-  it("gives a high school the topics and questions of the visit chosen, and the university the Education lists (0009, 0014)", async () => {
+  it("gives a high school the topics and questions of the visit chosen, and the training centre and the preschool the same visits (0009, 0014, 0018)", async () => {
     const [school] = await rows<{ id: string }>("SELECT id FROM establishment WHERE name = 'Lycée Lamine Guèye'");
     const services = Object.fromEntries((await rows<{ code: string; id: number }>(
       "SELECT code, id FROM service WHERE code IN ('SCHOOL_ADMIN', 'SCHOOL_LIFE')",
@@ -571,20 +571,6 @@ describe("feedback", () => {
       "Sécurité dans l'établissement",
       "Tables-bancs, matériel et manuels",
     ]);
-    // A training centre keeps what it had: the counter, the papers, the teaching.
-    expect(await topicsOf("a7b8c9d0-0000-4000-8000-000000000005", university!.id)).toEqual([
-      "Politesse du personnel (accueil, respect)",
-      "Compétence du personnel (connaît son travail, traite bien la demande)",
-      "Explications du personnel (claires, complètes)",
-      "Encadrement des élèves",
-      "Temps d'attente",
-      "Simplicité de la démarche (nombre de papiers nécessaires, allers-retours)",
-      "Horaires d'ouverture",
-      "Frais payés (montant, reçu)",
-      "Qualité de l'enseignement",
-      "Propreté, entretien et confort",
-      "Accessibilité aux personnes handicapées ou âgées",
-    ]);
     // The questions follow the visit too (0014): the classes only for the school year.
     const questionsOf = async (feedback: string) =>
       (await getDetailedQuestionnaire(feedback)).questions.map((q) => q.code);
@@ -595,8 +581,21 @@ describe("feedback", () => {
     expect(await questionsOf("f6a7b8c9-0000-4000-8000-000000000006")).toEqual([
       "RESPONDENT", "CLASSES_HELD", "CLASS_SIZE", "FACILITIES", "REPORTED", "REPORT_WHY",
     ]);
+    // A training centre and a preschool have the same two visits (0018); at the
+    // preschool, the child does not answer « Vous êtes ».
+    const [preschool] = await rows<{ id: string }>(
+      `INSERT INTO establishment (name, type_id) SELECT 'Case des tout-petits de test', id FROM establishment_type
+       WHERE code = 'PRESCHOOL' RETURNING id`,
+    );
+    expect(await topicsOf("a7b8c9d0-0000-4000-8000-000000000005", university!.id, services.SCHOOL_LIFE))
+      .toEqual(await topicsOf("f6a7b8c9-0000-4000-8000-000000000006", school!.id, services.SCHOOL_LIFE));
     expect(await questionsOf("a7b8c9d0-0000-4000-8000-000000000005")).toEqual([
-      "RESPONDENT", "CLASSES_HELD", "CLASS_SIZE", "FACILITIES", "PAID_SOMETHING", "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY",
+      "RESPONDENT", "CLASSES_HELD", "CLASS_SIZE", "FACILITIES", "REPORTED", "REPORT_WHY",
+    ]);
+    await topicsOf("a7b8c9d0-0000-4000-8000-000000000006", preschool!.id, services.SCHOOL_ADMIN);
+    expect(await questionsOf("a7b8c9d0-0000-4000-8000-000000000006")).toEqual([
+      "PRESCHOOL_RESPONDENT", "GOAL_ACHIEVED", "VISITS_COUNT", "WAIT_TIME", "DOCUMENTS_KNOWN", "PAID_SOMETHING",
+      "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY",
     ]);
   });
 

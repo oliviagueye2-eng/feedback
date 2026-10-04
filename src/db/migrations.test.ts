@@ -134,14 +134,14 @@ describe("reference data", () => {
       questions: [
         "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "FIELD_SITUATION",
         "FILE_SUBMITTED", "INTERVENTION_AWAITED", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
-        "POLICE_VISIT_REASON", "PREPAID_METER", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
+        "POLICE_VISIT_REASON", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
         "TELECOM_SUBJECT", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "UTILITY_SUBJECT",
       ],
       order: true,
     });
   });
 
-  it("has the bank of 63 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017), each written once, every text in French", async () => {
+  it("has the bank of 64 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -155,7 +155,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 63, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 64, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -165,7 +165,7 @@ describe("reference data", () => {
       )).rows.map((r) => [r.code, r.list]));
     expect(await attached("sector")).toEqual({
       ADMINISTRATION: "FILE_SERVICES", TAX: "FILE_SERVICES", JUSTICE: "FILE_SERVICES", SOCIAL: "FILE_SERVICES",
-      HEALTH: "HEALTH", BANKING_INSURANCE: "BANKING_INSURANCE", EDUCATION: "EDUCATION",
+      HEALTH: "HEALTH", BANKING_INSURANCE: "BANKING_INSURANCE", EDUCATION: null,
       ELECTRICITY: "ELECTRICITY", WATER: "WATER", TELECOM: "TELECOM",
       RETAIL: "GENERIC", CULTURE: "GENERIC", HOSPITALITY: "GENERIC", REAL_ESTATE: "GENERIC",
       FOOD_SERVICE: "GENERIC", SPORT: "GENERIC", TOURISM: "GENERIC",
@@ -178,11 +178,13 @@ describe("reference data", () => {
       HIGHER_EDUCATION_ADMIN: "SCHOOL_ADMIN", HIGHER_EDUCATION_COURSES: "SCHOOL_LIFE", TRAIN_TRIP: "TRAIN_TRIP",
       APP_RIDE: "APP_RIDE", STREET_TAXI_RIDE: "STREET_TAXI_RIDE",
     });
-    // Types with a list of their own (0005), and the education places without services (0014, 0015).
+    // Types with a list of their own (0005), and « Vous êtes » on the education places (0018).
     expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))
       .toEqual({
         AIRPORT: "AIRPORT", BUS_STATION: "BUS_STATION", DRIVING_LICENCE_CENTER: "FILE_SERVICES",
-        VOCATIONAL_TRAINING_CENTER: "OTHER_EDUCATION", PRESCHOOL: "OTHER_EDUCATION", DAARA: "OTHER_EDUCATION",
+        HIGH_SCHOOL: "EDUCATION", MIDDLE_SCHOOL: "EDUCATION", PRIMARY_SCHOOL: "EDUCATION", SCHOOL_GROUP: "EDUCATION",
+        UNIVERSITY: "EDUCATION", HIGHER_EDUCATION_SCHOOL: "EDUCATION", VOCATIONAL_TRAINING_CENTER: "EDUCATION",
+        DAARA: "EDUCATION", PRESCHOOL: "PRESCHOOL",
       });
   });
 
@@ -218,9 +220,12 @@ describe("reference data", () => {
       "COMMON: REPORTED ← OVERALL_SATISFACTION DISSATISFIED",
       "COMMON: REPORTED ← OVERALL_SATISFACTION VERY_DISSATISFIED",
       "COMMON: REPORT_WHY ← REPORTED NO",
+      "ELECTRICITY: CUTS_COUNT ← UTILITY_SUBJECT CUT",
       "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT 1_TO_3",
       "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT 4_TO_10",
       "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT OVER_10",
+      "ELECTRICITY: PREPAID_METER ← UTILITY_SUBJECT BILL",
+      "ELECTRICITY: PREPAID_METER ← UTILITY_SUBJECT CONNECTION",
       "FILE_SERVICES: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "FLIGHT: DELAY_CARE ← DEPARTURE_ON_TIME UNDER_1_H_LATE",
       "FLIGHT: DELAY_CARE ← DEPARTURE_ON_TIME OVER_1_H_LATE",
@@ -233,19 +238,22 @@ describe("reference data", () => {
       "LAND_TRIP: BUS_INCIDENT_TYPE ← TRIP_INCIDENT YES",
       "LAND_TRIP: INCIDENT_EXPLAINED ← TRIP_INCIDENT YES",
       "LAND_TRIP: INCIDENT_SOLUTION ← TRIP_INCIDENT YES",
-      "OTHER_EDUCATION: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_FIELD: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_PREMISES: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON COMPLAINT",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON LOSS",
       "SCHOOL_ADMIN: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "STREET_TAXI_RIDE: PRICE_KEPT ← PRICE_AGREED YES",
+      "TELECOM: NETWORK_LOSS ← TELECOM_SUBJECT CALLS_SMS",
+      "TELECOM: NETWORK_LOSS ← TELECOM_SUBJECT MOBILE_INTERNET",
+      "TELECOM: NETWORK_LOSS ← TELECOM_SUBJECT HOME_INTERNET",
       "TRAIN_TRIP: INCIDENT_EXPLAINED ← TRIP_INCIDENT YES",
       "TRAIN_TRIP: INCIDENT_SOLUTION ← TRIP_INCIDENT YES",
       "TRAIN_TRIP: TRAIN_INCIDENT_TYPE ← TRIP_INCIDENT YES",
       "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER 1_TO_3",
       "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER 4_TO_10",
       "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER OVER_10",
+      "WATER: DAYS_WITHOUT_WATER ← UTILITY_SUBJECT CUT",
     ]);
     // A condition on an answer of another question is refused.
     await expect(db.query(
@@ -265,7 +273,7 @@ describe("reference data", () => {
        JOIN question_set_item p ON p.question_set_id = i.question_set_id AND p.position = i.position - 1
        JOIN question pq ON pq.id = p.question_id
        WHERE dq.code IN ('PAID_SOMETHING', 'INTERVENTION_AWAITED')`)).rows;
-    expect(before).toHaveLength(8);
+    expect(before).toHaveLength(7);
     expect(before.every((r) => ["PAID_SOMETHING", "INTERVENTION_AWAITED"].includes(r.previous))).toBe(true);
     // A real service keeps its French label (then its synonyms) in its search_text.
     expect((await one<{ search_text: string }>(
