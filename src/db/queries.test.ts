@@ -111,6 +111,11 @@ describe("search", () => {
     expect(ours(result.results).sort()).toEqual([ids.gy, ids.pa].sort());
   });
 
+  it("finds the ride-hailing apps when searching « taxi » (0017)", async () => {
+    const result = await searchEstablishments("taxi");
+    expect(result.results.map((r) => r.name)).toEqual(expect.arrayContaining(["Yango", "Heetch"]));
+  });
+
   it("shows only the establishments of the municipality named in the query", async () => {
     const result = await searchEstablishments("État civil Parcelles Assainies");
     expect(result.matchType).toBe("service");
