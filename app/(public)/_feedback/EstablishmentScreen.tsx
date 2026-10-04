@@ -54,64 +54,52 @@ export async function EstablishmentScreen({
       {qr?.serviceId && <input type="hidden" name="service" value={qr.serviceId} />}
       <ResumeFeedback feedbackId={feedbackId} establishmentId={establishment.id} />
 
-      <h1 className={styles.title}>{t.title}</h1>
-
-      <div className={styles.identified}>
-        <span className={styles.check} aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12l5 5 9-10" />
-          </svg>
-        </span>
-        <div>
-          <span className="muted">{t.rating}</span>
-          <strong>{establishment.name}</strong>
-          {details && <span>{details}</span>}
-          {qrService?.label && <span>{qrService.label}</span>}
+      {/* The title and what is being rated read as one block: a light line
+          under the title, no check, « Changer » on the right. */}
+      <header className={styles.heading}>
+        <h1 className={styles.title}>{t.title}</h1>
+        <div className={styles.rated}>
+          {logo && (
+            // eslint-disable-next-line @next/next/no-img-element -- small SVG, nothing to optimize
+            <img className={styles.ratedLogo} src={logo} alt="" width={40} height={40} />
+          )}
+          <div className={styles.ratedText}>
+            <strong>{establishment.name}</strong>
+            {details && <span>{details}</span>}
+            {qrService?.label && <span>{qrService.label}</span>}
+          </div>
+          <Link href="/avis" className={styles.ratedChange} aria-label={t.changeLabel}>
+            {t.change}
+          </Link>
         </div>
-        {logo && (
-          // eslint-disable-next-line @next/next/no-img-element -- small SVG, nothing to optimize
-          <img className={styles.identifiedLogo} src={logo} alt="" width={56} height={56} />
-        )}
-        {/* Top right, on the line of « Vous évaluez »: the name below keeps the full width. */}
-        <Link href="/avis" className={styles.change} aria-label={t.changeLabel}>
-          {t.change}
-        </Link>
-      </div>
-
+      </header>
 
       {askReason && (
-        <div className={styles.group}>
-          <label htmlFor="service">{t.reason}</label>
-          <select
-            id="service"
+        <fieldset className={styles.group}>
+          <legend>{t.reason}</legend>
+          {/* « Autre démarche » and no choice are both saved as no service,
+              so a saved « no service » checks nothing. */}
+          <ChoiceSheet
             name="service"
-            className={styles.select}
-            // « Autre démarche » and no choice are both saved as no service: shown as no choice.
-            defaultValue={initial?.serviceId ? String(initial.serviceId) : ""}
-          >
-            <option value="">{t.reasonPlaceholder}</option>
-            {establishment.services.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label ?? s.code}
-              </option>
-            ))}
-            <option value="other">{t.reasonOther}</option>
-          </select>
-        </div>
+            choices={[
+              ...establishment.services.map((s) => ({ value: String(s.id), label: s.label ?? s.code })),
+              { value: "other", label: t.reasonOther },
+            ]}
+            checked={initial?.serviceId ? String(initial.serviceId) : undefined}
+          />
+        </fieldset>
       )}
 
       {askWhen && (
         <fieldset className={styles.group}>
           <legend>{t.when}</legend>
           <FormValidation message={t.whenError} shown={error} />
-          <div className={styles.periods}>
-            {VISIT_PERIODS.map((value) => (
-              <label key={value} className={styles.period}>
-                <input type="radio" name="visitPeriod" value={value} required defaultChecked={initial?.visitPeriod === value} />
-                <span>{t.periods[value]}</span>
-              </label>
-            ))}
-          </div>
+          <ChoiceSheet
+            name="visitPeriod"
+            required
+            choices={VISIT_PERIODS.map((value) => ({ value, label: t.periods[value] }))}
+            checked={initial?.visitPeriod ?? undefined}
+          />
         </fieldset>
       )}
 
@@ -124,5 +112,38 @@ export async function EstablishmentScreen({
       <BackLink href="/" label={common.backHome} />
       <PendingLoader message={common.wait} />
     </form>
+  );
+}
+
+/**
+ * One white sheet, one line per choice, separated by faint rules (« feuille
+ * légère », as on the topics screen). Real radio buttons: the whole line is
+ * the touch target; the chosen one gets the green tint and a green check.
+ */
+function ChoiceSheet({
+  name,
+  choices,
+  checked,
+  required,
+}: {
+  name: string;
+  choices: { value: string; label: string }[];
+  checked?: string;
+  required?: boolean;
+}) {
+  return (
+    <div className={styles.choiceSheet}>
+      {choices.map(({ value, label }) => (
+        <label key={value} className={styles.choice}>
+          <input type="radio" name={name} value={value} required={required} defaultChecked={checked === value} />
+          <span>{label}</span>
+          <span className={styles.choiceMark} aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12l5 5 9-10" />
+            </svg>
+          </span>
+        </label>
+      ))}
+    </div>
   );
 }
