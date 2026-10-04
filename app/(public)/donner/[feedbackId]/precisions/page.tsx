@@ -6,6 +6,7 @@ import { DomainError } from "@/src/domain/errors";
 import { COMMENT_MAX_LENGTH, getDetailsScreen, OTHER_TOPIC_CODE, OTHER_TOPIC_MAX_LENGTH } from "@/src/domain/feedback";
 import { saveDetails } from "../../../_feedback/actions";
 import { FeedbackHeader } from "../../../_feedback/FeedbackHeader";
+import { SATISFACTION_LEVEL, SatisfactionFace } from "../../../_feedback/SatisfactionFace";
 import { TopicRatings } from "../../../_feedback/TopicRatings";
 import { getDictionary } from "../../../../_i18n";
 import { frenchSpaces } from "../../../../_i18n/typography";
@@ -33,6 +34,7 @@ export default async function DetailsPage({ params, searchParams }: PageProps<"/
   // Reached without answering the essential question: back to it.
   if (!answer) redirect(`/donner/${feedbackId}`);
   const { common, details: t } = await getDictionary();
+  const level = SATISFACTION_LEVEL[answer.code];
 
   return (
     <>
@@ -42,14 +44,17 @@ export default async function DetailsPage({ params, searchParams }: PageProps<"/
           <input type="hidden" name="feedbackId" value={feedbackId} />
           <input type="hidden" name="promptOption" value={answer.code} />
 
-          <div className={styles.answered}>
-            <span>
-              <span className="muted">{frenchSpaces(question)}</span>
+          {/* The answer to screen 2, in its level's colours so it reads at a
+              glance; the question is a small reminder above it. */}
+          <div className={styles.answered} style={level ? satisfactionColours(level) : undefined}>
+            <span className={styles.answeredQuestion}>{frenchSpaces(question)}</span>
+            <div className={styles.answeredLevel}>
+              {level && <SatisfactionFace level={level} className={styles.answeredFace} />}
               <strong>{answer.label}</strong>
-            </span>
-            <Link href={`/donner/${feedbackId}`} className={styles.change}>
-              {t.change}
-            </Link>
+              <Link href={`/donner/${feedbackId}`} className={styles.answeredChange}>
+                {t.change}
+              </Link>
+            </div>
           </div>
 
           {erreur && (
@@ -108,4 +113,12 @@ export default async function DetailsPage({ params, searchParams }: PageProps<"/
       </main>
     </>
   );
+}
+
+/** The level's tint as the block's background, its colour for the edge. */
+function satisfactionColours(level: 1 | 2 | 3 | 4 | 5) {
+  return {
+    "--answer": `var(--satisfaction-${level})`,
+    "--answer-tint": `var(--satisfaction-${level}-tint)`,
+  } as React.CSSProperties;
 }
