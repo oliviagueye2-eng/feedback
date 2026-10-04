@@ -107,7 +107,7 @@ form.screen:has(> .heading) {
 /* Screen 1's choices (ChoiceSheet): one white sheet with no outline, one
    line each, separated by faint rules that stop short of its edges
    (« feuille légère », as on the topics screen). The whole line is the radio
-   button; the chosen one gets the green tint, a green edge and a green check. */
+   button; the chosen one gets the green tint, a thin green edge and a green check. */
 .choiceSheet {
   background: #fff;
   border-radius: 10px;
@@ -166,7 +166,7 @@ form.screen:has(> .heading) {
 
 .choice:has(input:checked) {
   background: var(--green-tint);
-  box-shadow: inset 0 0 0 2px var(--green);
+  box-shadow: inset 0 0 0 1px var(--green);
   border-radius: 10px;
   font-weight: 700;
 }
