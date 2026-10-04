@@ -408,6 +408,20 @@ describe("feedback", () => {
     expect(await firstQuestion("c3d4e5f6-0000-4000-8000-000000000004", "Aline Sitoë Diatta (bateau Dakar – Ziguinchor)", null))
       .toBeUndefined();
     expect(await firstQuestion("c3d4e5f6-0000-4000-8000-000000000005", "COSAMA", "BOAT_CROSSING")).toBe("DEPARTURE_ON_TIME");
+    // Incidents (0016): the bus, the train and the boat each have their kinds of incident; the TER is a train.
+    const questionsOf = async (feedback: string) =>
+      (await getQuestionnaireScreen(feedback, "sector")).questions.map((q) => q.code);
+    expect(await questionsOf("c3d4e5f6-0000-4000-8000-000000000001")).toEqual([
+      "STOP_WAIT", "CROWDED", "TICKET_GIVEN", "TRIP_INCIDENT", "BUS_INCIDENT_TYPE", "INCIDENT_EXPLAINED", "INCIDENT_SOLUTION",
+    ]);
+    expect((await questionsOf("c3d4e5f6-0000-4000-8000-000000000005")).slice(4)).toEqual([
+      "CROSSING_INCIDENT", "BOAT_INCIDENT_TYPE", "INCIDENT_EXPLAINED", "INCIDENT_SOLUTION",
+    ]);
+    const train = "c3d4e5f6-0000-4000-8000-000000000008";
+    await firstQuestion(train, "TER", "TRAIN_TRIP");
+    expect((await questionsOf(train))[4]).toBe("TRAIN_INCIDENT_TYPE");
+    expect((await getEstablishment(await establishment("TER"))).services.map((s) => s.label).sort())
+      .toEqual(["Achat d'un ticket ou d'une carte d'abonnement", "Un trajet en train"]);
     // The airport gets the questions of its type (0005).
     const aibd = "c3d4e5f6-0000-4000-8000-000000000006";
     await firstQuestion(aibd, "Aéroport international Blaise Diagne", null);
