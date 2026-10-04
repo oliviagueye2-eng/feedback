@@ -21,8 +21,8 @@ form.screen:has(> .heading) {
   line-height: 1.15;
 }
 
-/* Title and what is being rated: one block, the rated line light and
-   compact so it does not compete with the title. */
+/* Title and what is being rated: one block. The rated line sits on the page
+   with no box, like a subtitle, so it is not mistaken for a choice. */
 .heading {
   display: flex;
   flex-direction: column;
@@ -33,9 +33,6 @@ form.screen:has(> .heading) {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 4px 10px 14px;
-  background: #fff;
-  border-radius: 10px;
 }
 
 .ratedLogo {
@@ -64,9 +61,10 @@ form.screen:has(> .heading) {
   margin-left: auto;
   flex-shrink: 0;
   min-height: 44px;
-  padding: 0 10px;
+  padding: 0 0 0 12px;
   display: flex;
   align-items: center;
+  font-size: 15px;
   font-weight: 700;
 }
 
@@ -152,7 +150,7 @@ form.screen:has(> .heading) {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
-  border: 1.5px solid var(--control-light);
+  border: 1.5px solid var(--control);
   border-radius: 50%;
   display: flex;
   align-items: center;
