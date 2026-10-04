@@ -69,12 +69,12 @@ describe("first establishments of the registry", () => {
     expect(rows).toEqual([]);
   });
 
-  it("has the twenty-one organisations, each rated in general", async () => {
+  it("has the twenty-two organisations, each rated in general", async () => {
     const { rows } = await db.query<{ organizations: number; general: number }>(`
       SELECT (SELECT count(*)::int FROM organization) AS organizations,
              (SELECT count(*)::int FROM establishment WHERE scope = 'general') AS general`);
     // 11 organisations, the 5 transport operators (0003), Air Sénégal (0006), the police and the gendarmerie (0010).
-    expect(rows[0]).toEqual({ organizations: 21, general: 21 });
+    expect(rows[0]).toEqual({ organizations: 22, general: 22 });
   });
 
   it("finds an organisation by its usual name, full name or former name", async () => {
