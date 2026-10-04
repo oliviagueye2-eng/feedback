@@ -12,6 +12,9 @@
   --control: #6b7f73;
   /* Lighter border of answers not chosen, where many sit on one page (screen 6). */
   --control-light: #9aafa2;
+  /* Border of every answer to choose (screens 1, 2, 2b, 6, 6b), chosen or
+     not: one thin line everywhere; the chosen one changes colour and tint. */
+  --choice-border: 1px;
   --page: #f3f6f4;
   --hero: #eef2ef;
   --ticket-line: #9aafa2;

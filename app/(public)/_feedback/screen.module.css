@@ -166,7 +166,7 @@ form.screen:has(> .heading) {
 
 .choice:has(input:checked) {
   background: var(--green-tint);
-  box-shadow: inset 0 0 0 1px var(--green);
+  box-shadow: inset 0 0 0 var(--choice-border) var(--green);
   border-radius: 10px;
   font-weight: 700;
 }
@@ -198,7 +198,7 @@ form.screen:has(> .heading) {
   position: relative;
   min-height: 56px;
   padding: 6px 8px;
-  border: 1.5px solid var(--control);
+  border: var(--choice-border) solid var(--control);
   border-radius: 10px;
   background: #fff;
   display: flex;
@@ -219,7 +219,7 @@ form.screen:has(> .heading) {
 }
 
 .period:has(input:checked) {
-  border: 2px solid var(--green);
+  border: var(--choice-border) solid var(--green);
   background: var(--green-tint);
   font-weight: 700;
 }
@@ -278,7 +278,7 @@ form.screen:has(> .heading) {
   text-align: left;
   min-height: 52px;
   width: 100%;
-  border: 1.5px solid var(--control);
+  border: var(--choice-border) solid var(--control);
   border-radius: 10px;
   background: #fff;
   display: flex;
@@ -294,7 +294,7 @@ form.screen:has(> .heading) {
 
 /* The chosen answer takes its own colour (--answer, set per answer), else green. */
 .optionOn {
-  border: 2px solid var(--answer, var(--green));
+  border: var(--choice-border) solid var(--answer, var(--green));
   background: var(--answer-tint, var(--green-tint));
   font-weight: 700;
 }
@@ -433,7 +433,7 @@ form.screen:has(> .heading) {
 .rating {
   position: relative;
   min-height: 56px;
-  border: 2px solid transparent;
+  border: var(--choice-border) solid transparent;
   border-radius: 6px;
   background: var(--hero);
   display: flex;
@@ -492,14 +492,14 @@ form.screen:has(> .heading) {
 }
 
 .ratingGood:has(input:checked) {
-  border: 2px solid var(--satisfaction-1);
+  border: var(--choice-border) solid var(--satisfaction-1);
   background: var(--satisfaction-1-tint);
   color: var(--satisfaction-1);
   font-weight: 700;
 }
 
 .ratingBad:has(input:checked) {
-  border: 2px solid var(--satisfaction-5);
+  border: var(--choice-border) solid var(--satisfaction-5);
   background: var(--satisfaction-5-tint);
   color: var(--satisfaction-5);
   font-weight: 700;
@@ -508,7 +508,7 @@ form.screen:has(> .heading) {
 /* « Non concerné »: neutral grey when chosen, never green or red: it says
    nothing about the service. */
 .ratingNeutral:has(input:checked) {
-  border: 2px solid var(--control);
+  border: var(--choice-border) solid var(--control);
   background: var(--line-light);
   color: var(--ink);
   font-weight: 700;
@@ -546,7 +546,7 @@ form.screen:has(> .heading) {
 .gateOption {
   position: relative;
   min-height: 48px;
-  border: 2px solid transparent;
+  border: var(--choice-border) solid transparent;
   border-radius: 6px;
   background: var(--hero);
   display: flex;
@@ -570,7 +570,7 @@ form.screen:has(> .heading) {
 }
 
 .gateOption:has(input:checked) {
-  border: 2px solid var(--ink);
+  border: var(--choice-border) solid var(--ink);
   background: #fff;
   font-weight: 700;
 }
