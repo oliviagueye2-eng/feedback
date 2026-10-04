@@ -109,7 +109,7 @@ describe("reference data", () => {
     expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("PUNCTUALITY");
     expect((await db.query<{ code: string }>(`
       SELECT code FROM service WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRIP') ORDER BY code`))
-      .rows.map((r) => r.code)).toEqual(["BOAT_CROSSING", "FLIGHT", "LAND_TRIP"]);
+      .rows.map((r) => r.code)).toEqual(["BOAT_CROSSING", "FLIGHT", "LAND_TRIP", "TRAIN_TRIP"]);
   });
 
   it("gives every sector a topic list, and opening hours to the transport places (0008, 0009, 0010)", async () => {
@@ -132,15 +132,16 @@ describe("reference data", () => {
     expect(row).toEqual({
       topics: null,
       questions: [
-        "CLASS_SIZE", "FIELD_SITUATION", "FILE_SUBMITTED", "INTERVENTION_AWAITED", "OVERALL_SATISFACTION",
-        "PAID_SOMETHING", "PATIENT", "POLICE_VISIT_REASON", "PREPAID_METER", "RECOMMEND", "REPORTED", "REPORT_WHY",
-        "RESPONDENT", "TELECOM_SUBJECT", "UTILITY_SUBJECT",
+        "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "FIELD_SITUATION",
+        "FILE_SUBMITTED", "INTERVENTION_AWAITED", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
+        "POLICE_VISIT_REASON", "PREPAID_METER", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
+        "TELECOM_SUBJECT", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "UTILITY_SUBJECT",
       ],
       order: true,
     });
   });
 
-  it("has the bank of 50 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011), each written once, every text in French", async () => {
+  it("has the bank of 57 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -154,7 +155,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 50, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 57, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -174,7 +175,7 @@ describe("reference data", () => {
       CIVIL_REGISTRY: null, LAND_TRIP: "LAND_TRIP", BOAT_CROSSING: "BOAT_CROSSING", TICKET_PURCHASE: "TICKET_PURCHASE",
       FLIGHT: "FLIGHT", PLANE_TICKET: "TICKET_PURCHASE", SCHOOL_ADMIN: "SCHOOL_ADMIN", SCHOOL_LIFE: "SCHOOL_LIFE",
       POLICE_PREMISES: "POLICE_PREMISES", POLICE_FIELD: "POLICE_FIELD", POLICE_CALL: "POLICE_CALL",
-      HIGHER_EDUCATION_ADMIN: "SCHOOL_ADMIN", HIGHER_EDUCATION_COURSES: "SCHOOL_LIFE",
+      HIGHER_EDUCATION_ADMIN: "SCHOOL_ADMIN", HIGHER_EDUCATION_COURSES: "SCHOOL_LIFE", TRAIN_TRIP: "TRAIN_TRIP",
     });
     // Types with a list of their own (0005), and the education places without services (0014, 0015).
     expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))
@@ -210,6 +211,9 @@ describe("reference data", () => {
        ORDER BY qs.code, q.code, ao.position`)).rows.map((r) => `${r.list}: ${r.question} ← ${r.depends_on} ${r.option}`);
     expect(conditions).toEqual([
       "BANKING_INSURANCE: FEES_EXPLAINED ← PAID_SOMETHING YES",
+      "BOAT_CROSSING: BOAT_INCIDENT_TYPE ← CROSSING_INCIDENT YES",
+      "BOAT_CROSSING: INCIDENT_EXPLAINED ← CROSSING_INCIDENT YES",
+      "BOAT_CROSSING: INCIDENT_SOLUTION ← CROSSING_INCIDENT YES",
       "COMMON: REPORTED ← OVERALL_SATISFACTION DISSATISFIED",
       "COMMON: REPORTED ← OVERALL_SATISFACTION VERY_DISSATISFIED",
       "COMMON: REPORT_WHY ← REPORTED NO",
@@ -225,12 +229,18 @@ describe("reference data", () => {
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME CANCELLED",
       "GENERIC: RECEIPT_OR_INVOICE ← PAID_SOMETHING YES",
       "HEALTH: RECEIPT_GIVEN ← PAID_SOMETHING YES",
+      "LAND_TRIP: BUS_INCIDENT_TYPE ← TRIP_INCIDENT YES",
+      "LAND_TRIP: INCIDENT_EXPLAINED ← TRIP_INCIDENT YES",
+      "LAND_TRIP: INCIDENT_SOLUTION ← TRIP_INCIDENT YES",
       "OTHER_EDUCATION: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_FIELD: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_PREMISES: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON COMPLAINT",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON LOSS",
       "SCHOOL_ADMIN: RECEIPT_GIVEN ← PAID_SOMETHING YES",
+      "TRAIN_TRIP: INCIDENT_EXPLAINED ← TRIP_INCIDENT YES",
+      "TRAIN_TRIP: INCIDENT_SOLUTION ← TRIP_INCIDENT YES",
+      "TRAIN_TRIP: TRAIN_INCIDENT_TYPE ← TRIP_INCIDENT YES",
       "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER 1_TO_3",
       "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER 4_TO_10",
       "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER OVER_10",
