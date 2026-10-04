@@ -81,12 +81,20 @@ describe("reference data", () => {
       "Accessibilité aux personnes handicapées ou âgées",
     ]);
 
-    const electricity = (await topicsFor("ELECTRICITY")).map((t) => t.code);
-    expect(electricity).toHaveLength(13);
-    // In the order of the categories (0009): staff, delays, procedure, cost, quality of the service, premises.
-    expect(electricity).toEqual([
-      "STAFF", "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "INTERVENTION_TIME", "PROCEDURE", "OPENING_HOURS",
-      "CUSTOMER_SERVICE", "FEES", "BILLING", "POWER_CUTS", "CLEANLINESS", "ACCESS_FOR_ALL",
+    // Electricity and water: nothing in the sector, all in the agency or at home (0019).
+    expect(await topicsFor("ELECTRICITY")).toHaveLength(1);
+    const serviceTopics = async (service: string) =>
+      (await db.query<{ code: string }>(`
+        SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
+        WHERE i.topic_set_id = (SELECT topic_set_id FROM service WHERE code = $1) ORDER BY t.position`, [service]))
+        .rows.map((r) => r.code);
+    expect(await serviceTopics("ELECTRICITY_AGENCY")).toEqual([
+      "STAFF", "INFORMATION", "WAIT_TIME", "PROCEDURE", "OPENING_HOURS", "FEES", "BILLING", "CLEANLINESS", "ACCESS_FOR_ALL",
+    ]);
+    expect(await serviceTopics("WATER_AGENCY")).toEqual(await serviceTopics("ELECTRICITY_AGENCY"));
+    expect(await serviceTopics("ELECTRICITY_SUPPLY")).toEqual(["INTERVENTION_TIME", "CUSTOMER_SERVICE", "POWER_CUTS"]);
+    expect(await serviceTopics("WATER_SUPPLY")).toEqual([
+      "INTERVENTION_TIME", "CUSTOMER_SERVICE", "WATER_CUTS", "WATER_QUALITY",
     ]);
     expect((await topicsFor("BANKING_INSURANCE")).map((t) => t.code)).toEqual([
       "STAFF", "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "PROCESSING_TIME", "PROCEDURE", "CASE_TRACKING",
@@ -132,7 +140,7 @@ describe("reference data", () => {
     expect(row).toEqual({
       topics: null,
       questions: [
-        "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "FIELD_SITUATION",
+        "AGENCY_SUBJECT", "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "FIELD_SITUATION",
         "FILE_SUBMITTED", "INTERVENTION_AWAITED", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
         "POLICE_VISIT_REASON", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
         "TELECOM_SUBJECT", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "UTILITY_SUBJECT",
@@ -141,7 +149,7 @@ describe("reference data", () => {
     });
   });
 
-  it("has the bank of 64 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018), each written once, every text in French", async () => {
+  it("has the bank of 65 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -155,7 +163,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 64, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 65, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -166,7 +174,7 @@ describe("reference data", () => {
     expect(await attached("sector")).toEqual({
       ADMINISTRATION: "FILE_SERVICES", TAX: "FILE_SERVICES", JUSTICE: "FILE_SERVICES", SOCIAL: "FILE_SERVICES",
       HEALTH: "HEALTH", BANKING_INSURANCE: "BANKING_INSURANCE", EDUCATION: null,
-      ELECTRICITY: "ELECTRICITY", WATER: "WATER", TELECOM: "TELECOM",
+      ELECTRICITY: null, WATER: null, TELECOM: "TELECOM",
       RETAIL: "GENERIC", CULTURE: "GENERIC", HOSPITALITY: "GENERIC", REAL_ESTATE: "GENERIC",
       FOOD_SERVICE: "GENERIC", SPORT: "GENERIC", TOURISM: "GENERIC",
       SECURITY: null, TRANSPORT: null,
@@ -177,6 +185,8 @@ describe("reference data", () => {
       POLICE_PREMISES: "POLICE_PREMISES", POLICE_FIELD: "POLICE_FIELD", POLICE_CALL: "POLICE_CALL",
       HIGHER_EDUCATION_ADMIN: "SCHOOL_ADMIN", HIGHER_EDUCATION_COURSES: "SCHOOL_LIFE", TRAIN_TRIP: "TRAIN_TRIP",
       APP_RIDE: "APP_RIDE", STREET_TAXI_RIDE: "STREET_TAXI_RIDE",
+      ELECTRICITY_AGENCY: "ELECTRICITY_AGENCY", ELECTRICITY_SUPPLY: "ELECTRICITY_SUPPLY",
+      WATER_AGENCY: "WATER_AGENCY", WATER_SUPPLY: "WATER_SUPPLY",
     });
     // Types with a list of their own (0005), and « Vous êtes » on the education places (0018).
     expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))
@@ -220,12 +230,11 @@ describe("reference data", () => {
       "COMMON: REPORTED ← OVERALL_SATISFACTION DISSATISFIED",
       "COMMON: REPORTED ← OVERALL_SATISFACTION VERY_DISSATISFIED",
       "COMMON: REPORT_WHY ← REPORTED NO",
-      "ELECTRICITY: CUTS_COUNT ← UTILITY_SUBJECT CUT",
-      "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT 1_TO_3",
-      "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT 4_TO_10",
-      "ELECTRICITY: CUT_NOTICE ← CUTS_COUNT OVER_10",
-      "ELECTRICITY: PREPAID_METER ← UTILITY_SUBJECT BILL",
-      "ELECTRICITY: PREPAID_METER ← UTILITY_SUBJECT CONNECTION",
+      "ELECTRICITY_AGENCY: PREPAID_METER ← AGENCY_SUBJECT BILL",
+      "ELECTRICITY_AGENCY: PREPAID_METER ← AGENCY_SUBJECT CONNECTION",
+      "ELECTRICITY_SUPPLY: CUT_NOTICE ← CUTS_COUNT 1_TO_3",
+      "ELECTRICITY_SUPPLY: CUT_NOTICE ← CUTS_COUNT 4_TO_10",
+      "ELECTRICITY_SUPPLY: CUT_NOTICE ← CUTS_COUNT OVER_10",
       "FILE_SERVICES: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "FLIGHT: DELAY_CARE ← DEPARTURE_ON_TIME UNDER_1_H_LATE",
       "FLIGHT: DELAY_CARE ← DEPARTURE_ON_TIME OVER_1_H_LATE",
@@ -250,10 +259,9 @@ describe("reference data", () => {
       "TRAIN_TRIP: INCIDENT_EXPLAINED ← TRIP_INCIDENT YES",
       "TRAIN_TRIP: INCIDENT_SOLUTION ← TRIP_INCIDENT YES",
       "TRAIN_TRIP: TRAIN_INCIDENT_TYPE ← TRIP_INCIDENT YES",
-      "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER 1_TO_3",
-      "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER 4_TO_10",
-      "WATER: CUT_NOTICE ← DAYS_WITHOUT_WATER OVER_10",
-      "WATER: DAYS_WITHOUT_WATER ← UTILITY_SUBJECT CUT",
+      "WATER_SUPPLY: CUT_NOTICE ← DAYS_WITHOUT_WATER 1_TO_3",
+      "WATER_SUPPLY: CUT_NOTICE ← DAYS_WITHOUT_WATER 4_TO_10",
+      "WATER_SUPPLY: CUT_NOTICE ← DAYS_WITHOUT_WATER OVER_10",
     ]);
     // A condition on an answer of another question is refused.
     await expect(db.query(
