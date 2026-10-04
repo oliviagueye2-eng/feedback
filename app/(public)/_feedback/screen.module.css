@@ -69,19 +69,6 @@ form.screen:has(> .heading) {
   font-weight: 700;
 }
 
-/* « Changer » (screen 1) and « Modifier » (screen 2b): top right of their box, on
-   its first line, with a 44 px touch area all the same. */
-.change {
-  position: absolute;
-  top: 4px;
-  right: 8px;
-  padding: 0 8px;
-  font-weight: 700;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-}
-
 .group {
   display: flex;
   flex-direction: column;
@@ -327,32 +314,48 @@ form.screen:has(> .heading) {
 /* ---- Screen 2b: answer given, "Modifier" ---- */
 
 .answered {
-  position: relative;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px 14px;
-  display: flex;
-  gap: 12px;
-}
-
-/* The question's first line leaves room for « Modifier », top right. */
-.answered > span > :first-child {
-  padding-right: 84px;
-}
-
-.answered > span {
+  background: var(--answer-tint, var(--green-tint));
+  border-left: 4px solid var(--answer, var(--green));
+  border-radius: 10px;
+  padding: 10px 6px 10px 14px;
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
+  gap: 4px;
 }
 
-.answered :global(.muted) {
-  font-size: 13px;
+.answeredQuestion {
+  font-size: 14px;
+  color: var(--muted);
 }
 
-.answered strong {
-  font-size: 17px;
+.answeredLevel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.answeredFace {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.answeredLevel strong {
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+/* « Modifier »: on the level's line, right, 44 px touch area. */
+.answeredChange {
+  margin-left: auto;
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 /* ---- Screen 2b: topics and free text ---- */

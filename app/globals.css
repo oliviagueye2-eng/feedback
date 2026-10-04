@@ -169,6 +169,86 @@ select:focus-visible {
   font-size: 16px;
 }
 
+/* What is being rated, screens 2 to 7: the organisation (« Qui ? ») leads,
+   the visit reason (« Quoi ? ») follows, smaller and grey, never tiny. */
+.rated-context {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.rated-context strong {
+  color: var(--green);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.rated-context span {
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 400;
+}
+
+/* Phones: once the header has scrolled away, one line « Organisme · Service »
+   stays at the top (CompactContext). */
+.compact-context {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 1px 3px rgb(19 38 28 / 0.06);
+  transform: translateY(-100%);
+  visibility: hidden;
+  transition: transform 0.15s ease-out, visibility 0.15s;
+}
+
+.compact-context[data-shown="true"] {
+  transform: none;
+  visibility: visible;
+}
+
+.compact-context-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 52px;
+  white-space: nowrap;
+  font-size: 15px;
+}
+
+/* A long name keeps most of the line; the service gives way first. */
+.compact-context-inner strong {
+  color: var(--green);
+  font-size: 16px;
+  flex: 0 1 auto;
+  max-width: 65%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compact-context-inner span {
+  color: var(--muted);
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compact-context-inner .compact-context-dot {
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .compact-context {
+    transition: none;
+  }
+}
+
 /* Phones: the mobile mock-up has no navigation links. */
 .site-nav {
   display: none;
@@ -292,6 +372,19 @@ select:focus-visible {
 
   .site-name strong {
     font-size: 20px;
+  }
+
+  .rated-context strong {
+    font-size: 24px;
+  }
+
+  .rated-context span {
+    font-size: 17px;
+  }
+
+  /* Wide screens: the questionnaire fits, no pinned bar. */
+  .compact-context {
+    display: none;
   }
 
   .site-nav {
