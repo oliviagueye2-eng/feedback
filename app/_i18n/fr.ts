@@ -34,7 +34,7 @@ export const fr = {
 
   header: {
     siteName: "NeexNaxari",
-    tagline: "Chaque voix compte",
+    tagline: "La plateforme de vos expériences",
     navLabel: "Navigation principale",
     howItWorks: "Comment ça marche",
   },
