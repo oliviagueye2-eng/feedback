@@ -100,15 +100,85 @@
   margin-bottom: 8px;
 }
 
-.select {
-  font: inherit;
-  font-size: 17px;
-  min-height: 50px;
-  border: 1.5px solid var(--control);
-  border-radius: 10px;
-  padding: 0 12px;
+/* « Sur quoi porte votre avis ? »: the services on one white sheet with no
+   outline, one line each, separated by faint rules (« feuille légère », as on
+   the topics screen). The whole line is the radio button; the chosen one gets
+   the green tint and a green check on the right. */
+.serviceSheet {
   background: #fff;
-  color: var(--ink);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.service {
+  position: relative;
+  min-height: 56px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 17px;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+.service + .service::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  border-top: 1px solid var(--line-light);
+}
+
+.service input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Empty circle until chosen, so each line reads as a choice, not a link. */
+.serviceMark {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--control);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+}
+
+.serviceMark svg {
+  width: 15px;
+  height: 15px;
+}
+
+.service:has(input:checked) {
+  background: var(--green-tint);
+  font-weight: 700;
+}
+
+.service:has(input:checked)::before,
+.service:has(input:checked) + .service::before {
+  border-top-color: transparent;
+}
+
+.service:has(input:checked) .serviceMark {
+  border-color: var(--green);
+  background: var(--green);
+  color: #fff;
+}
+
+.service:has(input:focus-visible) {
+  outline: 3px solid var(--ink);
+  outline-offset: -3px;
 }
 
 /* "Quand êtes-vous venu(e) ?": four tiles, two per row; real radio buttons. */

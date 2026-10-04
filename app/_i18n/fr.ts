@@ -130,7 +130,6 @@ export const fr = {
     changeLabel: "Changer d'établissement ou d'organisme",
     whenError: "Indiquez à quand remonte votre expérience.",
     reason: "Sur quoi porte votre avis ?",
-    reasonPlaceholder: "Choisir dans la liste",
     reasonOther: "Autre démarche",
     when: "À quand remonte votre expérience ?",
     periods: {

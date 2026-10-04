@@ -80,24 +80,33 @@ export async function EstablishmentScreen({
 
 
       {askReason && (
-        <div className={styles.group}>
-          <label htmlFor="service">{t.reason}</label>
-          <select
-            id="service"
-            name="service"
-            className={styles.select}
-            // « Autre démarche » and no choice are both saved as no service: shown as no choice.
-            defaultValue={initial?.serviceId ? String(initial.serviceId) : ""}
-          >
-            <option value="">{t.reasonPlaceholder}</option>
-            {establishment.services.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label ?? s.code}
-              </option>
+        <fieldset className={styles.group}>
+          <legend>{t.reason}</legend>
+          {/* One white sheet, one line per service (« feuille légère », as on the
+              topics screen). Real radio buttons: « Autre démarche » and no choice
+              are both saved as no service, so a saved « no service » checks nothing. */}
+          <div className={styles.serviceSheet}>
+            {[
+              ...establishment.services.map((s) => ({ value: String(s.id), label: s.label ?? s.code })),
+              { value: "other", label: t.reasonOther },
+            ].map(({ value, label }) => (
+              <label key={value} className={styles.service}>
+                <input
+                  type="radio"
+                  name="service"
+                  value={value}
+                  defaultChecked={initial?.serviceId ? String(initial.serviceId) === value : false}
+                />
+                <span>{label}</span>
+                <span className={styles.serviceMark} aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12l5 5 9-10" />
+                  </svg>
+                </span>
+              </label>
             ))}
-            <option value="other">{t.reasonOther}</option>
-          </select>
-        </div>
+          </div>
+        </fieldset>
       )}
 
       {askWhen && (
