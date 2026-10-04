@@ -300,18 +300,27 @@
   font-weight: 400;
 }
 
-/* All the topics on one white sheet, separated by thin rules (« feuille
-   unique », chosen on mock-ups over a box per topic). */
+/* All the topics on one white sheet with no outline, separated by faint
+   rules that stop short of its edges (« feuille légère », chosen on mock-ups:
+   fewer lines, more white space, less of an administrative form). */
 .topicSheet {
   background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
 }
 
 .topicSheet > * + * {
-  border-top: 1px solid var(--line);
+  position: relative;
+}
+
+.topicSheet > * + *::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  border-top: 1px solid var(--line-light);
 }
 
 /* One line per topic: its name on the whole width, then « Bien », « Pas bien »
@@ -325,10 +334,10 @@
 }
 
 .topicLine {
-  padding: 14px 14px 16px;
+  padding: 20px 16px 22px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .topicLabel {
@@ -343,11 +352,14 @@
   gap: 8px;
 }
 
+/* Unchosen answers are soft grey keys with no border; the chosen one gets
+   its colour and a border, so it stands out at a glance. */
 .rating {
   position: relative;
-  min-height: 44px;
-  border: 1.5px solid var(--line);
-  border-radius: 8px;
+  min-height: 56px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: var(--hero);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -356,7 +368,7 @@
   font-size: 14px;
   line-height: 1.1;
   white-space: nowrap;
-  color: var(--muted);
+  color: var(--ink);
   cursor: pointer;
 }
 
@@ -389,14 +401,15 @@
    box goes on two lines rather than touching the border. */
 @media (max-width: 479px) {
   .ratings {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.25fr);
+    gap: 6px;
   }
 
   .rating {
-    min-height: 58px;
+    min-height: 62px;
     flex-direction: column;
     gap: 4px;
-    padding: 8px 6px;
+    padding: 8px 4px;
     white-space: normal;
     text-align: center;
   }
@@ -416,16 +429,11 @@
   font-weight: 700;
 }
 
-/* « Non concerné »: quieter than the two others (dashed, grey), and grey when
-   chosen too, never green or red: it says nothing about the service. */
-.ratingNeutral {
-  border-style: dashed;
-  border-color: var(--control-light);
-}
-
+/* « Non concerné »: neutral grey when chosen, never green or red: it says
+   nothing about the service. */
 .ratingNeutral:has(input:checked) {
   border: 2px solid var(--control);
-  background: var(--hero);
+  background: var(--line-light);
   color: var(--ink);
   font-weight: 700;
 }
@@ -437,11 +445,13 @@
   flex-direction: column;
 }
 
+/* The question on its own line, « Oui » and « Non » under it, each on half
+   the width: easier to read and to touch than two small boxes beside it. */
 .gateLine {
-  padding: 14px;
+  padding: 20px 16px 22px;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .gateLabel {
@@ -452,17 +462,17 @@
 }
 
 .gateOptions {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 6px;
-  flex-shrink: 0;
 }
 
 .gateOption {
   position: relative;
-  width: 64px;
-  min-height: 44px;
-  border: 1.5px solid var(--line);
-  border-radius: 8px;
+  min-height: 48px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: var(--hero);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -485,12 +495,12 @@
 
 .gateOption:has(input:checked) {
   border: 2px solid var(--ink);
-  background: var(--hero);
+  background: #fff;
   font-weight: 700;
 }
 
 .gated {
-  margin: 0 14px 14px;
+  margin: 0 16px 20px;
   padding-left: 10px;
   border-left: 3px solid var(--line);
   display: flex;
@@ -503,7 +513,7 @@
 }
 
 .otherField {
-  margin: 0 14px 14px;
+  margin: 0 16px 16px;
   font: inherit;
   font-size: 17px;
   min-height: 50px;
