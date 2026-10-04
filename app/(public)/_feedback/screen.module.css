@@ -45,14 +45,15 @@ form.screen:has(> .heading) {
 .ratedText {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--muted);
 }
 
 .ratedText strong {
-  font-size: 17px;
+  font-size: 22px;
+  line-height: 1.2;
   color: var(--ink);
 }
 
