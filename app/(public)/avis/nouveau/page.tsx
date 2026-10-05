@@ -44,7 +44,7 @@ export default async function NewEstablishmentPage({ searchParams }: PageProps<"
           types={types}
           initialSector={initialSector}
           error={error}
-          t={{ sector: t.sector, sectorError: t.sectorError, type: t.type, typeError: t.typeError, other: t.other }}
+          t={{ sector: t.sector, sectorError: t.sectorError, type: t.type, typeError: t.typeError, other: t.other, change: t.change }}
         />
         <div className={styles.group}>
           <label htmlFor="municipality">

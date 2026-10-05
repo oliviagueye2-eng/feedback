@@ -31,18 +31,23 @@ export function FormValidation({
     if (!form) return;
     form.noValidate = true;
     const mine = (field: Element) => !names || names.includes(field.getAttribute("name") ?? "");
+    // A radio group spreads over hidden lists too (one per sector): only the shown ones count.
+    const isShown = (field: Element) => field.getClientRects().length > 0;
     const check = (event: SubmitEvent) => {
       const invalid = [...form.querySelectorAll<HTMLElement>("input:invalid, select:invalid, textarea:invalid")];
-      const own = invalid.filter(mine);
+      const shownInvalid = invalid.filter(isShown);
+      const own = shownInvalid.filter(mine);
       setShown(own.length > 0);
       if (invalid.length === 0) return;
       event.preventDefault();
       // Not Immediate: the other messages of the form check their fields too.
       event.stopPropagation();
       // The message of the first wrong field takes the focus.
-      if (own[0] !== invalid[0]) return;
-      own[0].focus();
-      anchor.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+      if (!own[0] || own[0] !== shownInvalid[0]) return;
+      own[0].focus({ preventScroll: true });
+      // The message is still hidden here: scroll to its question instead.
+      const question = anchor.current?.closest("fieldset") ?? anchor.current?.parentElement;
+      question?.scrollIntoView({ block: "start", behavior: "smooth" });
     };
     // Capture: runs before React handles the form's action.
     form.addEventListener("submit", check, { capture: true });

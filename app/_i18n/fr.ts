@@ -118,6 +118,7 @@ export const fr = {
     type: "Type d'établissement",
     typeError: "Choisissez un type (ou « Autre »).",
     other: "Autre",
+    change: "Changer",
     municipality: "Localité ou quartier",
     municipalityPlaceholder: "Ex. : Dakar, Médina",
     note: "Il sera ajouté à la liste après validation. Votre avis compte dès maintenant.",

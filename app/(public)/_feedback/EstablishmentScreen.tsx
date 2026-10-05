@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BackLink } from "../../_components/BackLink";
+import { ChoiceSheet } from "./ChoiceSheet";
 import { FormValidation } from "../../_components/FormValidation";
 import { establishmentDetails } from "../../_components/establishmentDetails";
 import { organizationLogoSrc } from "../../_components/organizationLogo";
@@ -112,38 +113,5 @@ export async function EstablishmentScreen({
       <BackLink href="/" label={common.backHome} />
       <PendingLoader message={common.wait} />
     </form>
-  );
-}
-
-/**
- * One white sheet, one line per choice, separated by faint rules (« feuille
- * légère », as on the topics screen). Real radio buttons: the whole line is
- * the touch target; the chosen one gets the green tint and a green check.
- */
-function ChoiceSheet({
-  name,
-  choices,
-  checked,
-  required,
-}: {
-  name: string;
-  choices: { value: string; label: string }[];
-  checked?: string;
-  required?: boolean;
-}) {
-  return (
-    <div className={styles.choiceSheet}>
-      {choices.map(({ value, label }) => (
-        <label key={value} className={styles.choice}>
-          <input type="radio" name={name} value={value} required={required} defaultChecked={checked === value} />
-          <span>{label}</span>
-          <span className={styles.choiceMark} aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12l5 5 9-10" />
-            </svg>
-          </span>
-        </label>
-      ))}
-    </div>
   );
 }
