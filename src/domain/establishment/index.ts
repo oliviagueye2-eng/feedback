@@ -26,9 +26,14 @@ export async function searchEstablishments(
   return { ...found, suggestions: await db.findSimilarEstablishments(terms, SUGGESTION_LIMIT) };
 }
 
-/** Screen 0c: the optional sector list. */
+/** Screen 0c: the sectors to choose from. */
 export async function listSectors() {
   return db.listSectors();
+}
+
+/** Screen 0c: the types of every sector, shown once its sector is chosen. */
+export async function listEstablishmentTypes() {
+  return db.listEstablishmentTypes();
 }
 
 export async function getEstablishment(id: string) {
@@ -46,13 +51,15 @@ export async function getEstablishmentByQrCode(code: string) {
 
 /**
  * Screen 0c: establishment typed by the user when it is not in the registry.
- * Only the name is required; it is stored as pending_review until an agent checks it.
+ * Name and sector are required, and the type when the sector has types
+ * (« Autre » accepted); it is stored as pending_review until an agent checks it.
  */
 export async function createUserEstablishment(body: unknown): Promise<{ id: string }> {
   const input = asObject(body);
   const id = await db.insertUserEstablishment({
     rawInput: requireString(input, "name", { min: 3, max: 200 }),
-    sectorCode: optionalString(input, "sector", { max: 64 }),
+    sectorCode: requireString(input, "sector", { max: 64 }),
+    typeCode: optionalString(input, "type", { max: 64 }),
     municipalityInput: optionalString(input, "municipality", { max: 120 }),
   });
   return { id };
