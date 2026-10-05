@@ -4,6 +4,7 @@ import { SOCIAL_ACCOUNTS, SocialIcon } from "../../_components/SocialLinks";
 import { getDictionary } from "../../_i18n";
 import { LandingHeader } from "./LandingHeader";
 import { Reveal } from "./Reveal";
+import busPhoto from "../../../public/images/accueil-brt.jpg";
 import phoneScreen from "../../../public/images/lancement-ecran-satisfaction.png";
 import styles from "./landing.module.css";
 
@@ -21,19 +22,39 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+/** Icons of « Votre expérience → Votre voix → L'amélioration des services ». */
+const CHAIN_ICONS = [
+  // A person.
+  <svg key="person" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
+  </svg>,
+  // A speech bubble.
+  <svg key="voice" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 5h16v11H9l-5 4z" />
+    <path d="M9 10.5h.01M12 10.5h.01M15 10.5h.01" />
+  </svg>,
+  // A rising line.
+  <svg key="better" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 18l6-6 4 4 6-8" />
+    <path d="M15 8h5v5" />
+  </svg>,
+];
+
 /**
  * Pre-launch landing page: shown at the root of neexnaxari.com until the
  * official launch (proxy.ts). Presents the idea, never the platform as open:
  * no feedback button, no figures.
  */
 export default async function LandingPage() {
-  const { header, landing: t } = await getDictionary();
+  const { header, home, landing: t } = await getDictionary();
 
   return (
     <>
       <LandingHeader t={{ ...t.nav, siteName: header.siteName, tagline: header.tagline, navLabel: header.navLabel }} />
       <main>
-        {/* Hero: the idea on the left, the real questionnaire screen on the right. */}
+        {/* Hero: the idea on the left; on the right a real photo of an everyday service
+            (BRT, Dakar) and, in front of it, the real questionnaire screen. */}
         <section id="accueil" className={`${styles.hero} ${styles.anchor}`}>
           <div className={`container ${styles.heroInner}`}>
             <div className={styles.heroText}>
@@ -51,6 +72,9 @@ export default async function LandingPage() {
               </div>
             </div>
             <div className={styles.phoneStage}>
+              <div className={styles.photo}>
+                <Image src={busPhoto} alt={home.photoAlt} sizes="(min-width: 900px) 420px, 90vw" priority />
+              </div>
               <div className={styles.phone}>
                 <Image
                   src={phoneScreen}
@@ -74,8 +98,13 @@ export default async function LandingPage() {
               ))}
             </div>
             <ol className={styles.chain}>
-              {t.idea.chain.map((step) => (
-                <li key={step}>{step}</li>
+              {t.idea.chain.map((step, index) => (
+                <li key={step}>
+                  <span className={styles.chainIcon} aria-hidden="true">
+                    {CHAIN_ICONS[index]}
+                  </span>
+                  {step}
+                </li>
               ))}
             </ol>
           </div>

@@ -114,12 +114,17 @@
 
 /* ---- Shared ---- */
 
+/* Small label above a title: a pill in the logo's light green. */
 .label {
-  margin: 0 0 14px;
-  color: var(--green);
-  font-size: 14px;
+  display: inline-block;
+  margin: 0 0 16px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--green-tint);
+  color: var(--green-dark);
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -146,7 +151,7 @@
   min-height: 54px;
   padding: 0 26px;
   border: 2px solid var(--green);
-  border-radius: 10px;
+  border-radius: 999px;
   font-size: 18px;
   font-weight: 700;
   text-decoration: none;
@@ -233,30 +238,50 @@
   margin-top: 30px;
 }
 
-/* The phone: the real questionnaire screen in a plain frame, on a soft disc
-   in the logo's green. It settles in once, on arrival. */
+/* Right of the hero: a real photo (BRT, Dakar) in a soft rounded shape, a
+   yellow arc from the logo behind it, and the phone in front with the real
+   questionnaire screen. The phone settles in once, on arrival. */
 .phoneStage {
   position: relative;
-  display: flex;
-  justify-content: center;
-  padding: 12px 0;
+  min-height: 470px;
 }
 
 .phoneStage::before {
   content: "";
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 360px;
-  height: 360px;
+  top: -18px;
+  right: -40px;
+  width: 260px;
+  height: 260px;
+  border: 22px solid var(--flag-yellow);
   border-radius: 50%;
-  background: var(--green-tint);
-  transform: translate(-50%, -50%);
+  clip-path: inset(0 0 50% 50%);
+}
+
+.photo {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 78%;
+  height: 360px;
+  overflow: hidden;
+  border-radius: 46% 54% 42% 58% / 40% 38% 62% 60%;
+  background: var(--line);
+}
+
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 60% 50%;
+  display: block;
 }
 
 .phone {
-  position: relative;
-  width: 250px;
+  position: absolute;
+  left: 4%;
+  bottom: 0;
+  width: 200px;
   aspect-ratio: 390 / 800;
   border: 9px solid var(--ink);
   border-radius: 38px;
@@ -289,6 +314,7 @@
 
 .idea {
   padding: 72px 0;
+  background: #fff;
 }
 
 .ideaText {
@@ -316,17 +342,40 @@
 
 .chain li {
   position: relative;
-  font-size: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 22px 8px 8px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0 0 1px var(--line-light), 0 10px 24px -18px rgb(19 38 28 / 0.45);
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.2;
-  color: var(--green);
+}
+
+.chainIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+}
+
+.chain li:last-child .chainIcon {
+  background: var(--flag-yellow);
+  color: var(--ink);
 }
 
 .chain li:not(:last-child)::after {
   content: "";
   position: absolute;
-  left: 6px;
-  top: calc(100% + 9px);
+  left: 27px;
+  top: calc(100% + 10px);
   width: 10px;
   height: 10px;
   border-right: 2px solid var(--control);
@@ -334,15 +383,11 @@
   transform: rotate(45deg);
 }
 
-.chain li:last-child {
-  color: var(--ink);
-}
-
 /* ---- Public and private ---- */
 
 .services {
   padding: 72px 0;
-  background: var(--page);
+  background: #fff;
 }
 
 .groups {
@@ -351,10 +396,15 @@
   margin-top: 36px;
 }
 
+/* Examples only, written as plain lists: nothing here looks clickable. */
 .group {
-  padding: 24px;
-  border-radius: 14px;
-  background: #fff;
+  padding: 26px 26px 28px;
+  border-radius: 22px;
+  background: var(--green-tint);
+}
+
+.group:nth-child(2) {
+  background: var(--notice-tint);
 }
 
 .group h3 {
@@ -365,22 +415,31 @@
 .group ul {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 10px 20px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .group li {
-  padding: 14px 16px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  font-size: 16px;
-  transition: border-color 0.2s;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 17px;
 }
 
-.group li:hover {
-  border-color: var(--control);
+.group li::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--green);
+  transform: translateY(-2px);
+}
+
+.group:nth-child(2) li::before {
+  background: var(--satisfaction-3);
 }
 
 .more {
@@ -393,6 +452,7 @@
 
 .steps {
   padding: 72px 0;
+  background: var(--page);
 }
 
 .stepList {
@@ -404,16 +464,22 @@
 }
 
 .stepList li {
-  padding-top: 18px;
-  border-top: 2px solid var(--ink);
+  padding: 26px;
+  border-radius: 22px;
+  background: #fff;
 }
 
 .stepNumber {
-  display: block;
-  color: var(--green);
-  font-size: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+  font-size: 17px;
   font-weight: 700;
-  line-height: 1;
 }
 
 .stepList h3 {
@@ -436,13 +502,46 @@
 /* ---- Vision and values ---- */
 
 .vision {
+  position: relative;
+  overflow: hidden;
   padding: 88px 0;
   background: var(--ink);
   color: #fff;
 }
 
+/* Two arcs in the logo's colours, in opposite corners. */
+.vision::before,
+.vision::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.vision::before {
+  top: -150px;
+  right: -150px;
+  width: 210px;
+  height: 210px;
+  border: 18px solid var(--flag-yellow);
+}
+
+.vision::after {
+  bottom: -170px;
+  left: -160px;
+  width: 230px;
+  height: 230px;
+  border: 18px solid var(--flag-green);
+}
+
+.vision > div {
+  position: relative;
+  z-index: 1;
+}
+
 .vision .label {
-  color: var(--footer-text);
+  background: rgb(255 255 255 / 0.14);
+  color: #fff;
 }
 
 .visionLines {
@@ -459,7 +558,7 @@
 }
 
 .visionLines span:nth-child(3) {
-  color: rgb(255 255 255 / 0.62);
+  color: var(--flag-yellow);
 }
 
 .visionText {
@@ -486,8 +585,18 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-top: 16px;
-  border-top: 1px solid rgb(255 255 255 / 0.25);
+  padding: 20px;
+  border-radius: 18px;
+  background: rgb(255 255 255 / 0.06);
+  border-top: 4px solid var(--flag-green);
+}
+
+.values li:nth-child(2) {
+  border-top-color: var(--flag-yellow);
+}
+
+.values li:nth-child(3) {
+  border-top-color: var(--flag-red);
 }
 
 .values strong {
@@ -501,11 +610,32 @@
 /* ---- Coming soon ---- */
 
 .soon {
+  position: relative;
+  overflow: hidden;
   padding: 80px 0;
-  background: var(--green-tint);
+  background: var(--green);
+  color: #fff;
+}
+
+.soon::before {
+  content: "";
+  position: absolute;
+  bottom: -160px;
+  right: -150px;
+  width: 220px;
+  height: 220px;
+  border: 18px solid var(--flag-yellow);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.soon .label {
+  background: rgb(255 255 255 / 0.16);
+  color: #fff;
 }
 
 .soonInner {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -520,7 +650,7 @@
 }
 
 .soonInner .lead {
-  color: var(--ink);
+  color: var(--green-tint);
 }
 
 .soonFollow {
@@ -547,17 +677,21 @@
   gap: 10px;
   min-height: 54px;
   padding: 0 18px;
-  border-radius: 10px;
-  background: var(--green);
-  color: #fff;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--green-dark);
   font-weight: 700;
   text-decoration: none;
   transition: background-color 0.2s;
 }
 
 .networks a:hover {
-  background: var(--green-dark);
-  color: #fff;
+  background: var(--green-tint);
+  color: var(--green-dark);
+}
+
+.networks a:focus-visible {
+  outline-color: #fff;
 }
 
 .networks svg {
@@ -568,7 +702,7 @@
 
 .handle {
   margin: 14px 0 0;
-  color: var(--muted);
+  color: var(--green-tint);
 }
 
 /* ---- Footer ---- */
@@ -668,7 +802,7 @@
 
   .heroInner {
     display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
     align-items: center;
     gap: 56px;
   }
@@ -677,15 +811,25 @@
     font-size: 22px;
   }
 
+  .phoneStage {
+    min-height: 560px;
+  }
+
   .phoneStage::before {
-    width: 440px;
-    height: 440px;
+    width: 320px;
+    height: 320px;
+    right: -60px;
+  }
+
+  .photo {
+    height: 470px;
   }
 
   .phone {
-    width: 300px;
+    left: -4%;
+    width: 250px;
     border-width: 10px;
-    border-radius: 44px;
+    border-radius: 42px;
   }
 
   .idea,
@@ -702,23 +846,26 @@
   .chain {
     flex-direction: row;
     align-items: center;
-    gap: 64px;
     margin-top: 56px;
   }
 
   .chain li {
-    font-size: 28px;
+    font-size: 21px;
+  }
+
+  .chain {
+    gap: 56px;
   }
 
   .chain li:not(:last-child)::after {
-    left: calc(100% + 24px);
+    left: calc(100% + 20px);
     top: 50%;
     margin-top: -6px;
     transform: rotate(-45deg);
   }
 
   .group {
-    padding: 32px;
+    padding: 34px 36px 38px;
   }
 
   .stepList {
@@ -727,6 +874,30 @@
 
   .vision {
     padding: 136px 0;
+  }
+
+  .vision::before {
+    top: -210px;
+    right: -210px;
+    width: 340px;
+    height: 340px;
+    border-width: 26px;
+  }
+
+  .vision::after {
+    bottom: -250px;
+    left: -230px;
+    width: 360px;
+    height: 360px;
+    border-width: 26px;
+  }
+
+  .soon::before {
+    bottom: -170px;
+    right: -120px;
+    width: 340px;
+    height: 340px;
+    border-width: 26px;
   }
 
   .values {
