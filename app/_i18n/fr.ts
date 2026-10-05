@@ -121,7 +121,7 @@ export const fr = {
         "Nous utilisons chaque jour des services publics et privés. Chaque expérience nous apprend quelque chose : ce qui fonctionne, ce qui peut être amélioré et ce qui mérite d'être repensé.",
         "NeexNaxari donne à chacun la possibilité de partager simplement son expérience et de contribuer à une amélioration continue des services.",
       ],
-      chain: ["Votre expérience", "Votre voix", "L'amélioration des services"],
+      chain: ["Votre expérience", "Votre voix", "Des résultats partagés avec les services"],
     },
     services: {
       title: "Tous les services, toutes les expériences.",

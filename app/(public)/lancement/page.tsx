@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/** Icons of « Votre expérience → Votre voix → L'amélioration des services ». */
+/** Icons of « Votre expérience → Votre voix → Des résultats partagés avec les services ». */
 const CHAIN_ICONS = [
   // A person.
   <svg key="person" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -35,10 +35,9 @@ const CHAIN_ICONS = [
     <path d="M4 5h16v11H9l-5 4z" />
     <path d="M9 10.5h.01M12 10.5h.01M15 10.5h.01" />
   </svg>,
-  // A rising line.
-  <svg key="better" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 18l6-6 4 4 6-8" />
-    <path d="M15 8h5v5" />
+  // Results: three bars.
+  <svg key="results" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <path d="M6 20v-6M12 20V8M18 20V4M3 20h18" />
   </svg>,
 ];
 
