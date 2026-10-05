@@ -138,7 +138,7 @@ export const fr = {
         },
         {
           title: "Je contribue",
-          text: "Mon retour permet de mieux comprendre les expériences vécues et d'identifier les pistes d'amélioration.",
+          text: "Mon retour permet de mieux comprendre les expériences vécues et d'identifier les pistes d'amélioration. Les résultats seront rendus publics, en toute transparence.",
         },
       ],
       closing: "Environ une minute pour partager une expérience. Une voix de plus pour faire progresser les services.",
