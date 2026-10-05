@@ -134,9 +134,9 @@ describe("reference data", () => {
       SELECT (SELECT array_agg(t.code) FROM topic t
               WHERE t.category_id IS NULL AND EXISTS (SELECT 1 FROM topic_set_item i WHERE i.topic_id = t.id)) AS topics,
              (SELECT array_agg(code ORDER BY code) FROM question WHERE category_id IS NULL) AS questions,
-             -- The screen follows the order of the categories.
-             (SELECT bool_and((c.position - 1) * 10 < t.position AND t.position < c.position * 10)
-              FROM topic t JOIN evaluation_category c ON c.id = t.category_id) AS order`);
+             -- The screens follow the order of the categories, « Résultat obtenu » first (0021).
+             (SELECT array_agg(code ORDER BY position) = ARRAY['OUTCOME', 'STAFF', 'DELAYS', 'PROCEDURE', 'COST',
+                     'SERVICE_QUALITY', 'PREMISES'] FROM evaluation_category) AS order`);
     expect(row).toEqual({
       topics: null,
       questions: [
