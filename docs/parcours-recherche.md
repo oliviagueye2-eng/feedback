@@ -56,7 +56,7 @@ Sur ordinateur, pas de mode plein écran : les résultats s'affichent sous le ch
 - Carte « Vous évaluez » : nom, commune (si connue) et secteur, lien « Changer » (vers la recherche).
 - **Sur quoi porte votre avis ?** (mêmes textes pour un lieu ou un organisme, 2026-10-01) : la liste des services de l'établissement, plus « Autre démarche ». **Facultatif.** Pas affiché si l'établissement n'a aucun service.
 - **À quand remonte votre expérience ?** : 4 réponses en tuiles, **obligatoire**, aucune présélectionnée. Oubli : message du site « Indiquez à quand remonte votre expérience. » (plus la bulle du navigateur ; `FormValidation`).
-- Bouton **« Commencer »**, puis « Anonyme, environ 1 minute. » et le lien « ‹ Retour à l'accueil ».
+- Bouton **« Commencer »**, puis « Gratuit, environ 1 minute. » et le lien « ‹ Retour à l'accueil ».
 - **QR code** : ni motif (le service du guichet est connu et affiché) ni date (visite du jour). QR code inconnu ou désactivé : « Ce QR code n'est plus actif » et lien vers la recherche.
 - « Donner mon avis » enregistre la visite (identifiant d'avis créé à l'affichage de la page : un double envoi met à jour le même avis) puis ouvre l'écran 2.
 

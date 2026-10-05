@@ -5,6 +5,7 @@ import { DomainError } from "@/src/domain/errors";
 import { getEssentialScreen } from "@/src/domain/feedback";
 import { getDictionary } from "../../../../_i18n";
 import { FeedbackHeader } from "../../../_feedback/FeedbackHeader";
+import { sendPageHref } from "../../../_feedback/links";
 import styles from "../../../_feedback/screen.module.css";
 
 /**
@@ -21,8 +22,8 @@ export default async function ThanksPage({ params }: PageProps<"/donner/[feedbac
     throw error;
   }
   const { context } = screen;
-  // Not finished yet: back to screen 2b (which goes back to screen 2 if needed).
-  if (!context.completed) redirect(`/donner/${feedbackId}/precisions`);
+  // Not sent yet: back to the last screen (which goes back to screen 2 if needed).
+  if (!context.completed) redirect(sendPageHref(feedbackId));
   const { common, home, thanks: t } = await getDictionary();
   // The day's date on the stamp, in Dakar.
   const today = new Intl.DateTimeFormat("fr-FR", { timeZone: "Africa/Dakar", dateStyle: "short" }).format(new Date());

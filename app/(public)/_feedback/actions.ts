@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { DomainError } from "@/src/domain/errors";
 import { defaultLocale } from "../../_i18n";
 import {
-  completeFeedback,
   nextQuestionPage,
   OTHER_TOPIC_CODE,
   removeComment,
@@ -13,10 +12,11 @@ import {
   saveQuestionnaire,
   saveTopicGates,
   saveTopics,
+  submitFeedback,
   upsertFeedback,
   type QuestionPage,
 } from "@/src/domain/feedback";
-import { questionPageHref } from "./links";
+import { questionPageHref, sendPageHref } from "./links";
 
 /**
  * Screen 1 → screen 2: records the visit (establishment, reason, when), then
@@ -64,8 +64,8 @@ export async function answerEssential(formData: FormData) {
 
 /**
  * Screen 2b → the detailed questionnaire (screen 6) when one is published,
- * else the feedback is complete and screen 7 (thanks) follows: the user only
- * sees « Continuer », never a choice between stopping and going on. Saves
+ * else the last screen (« Envoyer mon avis »): the user only sees
+ * « Continuer », never a choice between stopping and going on. Saves
  * the yes/no answers asked in the place of a topic (fields "q:CODE") first,
  * then the topics marked « Bien », « Pas bien » or « Non concerné » (fields
  * "topic:CODE") and the free text, all optional (sending nothing is allowed).
@@ -106,14 +106,12 @@ export async function saveDetails(formData: FormData) {
     throw error;
   }
   const next = await nextQuestionPage(id, "details");
-  if (next) redirect(questionPageHref(id, next));
-  await completeFeedback(id);
-  redirect(`/donner/${id}/merci`);
+  redirect(next ? questionPageHref(id, next) : sendPageHref(id));
 }
 
 /**
- * Screen 6 or 6b → the next page of questions, or screen 7 once the feedback
- * is complete: saves the answers given (fields "q:CODE", each one optional).
+ * Screen 6 or 6b → the next page of questions, or the last screen (« Envoyer
+ * mon avis »): saves the answers given (fields "q:CODE", each one optional).
  * An unknown question or option (a forged sending) comes back with the error
  * message.
  */
@@ -134,5 +132,26 @@ export async function saveDetailedAnswers(formData: FormData) {
     }
     throw error;
   }
-  redirect(next ? questionPageHref(id, next) : `/donner/${id}/merci`);
+  redirect(next ? questionPageHref(id, next) : sendPageHref(id));
+}
+
+/**
+ * Last screen → screen 7: the e-mail or phone number and the statement on
+ * honour, both required (the browser asks for them first; a wrong number or
+ * a missing tick sent anyway comes back with the error message).
+ */
+export async function sendFeedback(formData: FormData) {
+  const id = String(formData.get("feedbackId") ?? "");
+  try {
+    await submitFeedback(id, {
+      contact: String(formData.get("contact") ?? ""),
+      attested: formData.get("attested") === "yes",
+    });
+  } catch (error) {
+    if (error instanceof DomainError && error.code === "INVALID_INPUT") {
+      redirect(`${sendPageHref(id)}?erreur=1`);
+    }
+    throw error;
+  }
+  redirect(`/donner/${id}/merci`);
 }

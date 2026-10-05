@@ -881,3 +881,53 @@ form.screen:has(> .heading) {
   background: var(--green) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 12.5l3.2 3.2L17 9' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
     center / 22px no-repeat;
 }
+
+/* ---- Last screen: e-mail or phone, statement on honour, « Envoyer mon avis » ---- */
+
+.contact {
+  font: inherit;
+  font-size: 17px;
+  min-height: 50px;
+  border: 1.5px solid var(--control);
+  border-radius: 10px;
+  padding: 0 14px;
+  background: #fff;
+  color: var(--ink);
+}
+
+/* The whole line is the checkbox: a large target, the box aligned on the first line.
+   (.group > .attest: stronger than the bold, unpadded .group > label.) */
+.group > .attest {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  min-height: 44px;
+  padding: 12px 14px;
+  border: var(--choice-border) solid var(--control);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.attest input {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--green);
+}
+
+.attest:has(input:checked) {
+  border-color: var(--green);
+  background: var(--green-tint);
+}
+
+/* Greyed until the statement is ticked (the browser, then the server, still say why). */
+@supports selector(:has(*)) {
+  .send:has(input[name="attested"]:not(:checked)) button[type="submit"] {
+    opacity: 0.5;
+  }
+}

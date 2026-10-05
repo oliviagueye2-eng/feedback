@@ -23,7 +23,7 @@ Le schéma est créé par les migrations SQL de [`src/db/migrations/`](../src/db
 ## 1. Principes
 
 1. **L'établissement est au centre.** Un avis porte toujours sur un établissement. Le service est une information complémentaire.
-2. **Anonymat.** Aucune donnée personnelle n'est stockée : pas de nom, de téléphone, d'adresse IP ni d'identifiant d'appareil durable.
+2. **Données personnelles réduites.** Depuis le 2026-10-05 (migration 0023), l'avis est envoyé avec un e-mail ou un numéro de téléphone (table `feedback_contact`, à part de l'avis, jamais publié ni transmis à l'établissement) et une attestation sur l'honneur. Pas de nom, pas d'adresse IP ni d'identifiant d'appareil durable.
 3. **Enregistrement immédiat.** Chaque réponse est enregistrée dès qu'elle est donnée. Un avis abandonné juste après la question essentielle reste exploitable.
 4. **Jamais d'impasse.** Un usager peut saisir un établissement absent du référentiel. Celui-ci est créé avec le statut `pending_review`.
 5. **Questionnaires versionnés.** On ne modifie jamais une question déjà utilisée : on crée une nouvelle version. Les anciens avis restent lisibles.

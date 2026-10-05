@@ -14,3 +14,6 @@ export const screenOneHref = (context: FeedbackContext, feedbackId: string) =>
 /** Screen 6 (the sector's questions) or 6b (the common questions). */
 export const questionPageHref = (feedbackId: string, page: QuestionPage) =>
   page === "sector" ? `/donner/${feedbackId}/questionnaire` : `/donner/${feedbackId}/questionnaire/commun`;
+
+/** Last screen: the e-mail or phone number and the statement on honour, then « Envoyer mon avis ». */
+export const sendPageHref = (feedbackId: string) => `/donner/${feedbackId}/envoyer`;

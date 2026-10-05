@@ -23,6 +23,8 @@ import {
   saveAnswer,
   saveComment,
   saveQuestionnaire,
+  getSendScreen,
+  submitFeedback,
   saveTopicGates,
   saveTopics,
   upsertFeedback,
@@ -357,11 +359,23 @@ describe("feedback", () => {
     await expect(saveAnswer(health, "RECEIPT_GIVEN", { option: "NOTHING_PAID" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
 
     // Two answered, three skipped.
-    // Satisfied enough: no common page after the sector's, the feedback ends.
+    // Satisfied enough: no common page after the sector's, the last screen follows.
     expect(await saveQuestionnaire(health, "sector", { WAIT_TIME: "2_TO_4_H", RECEIPT_GIVEN: "NO" })).toBeNull();
     const after = await getQuestionnaireScreen(health, "sector");
     expect(after.questions.map((q) => q.chosen)).toEqual([null, null, null, "2_TO_4_H", "NO"]);
-    expect(after.context.completed).toBe(true);
+    // Sent only from the last screen, with the contact and the statement on honour.
+    expect(after.context.completed).toBe(false);
+    const send = await getSendScreen(health);
+    expect(send.previous).toBe("sector");
+    expect(send.contact).toBeNull();
+    await expect(submitFeedback(health, { contact: "77 123 45 67", attested: false })).rejects.toMatchObject({ code: "INVALID_INPUT" });
+    await expect(submitFeedback(health, { contact: "pas un numéro", attested: true })).rejects.toMatchObject({ code: "INVALID_INPUT" });
+    expect((await getEssentialScreen(health)).context.completed).toBe(false);
+    await submitFeedback(health, { contact: "77 123 45 67", attested: true });
+    // Sent again (a network cut): the contact is replaced, the feedback stays complete.
+    await submitFeedback(health, { contact: " Awa.Diop@Exemple.SN ", attested: true });
+    expect((await getSendScreen(health)).contact).toEqual({ kind: "email", value: "awa.diop@exemple.sn" });
+    expect((await getEssentialScreen(health)).context.completed).toBe(true);
 
     await expect(saveQuestionnaire(health, "sector", { WAIT_TIME: "NEVER" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
   });
@@ -386,6 +400,9 @@ describe("feedback", () => {
     // « Pourquoi ? » answered, then « Non » changed to « Oui » on the same page.
     expect(await saveQuestionnaire(unhappy, "sector", { WAIT_TIME: "OVER_4_H" })).toBe("common");
     expect(await saveQuestionnaire(unhappy, "common", { REPORTED: "YES_ANSWERED", REPORT_WHY: "POINTLESS" })).toBeNull();
+    // « Précédent » from the last screen leads back to the common questions.
+    expect((await getSendScreen(unhappy)).previous).toBe("common");
+    await submitFeedback(unhappy, { contact: "771234567", attested: true });
     const answered = async () => (await rows<{ code: string }>(
       `SELECT q.code FROM answer a JOIN question q ON q.id = a.question_id
        WHERE a.feedback_id = $1 ORDER BY q.code`, [unhappy])).map((r) => r.code);
