@@ -538,7 +538,7 @@ export async function findDetailedQuestions(feedbackId: string, setIds: number[]
     }>(
       `${PAGE_ITEMS}
        SELECT q.id, q.code, q.type, qt.label, ao.code AS option_code, ot.label AS option_label, it.common,
-              (SELECT c.position FROM evaluation_category c WHERE c.id = q.category_id) AS category_position,
+              (SELECT c.question_position FROM evaluation_category c WHERE c.id = q.category_id) AS category_position,
               EXISTS (SELECT 1 FROM answer a WHERE a.feedback_id = $2 AND a.option_id = ao.id) AS chosen
        FROM items it
        JOIN question q ON q.id = it.question_id
@@ -595,12 +595,11 @@ export async function findDetailedQuestions(feedbackId: string, setIds: number[]
 }
 
 /**
- * The page in the order of the evaluation categories, like the topics. A
+ * The page in the order of the evaluation categories, like the topics, but
+ * by their question_position (« Résultat obtenu » first, 0021). A
  * question that another opens stays right after it, so each question goes
- * with the first one of its chain: in the category of that one (else the
- * first category of the chain); a chain without any comes first (the
- * questions that set the context: « Vous êtes », the subject). Otherwise the
- * lists' order is kept. The common questions stay last, on their own page.
+ * with the first one of its chain. Otherwise the lists' order is kept. The
+ * common questions stay last, on their own page.
  */
 function byCategory(questions: DetailedQuestion[], categoryOf: Map<string, number | null>): DetailedQuestion[] {
   const index = new Map(questions.map((q, i) => [q.code, i]));
@@ -610,13 +609,21 @@ function byCategory(questions: DetailedQuestion[], categoryOf: Map<string, numbe
     return parent ? rootOf(questions[index.get(parent.dependsOn)!]) : q.code;
   };
   const roots = new Map(questions.map((q) => [q.code, rootOf(q)]));
-  const chainKey = (root: string) => {
-    const categories = questions
-      .filter((q) => roots.get(q.code) === root)
+  // A chain whose first question has no category: first while nothing rated
+  // came before it (« Vous êtes », « Pourquoi êtes-vous venu(e) ? »), else
+  // with the first category of the questions it opens (« Avez-vous payé… ? »
+  // with the receipt), else with the chain before it (« Recommanderiez-
+  // vous… ? » stays at the end).
+  const keys = new Map<string, number>();
+  let previous = -1;
+  for (const root of new Set(roots.values())) {
+    const opened = questions
+      .filter((q) => q.code !== root && roots.get(q.code) === root)
       .flatMap((q) => categoryOf.get(q.code) ?? []);
-    return categoryOf.get(root) ?? (categories.length ? Math.min(...categories) : 0);
-  };
-  const keys = new Map([...new Set(roots.values())].map((root) => [root, chainKey(root)]));
+    previous =
+      categoryOf.get(root) ?? (previous === -1 ? -1 : opened.length ? Math.min(...opened) : previous);
+    keys.set(root, previous);
+  }
   const keyOf = (q: DetailedQuestion) => keys.get(roots.get(q.code)!)!;
   return [...questions].sort(
     (a, b) =>

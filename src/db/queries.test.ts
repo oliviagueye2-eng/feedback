@@ -299,7 +299,7 @@ describe("feedback", () => {
     });
     const { questions } = await getDetailedQuestionnaire(fileFeedback);
     expect(questions.map((q) => q.code)).toEqual([
-      "GOAL_ACHIEVED", "VISITS_COUNT", "WAIT_TIME", "DOCUMENTS_KNOWN", "PAID_SOMETHING", "RECEIPT_GIVEN", "REPORTED",
+      "GOAL_ACHIEVED", "WAIT_TIME", "VISITS_COUNT", "DOCUMENTS_KNOWN", "PAID_SOMETHING", "RECEIPT_GIVEN", "REPORTED",
       "REPORT_WHY",
     ]);
     await saveAnswer(fileFeedback, "GOAL_ACHIEVED", { option: "YES" });
@@ -338,9 +338,9 @@ describe("feedback", () => {
     await saveTopicGates(health, { PAID_SOMETHING: "YES" });
     const before = await getQuestionnaireScreen(health, "sector");
     expect(before.questions.map((q) => q.code)).toEqual([
-      "PATIENT", "CARE_RECEIVED", "WAIT_TIME", "PRESCRIPTION_AVAILABLE", "RECEIPT_GIVEN",
+      "PATIENT", "CARE_RECEIVED", "PRESCRIPTION_AVAILABLE", "WAIT_TIME", "RECEIPT_GIVEN",
     ]);
-    expect(before.questions[2]!.options.map((o) => o.label)[0]).toBe("Moins de 30 minutes");
+    expect(before.questions[3]!.options.map((o) => o.label)[0]).toBe("Moins de 30 minutes");
     // Paid: « Je n'ai rien payé » is no longer offered, nor accepted (0011).
     expect(before.questions[4]!.options.map((o) => o.code)).toEqual(["FOR_ALL", "FOR_SOME", "NO"]);
     await expect(saveAnswer(health, "RECEIPT_GIVEN", { option: "NOTHING_PAID" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
@@ -349,7 +349,7 @@ describe("feedback", () => {
     // Satisfied enough: no common page after the sector's, the feedback ends.
     expect(await saveQuestionnaire(health, "sector", { WAIT_TIME: "2_TO_4_H", RECEIPT_GIVEN: "NO" })).toBeNull();
     const after = await getQuestionnaireScreen(health, "sector");
-    expect(after.questions.map((q) => q.chosen)).toEqual([null, null, "2_TO_4_H", null, "NO"]);
+    expect(after.questions.map((q) => q.chosen)).toEqual([null, null, null, "2_TO_4_H", "NO"]);
     expect(after.context.completed).toBe(true);
 
     await expect(saveQuestionnaire(health, "sector", { WAIT_TIME: "NEVER" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
@@ -412,27 +412,28 @@ describe("feedback", () => {
     const questionsOf = async (feedback: string) =>
       (await getQuestionnaireScreen(feedback, "sector")).questions.map((q) => q.code);
     expect(await questionsOf("c3d4e5f6-0000-4000-8000-000000000001")).toEqual([
-      "STOP_WAIT", "CROWDED", "TICKET_GIVEN", "TRIP_INCIDENT", "BUS_INCIDENT_TYPE", "INCIDENT_EXPLAINED", "INCIDENT_SOLUTION",
+      "STOP_WAIT", "TRIP_INCIDENT", "BUS_INCIDENT_TYPE", "INCIDENT_EXPLAINED", "INCIDENT_SOLUTION", "TICKET_GIVEN", "CROWDED",
     ]);
-    expect((await questionsOf("c3d4e5f6-0000-4000-8000-000000000005")).slice(4)).toEqual([
+    expect((await questionsOf("c3d4e5f6-0000-4000-8000-000000000005")).slice(0, 5)).toEqual([
+      "DEPARTURE_ON_TIME",
       "CROSSING_INCIDENT", "BOAT_INCIDENT_TYPE", "INCIDENT_EXPLAINED", "INCIDENT_SOLUTION",
     ]);
     const train = "c3d4e5f6-0000-4000-8000-000000000008";
     await firstQuestion(train, "TER", "TRAIN_TRIP");
-    expect((await questionsOf(train))[4]).toBe("TRAIN_INCIDENT_TYPE");
+    expect((await questionsOf(train))[2]).toBe("TRAIN_INCIDENT_TYPE");
     expect((await getEstablishment(await establishment("TER"))).services.map((s) => s.label).sort())
       .toEqual(["Achat d'un ticket ou d'une carte d'abonnement", "Un trajet en train"]);
     // The airport gets the questions of its type (0005).
     const aibd = "c3d4e5f6-0000-4000-8000-000000000006";
     await firstQuestion(aibd, "Aéroport international Blaise Diagne", null);
     expect((await getQuestionnaireScreen(aibd, "sector")).questions.map((q) => q.code))
-      .toEqual(["WAYFINDING", "CHECKS_WAIT", "SEAT_TO_WAIT", "TOILETS", "TRANSPORT_ACCESS"]);
+      .toEqual(["CHECKS_WAIT", "WAYFINDING", "SEAT_TO_WAIT", "TOILETS", "TRANSPORT_ACCESS"]);
     // Air Sénégal (0006): a flight; « Informé(e) ? » and « Pris(e) en charge ? » shown only after a delay.
     const flight = "c3d4e5f6-0000-4000-8000-000000000007";
     await firstQuestion(flight, "Air Sénégal", "FLIGHT");
     expect((await getQuestionnaireScreen(flight, "sector")).questions.map((q) => q.code))
-      .toEqual(["DEPARTURE_ON_TIME", "DELAY_INFORMED", "DELAY_CARE", "BOARDING", "LUGGAGE"]);
-    expect((await getQuestionnaireScreen(flight, "sector")).questions[0]?.label).toBe("Êtes-vous parti(e) à l'heure prévue ?");
+      .toEqual(["LUGGAGE", "DEPARTURE_ON_TIME", "DELAY_INFORMED", "DELAY_CARE", "BOARDING"]);
+    expect((await getQuestionnaireScreen(flight, "sector")).questions[1]?.label).toBe("Êtes-vous parti(e) à l'heure prévue ?");
     // Screen 1 offers the operator's services.
     const { services } = await getEstablishment(await establishment("COSAMA"));
     expect(services.map((s) => s.label).sort()).toEqual(["Achat d'un ticket ou d'une carte d'abonnement", "Une traversée en bateau"]);
@@ -447,8 +448,8 @@ describe("feedback", () => {
     const { questions } = await getDetailedQuestionnaire(both);
     // Health's five, then the purchase's (its WAIT_TIME already asked), then the common ones.
     expect(questions.map((q) => q.code)).toEqual([
-      "PATIENT", "CARE_RECEIVED", "WAIT_TIME", "PRESCRIPTION_AVAILABLE", "PAID_SOMETHING", "RECEIPT_GIVEN",
-      "GOAL_ACHIEVED", "PAYMENT_AS_WISHED", "REPORTED", "REPORT_WHY",
+      "PATIENT", "CARE_RECEIVED", "PRESCRIPTION_AVAILABLE", "GOAL_ACHIEVED", "WAIT_TIME", "PAID_SOMETHING",
+      "RECEIPT_GIVEN", "PAYMENT_AS_WISHED", "REPORTED", "REPORT_WHY",
     ]);
     await db.exec("UPDATE establishment_type SET question_set_id = NULL WHERE code = 'HOSPITAL'");
   });
@@ -575,7 +576,7 @@ describe("feedback", () => {
     const questionsOf = async (feedback: string) =>
       (await getDetailedQuestionnaire(feedback)).questions.map((q) => q.code);
     expect(await questionsOf("f6a7b8c9-0000-4000-8000-000000000004")).toEqual([
-      "RESPONDENT", "GOAL_ACHIEVED", "VISITS_COUNT", "WAIT_TIME", "DOCUMENTS_KNOWN", "PAID_SOMETHING", "RECEIPT_GIVEN",
+      "RESPONDENT", "GOAL_ACHIEVED", "WAIT_TIME", "VISITS_COUNT", "DOCUMENTS_KNOWN", "PAID_SOMETHING", "RECEIPT_GIVEN",
       "REPORTED", "REPORT_WHY",
     ]);
     expect(await questionsOf("f6a7b8c9-0000-4000-8000-000000000006")).toEqual([
@@ -594,7 +595,7 @@ describe("feedback", () => {
     ]);
     await topicsOf("a7b8c9d0-0000-4000-8000-000000000006", preschool!.id, services.SCHOOL_ADMIN);
     expect(await questionsOf("a7b8c9d0-0000-4000-8000-000000000006")).toEqual([
-      "PRESCHOOL_RESPONDENT", "GOAL_ACHIEVED", "VISITS_COUNT", "WAIT_TIME", "DOCUMENTS_KNOWN", "PAID_SOMETHING",
+      "PRESCHOOL_RESPONDENT", "GOAL_ACHIEVED", "WAIT_TIME", "VISITS_COUNT", "DOCUMENTS_KNOWN", "PAID_SOMETHING",
       "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY",
     ]);
   });
@@ -637,7 +638,7 @@ describe("feedback", () => {
         "Accessibilité aux personnes handicapées ou âgées",
       ],
       questions: [
-        "RESPONDENT", "GOAL_ACHIEVED", "VISITS_COUNT", "WAIT_TIME", "DOCUMENTS_KNOWN", "PAID_SOMETHING", "RECEIPT_GIVEN",
+        "RESPONDENT", "GOAL_ACHIEVED", "WAIT_TIME", "VISITS_COUNT", "DOCUMENTS_KNOWN", "PAID_SOMETHING", "RECEIPT_GIVEN",
         "REPORTED", "REPORT_WHY",
       ],
     });
@@ -691,7 +692,7 @@ describe("feedback", () => {
         "Accessibilité aux personnes handicapées ou âgées",
       ],
       questions: [
-        "POLICE_VISIT_REASON", "GOAL_ACHIEVED", "WAIT_TIME", "VISITS_COUNT", "STATEMENT_RECEIPT", "PAID_SOMETHING",
+        "POLICE_VISIT_REASON", "STATEMENT_RECEIPT", "GOAL_ACHIEVED", "WAIT_TIME", "VISITS_COUNT", "PAID_SOMETHING",
         "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY",
       ],
     });
@@ -745,7 +746,7 @@ describe("feedback", () => {
       (await getQuestionnaireScreen(office, "sector")).questions.map((q) => [q.code, q.revealedBy?.dependsOn ?? null]);
     // The payment, already asked, is not shown again.
     expect(await screen6()).toEqual([
-      ["GOAL_ACHIEVED", null], ["VISITS_COUNT", null], ["WAIT_TIME", null], ["DOCUMENTS_KNOWN", null],
+      ["GOAL_ACHIEVED", null], ["WAIT_TIME", null], ["VISITS_COUNT", null], ["DOCUMENTS_KNOWN", null],
     ]);
     expect((await getDetailedQuestionnaire(office)).askedBefore).toEqual(["FILE_SUBMITTED", "PAID_SOMETHING"]);
 
@@ -753,7 +754,7 @@ describe("feedback", () => {
     await saveTopicGates(office, { FILE_SUBMITTED: "YES", PAID_SOMETHING: "YES" });
     await saveTopics(office, { topics: [{ code: "PROCESSING_TIME", sentiment: "negative" }, { code: "FEES", sentiment: "negative" }] });
     expect((await getDetailsScreen(office)).topics.filter((t) => t.sentiment).map((t) => t.code)).toEqual(["PROCESSING_TIME", "FEES"]);
-    expect((await screen6()).map(([code]) => code)).toEqual(["GOAL_ACHIEVED", "VISITS_COUNT", "WAIT_TIME", "DOCUMENTS_KNOWN", "RECEIPT_GIVEN"]);
+    expect((await screen6()).map(([code]) => code)).toEqual(["GOAL_ACHIEVED", "WAIT_TIME", "VISITS_COUNT", "DOCUMENTS_KNOWN", "RECEIPT_GIVEN"]);
 
     // Touched again (cleared): the answer goes, and so do the topic and, at the end, the receipt.
     await saveQuestionnaire(office, "sector", { RECEIPT_GIVEN: "NO" });
