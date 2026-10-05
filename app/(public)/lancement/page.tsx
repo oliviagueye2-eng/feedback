@@ -111,7 +111,6 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* Examples only: not the list of sectors of the platform. */}
         <section className={`${styles.services} ${styles.reveal}`} data-reveal="">
           <div className="container">
             <div className={styles.servicesHead}>
@@ -123,25 +122,11 @@ export default async function LandingPage() {
                 <Image src={healthPhoto} alt={t.services.photoAlt} sizes="(min-width: 900px) 520px, 90vw" />
               </div>
             </div>
-            <div className={styles.groups}>
-              {t.services.groups.map((group) => (
-                <div key={group.title} className={styles.group}>
-                  <h3>{group.title}</h3>
-                  <ul>
-                    {group.items.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-            <p className={styles.more}>{t.services.more}</p>
           </div>
         </section>
 
         <section id="comment-ca-marche" className={`${styles.steps} ${styles.anchor} ${styles.reveal}`} data-reveal="">
           <div className="container">
-            <p className={styles.label}>{t.steps.label}</p>
             <h2 className={styles.title}>{t.steps.title}</h2>
             <ol className={styles.stepList}>
               {t.steps.items.map((step, index) => (
@@ -161,7 +146,6 @@ export default async function LandingPage() {
         {/* The strong moment of the page: dark ink, very large lines, then the values. */}
         <section id="vision" className={`${styles.vision} ${styles.anchor} ${styles.reveal}`} data-reveal="">
           <div className="container">
-            <p className={styles.label}>{t.vision.label}</p>
             <h2 className={styles.visionLines}>
               {t.vision.lines.map((line) => (
                 <span key={line}>{line}</span>
@@ -182,7 +166,6 @@ export default async function LandingPage() {
 
         <section id="bientot" className={`${styles.soon} ${styles.anchor} ${styles.reveal}`} data-reveal="">
           <div className={`container ${styles.soonInner}`}>
-            <p className={styles.label}>{t.soon.label}</p>
             <h2 className={styles.soonTitle}>{t.soon.title}</h2>
             <p className={styles.lead}>{t.soon.text}</p>
             <p className={styles.soonFollow}>{t.soon.follow}</p>

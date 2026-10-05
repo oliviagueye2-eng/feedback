@@ -126,21 +126,9 @@ export const fr = {
     services: {
       title: "Tous les services, toutes les expériences.",
       lead: "NeexNaxari ne se limite pas à un secteur. La plateforme est pensée pour recueillir les expériences des citoyens et des clients, dans les services publics comme dans les services privés.",
-      groups: [
-        {
-          title: "Services publics",
-          items: ["Mairie", "Centre de santé", "Transport", "École", "Administration"],
-        },
-        {
-          title: "Services privés",
-          items: ["Restaurant", "Station-service", "Commerce", "Banque", "Prestataire de services"],
-        },
-      ],
-      more: "Et bien d'autres services du quotidien.",
       photoAlt: "Une usagère à l'accueil d'un centre de santé, face à une employée souriante.",
     },
     steps: {
-      label: "Simple et rapide",
       title: "Partager une expérience devrait être simple.",
       items: [
         { title: "Je choisis", text: "Je sélectionne le service ou l'établissement concerné." },
@@ -156,7 +144,6 @@ export const fr = {
       closing: "Environ une minute pour partager une expérience. Une voix de plus pour faire progresser les services.",
     },
     vision: {
-      label: "Notre vision",
       lines: ["Des services plus à l'écoute.", "Des expériences qui comptent.", "Un Sénégal qui progresse."],
       text: "NeexNaxari veut contribuer à créer une culture de l'écoute, du respect, de la transparence et de l'amélioration continue des services.",
       valuesTitle: "Ce qui nous guide",
@@ -174,7 +161,6 @@ export const fr = {
       ],
     },
     soon: {
-      label: "Bientôt",
       title: "NeexNaxari arrive.",
       text: "Une nouvelle façon de partager vos expériences et de participer à l'amélioration des services.",
       follow: "Suivez-nous sur les réseaux pour être informé du lancement officiel.",

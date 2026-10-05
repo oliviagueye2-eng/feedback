@@ -114,18 +114,13 @@
 
 /* ---- Shared ---- */
 
-/* Small label above a title: a pill in the logo's light green. */
+/* The short line above the hero title and above « Pourquoi » : plain text in
+   the logo's green, no box. */
 .label {
-  display: inline-block;
-  margin: 0 0 16px;
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: var(--green-tint);
-  color: var(--green-dark);
-  font-size: 13px;
+  margin: 0 0 12px;
+  color: var(--green);
+  font-size: 18px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .title {
@@ -390,12 +385,6 @@
   background: #fff;
 }
 
-.groups {
-  display: grid;
-  gap: 18px;
-  margin-top: 36px;
-}
-
 .servicesHead {
   display: grid;
   gap: 28px;
@@ -413,58 +402,6 @@
   height: 100%;
   object-fit: cover;
   display: block;
-}
-
-/* Examples only, written as plain lists: nothing here looks clickable. */
-.group {
-  padding: 26px 26px 28px;
-  border-radius: 22px;
-  background: var(--green-tint);
-}
-
-.group:nth-child(2) {
-  background: var(--notice-tint);
-}
-
-.group h3 {
-  margin: 0 0 16px;
-  font-size: 20px;
-}
-
-.group ul {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 20px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.group li {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  font-size: 17px;
-}
-
-.group li::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--green);
-  transform: translateY(-2px);
-}
-
-.group:nth-child(2) li::before {
-  background: var(--satisfaction-3);
-}
-
-.more {
-  margin: 22px 0 0;
-  color: var(--muted);
-  font-style: italic;
 }
 
 /* ---- How it works ---- */
@@ -558,10 +495,6 @@
   z-index: 1;
 }
 
-.vision .label {
-  background: rgb(255 255 255 / 0.14);
-  color: #fff;
-}
 
 .visionLines {
   display: flex;
@@ -648,10 +581,6 @@
   pointer-events: none;
 }
 
-.soon .label {
-  background: rgb(255 255 255 / 0.16);
-  color: #fff;
-}
 
 .soonInner {
   position: relative;
@@ -770,7 +699,6 @@
     flex-direction: row;
   }
 
-  .groups,
   .values {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -883,9 +811,6 @@
     transform: rotate(-45deg);
   }
 
-  .group {
-    padding: 34px 36px 38px;
-  }
 
   .servicesHead {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
