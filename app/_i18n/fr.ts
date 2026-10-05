@@ -104,7 +104,6 @@ export const fr = {
       closeMenu: "Fermer le menu",
     },
     hero: {
-      label: "Votre voix compte",
       title: "Votre expérience peut faire avancer les services.",
       lead: "Partagez votre expérience des services que vous utilisez et contribuez à leur amélioration.",
       discover: "Découvrir NeexNaxari",

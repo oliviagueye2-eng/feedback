@@ -7,6 +7,7 @@ import { Reveal } from "./Reveal";
 import busPhoto from "../../../public/images/lancement-bus-tata.jpg";
 import healthPhoto from "../../../public/images/lancement-centre-de-sante.jpg";
 import phoneScreen from "../../../public/images/lancement-ecran-satisfaction.png";
+import stopPhoto from "../../../public/images/lancement-telephone-arret.jpg";
 import styles from "./landing.module.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -58,7 +59,6 @@ export default async function LandingPage() {
         <section id="accueil" className={`${styles.hero} ${styles.anchor}`}>
           <div className={`container ${styles.heroInner}`}>
             <div className={styles.heroText}>
-              <p className={styles.label}>{t.hero.label}</p>
               <h1 className={styles.heroTitle}>{t.hero.title}</h1>
               <p className={styles.heroLead}>{t.hero.lead}</p>
               <div className={styles.actions}>
@@ -162,6 +162,10 @@ export default async function LandingPage() {
         </section>
 
         <section id="bientot" className={`${styles.soon} ${styles.anchor} ${styles.reveal}`} data-reveal="">
+          {/* Decorative: a passenger on her phone at a bus stop, under a green veil. */}
+          <div className={styles.soonPhoto} aria-hidden="true">
+            <Image src={stopPhoto} alt="" fill sizes="100vw" />
+          </div>
           <div className={`container ${styles.soonInner}`}>
             <h2 className={styles.soonTitle}>{t.soon.title}</h2>
             <p className={styles.lead}>{t.soon.text}</p>

@@ -566,11 +566,30 @@
   border: 18px solid var(--flag-yellow);
   border-radius: 50%;
   pointer-events: none;
+  z-index: 1;
 }
 
+.soonPhoto {
+  position: absolute;
+  inset: 0;
+}
+
+.soonPhoto img {
+  object-fit: cover;
+  object-position: 30% 35%;
+}
+
+/* Green veil so the white text and buttons stay readable over the photo. */
+.soonPhoto::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--green) 84%, transparent);
+}
 
 .soonInner {
   position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
