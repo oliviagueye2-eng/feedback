@@ -10,16 +10,20 @@ import { DomainError } from "@/src/domain/errors";
  */
 export async function createEstablishment(formData: FormData) {
   const name = String(formData.get("name") ?? "");
+  const sector = String(formData.get("sector") ?? "");
   let id: string;
   try {
     ({ id } = await createUserEstablishment({
       name,
-      sector: formData.get("sector") || null,
+      sector: sector || null,
+      type: formData.get("type") || null,
       municipality: formData.get("municipality") || null,
     }));
   } catch (error) {
     if (error instanceof DomainError && error.code === "INVALID_INPUT") {
-      redirect(`/avis/nouveau?nom=${encodeURIComponent(name)}&erreur=1`);
+      const error = name.trim().length < 3 ? "nom" : sector ? "type" : "secteur";
+      const params = new URLSearchParams({ nom: name, secteur: sector, erreur: error });
+      redirect(`/avis/nouveau?${params}`);
     }
     throw error;
   }

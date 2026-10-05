@@ -159,6 +159,7 @@ describe("establishment", () => {
     const { id } = await createUserEstablishment({
       name: "Mairie de Ndiarème",
       sector: "ADMINISTRATION",
+      type: "TOWN_HALL",
       municipality: "Guédiawaye",
     });
     const [row] = await rows(
@@ -178,17 +179,27 @@ describe("establishment", () => {
     expect(created.municipalityName).toBe("Guédiawaye");
   });
 
-  it("accepts an establishment without sector, and rejects an unknown sector", async () => {
-    const { id } = await createUserEstablishment({ name: "Boutique de Fatou" });
-    expect((await getEstablishment(id)).sectorLabel).toBeNull();
-    await expect(createUserEstablishment({ name: "Mairie X", sector: "SPACE" })).rejects.toMatchObject({
-      code: "INVALID_INPUT",
-    });
+  it("needs a sector, and a type of that sector (or « Autre ») when it has types", async () => {
+    const invalid = { code: "INVALID_INPUT" };
+    await expect(createUserEstablishment({ name: "Boutique de Fatou" })).rejects.toMatchObject(invalid);
+    await expect(createUserEstablishment({ name: "Mairie X", sector: "SPACE" })).rejects.toMatchObject(invalid);
+    await expect(createUserEstablishment({ name: "Mairie X", sector: "ADMINISTRATION" })).rejects.toMatchObject(invalid);
+    await expect(
+      createUserEstablishment({ name: "Mairie X", sector: "ADMINISTRATION", type: "HOSPITAL" }),
+    ).rejects.toMatchObject(invalid);
+
+    const typed = await createUserEstablishment({ name: "Hôpital de Pikine", sector: "HEALTH", type: "HOSPITAL" });
+    expect(await getEstablishment(typed.id)).toMatchObject({ typeCode: "HOSPITAL", sectorLabel: "Santé" });
+    const other = await createUserEstablishment({ name: "Centre de dialyse", sector: "HEALTH", type: "OTHER" });
+    expect(await getEstablishment(other.id)).toMatchObject({ typeCode: null, sectorLabel: "Santé" });
+    // No types in this sector: none asked.
+    const noTypes = await createUserEstablishment({ name: "Banque X", sector: "BANKING_INSURANCE" });
+    expect((await getEstablishment(noTypes.id)).typeCode).toBeNull();
   });
 
   it("needs a name of 3 letters at least (UBA fits)", async () => {
-    await expect(createUserEstablishment({ name: "UB" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
-    await expect(createUserEstablishment({ name: "UBA" })).resolves.toHaveProperty("id");
+    await expect(createUserEstablishment({ name: "UB", sector: "BANKING_INSURANCE" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
+    await expect(createUserEstablishment({ name: "UBA", sector: "BANKING_INSURANCE" })).resolves.toHaveProperty("id");
   });
 
   it("lists the nineteen sectors in alphabetical order, accents ignored", async () => {

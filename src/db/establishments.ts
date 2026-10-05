@@ -6,8 +6,10 @@ import type {
   EstablishmentScope,
   EstablishmentSearchResult,
   EstablishmentSummary,
+  EstablishmentType,
   Sector,
 } from "../domain/types";
+import { OTHER_TYPE } from "../domain/types";
 import { query } from "./client";
 
 export interface EstablishmentDetail extends EstablishmentSummary {
@@ -16,7 +18,9 @@ export interface EstablishmentDetail extends EstablishmentSummary {
 
 export interface NewUserEstablishment {
   rawInput: string;
-  sectorCode: string | null;
+  sectorCode: string;
+  /** A type of the sector, or OTHER_TYPE; ignored when the sector has no types. */
+  typeCode: string | null;
   municipalityInput: string | null;
 }
 
@@ -219,6 +223,16 @@ export async function listSectors(): Promise<Sector[]> {
   );
 }
 
+export async function listEstablishmentTypes(): Promise<EstablishmentType[]> {
+  return query<EstablishmentType>(
+    `SELECT et.code, t.label, s.code AS "sectorCode"
+     FROM establishment_type et
+     JOIN establishment_type_translation t ON t.establishment_type_id = et.id AND t.language = 'fr'
+     JOIN sector s ON s.id = et.sector_id
+     ORDER BY normalize_search(t.label)`,
+  );
+}
+
 const DETAIL_COLUMNS = `
   ${SUMMARY_COLUMNS},
   coalesce((SELECT json_agg(json_build_object('id', s.id, 'code', s.code, 'label', st.label)
@@ -269,14 +283,16 @@ export async function insertUserEstablishment(
   input: NewUserEstablishment,
 ): Promise<string> {
   const rows = await query<{ id: string }>(
-    `INSERT INTO establishment (name, raw_input, sector_id, municipality_input, status, source)
-     SELECT $1, $1, s.id, $3, 'pending_review', 'user'
-     FROM (SELECT NULL) AS one
-     LEFT JOIN sector s ON s.code = $2
-     WHERE $2::text IS NULL OR s.id IS NOT NULL
+    `INSERT INTO establishment (name, raw_input, sector_id, type_id, municipality_input, status, source)
+     SELECT $1, $1, s.id, et.id, $4, 'pending_review', 'user'
+     FROM sector s
+     LEFT JOIN establishment_type et ON et.code = $3 AND et.sector_id = s.id
+     WHERE s.code = $2
+       AND (et.id IS NOT NULL OR $3 = $5
+            OR NOT EXISTS (SELECT 1 FROM establishment_type t WHERE t.sector_id = s.id))
      RETURNING id`,
-    [input.rawInput, input.sectorCode, input.municipalityInput],
+    [input.rawInput, input.sectorCode, input.typeCode, input.municipalityInput, OTHER_TYPE],
   );
-  if (!rows[0]) throw invalidInput("Unknown sector");
+  if (!rows[0]) throw invalidInput("Unknown sector, or type missing or not of the sector");
   return rows[0].id;
 }
