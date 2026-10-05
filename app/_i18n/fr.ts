@@ -267,7 +267,7 @@ export const fr = {
   send: {
     contactLabel: "Votre e-mail ou votre numéro de téléphone",
     contactPlaceholder: "Ex. : 77 123 45 67",
-    contactHelp: "Il sert uniquement à valider votre avis. Il n'est jamais publié, ni transmis à l'établissement.",
+    contactHelp: "Il sert uniquement à des fins de validation et de modération. Il n'est jamais publié, ni transmis à l'établissement.",
     contactError: "Indiquez une adresse e-mail ou un numéro de téléphone sénégalais.",
     attest: "J'atteste sur l'honneur que cet avis décrit une expérience que j'ai vécue moi-même.",
     attestError: "Cochez l'attestation pour envoyer votre avis.",
