@@ -108,9 +108,10 @@ export async function findTopicCounts(establishmentId: string, from: string, to:
      FROM monthly_topic_counts c
      JOIN topic t ON t.id = c.topic_id
      LEFT JOIN topic_translation tt ON tt.topic_id = t.id AND tt.language = 'fr'
+     LEFT JOIN evaluation_category ec ON ec.id = t.category_id
      WHERE c.establishment_id = $1 AND c.month >= $2::date AND c.month < $3::date AND t.is_active
-     GROUP BY t.code, tt.label, t.position
-     ORDER BY t.position`,
+     GROUP BY t.code, tt.label, ec.position, t.position
+     ORDER BY ec.position NULLS LAST, t.position`,
     [establishmentId, from, to],
   );
 }

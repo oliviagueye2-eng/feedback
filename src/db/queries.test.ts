@@ -563,10 +563,10 @@ describe("feedback", () => {
       "Accessibilité aux personnes handicapées ou âgées",
     ]);
     expect(await topicsOf("f6a7b8c9-0000-4000-8000-000000000006", school!.id, services.SCHOOL_LIFE)).toEqual([
+      "Qualité de l'enseignement",
       "Compétence du personnel (connaît son travail, traite bien la demande)",
       "Encadrement des élèves",
       "Échanges avec les enseignants et la direction",
-      "Qualité de l'enseignement",
       "Propreté, entretien et confort",
       "Accessibilité aux personnes handicapées ou âgées",
       "Sécurité dans l'établissement",
@@ -644,11 +644,11 @@ describe("feedback", () => {
     });
     expect(await visit("c9d0e1f2-0000-4000-8000-000000000002", services.HIGHER_EDUCATION_COURSES!)).toEqual({
       topics: [
+        "Qualité de l'enseignement",
         "Compétence du personnel (connaît son travail, traite bien la demande)",
         "Encadrement des élèves",
         "Échanges avec les enseignants et la direction",
         "Respect du calendrier (examens, publication des notes)",
-        "Qualité de l'enseignement",
         "Propreté, entretien et confort",
         "Accessibilité aux personnes handicapées ou âgées",
         "Sécurité dans l'établissement",
@@ -677,6 +677,7 @@ describe("feedback", () => {
     };
     expect(await visit("b8c9d0e1-0000-4000-8000-000000000001", service.POLICE_PREMISES!)).toEqual({
       topics: [
+        "Prise en compte de la demande",
         "Politesse du personnel (accueil, respect)",
         "Compétence du personnel (connaît son travail, traite bien la demande)",
         "Explications du personnel (claires, complètes)",
@@ -687,7 +688,6 @@ describe("feedback", () => {
         "Suivi et transparence du dossier",
         "Horaires d'ouverture",
         "Frais payés (montant, reçu)",
-        "Prise en compte de la demande",
         "Propreté, entretien et confort",
         "Accessibilité aux personnes handicapées ou âgées",
       ],
@@ -698,22 +698,22 @@ describe("feedback", () => {
     });
     expect(await visit("b8c9d0e1-0000-4000-8000-000000000002", service.POLICE_FIELD!)).toEqual({
       topics: [
+        "Prise en compte de la demande",
         "Politesse du personnel (accueil, respect)",
         "Compétence du personnel (connaît son travail, traite bien la demande)",
         "Explications du personnel (claires, complètes)",
         "Respect des droits",
-        "Prise en compte de la demande",
       ],
       questions: ["REASON_EXPLAINED", "PAID_SOMETHING", "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY"],
     });
     expect(await visit("b8c9d0e1-0000-4000-8000-000000000005", service.POLICE_CALL!)).toEqual({
       topics: [
+        "Prise en compte de la demande",
         "Politesse du personnel (accueil, respect)",
         "Compétence du personnel (connaît son travail, traite bien la demande)",
         "Explications du personnel (claires, complètes)",
         "Respect des droits",
         "Délai d'intervention",
-        "Prise en compte de la demande",
       ],
       questions: ["ARRIVAL_TIME", "REPORTED", "REPORT_WHY"],
     });

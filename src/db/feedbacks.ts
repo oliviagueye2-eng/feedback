@@ -267,7 +267,8 @@ export async function findTopicChoices(feedbackId: string): Promise<TopicChoice[
        JOIN topic_translation tr ON tr.topic_id = t.id AND tr.language = 'fr'
        LEFT JOIN evaluation_category_translation ct ON ct.evaluation_category_id = t.category_id AND ct.language = 'fr'
        LEFT JOIN feedback_topic ft ON ft.feedback_id = $1 AND ft.topic_id = t.id
-       ORDER BY t.position`,
+       LEFT JOIN evaluation_category c ON c.id = t.category_id
+       ORDER BY c.position NULLS LAST, t.position`,
       [feedbackId],
     ),
     query<{
@@ -538,7 +539,7 @@ export async function findDetailedQuestions(feedbackId: string, setIds: number[]
     }>(
       `${PAGE_ITEMS}
        SELECT q.id, q.code, q.type, qt.label, ao.code AS option_code, ot.label AS option_label, it.common,
-              (SELECT c.question_position FROM evaluation_category c WHERE c.id = q.category_id) AS category_position,
+              (SELECT c.position FROM evaluation_category c WHERE c.id = q.category_id) AS category_position,
               EXISTS (SELECT 1 FROM answer a WHERE a.feedback_id = $2 AND a.option_id = ao.id) AS chosen
        FROM items it
        JOIN question q ON q.id = it.question_id
@@ -595,8 +596,8 @@ export async function findDetailedQuestions(feedbackId: string, setIds: number[]
 }
 
 /**
- * The page in the order of the evaluation categories, like the topics, but
- * by their question_position (« Résultat obtenu » first, 0021). A
+ * The page in the order of the evaluation categories, like the topics
+ * (« Résultat obtenu » first, 0021). A
  * question that another opens stays right after it, so each question goes
  * with the first one of its chain. Otherwise the lists' order is kept. The
  * common questions stay last, on their own page.
