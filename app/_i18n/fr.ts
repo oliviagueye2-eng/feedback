@@ -104,10 +104,8 @@ export const fr = {
       closeMenu: "Fermer le menu",
     },
     hero: {
-      label: "Votre voix compte",
       title: "Votre expérience peut faire avancer les services.",
       lead: "Partagez votre expérience des services que vous utilisez et contribuez à leur amélioration.",
-      scope: "Services publics et privés : restaurants, mairies, centres de santé, transports, commerces et bien plus encore.",
       discover: "Découvrir NeexNaxari",
       follow: "Suivre le lancement",
       photoAlt: "Des usagers montent dans un bus Tata à un arrêt de Dakar.",
@@ -116,12 +114,12 @@ export const fr = {
     },
     idea: {
       label: "Pourquoi NeexNaxari ?",
-      title: "Parce que chaque expérience peut faire avancer les services.",
+      title: "Parce que chaque expérience doit pouvoir être entendue.",
       paragraphs: [
         "Nous utilisons chaque jour des services publics et privés. Chaque expérience nous apprend quelque chose : ce qui fonctionne, ce qui peut être amélioré et ce qui mérite d'être repensé.",
         "NeexNaxari donne à chacun la possibilité de partager simplement son expérience et de contribuer à une amélioration continue des services.",
       ],
-      chain: ["Votre expérience", "Votre voix", "Des résultats partagés avec les services"],
+      chain: ["Votre expérience", "Votre voix", "Des résultats partagés chaque mois"],
     },
     services: {
       title: "Tous les services, toutes les expériences.",
@@ -129,22 +127,21 @@ export const fr = {
       photoAlt: "Une usagère à l'accueil d'un centre de santé, face à une employée souriante.",
     },
     steps: {
-      title: "Partager une expérience devrait être simple.",
+      title: "Partager une expérience devient simple et rapide.",
       items: [
         { title: "Je choisis", text: "Je sélectionne le service ou l'établissement concerné." },
         {
           title: "Je partage",
-          text: "Je donne mon avis sur mon expérience et j'évalue les différents aspects du service.",
+          text: "En quelques clics et de manière anonyme, je donne mon avis sur mon expérience et j'évalue les différents aspects du service.",
         },
         {
           title: "Je contribue",
           text: "Mon retour permet de mieux comprendre les expériences vécues et d'identifier les pistes d'amélioration. Les résultats seront rendus publics, en toute transparence.",
         },
       ],
-      closing: "Environ une minute pour partager une expérience. Une voix de plus pour faire progresser les services.",
     },
     vision: {
-      lines: ["Des services plus à l'écoute.", "Des expériences qui comptent.", "Un Sénégal qui progresse."],
+      lines: ["La satisfaction des usagers au cœur du développement.", "Des expériences qui comptent.", "Un Sénégal qui progresse."],
       text: "NeexNaxari veut contribuer à créer une culture de l'écoute, du respect, de la transparence et de l'amélioration continue des services.",
       valuesTitle: "Ce qui nous guide",
       values: [

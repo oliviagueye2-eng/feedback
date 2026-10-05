@@ -219,13 +219,6 @@
   line-height: 1.45;
 }
 
-.heroScope {
-  margin: 14px 0 0;
-  max-width: 34em;
-  font-size: 16px;
-  color: var(--muted);
-}
-
 .actions {
   display: flex;
   flex-direction: column;
@@ -449,12 +442,6 @@
   color: var(--muted);
 }
 
-.stepsClosing {
-  margin: 44px 0 0;
-  max-width: 34em;
-  font-size: 20px;
-}
-
 /* ---- Vision and values ---- */
 
 .vision {
@@ -579,11 +566,30 @@
   border: 18px solid var(--flag-yellow);
   border-radius: 50%;
   pointer-events: none;
+  z-index: 1;
 }
 
+.soonPhoto {
+  position: absolute;
+  inset: 0;
+}
+
+.soonPhoto img {
+  object-fit: cover;
+  object-position: 30% 35%;
+}
+
+/* Green veil so the white text and buttons stay readable over the photo. */
+.soonPhoto::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--green) 84%, transparent);
+}
 
 .soonInner {
   position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
