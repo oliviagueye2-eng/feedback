@@ -132,7 +132,7 @@ export const fr = {
         { title: "Je choisis", text: "Je sélectionne le service ou l'établissement concerné." },
         {
           title: "Je partage",
-          text: "En quelques clics et de manière anonyme, je donne mon avis sur mon expérience et j'évalue les différents aspects du service.",
+          text: "En quelques clics, je donne mon avis sur mon expérience et j'évalue les différents aspects du service.",
         },
         {
           title: "Je contribue",
