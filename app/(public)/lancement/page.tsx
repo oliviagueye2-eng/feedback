@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/** Icons of « Votre expérience → Votre voix → Des résultats partagés avec les services ». */
+/** Icons of « Votre expérience → Votre voix → Des résultats partagés chaque mois ». */
 const CHAIN_ICONS = [
   // A person.
   <svg key="person" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -61,7 +61,6 @@ export default async function LandingPage() {
               <p className={styles.label}>{t.hero.label}</p>
               <h1 className={styles.heroTitle}>{t.hero.title}</h1>
               <p className={styles.heroLead}>{t.hero.lead}</p>
-              <p className={styles.heroScope}>{t.hero.scope}</p>
               <div className={styles.actions}>
                 <a href="#comment-ca-marche" className={styles.primary}>
                   {t.hero.discover}
@@ -138,7 +137,6 @@ export default async function LandingPage() {
                 </li>
               ))}
             </ol>
-            <p className={styles.stepsClosing}>{t.steps.closing}</p>
           </div>
         </section>
 

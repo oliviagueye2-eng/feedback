@@ -219,13 +219,6 @@
   line-height: 1.45;
 }
 
-.heroScope {
-  margin: 14px 0 0;
-  max-width: 34em;
-  font-size: 16px;
-  color: var(--muted);
-}
-
 .actions {
   display: flex;
   flex-direction: column;
@@ -447,12 +440,6 @@
   margin: 0;
   max-width: 26em;
   color: var(--muted);
-}
-
-.stepsClosing {
-  margin: 44px 0 0;
-  max-width: 34em;
-  font-size: 20px;
 }
 
 /* ---- Vision and values ---- */
