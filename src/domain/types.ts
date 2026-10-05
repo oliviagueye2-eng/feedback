@@ -53,3 +53,13 @@ export interface Sector {
   code: string;
   label: string;
 }
+
+/** Screen 0c: a type of establishment to choose once the sector is chosen. */
+export interface EstablishmentType {
+  code: string;
+  label: string;
+  sectorCode: string;
+}
+
+/** Screen 0c: « Autre » in the list of types; the establishment keeps no type. */
+export const OTHER_TYPE = "OTHER";

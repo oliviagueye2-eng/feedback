@@ -1,17 +1,20 @@
 import Link from "next/link";
-import { listSectors } from "@/src/domain/establishment";
+import { listEstablishmentTypes, listSectors } from "@/src/domain/establishment";
 import { FormValidation } from "../../../_components/FormValidation";
 import { PendingLoader } from "../../../_components/PendingLoader";
 import { getDictionary } from "../../../_i18n";
 import styles from "../form.module.css";
 import { createEstablishment } from "./actions";
 import { ContinueButton } from "./ContinueButton";
+import { SectorAndType } from "./SectorAndType";
 
-/** Screen 0c: establishment not in the list. Only the name is required. */
+/** Screen 0c: establishment not in the list. Name, sector and type are required. */
 export default async function NewEstablishmentPage({ searchParams }: PageProps<"/avis/nouveau">) {
-  const { nom, erreur } = await searchParams;
+  const { nom, secteur, erreur } = await searchParams;
   const name = typeof nom === "string" ? nom : "";
-  const sectors = await listSectors();
+  const [sectors, types] = await Promise.all([listSectors(), listEstablishmentTypes()]);
+  const initialSector = sectors.find((s) => s.code === secteur)?.code ?? "";
+  const error = erreur === "secteur" || erreur === "type" ? erreur : null;
   const { common, newEstablishment: t } = await getDictionary();
 
   return (
@@ -33,22 +36,16 @@ export default async function NewEstablishmentPage({ searchParams }: PageProps<"
       <form action={createEstablishment} className={styles.form}>
         <div className={styles.group}>
           <label htmlFor="name">{t.name}</label>
-          <FormValidation message={t.error} shown={erreur !== undefined} />
+          <FormValidation message={t.error} shown={erreur === "nom" || erreur === "1"} names={["name"]} />
           <input id="name" name="name" className={styles.input} defaultValue={name} required minLength={3} maxLength={200} autoComplete="off" />
         </div>
-        <div className={styles.group}>
-          <label htmlFor="sector">
-            {t.sector} <span className="muted">{common.optional}</span>
-          </label>
-          <select id="sector" name="sector" className={styles.input} defaultValue="">
-            <option value="">{t.sectorPlaceholder}</option>
-            {sectors.map((s) => (
-              <option key={s.code} value={s.code}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SectorAndType
+          sectors={sectors}
+          types={types}
+          initialSector={initialSector}
+          error={error}
+          t={{ sector: t.sector, sectorError: t.sectorError, type: t.type, typeError: t.typeError, other: t.other, change: t.change }}
+        />
         <div className={styles.group}>
           <label htmlFor="municipality">
             {t.municipality} <span className="muted">{common.optional}</span>
