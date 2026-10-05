@@ -88,6 +88,106 @@ export const fr = {
     ],
   },
 
+  /** Pre-launch landing page (neexnaxari.com until the official launch). */
+  landing: {
+    meta: {
+      title: "NeexNaxari — La plateforme de vos expériences",
+      description:
+        "NeexNaxari permet de partager son expérience des services publics et privés et de contribuer à leur amélioration.",
+      imageAlt: "NeexNaxari, la plateforme de vos expériences",
+    },
+    nav: {
+      howItWorks: "Comment ça marche",
+      vision: "Notre vision",
+      soon: "Bientôt disponible",
+      openMenu: "Ouvrir le menu",
+      closeMenu: "Fermer le menu",
+    },
+    hero: {
+      label: "Votre voix compte",
+      title: "Votre expérience peut faire avancer les services.",
+      lead: "Partagez votre expérience des services que vous utilisez et contribuez à leur amélioration.",
+      scope: "Services publics et privés : restaurants, mairies, centres de santé, transports, commerces et bien plus encore.",
+      discover: "Découvrir NeexNaxari",
+      follow: "Suivre le lancement",
+      phoneAlt:
+        "Écran de NeexNaxari sur un téléphone : « Êtes-vous satisfait(e) du service reçu ? » pour un trajet en bus du BRT, avec cinq réponses de « Très satisfait(e) » à « Pas du tout satisfait(e) ».",
+    },
+    idea: {
+      label: "Pourquoi NeexNaxari ?",
+      title: "Parce que chaque expérience peut faire avancer les services.",
+      paragraphs: [
+        "Nous utilisons chaque jour des services publics et privés. Chaque expérience nous apprend quelque chose : ce qui fonctionne, ce qui peut être amélioré et ce qui mérite d'être repensé.",
+        "NeexNaxari donne à chacun la possibilité de partager simplement son expérience et de contribuer à une amélioration continue des services.",
+      ],
+      chain: ["Votre expérience", "Votre voix", "L'amélioration des services"],
+    },
+    services: {
+      title: "Tous les services, toutes les expériences.",
+      lead: "NeexNaxari ne se limite pas à un secteur. La plateforme est pensée pour recueillir les expériences des citoyens et des clients, dans les services publics comme dans les services privés.",
+      groups: [
+        {
+          title: "Services publics",
+          items: ["Mairie", "Centre de santé", "Transport", "École", "Administration"],
+        },
+        {
+          title: "Services privés",
+          items: ["Restaurant", "Station-service", "Commerce", "Banque", "Prestataire de services"],
+        },
+      ],
+      more: "Et bien d'autres services du quotidien.",
+    },
+    steps: {
+      label: "Simple et rapide",
+      title: "Partager une expérience devrait être simple.",
+      items: [
+        { title: "Je choisis", text: "Je sélectionne le service ou l'établissement concerné." },
+        {
+          title: "Je partage",
+          text: "Je donne mon avis sur mon expérience et j'évalue les différents aspects du service.",
+        },
+        {
+          title: "Je contribue",
+          text: "Mon retour permet de mieux comprendre les expériences vécues et d'identifier les pistes d'amélioration.",
+        },
+      ],
+      closing: "Environ une minute pour partager une expérience. Une voix de plus pour faire progresser les services.",
+    },
+    vision: {
+      label: "Notre vision",
+      lines: ["Des services plus à l'écoute.", "Des expériences qui comptent.", "Un Sénégal qui progresse."],
+      text: "NeexNaxari veut contribuer à créer une culture de l'écoute, du respect, de la transparence et de l'amélioration continue des services.",
+      valuesTitle: "Ce qui nous guide",
+      values: [
+        { title: "Engagement citoyen", text: "Donner à chacun la possibilité de faire entendre son expérience." },
+        {
+          title: "Amélioration des services",
+          text: "Transformer les retours d'expérience en opportunités d'amélioration.",
+        },
+        { title: "Respect", text: "Valoriser chaque expérience et chaque voix." },
+        {
+          title: "Transparence",
+          text: "Encourager une relation plus ouverte entre les usagers et les services.",
+        },
+      ],
+    },
+    soon: {
+      label: "Bientôt",
+      title: "NeexNaxari arrive.",
+      text: "Une nouvelle façon de partager vos expériences et de participer à l'amélioration des services.",
+      follow: "Suivez-nous sur les réseaux pour être informé du lancement officiel.",
+      handle: "@neexnaxari",
+      /** Button texts; the button opens the page in a new tab. */
+      networks: { facebook: "Facebook", instagram: "Instagram", tiktok: "TikTok", x: "X" },
+      newTab: "(nouvel onglet)",
+    },
+    footer: {
+      home: "Accueil",
+      copyright: "© 2026 NeexNaxari. Tous droits réservés.",
+      navLabel: "Plan du site",
+    },
+  },
+
   search: {
     title: "Donnez votre avis sur un service",
     help: "Recherche par nom, type ou commune",

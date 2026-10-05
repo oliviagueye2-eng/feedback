@@ -1,0 +1,755 @@
+/* Pre-launch landing page (page.tsx). Colours come from :root (globals.css).
+   Phones first; two columns from 900px. */
+
+@media (prefers-reduced-motion: no-preference) {
+  :global(html):has(.header) {
+    scroll-behavior: smooth;
+  }
+}
+
+.anchor {
+  /* Anchors land under the sticky header, not behind it. */
+  scroll-margin-top: 72px;
+}
+
+/* ---- Header ---- */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgb(255 255 255 / 0.94);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+
+.headerInner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 62px;
+}
+
+.menuButton {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Three bars drawn with one span and its shadows; a cross once open. */
+.menuButton span {
+  width: 20px;
+  height: 2px;
+  background: var(--ink);
+  box-shadow:
+    0 -6px 0 var(--ink),
+    0 6px 0 var(--ink);
+  transition: transform 0.2s;
+}
+
+.menuButton[aria-expanded="true"] span {
+  box-shadow: none;
+  transform: rotate(45deg);
+}
+
+.menuButton[aria-expanded="true"] span::after {
+  content: "";
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--ink);
+  transform: rotate(-90deg);
+}
+
+.nav {
+  display: none;
+}
+
+.nav[data-open="true"] {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 18px 18px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+
+.nav a {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  color: var(--ink);
+  font-size: 17px;
+  text-decoration: none;
+}
+
+.nav a:hover {
+  text-decoration: underline;
+}
+
+.nav .soonLink {
+  justify-content: center;
+  margin-top: 8px;
+  border: 1px solid var(--green);
+  border-radius: 999px;
+  color: var(--green);
+  font-weight: 700;
+}
+
+.nav .soonLink:hover {
+  background: var(--green-tint);
+  text-decoration: none;
+}
+
+/* ---- Shared ---- */
+
+.label {
+  margin: 0 0 14px;
+  color: var(--green);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  max-width: 20em;
+  font-size: clamp(28px, 3.6vw, 44px);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+}
+
+.lead {
+  margin: 18px 0 0;
+  max-width: 40em;
+  font-size: 18px;
+  color: var(--muted);
+}
+
+.primary,
+.secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  padding: 0 26px;
+  border: 2px solid var(--green);
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.primary {
+  background: var(--green);
+  color: #fff;
+}
+
+.primary:hover {
+  background: var(--green-dark);
+  border-color: var(--green-dark);
+  color: #fff;
+}
+
+.secondary {
+  background: transparent;
+  color: var(--green);
+}
+
+.secondary:hover {
+  background: var(--green-tint);
+  color: var(--green-dark);
+}
+
+/* Sections fade in once (Reveal.tsx). */
+.reveal[data-reveal="waiting"] {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.reveal[data-reveal="shown"] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.6s ease-out,
+    transform 0.6s ease-out;
+}
+
+/* ---- Hero ---- */
+
+.hero {
+  background: var(--hero);
+  padding: 44px 0 64px;
+  overflow: hidden;
+}
+
+.heroInner {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.heroTitle {
+  margin: 0;
+  max-width: 13em;
+  font-size: clamp(36px, 5.4vw, 66px);
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+}
+
+.heroLead {
+  margin: 22px 0 0;
+  max-width: 30em;
+  font-size: 20px;
+  line-height: 1.45;
+}
+
+.heroScope {
+  margin: 14px 0 0;
+  max-width: 34em;
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+/* The phone: the real questionnaire screen in a plain frame, on a soft disc
+   in the logo's green. It settles in once, on arrival. */
+.phoneStage {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.phoneStage::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: var(--green-tint);
+  transform: translate(-50%, -50%);
+}
+
+.phone {
+  position: relative;
+  width: 250px;
+  aspect-ratio: 390 / 800;
+  border: 9px solid var(--ink);
+  border-radius: 38px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 32px 60px -30px rgb(19 38 28 / 0.5);
+  transform: rotate(-2deg);
+}
+
+.phoneScreen {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .phone {
+    animation: phone-in 0.9s 0.15s ease-out both;
+  }
+}
+
+@keyframes phone-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px) rotate(0deg);
+  }
+}
+
+/* ---- The idea ---- */
+
+.idea {
+  padding: 72px 0;
+}
+
+.ideaText {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+  max-width: 1000px;
+  font-size: 18px;
+}
+
+.ideaText p {
+  margin: 0;
+}
+
+/* Your experience, your voice, better services: three steps joined by arrows. */
+.chain {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 34px;
+  margin: 44px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chain li {
+  position: relative;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--green);
+}
+
+.chain li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: calc(100% + 9px);
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--control);
+  border-bottom: 2px solid var(--control);
+  transform: rotate(45deg);
+}
+
+.chain li:last-child {
+  color: var(--ink);
+}
+
+/* ---- Public and private ---- */
+
+.services {
+  padding: 72px 0;
+  background: var(--page);
+}
+
+.groups {
+  display: grid;
+  gap: 18px;
+  margin-top: 36px;
+}
+
+.group {
+  padding: 24px;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.group h3 {
+  margin: 0 0 16px;
+  font-size: 20px;
+}
+
+.group ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.group li {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+
+.group li:hover {
+  border-color: var(--control);
+}
+
+.more {
+  margin: 22px 0 0;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ---- How it works ---- */
+
+.steps {
+  padding: 72px 0;
+}
+
+.stepList {
+  display: grid;
+  gap: 32px;
+  margin: 40px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stepList li {
+  padding-top: 18px;
+  border-top: 2px solid var(--ink);
+}
+
+.stepNumber {
+  display: block;
+  color: var(--green);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.stepList h3 {
+  margin: 14px 0 6px;
+  font-size: 22px;
+}
+
+.stepList p {
+  margin: 0;
+  max-width: 26em;
+  color: var(--muted);
+}
+
+.stepsClosing {
+  margin: 44px 0 0;
+  max-width: 34em;
+  font-size: 20px;
+}
+
+/* ---- Vision and values ---- */
+
+.vision {
+  padding: 88px 0;
+  background: var(--ink);
+  color: #fff;
+}
+
+.vision .label {
+  color: var(--footer-text);
+}
+
+.visionLines {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  font-size: clamp(38px, 7vw, 92px);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+}
+
+.visionLines span:nth-child(2) {
+  color: var(--footer-text);
+}
+
+.visionLines span:nth-child(3) {
+  color: rgb(255 255 255 / 0.62);
+}
+
+.visionText {
+  margin: 32px 0 0;
+  max-width: 36em;
+  font-size: 19px;
+  color: var(--footer-text);
+}
+
+.valuesTitle {
+  margin: 64px 0 0;
+  font-size: 22px;
+}
+
+.values {
+  display: grid;
+  gap: 24px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.values li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 16px;
+  border-top: 1px solid rgb(255 255 255 / 0.25);
+}
+
+.values strong {
+  font-size: 18px;
+}
+
+.values span {
+  color: var(--footer-text);
+}
+
+/* ---- Coming soon ---- */
+
+.soon {
+  padding: 80px 0;
+  background: var(--green-tint);
+}
+
+.soonInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.soonTitle {
+  margin: 0;
+  font-size: clamp(38px, 5.4vw, 64px);
+  line-height: 1.06;
+  letter-spacing: -0.015em;
+}
+
+.soonInner .lead {
+  color: var(--ink);
+}
+
+.soonFollow {
+  margin: 32px 0 0;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.networks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 640px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.networks a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 0 18px;
+  border-radius: 10px;
+  background: var(--green);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.networks a:hover {
+  background: var(--green-dark);
+  color: #fff;
+}
+
+.networks svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.handle {
+  margin: 14px 0 0;
+  color: var(--muted);
+}
+
+/* ---- Footer ---- */
+
+.footerInner {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.footerBrand em {
+  color: var(--footer-text);
+}
+
+.footerNav {
+  display: flex;
+  flex-direction: column;
+}
+
+.footerNav a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.footerNav a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.footerNav a:focus-visible {
+  outline-color: #fff;
+}
+
+.copyright {
+  padding-top: 18px;
+  border-top: 1px solid rgb(255 255 255 / 0.18);
+}
+
+/* ---- Tablets ---- */
+
+@media (min-width: 600px) {
+  .actions {
+    flex-direction: row;
+  }
+
+  .groups,
+  .values {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .networks {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* ---- Computers ---- */
+
+@media (min-width: 900px) {
+  .anchor {
+    scroll-margin-top: 90px;
+  }
+
+  .headerInner {
+    gap: 14px;
+    min-height: 84px;
+  }
+
+  .menuButton {
+    display: none;
+  }
+
+  .nav,
+  .nav[data-open="true"] {
+    position: static;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 32px;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  .nav .soonLink {
+    margin-top: 0;
+    min-height: 44px;
+    padding: 0 20px;
+    font-size: 16px;
+  }
+
+  .hero {
+    padding: 88px 0 104px;
+  }
+
+  .heroInner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+    align-items: center;
+    gap: 56px;
+  }
+
+  .heroLead {
+    font-size: 22px;
+  }
+
+  .phoneStage::before {
+    width: 440px;
+    height: 440px;
+  }
+
+  .phone {
+    width: 300px;
+    border-width: 10px;
+    border-radius: 44px;
+  }
+
+  .idea,
+  .services,
+  .steps {
+    padding: 112px 0;
+  }
+
+  .ideaText {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 48px;
+  }
+
+  .chain {
+    flex-direction: row;
+    align-items: center;
+    gap: 64px;
+    margin-top: 56px;
+  }
+
+  .chain li {
+    font-size: 28px;
+  }
+
+  .chain li:not(:last-child)::after {
+    left: calc(100% + 24px);
+    top: 50%;
+    margin-top: -6px;
+    transform: rotate(-45deg);
+  }
+
+  .group {
+    padding: 32px;
+  }
+
+  .stepList {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .vision {
+    padding: 136px 0;
+  }
+
+  .values {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .soon {
+    padding: 120px 0;
+  }
+
+  .footerInner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 32px 56px;
+  }
+
+  .footerNav {
+    flex-direction: row;
+    gap: 28px;
+  }
+
+  .copyright {
+    grid-column: 1 / -1;
+  }
+}
