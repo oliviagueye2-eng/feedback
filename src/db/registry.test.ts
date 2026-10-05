@@ -69,12 +69,13 @@ describe("first establishments of the registry", () => {
     expect(rows).toEqual([]);
   });
 
-  it("has the twenty-two organisations, each rated in general", async () => {
+  it("has the forty-eight organisations, each rated in general", async () => {
     const { rows } = await db.query<{ organizations: number; general: number }>(`
       SELECT (SELECT count(*)::int FROM organization) AS organizations,
              (SELECT count(*)::int FROM establishment WHERE scope = 'general') AS general`);
-    // 11 organisations, the 5 transport operators (0003), Air Sénégal (0006), the police and the gendarmerie (0010).
-    expect(rows[0]).toEqual({ organizations: 22, general: 22 });
+    // 11 organisations, the 5 transport operators (0003), Air Sénégal (0006), the police and the gendarmerie (0010),
+    // and 26 more banks (0022).
+    expect(rows[0]).toEqual({ organizations: 48, general: 48 });
   });
 
   it("finds an organisation by its usual name, full name or former name", async () => {
@@ -86,6 +87,20 @@ describe("first establishments of the registry", () => {
     expect((await first("seneau"))?.name).toBe("Sen'Eau");
     expect((await first("impots"))?.name).toBe("DGID");
     expect((await first("la poste"))?.name).toBe("La Poste");
+  });
+
+  it("finds the banks by their short name, official name or former name (0022)", async () => {
+    const first = async (text: string) => (await searchEstablishments(text)).results[0];
+    expect((await first("bhs"))?.name).toBe("BHS");
+    expect((await first("banque de l'habitat"))?.name).toBe("BHS");
+    expect((await first("bicis"))?.name).toBe("Sunu Bank");
+    expect((await first("cncas"))?.name).toBe("La Banque Agricole");
+    expect((await first("orabank"))?.name).toBe("Orabank");
+    expect((await first("sgsn"))?.name).toBe("Société Générale");
+    const { rows } = await db.query<{ n: number }>(`
+      SELECT count(*)::int AS n FROM organization o JOIN sector s ON s.id = o.sector_id
+      WHERE s.code = 'BANKING_INSURANCE'`);
+    expect(rows[0]?.n).toBe(29);
   });
 
   it("shows Sen'Eau under water and Senelec under electricity", async () => {
