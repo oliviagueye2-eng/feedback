@@ -4,7 +4,8 @@ import { SOCIAL_ACCOUNTS, SocialIcon } from "../../_components/SocialLinks";
 import { getDictionary } from "../../_i18n";
 import { LandingHeader } from "./LandingHeader";
 import { Reveal } from "./Reveal";
-import busPhoto from "../../../public/images/accueil-brt.jpg";
+import busPhoto from "../../../public/images/lancement-bus-tata.jpg";
+import healthPhoto from "../../../public/images/lancement-centre-de-sante.jpg";
 import phoneScreen from "../../../public/images/lancement-ecran-satisfaction.png";
 import styles from "./landing.module.css";
 
@@ -47,14 +48,14 @@ const CHAIN_ICONS = [
  * no feedback button, no figures.
  */
 export default async function LandingPage() {
-  const { header, home, landing: t } = await getDictionary();
+  const { header, landing: t } = await getDictionary();
 
   return (
     <>
       <LandingHeader t={{ ...t.nav, siteName: header.siteName, tagline: header.tagline, navLabel: header.navLabel }} />
       <main>
         {/* Hero: the idea on the left; on the right a real photo of an everyday service
-            (BRT, Dakar) and, in front of it, the real questionnaire screen. */}
+            (a bus stop in Dakar) and, in front of it, the real questionnaire screen. */}
         <section id="accueil" className={`${styles.hero} ${styles.anchor}`}>
           <div className={`container ${styles.heroInner}`}>
             <div className={styles.heroText}>
@@ -73,7 +74,7 @@ export default async function LandingPage() {
             </div>
             <div className={styles.phoneStage}>
               <div className={styles.photo}>
-                <Image src={busPhoto} alt={home.photoAlt} sizes="(min-width: 900px) 420px, 90vw" priority />
+                <Image src={busPhoto} alt={t.hero.photoAlt} sizes="(min-width: 900px) 460px, 90vw" priority />
               </div>
               <div className={styles.phone}>
                 <Image
@@ -113,8 +114,15 @@ export default async function LandingPage() {
         {/* Examples only: not the list of sectors of the platform. */}
         <section className={`${styles.services} ${styles.reveal}`} data-reveal="">
           <div className="container">
-            <h2 className={styles.title}>{t.services.title}</h2>
-            <p className={styles.lead}>{t.services.lead}</p>
+            <div className={styles.servicesHead}>
+              <div>
+                <h2 className={styles.title}>{t.services.title}</h2>
+                <p className={styles.lead}>{t.services.lead}</p>
+              </div>
+              <div className={styles.servicesPhoto}>
+                <Image src={healthPhoto} alt={t.services.photoAlt} sizes="(min-width: 900px) 520px, 90vw" />
+              </div>
+            </div>
             <div className={styles.groups}>
               {t.services.groups.map((group) => (
                 <div key={group.title} className={styles.group}>

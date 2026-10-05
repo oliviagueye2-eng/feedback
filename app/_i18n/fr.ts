@@ -110,8 +110,9 @@ export const fr = {
       scope: "Services publics et privés : restaurants, mairies, centres de santé, transports, commerces et bien plus encore.",
       discover: "Découvrir NeexNaxari",
       follow: "Suivre le lancement",
+      photoAlt: "Des usagers montent dans un bus Tata à un arrêt de Dakar.",
       phoneAlt:
-        "Écran de NeexNaxari sur un téléphone : « Êtes-vous satisfait(e) du service reçu ? » pour un trajet en bus du BRT, avec cinq réponses de « Très satisfait(e) » à « Pas du tout satisfait(e) ».",
+        "Écran de NeexNaxari sur un téléphone : « Êtes-vous satisfait(e) du service reçu ? » pour un trajet en bus de l'AFTU, avec cinq réponses de « Très satisfait(e) » à « Pas du tout satisfait(e) ».",
     },
     idea: {
       label: "Pourquoi NeexNaxari ?",
@@ -136,6 +137,7 @@ export const fr = {
         },
       ],
       more: "Et bien d'autres services du quotidien.",
+      photoAlt: "Une usagère à l'accueil d'un centre de santé, face à une employée souriante.",
     },
     steps: {
       label: "Simple et rapide",
