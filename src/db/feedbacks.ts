@@ -248,15 +248,24 @@ export interface TopicChoice {
   otherText: string | null;
   /** Shown only after an answer to this question; null when always shown. */
   gate: TopicGate | null;
+  /** French label of its evaluation category (a title above its topics); null when none. */
+  category: string | null;
 }
 
 /** Screen 2b: the topics to show, in order, with what the user already touched. */
 export async function findTopicChoices(feedbackId: string): Promise<TopicChoice[]> {
   const [rows, gates] = await Promise.all([
-    query<{ code: string; label: string; sentiment: TopicSentiment | null; other_text: string | null }>(
-      `SELECT t.code, tr.label, ft.sentiment, ft.other_text
+    query<{
+      code: string;
+      label: string;
+      sentiment: TopicSentiment | null;
+      other_text: string | null;
+      category: string | null;
+    }>(
+      `SELECT t.code, tr.label, ft.sentiment, ft.other_text, ct.label AS category
        FROM (${topicsForFeedback("$1")}) t
        JOIN topic_translation tr ON tr.topic_id = t.id AND tr.language = 'fr'
+       LEFT JOIN evaluation_category_translation ct ON ct.evaluation_category_id = t.category_id AND ct.language = 'fr'
        LEFT JOIN feedback_topic ft ON ft.feedback_id = $1 AND ft.topic_id = t.id
        ORDER BY t.position`,
       [feedbackId],
@@ -300,6 +309,7 @@ export async function findTopicChoices(feedbackId: string): Promise<TopicChoice[
     sentiment: r.sentiment,
     otherText: r.other_text,
     gate: gateOf.get(r.code) ?? null,
+    category: r.category,
   }));
 }
 
@@ -524,9 +534,11 @@ export async function findDetailedQuestions(feedbackId: string, setIds: number[]
       option_label: string;
       chosen: boolean;
       common: boolean;
+      category_position: number | null;
     }>(
       `${PAGE_ITEMS}
        SELECT q.id, q.code, q.type, qt.label, ao.code AS option_code, ot.label AS option_label, it.common,
+              (SELECT c.position FROM evaluation_category c WHERE c.id = q.category_id) AS category_position,
               EXISTS (SELECT 1 FROM answer a WHERE a.feedback_id = $2 AND a.option_id = ao.id) AS chosen
        FROM items it
        JOIN question q ON q.id = it.question_id
@@ -549,7 +561,9 @@ export async function findDetailedQuestions(feedbackId: string, setIds: number[]
     ),
   ]);
   const questions: DetailedQuestion[] = [];
+  const categoryOf = new Map<string, number | null>();
   for (const row of rows) {
+    categoryOf.set(row.code, row.category_position);
     let question = questions.at(-1);
     if (question?.code !== row.code) {
       question = {
@@ -577,7 +591,40 @@ export async function findDetailedQuestions(feedbackId: string, setIds: number[]
     }
     condition.options.push(row.option_code);
   }
-  return questions;
+  return byCategory(questions, categoryOf);
+}
+
+/**
+ * The page in the order of the evaluation categories, like the topics. A
+ * question that another opens stays right after it, so each question goes
+ * with the first one of its chain: in the category of that one (else the
+ * first category of the chain); a chain without any comes first (the
+ * questions that set the context: « Vous êtes », the subject). Otherwise the
+ * lists' order is kept. The common questions stay last, on their own page.
+ */
+function byCategory(questions: DetailedQuestion[], categoryOf: Map<string, number | null>): DetailedQuestion[] {
+  const index = new Map(questions.map((q, i) => [q.code, i]));
+  // The question asked before on this page that opens this one, if any.
+  const rootOf = (q: DetailedQuestion): string => {
+    const parent = q.conditions.find((c) => (index.get(c.dependsOn) ?? Infinity) < index.get(q.code)!);
+    return parent ? rootOf(questions[index.get(parent.dependsOn)!]) : q.code;
+  };
+  const roots = new Map(questions.map((q) => [q.code, rootOf(q)]));
+  const chainKey = (root: string) => {
+    const categories = questions
+      .filter((q) => roots.get(q.code) === root)
+      .flatMap((q) => categoryOf.get(q.code) ?? []);
+    return categoryOf.get(root) ?? (categories.length ? Math.min(...categories) : 0);
+  };
+  const keys = new Map([...new Set(roots.values())].map((root) => [root, chainKey(root)]));
+  const keyOf = (q: DetailedQuestion) => keys.get(roots.get(q.code)!)!;
+  return [...questions].sort(
+    (a, b) =>
+      Number(a.common) - Number(b.common) ||
+      keyOf(a) - keyOf(b) ||
+      index.get(roots.get(a.code)!)! - index.get(roots.get(b.code)!)! ||
+      index.get(a.code)! - index.get(b.code)!,
+  );
 }
 
 /**

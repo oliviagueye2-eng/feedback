@@ -147,12 +147,21 @@ export function TopicRatings({
     );
   };
 
-  // Each question once, in the place of the first of its topics, with all of them under it.
+  // The title of each category above its first topic (the topics come in
+  // the order of the categories). Each question once, in the place of the
+  // first of its topics, with all of them under it.
   const asked = new Set<string>();
-  return topics.flatMap((topic) => {
-    if (!topic.gate) return [topicRow(topic)];
-    if (asked.has(topic.gate.code)) return [];
+  return topics.flatMap((topic, i) => {
+    if (topic.gate && asked.has(topic.gate.code)) return [];
+    const title =
+      topic.category && topic.category !== topics[i - 1]?.category ? (
+        <h3 key={`category:${topic.category}`} className={styles.categoryTitle}>
+          {topic.category}
+        </h3>
+      ) : null;
+    if (!topic.gate) return title ? [title, topicRow(topic)] : [topicRow(topic)];
     asked.add(topic.gate.code);
-    return [gateBlock(topic.gate, topics.filter((other) => other.gate?.code === topic.gate!.code))];
+    const block = gateBlock(topic.gate, topics.filter((other) => other.gate?.code === topic.gate!.code));
+    return title ? [title, block] : [block];
   });
 }
