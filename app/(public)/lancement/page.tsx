@@ -15,7 +15,7 @@ import styles from "./landing.module.css";
 export async function generateMetadata(): Promise<Metadata> {
   const { landing, header } = await getDictionary();
   const { title, description, imageAlt } = landing.meta;
-  const image = { url: "/brand/partage-neexnaxari.png", width: 1200, height: 630, alt: imageAlt };
+  const image = { url: "/brand/partage-neexnaxari-v2.png", width: 1200, height: 630, alt: imageAlt };
   return {
     metadataBase: new URL("https://neexnaxari.com"),
     title,
