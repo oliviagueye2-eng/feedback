@@ -270,8 +270,6 @@ export const fr = {
     contactError: "Indiquez une adresse e-mail ou un numéro de téléphone sénégalais.",
     attest:
       "J'atteste sur l'honneur que cet avis est sincère, qu'il décrit une expérience que j'ai vécue moi-même, et que les coordonnées indiquées sont les miennes.",
-    /** Opens in a new tab: the form keeps what was typed. */
-    privacyLink: "Politique de confidentialité (nouvel onglet)",
     attestError: "Cochez l'attestation pour envoyer votre avis.",
     error: "Vérifiez votre e-mail ou votre numéro, et cochez l'attestation, puis appuyez de nouveau sur « Envoyer mon avis ».",
     submit: "Envoyer mon avis",
