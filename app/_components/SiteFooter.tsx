@@ -24,7 +24,6 @@ export async function SiteFooter() {
           <em>{header.tagline}</em>
         </div>
         <div className="site-footer-text">
-          <p>{t.privacy}</p>
           <p>{t.purpose}</p>
         </div>
         <SocialLinks />

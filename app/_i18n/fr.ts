@@ -40,7 +40,6 @@ export const fr = {
   },
 
   footer: {
-    privacy: "Vos coordonnées ne sont jamais publiées ni transmises.",
     purpose: "Une plateforme au service de la transparence et de la bonne gouvernance.",
     followUs: "Suivez-nous",
     /** Read by screen readers on each icon (the page opens in a new tab). */
