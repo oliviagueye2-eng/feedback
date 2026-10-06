@@ -141,15 +141,15 @@ describe("reference data", () => {
       topics: null,
       questions: [
         "AGENCY_SUBJECT", "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "FIELD_SITUATION",
-        "FILE_SUBMITTED", "INTERVENTION_AWAITED", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
+        "FILE_SUBMITTED", "INTERVENTION_AWAITED", "MONEY_CHANNEL", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
         "POLICE_VISIT_REASON", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
-        "TELECOM_SUBJECT", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "UTILITY_SUBJECT",
+        "SEWER_PROBLEM", "TELECOM_SUBJECT", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "UTILITY_SUBJECT",
       ],
       order: true,
     });
   });
 
-  it("has the bank of 65 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019), each written once, every text in French", async () => {
+  it("has the bank of 78 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -163,7 +163,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 65, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 78, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -174,7 +174,7 @@ describe("reference data", () => {
     expect(await attached("sector")).toEqual({
       ADMINISTRATION: "FILE_SERVICES", TAX: "FILE_SERVICES", JUSTICE: "FILE_SERVICES", SOCIAL: "FILE_SERVICES",
       HEALTH: "HEALTH", BANKING_INSURANCE: "BANKING_INSURANCE", EDUCATION: null,
-      ELECTRICITY: null, WATER: null, TELECOM: "TELECOM",
+      ELECTRICITY: null, WATER: null, TELECOM: null,
       RETAIL: "GENERIC", CULTURE: "GENERIC", HOSPITALITY: "GENERIC", REAL_ESTATE: "GENERIC",
       FOOD_SERVICE: "GENERIC", SPORT: "GENERIC", TOURISM: "GENERIC",
       SECURITY: null, TRANSPORT: null,
@@ -187,6 +187,10 @@ describe("reference data", () => {
       APP_RIDE: "APP_RIDE", STREET_TAXI_RIDE: "STREET_TAXI_RIDE",
       ELECTRICITY_AGENCY: "ELECTRICITY_AGENCY", ELECTRICITY_SUPPLY: "ELECTRICITY_SUPPLY",
       WATER_AGENCY: "WATER_AGENCY", WATER_SUPPLY: "WATER_SUPPLY",
+      // 0025: the telecom questions move from the sector to « Téléphone ou internet ».
+      MOBILE_MONEY: "MOBILE_MONEY", SEWER_ISSUE: "SEWER_ISSUE", INSURANCE_CLAIM: "INSURANCE_CLAIM",
+      PORT_PROCEDURE: "FILE_SERVICES", HIGHWAY_TRIP: "TOLL_HIGHWAY", TV_SUBSCRIPTION: "TV_SUBSCRIPTION",
+      PHONE_INTERNET: "TELECOM",
     });
     // Types with a list of their own (0005), and « Vous êtes » on the education places (0018).
     expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))
@@ -244,9 +248,14 @@ describe("reference data", () => {
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME CANCELLED",
       "GENERIC: RECEIPT_OR_INVOICE ← PAID_SOMETHING YES",
       "HEALTH: RECEIPT_GIVEN ← PAID_SOMETHING YES",
+      "INSURANCE_CLAIM: CLAIM_DELAY ← CLAIM_PAID YES",
+      "INSURANCE_CLAIM: CLAIM_DELAY ← CLAIM_PAID PARTLY",
       "LAND_TRIP: BUS_INCIDENT_TYPE ← TRIP_INCIDENT YES",
       "LAND_TRIP: INCIDENT_EXPLAINED ← TRIP_INCIDENT YES",
       "LAND_TRIP: INCIDENT_SOLUTION ← TRIP_INCIDENT YES",
+      "MOBILE_MONEY: AGENT_CASH ← MONEY_CHANNEL AGENT",
+      "MOBILE_MONEY: MONEY_PROBLEM_SOLVED ← MONEY_OPERATION_OK FAILED",
+      "MOBILE_MONEY: MONEY_PROBLEM_SOLVED ← MONEY_OPERATION_OK BLOCKED",
       "POLICE_FIELD: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_PREMISES: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON COMPLAINT",

@@ -22,13 +22,13 @@ afterAll(async () => {
 });
 
 describe("first establishments of the registry", () => {
-  it("has the twenty places, all active, public but COSAMA's ship", async () => {
+  it("has the twenty-six places, all active, public but COSAMA's ship", async () => {
     const { rows } = await db.query<{ n: number; active_public: number }>(`
       SELECT count(*)::int AS n,
              count(*) FILTER (WHERE status = 'active' AND ownership = 'public')::int AS active_public
       FROM establishment WHERE scope = 'site'`);
-    // 19 public places (0004) and the ship Aline Sitoë Diatta (0019, private operator).
-    expect(rows[0]).toEqual({ n: 20, active_public: 19 });
+    // 19 public places (0004), the ship Aline Sitoë Diatta (0019, private operator) and 6 universities (0025).
+    expect(rows[0]).toEqual({ n: 26, active_public: 25 });
   });
 
   it("has the validated types (0005, driving licence centre moved to Administration in 0008)", async () => {
@@ -69,13 +69,13 @@ describe("first establishments of the registry", () => {
     expect(rows).toEqual([]);
   });
 
-  it("has the forty-eight organisations, each rated in general", async () => {
+  it("has the eighty-nine organisations, each rated in general", async () => {
     const { rows } = await db.query<{ organizations: number; general: number }>(`
       SELECT (SELECT count(*)::int FROM organization) AS organizations,
              (SELECT count(*)::int FROM establishment WHERE scope = 'general') AS general`);
     // 11 organisations, the 5 transport operators (0003), Air Sénégal (0006), the police and the gendarmerie (0010),
-    // and 26 more banks (0022).
-    expect(rows[0]).toEqual({ organizations: 48, general: 48 });
+    // 26 more banks (0022) and 41 more organisations (0025).
+    expect(rows[0]).toEqual({ organizations: 89, general: 89 });
   });
 
   it("finds an organisation by its usual name, full name or former name", async () => {
@@ -100,11 +100,24 @@ describe("first establishments of the registry", () => {
     const { rows } = await db.query<{ n: number }>(`
       SELECT count(*)::int AS n FROM organization o JOIN sector s ON s.id = o.sector_id
       WHERE s.code = 'BANKING_INSURANCE'`);
-    expect(rows[0]?.n).toBe(29);
+    // 29 banks, then Wave, 16 insurers and 6 microfinance institutions (0025).
+    expect(rows[0]?.n).toBe(52);
+  });
+
+  it("finds the new organisations by their name or an everyday word (0025)", async () => {
+    const first = async (text: string) => (await searchEstablishments(text)).results[0];
+    expect((await first("wave"))?.name).toBe("Wave");
+    expect((await first("caisse de securite sociale"))?.name).toBe("CSS");
+    expect((await first("cmu"))?.name).toBe("Agence de la CMU");
+    expect((await first("onas"))?.name).toBe("ONAS");
+    expect((await first("douane"))?.name).toBe("Douanes");
+    expect((await first("peage"))?.name).toBe("Autoroute à péage");
+    expect((await first("uidt"))?.name).toBe("Université Iba Der Thiam de Thiès");
   });
 
   it("shows Sen'Eau under water and Senelec under electricity", async () => {
-    const [seneau, senelec] = (await searchEstablishments("sen")).results;
+    const results = (await searchEstablishments("sen")).results;
+    const [seneau, senelec] = ["Sen'Eau", "Senelec"].map((name) => results.find((r) => r.name === name));
     expect(seneau).toMatchObject({ name: "Sen'Eau", sectorLabel: "Eau" });
     expect(senelec).toMatchObject({ name: "Senelec", sectorLabel: "Électricité" });
   });
@@ -123,8 +136,9 @@ describe("first establishments of the registry", () => {
   });
 
   it("with 3 or 4 letters, only names with a word starting with them (Sénégal ignored)", async () => {
-    // Displayed names first; COSAMA (« sénégalais ») and TER (« SENTER ») by an alias only.
-    expect(await names("sen")).toEqual(["Sen'Eau", "Senelec", "COSAMA", "TER"]);
+    // Displayed names first (« Sénégalaise » is not « Sénégal »); COSAMA (« sénégalais »),
+    // LONASE (« sénégalaise ») and TER (« SENTER ») by an alias only.
+    expect(await names("sen")).toEqual(["Sen'Eau", "La Sécurité Sénégalaise", "Senelec", "COSAMA", "LONASE", "TER"]);
     expect(await names("ucad")).toEqual(["Université Cheikh Anta Diop de Dakar"]);
     expect(await names("snl")).toEqual([]);
   });
