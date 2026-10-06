@@ -61,6 +61,9 @@ export default async function LandingPage() {
         <section id="accueil" className={`${styles.hero} ${styles.anchor}`}>
           <div className={`container ${styles.heroInner}`}>
             <div className={styles.heroText}>
+              {/* The brand mark, large: the logo is how people will recognise NeexNaxari. */}
+              {/* eslint-disable-next-line @next/next/no-img-element -- SVG, nothing to optimize */}
+              <img className={styles.heroLogo} src="/brand/logo-degrade.svg" alt="" width={120} height={127} />
               <h1 className={styles.heroTitle}>{t.hero.title}</h1>
               <p className={styles.heroLead}>{t.hero.lead}</p>
               <div className={styles.actions}>
@@ -169,6 +172,8 @@ export default async function LandingPage() {
             <Image src={stopPhoto} alt="" fill sizes="100vw" />
           </div>
           <div className={`container ${styles.soonInner}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- SVG, nothing to optimize */}
+            <img className={styles.soonLogo} src="/brand/logo-blanc.svg" alt="" width={110} height={117} />
             <h2 className={styles.soonTitle}>{t.soon.title}</h2>
             <p className={styles.lead}>{t.soon.text}</p>
             <p className={styles.soonFollow}>{t.soon.follow}</p>
