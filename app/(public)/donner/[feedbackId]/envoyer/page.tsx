@@ -5,7 +5,6 @@ import { PendingLoader } from "../../../../_components/PendingLoader";
 import { DomainError } from "@/src/domain/errors";
 import { CONTACT_MAX_LENGTH, getSendScreen } from "@/src/domain/feedback";
 import { getDictionary } from "../../../../_i18n";
-import { LEGAL_PAGES } from "../../../_legal/links";
 import { sendFeedback } from "../../../_feedback/actions";
 import { FeedbackHeader } from "../../../_feedback/FeedbackHeader";
 import { questionPageHref } from "../../../_feedback/links";
@@ -75,9 +74,6 @@ export default async function SendPage({ params, searchParams }: PageProps<"/don
               <input type="checkbox" name="attested" value="yes" required />
               <span>{t.attest}</span>
             </label>
-            <a href={LEGAL_PAGES.privacy} target="_blank" rel="noopener" className={styles.privacyLink}>
-              {t.privacyLink}
-            </a>
           </div>
           <div className={styles.actions}>
             <button type="submit" className="btn">
