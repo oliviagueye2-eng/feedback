@@ -855,13 +855,16 @@ describe("published results", () => {
 
   it("adds up the last 3 months and every service, and publishes from 10 feedbacks", async () => {
     await db.exec(`
-      INSERT INTO feedback (id, establishment_id, service_id, channel, language, visit_period, visit_month)
-      SELECT gen_random_uuid(), '${ids.results}', NULL, 'qr', 'fr', 'today', v.month::date
+      INSERT INTO feedback (id, establishment_id, service_id, channel, language, visit_period, visit_month, step, completed_at)
+      SELECT gen_random_uuid(), '${ids.results}', NULL, 'qr', 'fr', 'today', v.month::date, 'completed', date_trunc('hour', now())
       FROM (VALUES ('2026-02-01'), ('2026-02-01'), ('2026-02-01'), ('2026-02-01'), ('2026-02-01'),
                    ('2026-02-01'), ('2026-02-01'), ('2026-02-01'), ('2026-02-01'), ('2026-02-01'),
                    ('2026-01-01'), ('2026-01-01'),
                    -- Out of the period: April is not complete yet, December is too old.
                    ('2026-04-01'), ('2025-12-01')) AS v (month);
+      -- Sent from the last screen (0023): only those count (0024).
+      INSERT INTO feedback_contact (feedback_id, kind, value)
+      SELECT id, 'phone', '+221771234567' FROM feedback WHERE establishment_id = '${ids.results}';
       INSERT INTO answer (feedback_id, question_id, option_id)
       SELECT f.id, q.id, ao.id
       FROM feedback f, question q JOIN answer_option ao ON ao.question_id = q.id
@@ -888,6 +891,13 @@ describe("published results", () => {
             UNION ALL SELECT n, 'PRIVACY', 'positive', NULL FROM generate_series(1, 3) AS n
             UNION ALL VALUES (1, 'OTHER', 'negative', 'Parking')) AS v (n, code, sentiment, other_text) ON v.n = f.n
       JOIN topic t ON t.code = v.code;
+      -- Stopped before « Envoyer mon avis »: kept, never published.
+      INSERT INTO feedback (id, establishment_id, channel, language, visit_period, visit_month)
+      VALUES ('0d0d0d0d-0024-4000-8000-00000000abcd', '${ids.results}', 'qr', 'fr', 'today', '2026-02-01');
+      INSERT INTO answer (feedback_id, question_id, option_id)
+      SELECT '0d0d0d0d-0024-4000-8000-00000000abcd', q.id, ao.id
+      FROM question q JOIN answer_option ao ON ao.question_id = q.id
+      WHERE q.code = 'OVERALL_SATISFACTION' AND ao.code = 'VERY_DISSATISFIED';
     `);
     await refreshPublishedStats();
 

@@ -365,7 +365,7 @@ export const fr = {
     title: "Comment sont calculés les résultats",
     periodTitle: "Période et mise à jour",
     period:
-      "Les résultats portent sur les avis des 3 derniers mois complets et sont mis à jour le 1er de chaque mois. Rien n'est publié avant {threshold} avis. Aucun avis n'est publié un par un, et les commentaires écrits ne sont pas publiés.",
+      "Les résultats portent sur les avis des 3 derniers mois complets et sont mis à jour le 1er de chaque mois. Seuls les avis complets et validés sont comptés. Rien n'est publié avant {threshold} avis. Aucun avis n'est publié un par un, et les commentaires écrits ne sont pas publiés.",
     /** Text validated on 2026-10-03, word for word. */
     highlightsTitle: "Points forts et points à améliorer",
     highlights:
