@@ -44,14 +44,14 @@ export default async function ThanksPage({ params }: PageProps<"/donner/[feedbac
               <p>{t.text}</p>
             </div>
             <div className={styles.thanksTear} aria-hidden="true" />
-            <p className={`muted ${styles.thanksStub}`}>{t.close}</p>
+            <p className={`muted ${styles.thanksStub}`}>{t.nextPublication}</p>
             {/* Decorative: the title already says it. */}
             <div className={styles.stamp} aria-hidden="true">
               <strong>{t.stamp}</strong>
               <span>{today}</span>
             </div>
           </div>
-          <Link href={`/resultats/${context.establishmentId}`} className={styles.thanksResults}>
+          <Link href={`/resultats/${context.establishmentId}?avis=envoye`} className={styles.thanksResults}>
             {t.seeResults}
           </Link>
           <BackLink href="/" label={common.backHome} />

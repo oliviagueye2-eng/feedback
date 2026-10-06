@@ -277,8 +277,9 @@ export const fr = {
 
   thanks: {
     title: "Merci pour votre participation",
-    text: "Vos réponses aideront à améliorer ce service.",
-    close: "Vous pouvez fermer cette page.",
+    text: "Votre avis aidera à améliorer ce service pour tous les usagers.",
+    /** In the stub, beside the stamp (her wording, 2026-10-06). */
+    nextPublication: "Il sera comptabilisé lors de la prochaine publication mensuelle des résultats.",
     stamp: "Merci",
     seeResults: "Voir les résultats de cet établissement",
   },
@@ -292,8 +293,8 @@ export const fr = {
     waitingPeriod: "3 derniers mois",
     /** Day of the last update, the 1st of the month (her choice, 2026-10-03). */
     stampPublished: "Mis à jour",
+    /** Alone on the stamp: no « 0 avis sur 10 » (her request, 2026-10-06). */
     stampWaiting: "En attente",
-    stampCount: "{count} avis sur {threshold}",
     /** Short label as the title, the exact question asked under it, alone (her choice, 2026-10-03). */
     satisfactionTitle: "Satisfaction",
     goalTitle: "Résultat obtenu",
@@ -353,8 +354,9 @@ export const fr = {
     satisfied: "Satisfaits",
     notEnough: "pas assez d'avis",
     emptyTitle: "Pas encore assez d'avis pour publier un résultat.",
-    emptyCount: { one: "{count} avis reçu ces 3 derniers mois.", other: "{count} avis reçus ces 3 derniers mois." },
-    emptyWhy: "Il en faut au moins {threshold} pour que le résultat soit fiable et que personne ne puisse être reconnu.",
+    /** The rule without the count, which read as a score at 0 (2026-10-06). */
+    emptyWhy:
+      "Les résultats s'affichent à partir de {threshold} avis reçus sur les 3 derniers mois, pour qu'ils soient fiables et que personne ne puisse être reconnu.",
     rules: "Résultats mis à jour chaque mois.",
     methodLink: "Comment sont calculés ces résultats ?",
     give: "Donner mon avis sur cet établissement",

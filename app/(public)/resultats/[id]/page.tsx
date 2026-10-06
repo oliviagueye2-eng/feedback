@@ -71,15 +71,17 @@ const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1
  * number of feedbacks shows. Written comments are never published, nor the
  * full list of topics: only the strengths and points to improve.
  */
-export default async function ResultsPage({ params }: PageProps<"/resultats/[id]">) {
+export default async function ResultsPage({ params, searchParams }: PageProps<"/resultats/[id]">) {
   const { id } = await params;
+  // Coming from the thanks page: the feedback was just given, no button to give it (2026-10-06).
+  const justGiven = (await searchParams).avis === "envoye";
   const establishment = await load(id);
   const results = await getPublishedResults(establishment.id);
   const { common, results: t } = await getDictionary();
   const publishedOn = new Intl.DateTimeFormat("fr-FR", { timeZone: "UTC", dateStyle: "short" }).format(
     new Date(`${results.period.publishedOn}T00:00:00Z`),
   );
-  const giveLink = (
+  const giveLink = !justGiven && (
     <Link className="btn" href={`/avis/${establishment.id}`}>
       {t.give}
     </Link>
@@ -108,7 +110,6 @@ export default async function ResultsPage({ params }: PageProps<"/resultats/[id]
                 ) : (
                   <p className={`${styles.stamp} ${styles.stampWaiting}`}>
                     <strong>{t.stampWaiting}</strong>
-                    <span>{fill(t.stampCount, { count: results.feedbackCount, threshold: results.threshold })}</span>
                   </p>
                 )}
               </div>
@@ -116,9 +117,7 @@ export default async function ResultsPage({ params }: PageProps<"/resultats/[id]
               {!results.published ? (
                 <section className={styles.section}>
                   <h2>{t.emptyTitle}</h2>
-                  <p>
-                    {plural(t.emptyCount, results.feedbackCount)} {fill(t.emptyWhy, { threshold: results.threshold })}
-                  </p>
+                  <p>{fill(t.emptyWhy, { threshold: results.threshold })}</p>
                 </section>
               ) : (
                 <>
@@ -252,18 +251,22 @@ export default async function ResultsPage({ params }: PageProps<"/resultats/[id]
               )}
             </div>
 
-            <div className={styles.tear} aria-hidden="true" />
-            <div className={styles.stub}>
-              {results.published && (
-                <p className="muted">
-                  {t.rules}{" "}
-                  <Link className={styles.methodLink} href="/resultats/calcul">
-                    {t.methodLink}
-                  </Link>
-                </p>
-              )}
-              {giveLink}
-            </div>
+            {(results.published || giveLink) && (
+              <>
+                <div className={styles.tear} aria-hidden="true" />
+                <div className={styles.stub}>
+                  {results.published && (
+                    <p className="muted">
+                      {t.rules}{" "}
+                      <Link className={styles.methodLink} href="/resultats/calcul">
+                        {t.methodLink}
+                      </Link>
+                    </p>
+                  )}
+                  {giveLink}
+                </div>
+              </>
+            )}
           </article>
           <BackLink href="/" label={common.backHome} />
         </div>
