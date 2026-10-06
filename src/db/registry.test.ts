@@ -69,13 +69,14 @@ describe("first establishments of the registry", () => {
     expect(rows).toEqual([]);
   });
 
-  it("has the eighty-nine organisations, each rated in general", async () => {
+  it("has the ninety-one organisations, each rated in general", async () => {
     const { rows } = await db.query<{ organizations: number; general: number }>(`
       SELECT (SELECT count(*)::int FROM organization) AS organizations,
              (SELECT count(*)::int FROM establishment WHERE scope = 'general') AS general`);
     // 11 organisations, the 5 transport operators (0003), Air Sénégal (0006), the police and the gendarmerie (0010),
     // 26 more banks (0022) and 41 more organisations (0025).
-    expect(rows[0]).toEqual({ organizations: 89, general: 89 });
+    // Orange Money and Mixx by Yas (0027).
+    expect(rows[0]).toEqual({ organizations: 91, general: 91 });
   });
 
   it("finds an organisation by its usual name, full name or former name", async () => {
@@ -100,8 +101,9 @@ describe("first establishments of the registry", () => {
     const { rows } = await db.query<{ n: number }>(`
       SELECT count(*)::int AS n FROM organization o JOIN sector s ON s.id = o.sector_id
       WHERE s.code = 'BANKING_INSURANCE'`);
-    // 29 banks, then Wave, 16 insurers and 6 microfinance institutions (0025).
-    expect(rows[0]?.n).toBe(52);
+    // 29 banks, then Wave, 16 insurers and 6 microfinance institutions (0025),
+    // Orange Money and Mixx by Yas (0027).
+    expect(rows[0]?.n).toBe(54);
   });
 
   it("finds the new organisations by their name or an everyday word (0025)", async () => {
@@ -117,8 +119,9 @@ describe("first establishments of the registry", () => {
 
   it("finds only the brand searched for, not the other mobile money operators (0026)", async () => {
     expect(await names("wave")).toEqual(["Wave"]);
-    expect(await names("orange money")).toEqual(["Orange"]);
-    expect(await names("mixx")).toEqual(["Yas"]);
+    // Orange Money and Mixx by Yas are organisations of their own (0027).
+    expect((await searchEstablishments("orange money")).results[0]?.name).toBe("Orange Money");
+    expect((await searchEstablishments("mixx")).results[0]?.name).toBe("Mixx by Yas");
   });
 
   it("shows Sen'Eau under water and Senelec under electricity", async () => {
