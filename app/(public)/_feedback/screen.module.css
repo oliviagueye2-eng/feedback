@@ -920,6 +920,14 @@ form.screen:has(> .heading) {
   accent-color: var(--green);
 }
 
+/* Under the statement: where the e-mail or phone goes, read without leaving the form. */
+.privacyLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 15px;
+}
+
 .attest:has(input:checked) {
   border-color: var(--green);
   background: var(--green-tint);

@@ -1,8 +1,10 @@
+import Link from "next/link";
+import { LEGAL_PAGES } from "../(public)/_legal/links";
 import { getDictionary } from "../_i18n";
 import { SocialLinks } from "./SocialLinks";
 
 export async function SiteFooter() {
-  const { footer: t, header } = await getDictionary();
+  const { footer: t, header, legal } = await getDictionary();
   return (
     <footer className="site-footer">
       <div className="container site-footer-inner">
@@ -22,10 +24,14 @@ export async function SiteFooter() {
           <em>{header.tagline}</em>
         </div>
         <div className="site-footer-text">
-          <p>{t.privacy}</p>
           <p>{t.purpose}</p>
         </div>
         <SocialLinks />
+        <nav className="site-footer-legal" aria-label={legal.navLabel}>
+          <Link href={LEGAL_PAGES.notice}>{legal.notice.title}</Link>
+          <Link href={LEGAL_PAGES.privacy}>{legal.privacy.title}</Link>
+          <Link href={LEGAL_PAGES.terms}>{legal.terms.title}</Link>
+        </nav>
       </div>
     </footer>
   );

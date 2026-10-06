@@ -516,6 +516,25 @@ export async function deleteAbandonedFeedbacks(days: number): Promise<number> {
   return rows.length;
 }
 
+/**
+ * Nightly cleanup: the e-mail or phone of a person who sent no feedback for
+ * `months` months (privacy policy: « 12 mois après votre dernier avis »). The
+ * feedbacks stay, with nothing left to tie them to that person. Returns how
+ * many contacts were deleted.
+ */
+export async function deleteExpiredContacts(months: number): Promise<number> {
+  const rows = await query(
+    `DELETE FROM feedback_contact c
+     WHERE NOT EXISTS (
+       SELECT 1 FROM feedback_contact recent
+       WHERE recent.kind = c.kind AND recent.value = c.value
+         AND recent.attested_at >= now() - make_interval(months => $1))
+     RETURNING c.feedback_id`,
+    [months],
+  );
+  return rows.length;
+}
+
 export interface DetailedQuestion {
   id: number;
   code: string;

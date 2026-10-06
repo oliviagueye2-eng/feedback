@@ -1,0 +1,117 @@
+/* The legal pages: one white sheet like the results, set for long reading. */
+
+.main {
+  background: var(--page);
+}
+
+.page {
+  max-width: 760px;
+  padding-top: 26px;
+  padding-bottom: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.sheet {
+  background: #fff;
+  border: 1px solid var(--ticket-line);
+  border-radius: 6px;
+  padding: 20px 20px 8px;
+}
+
+.sheet h1 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+.sheet p {
+  margin: 0 0 10px;
+  line-height: 1.55;
+}
+
+.updated {
+  font-size: 14px;
+}
+
+.lead {
+  margin-top: 18px;
+}
+
+.section {
+  padding-top: 18px;
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.section h2 {
+  margin: 0 0 8px;
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+/* The data collected: a table on a computer, one block per data on a phone. */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 4px 0 14px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 12px 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.table thead th {
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+@media (max-width: 599px) {
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .table tr {
+    display: block;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .table th,
+  .table td {
+    display: block;
+    padding: 2px 0;
+    border: 0;
+  }
+
+  .table td::before {
+    content: attr(data-label) " : ";
+    color: var(--muted);
+  }
+}
+
+@media (min-width: 600px) {
+  .page {
+    padding-top: 40px;
+  }
+
+  .sheet {
+    padding: 28px 40px 16px;
+  }
+
+  .sheet h1 {
+    font-size: 30px;
+  }
+}

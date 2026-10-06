@@ -698,6 +698,13 @@
   border-top: 1px solid rgb(255 255 255 / 0.18);
 }
 
+/* Under the copyright, which already draws the line. */
+.footerLegal {
+  margin-top: -20px;
+  padding-top: 0;
+  border-top: 0;
+}
+
 /* ---- Tablets ---- */
 
 @media (min-width: 600px) {
@@ -876,7 +883,8 @@
     gap: 28px;
   }
 
-  .copyright {
+  .copyright,
+  .footerLegal {
     grid-column: 1 / -1;
   }
 }

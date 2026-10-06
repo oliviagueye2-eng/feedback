@@ -976,4 +976,33 @@ describe("nightly job", () => {
     );
     expect(left.map((r) => r.id)).toEqual([oldAnswered, recent]);
   });
+
+  it("deletes the e-mail or phone 12 months after the person's last feedback, and keeps the feedbacks", async () => {
+    const gone = "a1b2c3d4-0000-4000-8000-000000000011";
+    const kept = "a1b2c3d4-0000-4000-8000-000000000012";
+    const backOld = "a1b2c3d4-0000-4000-8000-000000000013";
+    const backRecent = "a1b2c3d4-0000-4000-8000-000000000014";
+    // Started now: these are not abandoned feedbacks, only their contacts age.
+    await db.exec(`
+      INSERT INTO feedback (id, establishment_id, channel, language)
+      SELECT v.id::uuid, '${ids.gy}', 'search', 'fr'
+      FROM (VALUES ('${gone}'), ('${kept}'), ('${backOld}'), ('${backRecent}')) AS v (id);
+      INSERT INTO feedback_contact (feedback_id, kind, value, attested_at)
+      SELECT v.id::uuid, v.kind, v.value, date_trunc('hour', now()) - v.age
+      FROM (VALUES ('${gone}', 'email', 'parti@example.sn', interval '13 months'),
+                   ('${kept}', 'phone', '+221771234567', interval '11 months'),
+                   ('${backOld}', 'email', 'revenu@example.sn', interval '13 months'),
+                   ('${backRecent}', 'email', 'revenu@example.sn', interval '2 months'))
+        AS v (id, kind, value, age);
+    `);
+
+    expect((await refreshPublishedStats()).contactsDeleted).toBe(1);
+    const contacts = await rows<{ id: string }>(
+      "SELECT feedback_id::text AS id FROM feedback_contact WHERE feedback_id IN ($1, $2, $3, $4) ORDER BY 1",
+      [gone, kept, backOld, backRecent],
+    );
+    expect(contacts.map((r) => r.id)).toEqual([kept, backOld, backRecent]);
+    const feedbacks = await rows<{ id: string }>("SELECT id::text FROM feedback WHERE id = $1", [gone]);
+    expect(feedbacks).toHaveLength(1);
+  });
 });
