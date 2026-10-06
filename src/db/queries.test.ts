@@ -636,6 +636,15 @@ describe("feedback", () => {
       "Service client (appel, réclamation)",
       "Utilisation de l'application mobile",
     ]);
+    // Orange Money and Mixx by Yas have the same three; Orange and Yas keep the telephone (0027).
+    const servicesOf = async (name: string) => {
+      const [e] = await rows<{ id: string }>("SELECT id FROM establishment WHERE name = $1", [name]);
+      return (await getEstablishment(e!.id)).services.map((s) => s.label);
+    };
+    expect(await servicesOf("Orange Money")).toEqual(Object.keys(services));
+    expect(await servicesOf("Mixx by Yas")).toEqual(Object.keys(services));
+    expect(await servicesOf("Orange")).toEqual(["Téléphone ou internet"]);
+    expect(await servicesOf("Yas")).toEqual(["Téléphone ou internet"]);
     const visit = async (feedback: string, serviceId: number) => {
       await upsertFeedback(feedback, { channel: "search", establishmentId: wave!.id, serviceId, language: "fr", visitPeriod: "today" });
       return {
