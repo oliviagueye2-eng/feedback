@@ -115,6 +115,12 @@ describe("first establishments of the registry", () => {
     expect((await first("uidt"))?.name).toBe("Université Iba Der Thiam de Thiès");
   });
 
+  it("finds only the brand searched for, not the other mobile money operators (0026)", async () => {
+    expect(await names("wave")).toEqual(["Wave"]);
+    expect(await names("orange money")).toEqual(["Orange"]);
+    expect(await names("mixx")).toEqual(["Yas"]);
+  });
+
   it("shows Sen'Eau under water and Senelec under electricity", async () => {
     const results = (await searchEstablishments("sen")).results;
     const [seneau, senelec] = ["Sen'Eau", "Senelec"].map((name) => results.find((r) => r.name === name));
