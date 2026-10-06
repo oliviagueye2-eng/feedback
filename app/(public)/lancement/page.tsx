@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { SOCIAL_ACCOUNTS, SocialIcon } from "../../_components/SocialLinks";
 import { getDictionary } from "../../_i18n";
+import { LEGAL_PAGES } from "../_legal/links";
 import { LandingHeader } from "./LandingHeader";
 import { Reveal } from "./Reveal";
 import busPhoto from "../../../public/images/lancement-bus-tata.jpg";
@@ -48,7 +50,7 @@ const CHAIN_ICONS = [
  * no feedback button, no figures.
  */
 export default async function LandingPage() {
-  const { header, landing: t } = await getDictionary();
+  const { header, landing: t, legal } = await getDictionary();
 
   return (
     <>
@@ -202,6 +204,11 @@ export default async function LandingPage() {
             <a href="#vision">{t.nav.vision}</a>
           </nav>
           <p className={styles.copyright}>{t.footer.copyright}</p>
+          <nav className={`site-footer-legal ${styles.footerLegal}`} aria-label={legal.navLabel}>
+            <Link href={LEGAL_PAGES.notice}>{legal.notice.title}</Link>
+            <Link href={LEGAL_PAGES.privacy}>{legal.privacy.title}</Link>
+            <Link href={LEGAL_PAGES.terms}>{legal.terms.title}</Link>
+          </nav>
         </div>
       </footer>
       <Reveal />

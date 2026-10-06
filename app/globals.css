@@ -323,6 +323,31 @@ select:focus-visible {
   line-height: 1.45;
 }
 
+/* Legal pages: plain links, 44 px high to be easy to touch. */
+.site-footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 20px;
+  padding-top: 8px;
+  border-top: 1px solid rgb(255 255 255 / 0.18);
+}
+
+.site-footer-legal a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 14px;
+  color: var(--footer-text);
+}
+
+.site-footer-legal a:hover {
+  color: #fff;
+}
+
+.site-footer-legal a:focus-visible {
+  outline-color: #fff;
+}
+
 .site-footer-social ul {
   display: flex;
   gap: 8px;

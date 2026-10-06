@@ -14,6 +14,12 @@ describe("routeRequest", () => {
     expect(routeRequest("neexnaxari.com", "/lancement")).toBe("to-landing");
   });
 
+  it("keeps the legal pages on the main domain", () => {
+    expect(routeRequest("neexnaxari.com", "/mentions-legales")).toBe("site");
+    expect(routeRequest("neexnaxari.com", "/confidentialite")).toBe("site");
+    expect(routeRequest("www.neexnaxari.com", "/conditions-utilisation")).toBe("site");
+  });
+
   it("keeps the whole site on the test address", () => {
     expect(routeRequest("feedback-pink-sigma.vercel.app", "/")).toBe("site");
     expect(routeRequest("feedback-pink-sigma.vercel.app", "/avis")).toBe("site");

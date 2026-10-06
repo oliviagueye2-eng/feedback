@@ -40,7 +40,7 @@ export const fr = {
   },
 
   footer: {
-    privacy: "Aucune donnée personnelle n'est demandée aux usagers.",
+    privacy: "Vos coordonnées ne sont jamais publiées ni transmises.",
     purpose: "Une plateforme au service de la transparence et de la bonne gouvernance.",
     followUs: "Suivez-nous",
     /** Read by screen readers on each icon (the page opens in a new tab). */
@@ -269,7 +269,10 @@ export const fr = {
     contactPlaceholder: "Ex. : 77 123 45 67",
     contactHelp: "Il sert uniquement à des fins de validation et de modération. Il n'est jamais publié ni transmis.",
     contactError: "Indiquez une adresse e-mail ou un numéro de téléphone sénégalais.",
-    attest: "J'atteste sur l'honneur que cet avis décrit une expérience que j'ai vécue moi-même.",
+    attest:
+      "J'atteste sur l'honneur que cet avis est sincère, qu'il décrit une expérience que j'ai vécue moi-même, et que les coordonnées indiquées sont les miennes.",
+    /** Opens in a new tab: the form keeps what was typed. */
+    privacyLink: "Politique de confidentialité (nouvel onglet)",
     attestError: "Cochez l'attestation pour envoyer votre avis.",
     error: "Vérifiez votre e-mail ou votre numéro, et cochez l'attestation, puis appuyez de nouveau sur « Envoyer mon avis ».",
     submit: "Envoyer mon avis",
@@ -371,6 +374,192 @@ export const fr = {
     highlights:
       "Un pourcentage calculé sur peu d'avis peut changer beaucoup avec un seul avis de plus. Pour ne pas juger un établissement trop vite, nous tenons compte de cette incertitude : un thème n'est affiché comme point fort que si son résultat reste au-dessus de 60 % même dans le cas le moins favorable, et comme point à améliorer que s'il reste sous 50 % même dans le cas le plus favorable.",
     highlightsMethod: "(Méthode : intervalle de confiance à 95 %, calculé selon Wilson.)",
+  },
+
+  /**
+   * Legal pages (mentions légales, confidentialité, conditions d'utilisation),
+   * validated by Olivia on 2026-10-06 (Claude Doc « NeexNaxari : pages légales »).
+   * Tags: <contact> the contact address, <method> the page of the calculation,
+   * <cdp> the CDP's site, <privacy> the privacy policy.
+   */
+  legal: {
+    updated: "Dernière mise à jour : 6 octobre 2026",
+    navLabel: "Informations légales",
+    notice: {
+      title: "Mentions légales",
+      sections: [
+        { title: "Éditeur du site", paragraphs: ["Le site neexnaxari.com est édité par Olivia Bonfils Guèye, personne physique."] },
+        { title: "Responsable de la publication", paragraphs: ["Olivia Bonfils Guèye, fondatrice."] },
+        { title: "Contact", paragraphs: ["<contact>contact@neexnaxari.com</contact>"] },
+        {
+          title: "Hébergement",
+          paragraphs: [
+            "Site : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis (vercel.com).",
+            "Base de données : Neon (Databricks), serveurs situés à Francfort, Allemagne (neon.tech).",
+          ],
+        },
+        {
+          title: "Propriété intellectuelle",
+          paragraphs: [
+            "Le nom NeexNaxari, le logo, les textes et les illustrations du site appartiennent à Olivia Bonfils Guèye. Les résultats publiés peuvent être cités en indiquant la source « NeexNaxari » et la date de consultation.",
+          ],
+        },
+        {
+          title: "Indépendance",
+          paragraphs: ["NeexNaxari n'est pas un service de l'État et n'est lié à aucun des organismes évalués."],
+        },
+      ],
+    },
+    privacy: {
+      title: "Politique de confidentialité",
+      summary:
+        "<b>En une phrase.</b> Vos coordonnées servent uniquement à des fins de validation et de modération : elles ne sont jamais publiées, ni transmises, ni vendues.",
+      before: [
+        {
+          title: "Responsable du traitement",
+          paragraphs: [
+            "Olivia Bonfils Guèye. Contact : <contact>contact@neexnaxari.com</contact>.",
+            "Déclaration à la Commission de Protection des Données Personnelles (CDP) en cours, conformément à la loi n° 2008-12 du 25 janvier 2008. Le numéro de récépissé sera indiqué ici dès réception.",
+          ],
+        },
+      ],
+      collected: {
+        title: "Ce que nous recueillons",
+        headers: ["Donnée", "Pourquoi", "Combien de temps"],
+        rows: [
+          [
+            "E-mail ou téléphone (au choix)",
+            "Valider et modérer les avis (doublons, avis en masse)",
+            "12 mois après votre dernier avis",
+          ],
+          [
+            "Vos réponses (satisfaction, thèmes, questions)",
+            "Calculer les résultats publiés",
+            "Tant que le service existe, sans lien avec votre e-mail ou téléphone après 12 mois",
+          ],
+          [
+            "Votre commentaire écrit",
+            "Relu par notre équipe, non publié",
+            "Tant que le service existe, sans lien avec votre e-mail ou téléphone après 12 mois. Les informations personnelles qu'il contient (noms, numéros, adresses) sont effacées à la relecture.",
+          ],
+          ["Dates de votre expérience et de votre avis", "Ne compter que les avis récents", "Avec l'avis"],
+          [
+            "Journaux techniques (adresse IP, navigateur)",
+            "Sécurité du site, lutte contre les abus",
+            "Durée fixée par l'hébergeur du site",
+          ],
+        ],
+        note: "L'e-mail ou le téléphone est obligatoire pour envoyer un avis. Un avis arrêté avant ce dernier écran n'est pas compté dans les résultats ; ses réponses sont gardées sans aucune donnée sur vous, pour nos statistiques internes. En envoyant votre avis, vous acceptez ce traitement.",
+      },
+      after: [
+        {
+          title: "Ce qui est publié",
+          paragraphs: [
+            "Seuls des résultats d'ensemble par organisme, selon les règles expliquées sur la page <method>Comment sont calculés les résultats</method>, dont le nombre minimum d'avis. Aucun avis individuel, aucun commentaire, aucune information sur vous.",
+          ],
+        },
+        {
+          title: "Qui y a accès",
+          paragraphs: [
+            "Seule l'équipe de NeexNaxari. Les organismes évalués n'ont jamais accès à vos coordonnées. Nous ne vendons et ne louons aucune donnée, et n'en faisons aucun usage commercial, publicitaire ou politique.",
+          ],
+        },
+        {
+          title: "Prestataires",
+          paragraphs: [
+            "Le site est hébergé par Vercel (États-Unis) et la base de données par Neon à Francfort (Allemagne). Ce transfert hors du Sénégal figure dans notre déclaration à la CDP, en cours. Ces prestataires ne peuvent pas utiliser vos données pour leur propre compte.",
+          ],
+        },
+        {
+          title: "Sécurité",
+          paragraphs: [
+            "Les échanges avec le site sont chiffrés. Vos coordonnées sont rangées à part de vos réponses. Seule l'équipe de NeexNaxari y accède, avec un mot de passe.",
+          ],
+        },
+        {
+          title: "Vos droits",
+          paragraphs: [
+            "Vous pouvez demander à consulter, corriger ou supprimer vos données personnelles, et vous opposer à leur utilisation, en écrivant à <contact>contact@neexnaxari.com</contact>. Nous répondons sous 30 jours. Si la réponse ne vous satisfait pas, vous pouvez saisir la CDP (<cdp>cdp.sn</cdp>).",
+          ],
+        },
+        {
+          title: "Stockage sur votre appareil",
+          paragraphs: [
+            "Le site ne pose pas de cookie publicitaire ni de mesure d'audience. Il garde seulement sur votre appareil les informations utiles à son bon fonctionnement.",
+          ],
+        },
+      ],
+    },
+    terms: {
+      title: "Conditions d'utilisation",
+      intro: "En donnant un avis sur NeexNaxari, vous acceptez ces conditions.",
+      sections: [
+        {
+          title: "1. Objet",
+          paragraphs: [
+            "NeexNaxari permet aux usagers de donner leur avis sur les services publics et privés au Sénégal, et publie des résultats d'ensemble par organisme. NeexNaxari ne transmet pas les avis et ne traite pas les plaintes : pour une réclamation, adressez-vous directement à l'organisme concerné.",
+          ],
+        },
+        {
+          title: "2. Gratuité",
+          paragraphs: [
+            "Donner un avis et consulter les résultats est gratuit. Les frais de connexion internet restent à votre charge.",
+          ],
+        },
+        {
+          title: "3. Vérification",
+          paragraphs: ["Chaque avis est accompagné de vos coordonnées, qui doivent être les vôtres."],
+        },
+        {
+          title: "4. Un avis sincère",
+          paragraphs: [
+            "Vous vous engagez à décrire une expérience que vous avez vécue vous-même. Sont interdits : les avis inventés, les avis contre rémunération, les avis donnés pour le compte d'un organisme ou contre un concurrent.",
+          ],
+        },
+        {
+          title: "5. Commentaires",
+          paragraphs: [
+            "Les commentaires écrits ne sont pas publiés. Ils sont relus par notre équipe. N'y mettez ni nom de personne, ni numéro de téléphone, ni propos injurieux ou contraires à la loi. Ne visez pas une personne en particulier : l'avis porte sur le service. Si un commentaire contient des informations personnelles, nous les effaçons.",
+          ],
+        },
+        {
+          title: "6. Droits sur vos réponses",
+          paragraphs: [
+            "En envoyant un avis, vous autorisez NeexNaxari à l'utiliser pour calculer et publier des résultats d'ensemble. Vos réponses ne sont ni vendues ni utilisées à des fins publicitaires.",
+          ],
+        },
+        {
+          title: "7. Modération",
+          paragraphs: [
+            "Nous pouvons écarter des résultats un avis qui ne respecte pas ces règles, ou une série d'avis suspects, sans avoir à nous justifier auprès de son auteur.",
+          ],
+        },
+        {
+          title: "8. Résultats publiés",
+          paragraphs: [
+            "Les résultats reflètent les avis reçus. Ils ne constituent ni un classement officiel, ni une inspection, ni un jugement sur des personnes. Leurs règles de calcul et de publication, dont le nombre minimum d'avis, sont expliquées sur la page <method>Comment sont calculés les résultats</method>.",
+          ],
+        },
+        {
+          title: "9. Organismes évalués",
+          paragraphs: [
+            "Un organisme peut signaler une erreur (nom, adresse, fermeture) à <contact>contact@neexnaxari.com</contact>. Il ne peut ni acheter, ni modifier, ni faire retirer ses résultats.",
+          ],
+        },
+        {
+          title: "10. Responsabilité",
+          paragraphs: [
+            "Nous faisons notre possible pour que le site fonctionne et que les résultats soient exacts, sans pouvoir le garantir à tout moment. L'auteur d'un avis reste responsable de ce qu'il écrit. Les signalements de contenu illicite se font à <contact>contact@neexnaxari.com</contact> (loi n° 2008-08 sur les transactions électroniques).",
+          ],
+        },
+        {
+          title: "11. Droit applicable",
+          paragraphs: [
+            "Ces conditions relèvent du droit sénégalais. En cas de désaccord, une solution amiable est recherchée d'abord, à <contact>contact@neexnaxari.com</contact> ; à défaut, les tribunaux de Dakar sont compétents. Elles sont susceptibles d'être modifiées.",
+          ],
+        },
+      ],
+    },
   },
 
   admin: {
