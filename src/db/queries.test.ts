@@ -628,6 +628,35 @@ describe("feedback", () => {
     ]);
   });
 
+  it("gives mobile money three services with their own topics, not the bank agencies' (0026)", async () => {
+    const [wave] = await rows<{ id: string }>("SELECT id FROM establishment WHERE name = 'Wave'");
+    const services = Object.fromEntries((await getEstablishment(wave!.id)).services.map((s) => [s.label, s.id]));
+    expect(Object.keys(services)).toEqual([
+      "Opération dans un point de service",
+      "Service client (appel, réclamation)",
+      "Utilisation de l'application mobile",
+    ]);
+    const visit = async (feedback: string, serviceId: number) => {
+      await upsertFeedback(feedback, { channel: "search", establishmentId: wave!.id, serviceId, language: "fr", visitPeriod: "today" });
+      return {
+        topics: (await getDetailsScreen(feedback)).topics.map((t) => t.code),
+        questions: (await getDetailedQuestionnaire(feedback)).questions.map((q) => q.code),
+      };
+    };
+    expect(await visit("d0e1f2a3-0000-4000-8000-000000000001", services["Utilisation de l'application mobile"]!)).toEqual({
+      topics: ["OPERATION_RELIABILITY", "OPERATION_SPEED", "APP_EASE", "FEES", "SERVICE_AVAILABILITY", "ACCOUNT_SECURITY"],
+      questions: ["MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "REPORTED", "REPORT_WHY"],
+    });
+    expect(await visit("d0e1f2a3-0000-4000-8000-000000000002", services["Opération dans un point de service"]!)).toEqual({
+      topics: ["OPERATION_RELIABILITY", "STAFF", "PROFESSIONALISM", "WAIT_TIME", "FEES", "AGENT_LIQUIDITY", "AGENT_PROXIMITY"],
+      questions: ["MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "AGENT_CASH", "REPORTED", "REPORT_WHY"],
+    });
+    expect(await visit("d0e1f2a3-0000-4000-8000-000000000003", services["Service client (appel, réclamation)"]!)).toEqual({
+      topics: ["REQUEST_HANDLING", "STAFF", "PROFESSIONALISM", "INFORMATION", "RESPONSE_TIME", "SUPPORT_REACHABILITY"],
+      questions: ["MONEY_PROBLEM_SOLVED", "REPORTED", "REPORT_WHY"],
+    });
+  });
+
   it("gives a university the topics of the visit chosen and the schools' questions (0015)", async () => {
     const [university] = await rows<{ id: string }>(
       `INSERT INTO establishment (name, type_id) SELECT 'Université de test', id FROM establishment_type
