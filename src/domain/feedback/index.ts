@@ -12,8 +12,10 @@ import { invalidInput, notFound } from "../errors";
 import { questionsNotApplicable, questionsToShow } from "../questionnaire/conditions";
 import { selectQuestionSets } from "../questionnaire/select";
 import { VISIT_PERIODS, type Channel, type VisitPeriod } from "../types";
+import { parseContact } from "./contact";
 import { computeVisitMonth, defaultVisitPeriod } from "./visit";
 
+export { CONTACT_MAX_LENGTH } from "./contact";
 export const COMMENT_MAX_LENGTH = 500;
 export const OTHER_TOPIC_MAX_LENGTH = 50;
 export const OTHER_TOPIC_CODE = "OTHER";
@@ -236,10 +238,10 @@ export async function getQuestionnaireScreen(feedbackId: string, page: QuestionP
 }
 
 /**
- * Screen 6 or 6b → the next page of questions, or the end of the feedback
- * (screen 7): the answers given (question code → option code), all optional.
+ * Screen 6 or 6b → the next page of questions, or the last screen (« Envoyer
+ * mon avis »): the answers given (question code → option code), all optional.
  * A question not answered keeps the answer given before, if any. Returns the
- * next page, or null when the feedback is complete.
+ * next page, or null when the questions are over.
  */
 export async function saveQuestionnaire(
   feedbackId: string,
@@ -249,13 +251,39 @@ export async function saveQuestionnaire(
   for (const [questionCode, option] of Object.entries(answers)) {
     await saveAnswer(feedbackId, questionCode, { option });
   }
-  const next = await nextQuestionPage(feedbackId, page);
-  if (!next) await completeFeedback(feedbackId);
-  return next;
+  return nextQuestionPage(feedbackId, page);
 }
 
 /**
- * End of the feedback (screen 7 follows): only once the essential question is
+ * Last screen (« Envoyer mon avis »): the feedback's context, the contact
+ * already given, and the page « Précédent » leads to (the last page of
+ * questions shown, else screen 2b).
+ */
+export async function getSendScreen(feedbackId: string) {
+  requireUuid(feedbackId, "id");
+  const loaded = await loadPageQuestions(feedbackId);
+  const previous: QuestionPage | "details" =
+    [...QUESTION_PAGES].reverse().find((page) => shownOn(page, loaded).length > 0) ?? "details";
+  return { context: loaded.context, contact: await db.findFeedbackContact(feedbackId), previous };
+}
+
+/**
+ * Last screen → screen 7: the e-mail or phone number (required) and the
+ * statement on honour (required), then the feedback is complete. Only once
+ * the essential question is answered.
+ */
+export async function submitFeedback(feedbackId: string, input: { contact: string; attested: boolean }) {
+  requireUuid(feedbackId, "id");
+  if (!input.attested) throw invalidInput("the statement on honour is required");
+  const contact = parseContact(input.contact);
+  const context = await db.findFeedbackContext(feedbackId);
+  if (!context?.essentialOption) throw notFound("Feedback not found or essential question not answered");
+  await db.saveFeedbackContact(feedbackId, contact);
+  await completeFeedback(feedbackId);
+}
+
+/**
+ * End of the feedback (screen 7 follows), from the last screen: only once the essential question is
  * answered. The answers that no longer apply are removed first (e.g. « Avez-
  * vous signalé ce problème ? » answered, then the user became satisfied).
  */

@@ -23,6 +23,8 @@ import {
   saveAnswer,
   saveComment,
   saveQuestionnaire,
+  getSendScreen,
+  submitFeedback,
   saveTopicGates,
   saveTopics,
   upsertFeedback,
@@ -357,11 +359,23 @@ describe("feedback", () => {
     await expect(saveAnswer(health, "RECEIPT_GIVEN", { option: "NOTHING_PAID" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
 
     // Two answered, three skipped.
-    // Satisfied enough: no common page after the sector's, the feedback ends.
+    // Satisfied enough: no common page after the sector's, the last screen follows.
     expect(await saveQuestionnaire(health, "sector", { WAIT_TIME: "2_TO_4_H", RECEIPT_GIVEN: "NO" })).toBeNull();
     const after = await getQuestionnaireScreen(health, "sector");
     expect(after.questions.map((q) => q.chosen)).toEqual([null, null, null, "2_TO_4_H", "NO"]);
-    expect(after.context.completed).toBe(true);
+    // Sent only from the last screen, with the contact and the statement on honour.
+    expect(after.context.completed).toBe(false);
+    const send = await getSendScreen(health);
+    expect(send.previous).toBe("sector");
+    expect(send.contact).toBeNull();
+    await expect(submitFeedback(health, { contact: "77 123 45 67", attested: false })).rejects.toMatchObject({ code: "INVALID_INPUT" });
+    await expect(submitFeedback(health, { contact: "pas un numéro", attested: true })).rejects.toMatchObject({ code: "INVALID_INPUT" });
+    expect((await getEssentialScreen(health)).context.completed).toBe(false);
+    await submitFeedback(health, { contact: "77 123 45 67", attested: true });
+    // Sent again (a network cut): the contact is replaced, the feedback stays complete.
+    await submitFeedback(health, { contact: " Awa.Diop@Exemple.SN ", attested: true });
+    expect((await getSendScreen(health)).contact).toEqual({ kind: "email", value: "awa.diop@exemple.sn" });
+    expect((await getEssentialScreen(health)).context.completed).toBe(true);
 
     await expect(saveQuestionnaire(health, "sector", { WAIT_TIME: "NEVER" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
   });
@@ -386,6 +400,9 @@ describe("feedback", () => {
     // « Pourquoi ? » answered, then « Non » changed to « Oui » on the same page.
     expect(await saveQuestionnaire(unhappy, "sector", { WAIT_TIME: "OVER_4_H" })).toBe("common");
     expect(await saveQuestionnaire(unhappy, "common", { REPORTED: "YES_ANSWERED", REPORT_WHY: "POINTLESS" })).toBeNull();
+    // « Précédent » from the last screen leads back to the common questions.
+    expect((await getSendScreen(unhappy)).previous).toBe("common");
+    await submitFeedback(unhappy, { contact: "771234567", attested: true });
     const answered = async () => (await rows<{ code: string }>(
       `SELECT q.code FROM answer a JOIN question q ON q.id = a.question_id
        WHERE a.feedback_id = $1 ORDER BY q.code`, [unhappy])).map((r) => r.code);
@@ -838,13 +855,16 @@ describe("published results", () => {
 
   it("adds up the last 3 months and every service, and publishes from 10 feedbacks", async () => {
     await db.exec(`
-      INSERT INTO feedback (id, establishment_id, service_id, channel, language, visit_period, visit_month)
-      SELECT gen_random_uuid(), '${ids.results}', NULL, 'qr', 'fr', 'today', v.month::date
+      INSERT INTO feedback (id, establishment_id, service_id, channel, language, visit_period, visit_month, step, completed_at)
+      SELECT gen_random_uuid(), '${ids.results}', NULL, 'qr', 'fr', 'today', v.month::date, 'completed', date_trunc('hour', now())
       FROM (VALUES ('2026-02-01'), ('2026-02-01'), ('2026-02-01'), ('2026-02-01'), ('2026-02-01'),
                    ('2026-02-01'), ('2026-02-01'), ('2026-02-01'), ('2026-02-01'), ('2026-02-01'),
                    ('2026-01-01'), ('2026-01-01'),
                    -- Out of the period: April is not complete yet, December is too old.
                    ('2026-04-01'), ('2025-12-01')) AS v (month);
+      -- Sent from the last screen (0023): only those count (0024).
+      INSERT INTO feedback_contact (feedback_id, kind, value)
+      SELECT id, 'phone', '+221771234567' FROM feedback WHERE establishment_id = '${ids.results}';
       INSERT INTO answer (feedback_id, question_id, option_id)
       SELECT f.id, q.id, ao.id
       FROM feedback f, question q JOIN answer_option ao ON ao.question_id = q.id
@@ -871,6 +891,13 @@ describe("published results", () => {
             UNION ALL SELECT n, 'PRIVACY', 'positive', NULL FROM generate_series(1, 3) AS n
             UNION ALL VALUES (1, 'OTHER', 'negative', 'Parking')) AS v (n, code, sentiment, other_text) ON v.n = f.n
       JOIN topic t ON t.code = v.code;
+      -- Stopped before « Envoyer mon avis »: kept, never published.
+      INSERT INTO feedback (id, establishment_id, channel, language, visit_period, visit_month)
+      VALUES ('0d0d0d0d-0024-4000-8000-00000000abcd', '${ids.results}', 'qr', 'fr', 'today', '2026-02-01');
+      INSERT INTO answer (feedback_id, question_id, option_id)
+      SELECT '0d0d0d0d-0024-4000-8000-00000000abcd', q.id, ao.id
+      FROM question q JOIN answer_option ao ON ao.question_id = q.id
+      WHERE q.code = 'OVERALL_SATISFACTION' AND ao.code = 'VERY_DISSATISFIED';
     `);
     await refreshPublishedStats();
 

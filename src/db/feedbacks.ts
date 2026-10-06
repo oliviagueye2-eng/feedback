@@ -460,6 +460,36 @@ export async function completeFeedback(feedbackId: string): Promise<boolean> {
   return rows.length > 0;
 }
 
+export type ContactKind = "email" | "phone";
+
+/** The e-mail or phone number given on the last screen, already normalized. */
+export interface FeedbackContact {
+  kind: ContactKind;
+  value: string;
+}
+
+/**
+ * Last screen (« Envoyer mon avis »): the contact and the statement on honour.
+ * Sent again (a network cut, « Précédent »), it replaces the contact; the
+ * time of the statement is kept.
+ */
+export async function saveFeedbackContact(feedbackId: string, contact: FeedbackContact): Promise<void> {
+  await query(
+    `INSERT INTO feedback_contact (feedback_id, kind, value) VALUES ($1, $2, $3)
+     ON CONFLICT (feedback_id) DO UPDATE SET kind = excluded.kind, value = excluded.value`,
+    [feedbackId, contact.kind, contact.value],
+  );
+}
+
+/** The contact already given for this feedback (coming back to the last screen). */
+export async function findFeedbackContact(feedbackId: string): Promise<FeedbackContact | null> {
+  const rows = await query<FeedbackContact>(
+    `SELECT kind, value FROM feedback_contact WHERE feedback_id = $1`,
+    [feedbackId],
+  );
+  return rows[0] ?? null;
+}
+
 /**
  * Nightly cleanup: feedbacks started more than `days` days ago and never
  * answered at the essential question (left at screen 1). Their topics,
@@ -476,6 +506,7 @@ export async function deleteAbandonedFeedbacks(days: number): Promise<number> {
            WHERE a.feedback_id = f.id AND q.code = 'OVERALL_SATISFACTION')
      ),
      topics AS (DELETE FROM feedback_topic WHERE feedback_id IN (SELECT id FROM abandoned)),
+     contacts AS (DELETE FROM feedback_contact WHERE feedback_id IN (SELECT id FROM abandoned)),
      comments AS (DELETE FROM comment WHERE feedback_id IN (SELECT id FROM abandoned)),
      answers AS (DELETE FROM answer WHERE feedback_id IN (SELECT id FROM abandoned))
      DELETE FROM feedback WHERE id IN (SELECT id FROM abandoned)

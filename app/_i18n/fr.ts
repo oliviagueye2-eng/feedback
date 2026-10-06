@@ -16,7 +16,7 @@
 export const fr = {
   meta: {
     title: "NeexNaxari, plateforme citoyenne de satisfaction des usagers",
-    description: "Donnez votre avis sur un établissement : anonyme, gratuit, environ une minute.",
+    description: "Donnez votre avis sur un établissement : gratuit, environ une minute.",
   },
 
   common: {
@@ -65,7 +65,7 @@ export const fr = {
     ticketNumber: "N° 047",
     title: "C'est votre tour.",
     lead: "Vous avez utilisé un service, public ou privé ? Dites-nous comment ça s'est passé. Ensemble, pour un Sénégal qui progresse.",
-    duration: "Anonyme et gratuit, environ 1 minute.",
+    duration: "Gratuit, environ 1 minute.",
     qr: "Encore au guichet ? <b>Scannez le QR code affiché</b>, l'établissement sera déjà rempli.",
     civicTitle: "Un geste citoyen : donner son avis, c'est faire entendre la voix des usagers.",
     civicLead: "Chaque expérience compte : mairie, hôpital, banque, transport, hôtel, restaurant…",
@@ -132,7 +132,7 @@ export const fr = {
         { title: "Je choisis", text: "Je sélectionne le service ou l'établissement concerné." },
         {
           title: "Je partage",
-          text: "En quelques clics et de manière anonyme, je donne mon avis sur mon expérience et j'évalue les différents aspects du service.",
+          text: "En quelques clics, je donne mon avis sur mon expérience et j'évalue les différents aspects du service.",
         },
         {
           title: "Je contribue",
@@ -227,7 +227,7 @@ export const fr = {
       over_month: "Il y a plus d'un mois",
     },
     start: "Commencer",
-    duration: "Anonyme, environ 1 minute.",
+    duration: "Gratuit, environ 1 minute.",
   },
 
   qr: {
@@ -261,6 +261,18 @@ export const fr = {
     or: " ou ",
     error: "Une réponse n'a pas été acceptée. Vérifiez vos réponses, puis appuyez de nouveau sur « Continuer ».",
     submit: "Continuer",
+  },
+
+  /** Last screen, after the questions (2026-10-05): contact and statement on honour. */
+  send: {
+    contactLabel: "Votre e-mail ou votre numéro de téléphone",
+    contactPlaceholder: "Ex. : 77 123 45 67",
+    contactHelp: "Il sert uniquement à des fins de validation et de modération. Il n'est jamais publié ni transmis.",
+    contactError: "Indiquez une adresse e-mail ou un numéro de téléphone sénégalais.",
+    attest: "J'atteste sur l'honneur que cet avis décrit une expérience que j'ai vécue moi-même.",
+    attestError: "Cochez l'attestation pour envoyer votre avis.",
+    error: "Vérifiez votre e-mail ou votre numéro, et cochez l'attestation, puis appuyez de nouveau sur « Envoyer mon avis ».",
+    submit: "Envoyer mon avis",
   },
 
   thanks: {
@@ -353,7 +365,7 @@ export const fr = {
     title: "Comment sont calculés les résultats",
     periodTitle: "Période et mise à jour",
     period:
-      "Les résultats portent sur les avis des 3 derniers mois complets et sont mis à jour le 1er de chaque mois. Rien n'est publié avant {threshold} avis. Les avis sont anonymes ; les commentaires écrits ne sont pas publiés.",
+      "Les résultats portent sur les avis des 3 derniers mois complets et sont mis à jour le 1er de chaque mois. Seuls les avis complets et validés sont comptés. Rien n'est publié avant {threshold} avis. Aucun avis n'est publié un par un, et les commentaires écrits ne sont pas publiés.",
     /** Text validated on 2026-10-03, word for word. */
     highlightsTitle: "Points forts et points à améliorer",
     highlights:
