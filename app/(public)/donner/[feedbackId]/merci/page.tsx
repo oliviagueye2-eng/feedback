@@ -44,8 +44,7 @@ export default async function ThanksPage({ params }: PageProps<"/donner/[feedbac
               <p>{t.text}</p>
             </div>
             <div className={styles.thanksTear} aria-hidden="true" />
-            {/* The stub holds only the stamp (« Vous pouvez fermer cette page » removed, 2026-10-06). */}
-            <div className={styles.thanksStub} aria-hidden="true" />
+            <p className={`muted ${styles.thanksStub}`}>{t.nextPublication}</p>
             {/* Decorative: the title already says it. */}
             <div className={styles.stamp} aria-hidden="true">
               <strong>{t.stamp}</strong>

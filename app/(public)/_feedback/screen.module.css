@@ -731,9 +731,14 @@ form.screen:has(> .heading) {
     center / calc(100% - 36px) 2px no-repeat;
 }
 
-/* Empty: tall enough for the stamp. */
 .thanksStub {
+  margin: 0;
+  /* Tall enough for the stamp, even when the text holds on one line (computer). */
   min-height: 96px;
+  padding: 14px 20px 26px;
+  max-width: 52%;
+  font-size: 15px;
+  line-height: 1.45;
 }
 
 /* « Voir les résultats de cet établissement », under the ticket. */

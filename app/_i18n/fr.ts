@@ -278,6 +278,8 @@ export const fr = {
   thanks: {
     title: "Merci pour votre participation",
     text: "Votre avis aidera à améliorer ce service pour tous les usagers.",
+    /** In the stub, beside the stamp (her wording, 2026-10-06). */
+    nextPublication: "Il sera comptabilisé lors de la prochaine publication mensuelle des résultats.",
     stamp: "Merci",
     seeResults: "Voir les résultats de cet établissement",
   },
