@@ -1,5 +1,7 @@
 import { COMMENT_MAX_LENGTH } from "@/src/domain/feedback";
 import { listComments, type AdminComment } from "@/src/domain/admin";
+import { getEstablishment } from "@/src/domain/establishment";
+import { isUuid } from "@/src/lib/validation";
 import { getDictionary } from "../../../../_i18n";
 import { Icon } from "../../_components/Icons";
 import { commentAction } from "../../_lib/actions";
@@ -20,14 +22,21 @@ export default async function CommentsPage({ searchParams }: PageProps<"/console
   const params = await searchParams;
   const reviewed = params.voir === "relus";
   const newestFirst = params.ordre === "recents";
-  const [{ admin }, comments, pending] = await Promise.all([
+  // From the dashboard's table: one establishment's comments (?etablissement=).
+  const establishmentId = typeof params.etablissement === "string" && isUuid(params.etablissement) ? params.etablissement : undefined;
+  const [{ admin }, comments, pending, establishment] = await Promise.all([
     getDictionary(),
-    listComments(reviewed ? "reviewed" : "pending", newestFirst),
-    reviewed ? listComments("pending", false) : null,
+    listComments(reviewed ? "reviewed" : "pending", newestFirst, establishmentId),
+    reviewed ? listComments("pending", false, establishmentId) : null,
+    establishmentId ? getEstablishment(establishmentId).catch(() => null) : null,
   ]);
   const t = admin.comments;
   const pendingCount = pending ? pending.length : comments.length;
-  const query = new URLSearchParams({ ...(reviewed && { voir: "relus" }), ...(newestFirst && { ordre: "recents" }) });
+  const query = new URLSearchParams({
+    ...(establishmentId && { etablissement: establishmentId }),
+    ...(reviewed && { voir: "relus" }),
+    ...(newestFirst && { ordre: "recents" }),
+  });
   const returnTo = query.size > 0 ? `${PATH}?${query}` : PATH;
   const openWith = (key: string, id: string) => {
     const q = new URLSearchParams(query);
@@ -95,7 +104,16 @@ export default async function CommentsPage({ searchParams }: PageProps<"/console
     <>
       <h1>{t.title}</h1>
       <p className={styles.lead}>{t.lead}</p>
+      {establishmentId && (
+        <p className={styles.row}>
+          <strong>{t.filteredOn.replace("{name}", establishment?.name ?? t.unknownEstablishment)}</strong>
+          <a href={PATH} className={styles.link}>
+            {t.allEstablishments}
+          </a>
+        </p>
+      )}
       <form className={styles.filters} method="get" action={PATH}>
+        {establishmentId && <input type="hidden" name="etablissement" value={establishmentId} />}
         <select name="voir" aria-label={t.show} defaultValue={reviewed ? "relus" : ""} className={styles.input}>
           <option value="">{t.pending.replace("{n}", String(pendingCount))}</option>
           <option value="relus">{t.reviewed}</option>

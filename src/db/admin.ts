@@ -56,7 +56,12 @@ export interface AdminComment {
   createdAt: string;
 }
 
-export async function listComments(status: CommentStatus, newestFirst: boolean): Promise<AdminComment[]> {
+/** `establishmentId`: only the comments on that establishment (or on one merged into it). */
+export async function listComments(
+  status: CommentStatus,
+  newestFirst: boolean,
+  establishmentId: string | null = null,
+): Promise<AdminComment[]> {
   return query<AdminComment>(
     `SELECT c.feedback_id AS "feedbackId", c.text, e.name AS "establishmentName",
             st.label AS "serviceLabel", to_char(f.visit_month, 'YYYY-MM') AS "visitMonth",
@@ -67,9 +72,35 @@ export async function listComments(status: CommentStatus, newestFirst: boolean):
      JOIN establishment e ON e.id = f.establishment_id
      LEFT JOIN service_translation st ON st.service_id = f.service_id AND st.language = 'fr'
      LEFT JOIN answer_option_translation aot ON aot.answer_option_id = c.prompt_option_id AND aot.language = 'fr'
-     WHERE c.status = $1
+     WHERE c.status = $1 AND ($2::uuid IS NULL OR coalesce(e.merged_into_id, e.id) = $2)
      ORDER BY c.created_at ${newestFirst ? "DESC" : "ASC"}, c.feedback_id`,
-    [status],
+    [status, establishmentId],
+  );
+}
+
+export interface EstablishmentComments {
+  establishmentId: string;
+  name: string;
+  municipality: string | null;
+  total: number;
+  pending: number;
+}
+
+/** Establishments with comments written this month, the most commented first. */
+export async function countCommentsByEstablishmentThisMonth(): Promise<EstablishmentComments[]> {
+  return query<EstablishmentComments>(
+    `SELECT t.id AS "establishmentId", t.name,
+            coalesce(m.name, t.municipality_input) AS municipality,
+            count(*)::int AS total,
+            count(*) FILTER (WHERE c.status = 'pending')::int AS pending
+     FROM comment c
+     JOIN feedback f ON f.id = c.feedback_id
+     JOIN establishment e ON e.id = f.establishment_id
+     JOIN establishment t ON t.id = coalesce(e.merged_into_id, e.id)
+     LEFT JOIN municipality m ON m.id = t.municipality_id
+     WHERE c.created_at >= date_trunc('month', now())
+     GROUP BY t.id, t.name, m.name, t.municipality_input
+     ORDER BY total DESC, t.name`,
   );
 }
 

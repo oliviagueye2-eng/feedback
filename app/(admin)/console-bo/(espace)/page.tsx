@@ -56,6 +56,41 @@ export default async function DashboardPage() {
         )}
       </p>
 
+      <section className={styles.commented}>
+        <h2>{t.commentedTitle}</h2>
+        {d.commented.length === 0 ? (
+          <p className={styles.empty}>{t.commentedEmpty}</p>
+        ) : (
+          <>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th scope="col">{t.commentedEstablishment}</th>
+                  <th scope="col">{t.commentedTotal}</th>
+                  <th scope="col">{t.commentedPending}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {d.commented.map((e) => {
+                  const q = new URLSearchParams({ etablissement: e.establishmentId, ...(e.pending === 0 && { voir: "relus" }) });
+                  return (
+                    <tr key={e.establishmentId}>
+                      <th scope="row">
+                        <a href={`/console-bo/commentaires?${q}`}>{e.name}</a>
+                        {e.municipality && <span className={styles.muted}>{e.municipality}</span>}
+                      </th>
+                      <td>{e.total}</td>
+                      <td>{e.pending === 0 ? dash : <strong>{e.pending}</strong>}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <p className={styles.meta}>{t.commentedHelp}</p>
+          </>
+        )}
+      </section>
+
       <section className={styles.month} aria-label={t.monthLabel}>
         <div>
           <p className={styles.meta}>{t.complete}</p>

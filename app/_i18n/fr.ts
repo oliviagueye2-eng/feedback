@@ -613,6 +613,12 @@ export const fr = {
       satisfactionNotSent: "Avis non envoyés",
       satisfactionHelp:
         "Si les avis non envoyés sont nettement moins satisfaits, le parcours décourage les avis négatifs. Un avis compte comme non envoyé 24 heures après son début.",
+      commentedTitle: "Commentaires du mois par établissement",
+      commentedEstablishment: "Établissement",
+      commentedTotal: "Commentaires",
+      commentedPending: "À relire",
+      commentedEmpty: "Aucun commentaire ce mois-ci.",
+      commentedHelp: "Cliquez sur un établissement pour lire ses commentaires.",
     },
     comments: {
       title: "Commentaires à relire",
@@ -635,6 +641,9 @@ export const fr = {
       keptHelp: "Le texte d'origine est remplacé : les informations retirées ne sont gardées nulle part.",
       save: "Enregistrer",
       cancel: "Annuler",
+      filteredOn: "Commentaires sur {name}.",
+      unknownEstablishment: "cet établissement",
+      allEstablishments: "Voir tous les établissements",
     },
     establishments: {
       title: "Établissements ajoutés par les usagers",

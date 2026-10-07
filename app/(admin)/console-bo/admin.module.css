@@ -425,6 +425,50 @@
   border-radius: 4px;
 }
 
+/* Comments of the month, by establishment: a plain table, numbers on the right. */
+
+.commented {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 28px;
+  max-width: 720px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid var(--line-light);
+  text-align: right;
+  font-weight: 400;
+}
+
+.table th:first-child {
+  text-align: left;
+}
+
+.table thead th {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.table tbody th a {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.muted {
+  display: block;
+  color: var(--muted);
+  font-size: 14px;
+}
+
 /* Sign-in -------------------------------------------------------------------- */
 
 .signInPage {

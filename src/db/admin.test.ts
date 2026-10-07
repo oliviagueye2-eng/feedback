@@ -20,6 +20,7 @@ import {
   validateEstablishment,
 } from "../domain/admin";
 import { createSessionToken, isRightPassword } from "../domain/admin/session";
+import { countCommentsByEstablishmentThisMonth } from "./admin";
 import { createUserEstablishment } from "../domain/establishment";
 import { recordPageShown, saveAnswer, saveComment, submitFeedback, upsertFeedback } from "../domain/feedback";
 import { refreshPublishedStats } from "../domain/stats";
@@ -117,6 +118,15 @@ describe("comments", () => {
     expect((await listComments("pending", false)).map((c) => c.feedbackId)).toEqual([id]);
     await markCommentReviewed(id);
     expect(await listComments("pending", false)).toEqual([]);
+  });
+
+  it("counts this month's comments by establishment, and filters on one", async () => {
+    expect(await countCommentsByEstablishmentThisMonth()).toEqual([
+      { establishmentId: active, name: "Centre de santé de Test", municipality: null, total: 1, pending: 0 },
+    ]);
+    expect(await listComments("reviewed", false, active)).toHaveLength(1);
+    expect(await listComments("reviewed", false, "a1a1a1a1-0028-4000-8000-0000000000ff")).toEqual([]);
+    expect(await listComments("reviewed", false, "pas-un-uuid")).toHaveLength(1);
   });
 
   it("refuses an empty correction", async () => {

@@ -6,11 +6,11 @@
 import * as db from "../../db/admin";
 import { COMMENT_MAX_LENGTH } from "../feedback";
 import { invalidInput } from "../errors";
-import { requireUuid } from "../../lib/validation";
+import { isUuid, requireUuid } from "../../lib/validation";
 import { createSessionToken, isRightPassword } from "./session";
 
 export { isValidSessionToken, SESSION_DAYS } from "./session";
-export type { AdminComment, CommentStatus, PendingEstablishment, StopPage } from "../../db/admin";
+export type { AdminComment, CommentStatus, EstablishmentComments, PendingEstablishment, StopPage } from "../../db/admin";
 
 /** 5 failed sign-ins in 15 minutes from one address block it for 15 minutes. */
 export const LOGIN_MAX_FAILURES = 5;
@@ -40,8 +40,9 @@ export async function signIn(ip: string, password: string, expected: string): Pr
 
 // Comments -------------------------------------------------------------------
 
-export async function listComments(status: db.CommentStatus, newestFirst: boolean) {
-  return db.listComments(status, newestFirst);
+/** An `establishmentId` that is not a UUID shows every establishment. */
+export async function listComments(status: db.CommentStatus, newestFirst: boolean, establishmentId?: string) {
+  return db.listComments(status, newestFirst, establishmentId && isUuid(establishmentId) ? establishmentId : null);
 }
 
 export async function markCommentReviewed(feedbackId: string) {
@@ -95,12 +96,13 @@ export async function mergeEstablishment(id: string, targetId: string) {
 export const STOP_PAGES: db.StopPage[] = ["details", "sector", "common", "send"];
 
 export async function getDashboard() {
-  const [pendingComments, pendingEstablishments, month, stops, weeks] = await Promise.all([
+  const [pendingComments, pendingEstablishments, month, stops, weeks, commented] = await Promise.all([
     db.countPendingComments(),
     db.countPendingEstablishments(),
     db.getMonthFigures(NOT_SENT_AFTER_HOURS),
     db.countStopPages(NOT_SENT_AFTER_HOURS),
     db.countCompleteByWeek(DASHBOARD_WEEKS),
+    db.countCommentsByEstablishmentThisMonth(),
   ]);
   const started = month.complete + month.notSent;
   return {
@@ -116,5 +118,7 @@ export async function getDashboard() {
       return { page, satisfied, notSatisfied, total, percent: started === 0 ? null : Math.round((100 * total) / started) };
     }),
     weeks,
+    /** Establishments with comments this month (asked by Olivia, 2026-10-07). */
+    commented,
   };
 }
