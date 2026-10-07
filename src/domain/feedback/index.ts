@@ -255,6 +255,17 @@ export async function saveQuestionnaire(
 }
 
 /**
+ * The page now shown to the user (screen 2b « details », a page of questions,
+ * or the last screen « send »), recorded while the feedback is not sent: for
+ * a feedback never sent, the last one is the page left without submitting
+ * (back-office, « Abandons par étape »).
+ */
+export async function recordPageShown(feedbackId: string, page: "details" | QuestionPage | "send"): Promise<void> {
+  requireUuid(feedbackId, "id");
+  await db.setLastPage(feedbackId, page);
+}
+
+/**
  * Last screen (« Envoyer mon avis »): the feedback's context, the contact
  * already given, and the page « Précédent » leads to (the last page of
  * questions shown, else screen 2b).

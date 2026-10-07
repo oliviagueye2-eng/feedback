@@ -529,6 +529,8 @@ Un avis : le passage d'un usager, de la première réponse à la fin.
 | visit_month | date | mois de la visite, calculé à l'enregistrement à partir de `visit_period` et `started_at` (ex. 2026-03-01). Ne change plus ensuite |
 | started_at | timestamptz | arrondi à l'heure pour limiter la réidentification |
 | completed_at | timestamptz | |
+| last_page | enum | `details`, `sector`, `common`, `send` : dernière page affichée après la question essentielle (migration 0028). Pour un avis jamais envoyé, c'est la page quittée sans valider (back-office, « Abandons par étape ») ; ne bouge plus une fois l'avis envoyé |
+| attested_at | timestamptz | déclaration sur l'honneur cochée (migration 0028). Copiée depuis `feedback_contact`, elle reste quand le contact est effacé après 12 mois : l'avis continue de compter |
 
 **Date de visite.** On ne demande pas de date précise (plus simple pour l'usager, et moins de risque de le reconnaître). Exemple : un avis donné le 10 mars avec « il y a moins d'une semaine » donne `visit_month = 2026-03-01`. Cette valeur est fixée une fois pour toutes : dans six mois, l'avis comptera toujours pour mars. Les avis `over_month` sont conservés mais n'entrent pas dans les notes publiées.
 
@@ -553,7 +555,7 @@ Le texte libre demandé juste après la question essentielle (écran 2b). Il rem
 | feedback_id | fk unique | un commentaire par avis |
 | prompt_option_id | fk answer_option | option choisie à la question essentielle au moment où le texte a été écrit (avant l'option D, elle indiquait aussi le libellé affiché : « Qu'est-ce qui vous a plu ? », « Que s'est-il passé ? »…) |
 | text | text | 500 caractères au plus |
-| status | enum | `pending`, `published`, `hidden` |
+| status | enum | `pending` (à relire), `reviewed` (relu dans le back-office, informations personnelles effacées s'il y en avait ; migration 0028), `published`, `hidden`. Les commentaires ne sont jamais publiés (décision d'Olivia, 2026-10-07) |
 | hidden_reason | text | ex. donnée personnelle, injure |
 
 ### feedback_topic
@@ -590,7 +592,7 @@ Seuls les avis dont `visit_period` n'est pas `over_month` sont comptés.
 Règle de publication (validée le 2026-10-03) : les avis des **3 derniers mois complets**, mis à jour chaque mois, publiés à partir de **10 avis** ; sous ce seuil, seul le nombre d'avis est donné. Établissement `pending_review` : rien de publié. Commentaires écrits : jamais publiés au lancement. Ces règles sont appliquées à la lecture (`src/domain/stats/results.ts`), pas dans la base.
 
 ### monthly_answer_counts et monthly_topic_counts (vues matérialisées, migration 0007)
-Recalculées chaque nuit avec `monthly_stats`, à partir de la vue simple `published_feedback` (avis qui comptent : mois de visite connu, question essentielle répondue, établissement fusionné suivi jusqu'à son remplaçant).
+Recalculées chaque nuit avec `monthly_stats`, à partir de la vue simple `published_feedback` (avis qui comptent : mois de visite connu, question essentielle répondue, avis envoyé avec la déclaration sur l'honneur, établissement fusionné suivi jusqu'à son remplaçant, établissement refusé exclu depuis 0028).
 
 | Vue | Une ligne par | Colonnes |
 |---|---|---|
@@ -598,6 +600,9 @@ Recalculées chaque nuit avec `monthly_stats`, à partir de la vue simple `publi
 | monthly_topic_counts | établissement, service, mois, thème (sauf « Autre ») | `positive_count`, `negative_count` |
 
 Source de la page `/resultats/{id}`. Explication du choix : `docs/publication-resultats.md`, section 4.
+
+### admin_login_attempt (migration 0028)
+Connexions ratées au back-office (`/console-bo`), par adresse IP : `ip`, `attempted_at`. Cinq échecs en 15 minutes bloquent l'adresse 15 minutes. Une connexion réussie efface les échecs de son adresse ; la tâche de nuit efface ceux de plus d'un jour.
 
 ### search_log (facultatif)
 Pour améliorer le référentiel : terme tapé (`query`), nombre de résultats (`result_count`), établissement choisi (`selected_establishment_id`) ou saisi (`created_establishment_id`), date (`searched_at`). Aucune donnée d'identification. Utile pour repérer les établissements manquants et les synonymes à ajouter.

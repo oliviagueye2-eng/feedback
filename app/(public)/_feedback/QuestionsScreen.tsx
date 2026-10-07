@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { BackLink } from "../../_components/BackLink";
 import { PendingLoader } from "../../_components/PendingLoader";
 import { DomainError } from "@/src/domain/errors";
-import { getQuestionnaireScreen, nextQuestionPage, type QuestionPage } from "@/src/domain/feedback";
+import { getQuestionnaireScreen, nextQuestionPage, recordPageShown, type QuestionPage } from "@/src/domain/feedback";
 import { getDictionary } from "../../_i18n";
 import { fill } from "../../_i18n/format";
 import { frenchSpaces } from "../../_i18n/typography";
@@ -47,6 +47,7 @@ export async function QuestionsScreen({
     const next = await nextQuestionPage(feedbackId, page);
     redirect(next ? questionPageHref(feedbackId, next) : `/donner/${feedbackId}/precisions`);
   }
+  await recordPageShown(feedbackId, page);
   const previousHref =
     previous === "sector" ? questionPageHref(feedbackId, "sector") : `/donner/${feedbackId}/precisions`;
   const { common, questionnaire: t } = await getDictionary();

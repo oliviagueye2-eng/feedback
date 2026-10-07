@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { BackLink } from "../../../../_components/BackLink";
 import { PendingLoader } from "../../../../_components/PendingLoader";
 import { DomainError } from "@/src/domain/errors";
-import { COMMENT_MAX_LENGTH, getDetailsScreen, OTHER_TOPIC_CODE, OTHER_TOPIC_MAX_LENGTH } from "@/src/domain/feedback";
+import { COMMENT_MAX_LENGTH, getDetailsScreen, OTHER_TOPIC_CODE, recordPageShown, OTHER_TOPIC_MAX_LENGTH } from "@/src/domain/feedback";
 import { saveDetails } from "../../../_feedback/actions";
 import { FeedbackHeader } from "../../../_feedback/FeedbackHeader";
 import { SATISFACTION_LEVEL, SatisfactionFace } from "../../../_feedback/SatisfactionFace";
@@ -33,6 +33,7 @@ export default async function DetailsPage({ params, searchParams }: PageProps<"/
   const { context, question, answer, topics, comment } = screen;
   // Reached without answering the essential question: back to it.
   if (!answer) redirect(`/donner/${feedbackId}`);
+  await recordPageShown(feedbackId, "details");
   const { common, details: t } = await getDictionary();
   const level = SATISFACTION_LEVEL[answer.code];
 

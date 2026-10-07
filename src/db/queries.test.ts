@@ -900,9 +900,10 @@ describe("published results", () => {
                    ('2026-01-01'), ('2026-01-01'),
                    -- Out of the period: April is not complete yet, December is too old.
                    ('2026-04-01'), ('2025-12-01')) AS v (month);
-      -- Sent from the last screen (0023): only those count (0024).
+      -- Sent from the last screen (0023): only those count (0024, 0028).
       INSERT INTO feedback_contact (feedback_id, kind, value)
       SELECT id, 'phone', '+221771234567' FROM feedback WHERE establishment_id = '${ids.results}';
+      UPDATE feedback SET attested_at = date_trunc('hour', now()) WHERE establishment_id = '${ids.results}';
       INSERT INTO answer (feedback_id, question_id, option_id)
       SELECT f.id, q.id, ao.id
       FROM feedback f, question q JOIN answer_option ao ON ao.question_id = q.id

@@ -1,0 +1,228 @@
+/**
+ * The back-office (0028) against an in-memory PostgreSQL with the real
+ * migrations: sign-in blocking, comments, establishments added by users,
+ * the dashboard, and the published results once a contact is deleted.
+ */
+import type { PGlite } from "@electric-sql/pglite";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import {
+  correctComment,
+  correctEstablishment,
+  getDashboard,
+  isValidSessionToken,
+  listComments,
+  listPendingEstablishments,
+  LOGIN_MAX_FAILURES,
+  markCommentReviewed,
+  mergeEstablishment,
+  refuseEstablishment,
+  signIn,
+  validateEstablishment,
+} from "../domain/admin";
+import { createSessionToken, isRightPassword } from "../domain/admin/session";
+import { createUserEstablishment } from "../domain/establishment";
+import { recordPageShown, saveAnswer, saveComment, submitFeedback, upsertFeedback } from "../domain/feedback";
+import { refreshPublishedStats } from "../domain/stats";
+import { useTestDatabase } from "./client";
+import { createTestDatabase } from "./test-database";
+
+let db: PGlite;
+let active: string;
+
+const rows = async <T>(sql: string, params: unknown[] = []) => (await db.query<T>(sql, params)).rows;
+
+/** A feedback on `establishmentId`, its essential answer given. */
+async function startFeedback(id: string, establishmentId: string, satisfaction: string) {
+  await upsertFeedback(id, { channel: "search", establishmentId, language: "fr", visitPeriod: "today" });
+  await saveAnswer(id, "OVERALL_SATISFACTION", { option: satisfaction });
+}
+
+/** Started more than a day ago, so it counts as not sent if it was never sent. */
+const ageFeedback = (id: string) =>
+  db.query(`UPDATE feedback SET started_at = date_trunc('hour', now()) - interval '30 hours' WHERE id = $1`, [id]);
+
+beforeAll(async () => {
+  db = await createTestDatabase();
+  useTestDatabase(db);
+  const [row] = await rows<{ id: string }>(
+    `INSERT INTO establishment (name, type_id)
+     VALUES ('Centre de santé de Test', (SELECT id FROM establishment_type WHERE code = 'HEALTH_CENTER'))
+     RETURNING id`,
+  );
+  active = row!.id;
+});
+
+afterAll(async () => {
+  useTestDatabase(null);
+  await db.close();
+});
+
+describe("session", () => {
+  it("accepts the right password only", () => {
+    expect(isRightPassword("secret", "secret")).toBe(true);
+    expect(isRightPassword("Secret", "secret")).toBe(false);
+    expect(isRightPassword("", "")).toBe(false);
+  });
+
+  it("signs the cookie with the password, for 7 days", () => {
+    const now = Date.UTC(2026, 9, 7);
+    const token = createSessionToken("secret", now);
+    expect(isValidSessionToken(token, "secret", now + 1000)).toBe(true);
+    expect(isValidSessionToken(token, "other", now + 1000)).toBe(false);
+    expect(isValidSessionToken(token, "secret", now + 8 * 24 * 3600 * 1000)).toBe(false);
+    expect(isValidSessionToken(`${now + 1e9}.forged`, "secret", now)).toBe(false);
+    expect(isValidSessionToken(undefined, "secret", now)).toBe(false);
+  });
+});
+
+describe("sign-in", () => {
+  it("blocks an address after 5 failures, even with the right password", async () => {
+    for (let i = 0; i < LOGIN_MAX_FAILURES; i++) {
+      expect(await signIn("1.2.3.4", "wrong", "secret")).toEqual({ ok: false, reason: "wrong" });
+    }
+    expect(await signIn("1.2.3.4", "secret", "secret")).toEqual({ ok: false, reason: "blocked" });
+    // Another address is not blocked; a success starts its count again.
+    expect((await signIn("5.6.7.8", "secret", "secret")).ok).toBe(true);
+  });
+
+  it("forgets the attempts after a day (nightly job)", async () => {
+    await db.query(`UPDATE admin_login_attempt SET attempted_at = now() - interval '25 hours'`);
+    await refreshPublishedStats();
+    expect(await rows(`SELECT * FROM admin_login_attempt`)).toEqual([]);
+    expect((await signIn("1.2.3.4", "secret", "secret")).ok).toBe(true);
+  });
+});
+
+describe("comments", () => {
+  const id = "a1a1a1a1-0028-4000-8000-000000000001";
+
+  it("lists the comment to read, then the corrected one as read", async () => {
+    await startFeedback(id, active, "DISSATISFIED");
+    await saveComment(id, { text: "Appelez-moi au 77 123 45 67.", promptOption: "DISSATISFIED" });
+    const [pending] = await listComments("pending", false);
+    expect(pending).toMatchObject({
+      feedbackId: id,
+      text: "Appelez-moi au 77 123 45 67.",
+      establishmentName: "Centre de santé de Test",
+      sent: false,
+    });
+    await correctComment(id, "Appelez-moi au [numéro retiré].");
+    expect(await listComments("pending", false)).toEqual([]);
+    const [reviewed] = await listComments("reviewed", false);
+    expect(reviewed?.text).toBe("Appelez-moi au [numéro retiré].");
+  });
+
+  it("goes back to reading when the user changes it", async () => {
+    await saveComment(id, { text: "Autre texte.", promptOption: "DISSATISFIED" });
+    expect((await listComments("pending", false)).map((c) => c.feedbackId)).toEqual([id]);
+    await markCommentReviewed(id);
+    expect(await listComments("pending", false)).toEqual([]);
+  });
+
+  it("refuses an empty correction", async () => {
+    await expect(correctComment(id, "  ")).rejects.toMatchObject({ code: "INVALID_INPUT" });
+  });
+});
+
+describe("establishments added by users", () => {
+  const added = async (name: string) =>
+    (await createUserEstablishment({ name, sector: "HEALTH", type: "OTHER", municipality: "Thiès" })).id;
+
+  it("corrects the name, sector and type, then validates", async () => {
+    const id = await added("centre sante tiess");
+    await correctEstablishment(id, {
+      name: "Centre de santé de Thiès",
+      municipality: "Thiès",
+      sectorCode: "HEALTH",
+      typeCode: "HEALTH_CENTER",
+    });
+    const pending = (await listPendingEstablishments()).find((e) => e.id === id);
+    expect(pending).toMatchObject({ name: "Centre de santé de Thiès", typeCode: "HEALTH_CENTER", sectorCode: "HEALTH" });
+    await validateEstablishment(id);
+    expect((await listPendingEstablishments()).some((e) => e.id === id)).toBe(false);
+    expect(await rows(`SELECT status FROM establishment WHERE id = $1`, [id])).toEqual([{ status: "active" }]);
+  });
+
+  it("refuses a type of another sector", async () => {
+    const id = await added("mairie inconnue");
+    await expect(
+      correctEstablishment(id, { name: "Mairie", municipality: "", sectorCode: "HEALTH", typeCode: "TOWN_HALL" }),
+    ).rejects.toMatchObject({ code: "INVALID_INPUT" });
+  });
+
+  it("merges: the feedbacks move to the establishment chosen", async () => {
+    const id = await added("hopital test bis");
+    const feedback = "a1a1a1a1-0028-4000-8000-000000000002";
+    await startFeedback(feedback, id, "SATISFIED");
+    await mergeEstablishment(id, active);
+    expect(await rows(`SELECT establishment_id FROM feedback WHERE id = $1`, [feedback])).toEqual([
+      { establishment_id: active },
+    ]);
+    expect(await rows(`SELECT status, merged_into_id FROM establishment WHERE id = $1`, [id])).toEqual([
+      { status: "merged", merged_into_id: active },
+    ]);
+  });
+
+  it("refuses: its sent feedbacks no longer count in the results", async () => {
+    const id = await added("faux etablissement");
+    const feedback = "a1a1a1a1-0028-4000-8000-000000000003";
+    await startFeedback(feedback, id, "SATISFIED");
+    await submitFeedback(feedback, { contact: "77 000 00 01", attested: true });
+    const published = () => rows(`SELECT id FROM published_feedback WHERE id = $1`, [feedback]);
+    expect(await published()).toHaveLength(1);
+    await refuseEstablishment(id);
+    expect(await published()).toEqual([]);
+  });
+});
+
+describe("published results", () => {
+  it("keep a feedback once its contact is deleted after 12 months", async () => {
+    const id = "a1a1a1a1-0028-4000-8000-000000000004";
+    await startFeedback(id, active, "SATISFIED");
+    await submitFeedback(id, { contact: "a@example.sn", attested: true });
+    await db.query(`UPDATE feedback_contact SET attested_at = date_trunc('hour', now()) - interval '13 months' WHERE feedback_id = $1`, [id]);
+    await refreshPublishedStats();
+    expect(await rows(`SELECT 1 FROM feedback_contact WHERE feedback_id = $1`, [id])).toEqual([]);
+    expect(await rows(`SELECT id FROM published_feedback WHERE id = $1`, [id])).toHaveLength(1);
+  });
+});
+
+describe("dashboard", () => {
+  it("counts this month's feedbacks and where the ones not sent stopped", async () => {
+    await db.exec(`DELETE FROM comment; DELETE FROM feedback_contact; DELETE FROM answer; DELETE FROM feedback`);
+    const sent = "b2b2b2b2-0028-4000-8000-000000000001";
+    await startFeedback(sent, active, "VERY_SATISFIED");
+    await recordPageShown(sent, "send");
+    await submitFeedback(sent, { contact: "77 000 00 02", attested: true });
+
+    const stops: [string, string, "details" | "sector" | "common" | "send"][] = [
+      ["b2b2b2b2-0028-4000-8000-000000000002", "SATISFIED", "details"],
+      ["b2b2b2b2-0028-4000-8000-000000000003", "DISSATISFIED", "common"],
+      ["b2b2b2b2-0028-4000-8000-000000000004", "DISSATISFIED", "send"],
+    ];
+    for (const [id, satisfaction, page] of stops) {
+      await startFeedback(id, active, satisfaction);
+      await recordPageShown(id, page);
+      await ageFeedback(id);
+    }
+    // Started less than 24 hours ago: still in progress, not counted.
+    await startFeedback("b2b2b2b2-0028-4000-8000-000000000005", active, "DISSATISFIED");
+
+    const d = await getDashboard();
+    expect(d.month).toMatchObject({ complete: 1, notSent: 3, abandonPercent: 75, satisfiedComplete: 100, satisfiedNotSent: 33 });
+    expect(d.stops.map((s) => [s.page, s.satisfied, s.notSatisfied, s.percent])).toEqual([
+      ["details", 1, 0, 25],
+      ["sector", 0, 0, 0],
+      ["common", 0, 1, 25],
+      ["send", 0, 1, 25],
+    ]);
+    expect(d.weeks).toHaveLength(8);
+    expect(d.weeks.at(-1)?.count).toBe(1);
+  });
+
+  it("does not move the page once the feedback is sent", async () => {
+    const sent = "b2b2b2b2-0028-4000-8000-000000000001";
+    await recordPageShown(sent, "details");
+    expect(await rows(`SELECT last_page FROM feedback WHERE id = $1`, [sent])).toEqual([{ last_page: "send" }]);
+  });
+});

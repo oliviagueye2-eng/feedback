@@ -476,14 +476,28 @@ export interface FeedbackContact {
 /**
  * Last screen (« Envoyer mon avis »): the contact and the statement on honour.
  * Sent again (a network cut, « Précédent »), it replaces the contact; the
- * time of the statement is kept.
+ * time of the statement is kept. The statement is also kept on the feedback,
+ * which stays published once the contact is deleted after 12 months (0028).
  */
 export async function saveFeedbackContact(feedbackId: string, contact: FeedbackContact): Promise<void> {
   await query(
-    `INSERT INTO feedback_contact (feedback_id, kind, value) VALUES ($1, $2, $3)
-     ON CONFLICT (feedback_id) DO UPDATE SET kind = excluded.kind, value = excluded.value`,
+    `WITH saved AS (
+       INSERT INTO feedback_contact (feedback_id, kind, value) VALUES ($1, $2, $3)
+       ON CONFLICT (feedback_id) DO UPDATE SET kind = excluded.kind, value = excluded.value
+       RETURNING feedback_id, attested_at
+     )
+     UPDATE feedback f SET attested_at = coalesce(f.attested_at, saved.attested_at)
+     FROM saved WHERE f.id = saved.feedback_id`,
     [feedbackId, contact.kind, contact.value],
   );
+}
+
+/**
+ * The page of the questionnaire now shown (0028), while the feedback is not
+ * sent: the last one shown is where a feedback never sent stopped.
+ */
+export async function setLastPage(feedbackId: string, page: "details" | "sector" | "common" | "send"): Promise<void> {
+  await query(`UPDATE feedback SET last_page = $2 WHERE id = $1 AND step <> 'completed'`, [feedbackId, page]);
 }
 
 /** The contact already given for this feedback (coming back to the last screen). */
