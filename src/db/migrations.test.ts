@@ -71,8 +71,7 @@ describe("reference data", () => {
         ORDER BY t.position`, [sector])).rows;
 
     expect((await topicsFor("RETAIL")).map((t) => t.label)).toEqual([
-      "Politesse du personnel (accueil, respect)",
-      "Compétence du personnel (connaît son travail, traite bien la demande)",
+      "Compétence du personnel (Politesse, respect et professionnalisme)",
       "Explications du personnel (claires, complètes)",
       "Temps d'attente",
       "Horaires d'ouverture",
@@ -81,8 +80,9 @@ describe("reference data", () => {
       "Accessibilité aux personnes handicapées ou âgées",
     ]);
 
-    // Electricity and water: nothing in the sector, all in the agency or at home (0019).
-    expect(await topicsFor("ELECTRICITY")).toHaveLength(1);
+    // Electricity and water: nothing in the sector, all in the agency or at home
+    // (0019); nothing in COMMON either since 0034.
+    expect(await topicsFor("ELECTRICITY")).toHaveLength(0);
     const serviceTopics = async (service: string) =>
       (await db.query<{ code: string }>(`
         SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
@@ -97,11 +97,11 @@ describe("reference data", () => {
       "INTERVENTION_TIME", "CUSTOMER_SERVICE", "WATER_CUTS", "WATER_QUALITY",
     ]);
     expect((await topicsFor("BANKING_INSURANCE")).map((t) => t.code)).toEqual([
-      "STAFF", "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "PROCESSING_TIME", "PROCEDURE", "CASE_TRACKING",
+      "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "PROCESSING_TIME", "PROCEDURE", "CASE_TRACKING",
       "OPENING_HOURS", "CUSTOMER_SERVICE", "FEES", "CLEANLINESS", "ACCESS_FOR_ALL",
     ]);
     // « Simplicité de la démarche » only where there are papers.
-    expect(await topicsFor("HEALTH")).toHaveLength(11);
+    expect(await topicsFor("HEALTH")).toHaveLength(10);
     expect((await topicsFor("ADMINISTRATION")).map((t) => t.code)).toContain("PROCEDURE");
     // A trip has no opening hours: the transport places add them (TRANSPORT_PLACE).
     expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("OPENING_HOURS");

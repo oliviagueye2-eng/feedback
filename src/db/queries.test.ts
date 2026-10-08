@@ -491,8 +491,7 @@ describe("feedback", () => {
       .toEqual(["FAIR_PRICE", "PAID_SOMETHING", "RECEIPT_OR_INVOICE", "RECOMMEND"]);
     // And the COMMERCE topics: the common ones plus those of a counter.
     expect((await getDetailsScreen(unknown)).topics.map((t) => t.code)).toEqual([
-      "STAFF", "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS", "FEES", "CLEANLINESS",
-      "ACCESS_FOR_ALL",
+      "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS", "FEES", "CLEANLINESS", "ACCESS_FOR_ALL",
     ]);
   });
 
@@ -507,7 +506,7 @@ describe("feedback", () => {
     });
     await saveTopics(feedbackId, {
       topics: [
-        { code: "STAFF", sentiment: "positive" },
+        { code: "PROFESSIONALISM", sentiment: "positive" },
         { code: "FEES", sentiment: "negative" },
         { code: "ACCESS_FOR_ALL", sentiment: "not_concerned" },
       ],
@@ -520,7 +519,7 @@ describe("feedback", () => {
     expect(topics).toEqual([
       { code: "ACCESS_FOR_ALL", sentiment: "not_concerned", other_text: null },
       { code: "FEES", sentiment: "negative", other_text: null },
-      { code: "STAFF", sentiment: "positive", other_text: null },
+      { code: "PROFESSIONALISM", sentiment: "positive", other_text: null },
     ]);
   });
 
@@ -541,11 +540,11 @@ describe("feedback", () => {
     const codes = screen.topics.map((t) => t.code);
     // In the order of the categories (0009): the delays and the file follow the staff, before the fees.
     expect(codes).toEqual([
-      "STAFF", "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "PROCESSING_TIME", "PROCEDURE", "CASE_TRACKING",
+      "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "PROCESSING_TIME", "PROCEDURE", "CASE_TRACKING",
       "OPENING_HOURS", "FEES", "CLEANLINESS", "ACCESS_FOR_ALL",
     ]);
     expect(screen.topics.filter((t) => t.sentiment).map((t) => [t.code, t.sentiment, t.otherText])).toEqual([
-      ["STAFF", "positive", null],
+      ["PROFESSIONALISM", "positive", null],
       ["FEES", "negative", null],
       ["ACCESS_FOR_ALL", "not_concerned", null],
     ]);
@@ -580,7 +579,6 @@ describe("feedback", () => {
     };
     expect(await topicsOf("f6a7b8c9-0000-4000-8000-000000000004", school!.id, services.SCHOOL_ADMIN)).toEqual([
       "Politesse du personnel (accueil, respect)",
-      "Compétence du personnel (connaît son travail, traite bien la demande)",
       "Explications du personnel (claires, complètes)",
       "Temps d'attente",
       "Simplicité de la démarche (nombre de papiers nécessaires, allers-retours)",
@@ -591,7 +589,6 @@ describe("feedback", () => {
     ]);
     expect(await topicsOf("f6a7b8c9-0000-4000-8000-000000000006", school!.id, services.SCHOOL_LIFE)).toEqual([
       "Qualité de l'enseignement",
-      "Compétence du personnel (connaît son travail, traite bien la demande)",
       "Encadrement des élèves",
       "Échanges avec les enseignants et la direction",
       "Propreté, entretien et confort",
@@ -691,7 +688,6 @@ describe("feedback", () => {
     expect(await visit("c9d0e1f2-0000-4000-8000-000000000001", services.HIGHER_EDUCATION_ADMIN!)).toEqual({
       topics: [
         "Politesse du personnel (accueil, respect)",
-        "Compétence du personnel (connaît son travail, traite bien la demande)",
         "Explications du personnel (claires, complètes)",
         "Temps d'attente",
         "Délai de traitement du dossier",
@@ -710,7 +706,6 @@ describe("feedback", () => {
     expect(await visit("c9d0e1f2-0000-4000-8000-000000000002", services.HIGHER_EDUCATION_COURSES!)).toEqual({
       topics: [
         "Qualité de l'enseignement",
-        "Compétence du personnel (connaît son travail, traite bien la demande)",
         "Encadrement des élèves",
         "Échanges avec les enseignants et la direction",
         "Respect du calendrier (examens, publication des notes)",
@@ -744,7 +739,6 @@ describe("feedback", () => {
       topics: [
         "Prise en compte de la demande",
         "Politesse du personnel (accueil, respect)",
-        "Compétence du personnel (connaît son travail, traite bien la demande)",
         "Explications du personnel (claires, complètes)",
         "Respect des droits",
         "Temps d'attente",
@@ -765,7 +759,6 @@ describe("feedback", () => {
       topics: [
         "Prise en compte de la demande",
         "Politesse du personnel (accueil, respect)",
-        "Compétence du personnel (connaît son travail, traite bien la demande)",
         "Explications du personnel (claires, complètes)",
         "Respect des droits",
       ],
@@ -775,7 +768,6 @@ describe("feedback", () => {
       topics: [
         "Prise en compte de la demande",
         "Politesse du personnel (accueil, respect)",
-        "Compétence du personnel (connaît son travail, traite bien la demande)",
         "Explications du personnel (claires, complètes)",
         "Respect des droits",
         "Délai d'intervention",

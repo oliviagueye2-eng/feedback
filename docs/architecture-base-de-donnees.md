@@ -415,7 +415,7 @@ Libellés (dans `topic_translation`) :
 | code | Libellé |
 |---|---|
 | `STAFF` | Politesse du personnel (accueil, respect) (2026-10-03, ex-« Accueil et politesse ») |
-| `PROFESSIONALISM` | Compétence du personnel (connaît son travail, traite bien la demande) (2026-10-03, ex-« Professionnalisme du personnel ») |
+| `PROFESSIONALISM` | Compétence du personnel (Politesse, respect et professionnalisme) (2026-10-08 ; ex-« Compétence du personnel (connaît son travail, traite bien la demande) », ex-« Professionnalisme du personnel ») |
 | `WAIT_TIME` | Temps d'attente |
 | `INFORMATION` | Explications du personnel (claires, complètes) (2026-10-03 : ce que l'agent a dit) |
 | `PROCEDURE` | Simplicité de la démarche (nombre de papiers nécessaires, allers-retours) (2026-10-03 : la règle elle-même) |
@@ -459,7 +459,7 @@ Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_
 
 | Liste | Thèmes | Rattachée à |
 |---|---|---|
-| `COMMON` | Professionnalisme (Accueil et Frais en sont sortis en 0009 : un élève en classe ne passe pas au guichet ; Propreté et Accessibilité en 0010 : un contrôle routier n'a pas de locaux ; ils sont dans toutes les autres listes, sauf `SECURITY` et `POLICE_FIELD`) | tout le monde |
+| `COMMON` | vide depuis 0034 (2026-10-08) : Compétence du personnel en est sortie et remplace Politesse du personnel dans `FILE_SERVICES`, `HEALTH`, `BANKING_INSURANCE`, `COMMERCE` et `REAL_ESTATE`. Avant : Accueil et Frais sortis en 0009 (un élève en classe ne passe pas au guichet) ; Propreté et Accessibilité en 0010 (un contrôle routier n'a pas de locaux) | tout le monde |
 | `COMMERCE` | Accueil et politesse, Temps d'attente, Explications reçues, Horaires, Frais payés | secteurs Culture, Restauration, Hôtellerie, Commerce, Sport, Tourisme ; secteur inconnu |
 | `FILE_SERVICES` | Accueil, Temps d'attente, Explications, Simplicité de la démarche, Horaires, Frais, Délai de traitement, Suivi du dossier | secteurs Administration, Justice, Impôts, Social |
 | `SECURITY` | Accueil, Explications, Respect des droits, Prise en compte de la demande (ce que partagent les deux visites, 0010) | secteur Sécurité |
