@@ -415,6 +415,7 @@ Libellés (dans `topic_translation`) :
 | code | Libellé |
 |---|---|
 | `STAFF` | Politesse du personnel (accueil, respect) (2026-10-03, ex-« Accueil et politesse ») |
+| `DRIVER_BEHAVIOUR` | Comportement du chauffeur (Politesse, respect et professionnalisme) (2026-10-08, bus, VTC et taxi) |
 | `PROFESSIONALISM` | Compétence du personnel (Politesse, respect et professionnalisme) (2026-10-08 ; ex-« Compétence du personnel (connaît son travail, traite bien la demande) », ex-« Professionnalisme du personnel ») |
 | `WAIT_TIME` | Temps d'attente |
 | `INFORMATION` | Explications du personnel (claires, complètes) (2026-10-03 : ce que l'agent a dit) |
@@ -476,8 +477,9 @@ Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_
 | `OTHER_EDUCATION` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Qualité de l'enseignement, Encadrement des élèves | types Université, École supérieure, Formation professionnelle, Maternelle, Daara |
 | `SCHOOL_ADMIN` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais | service « Inscription ou démarche administrative » des écoles |
 | `SCHOOL_LIFE` | Qualité de l'enseignement, Encadrement des élèves, Sécurité dans l'établissement, Tables-bancs et manuels, Échanges avec les enseignants et la direction | service « Les cours et la vie de l'école » des écoles |
-| `TRANSPORT` | Accueil, Explications, Frais, Service client | secteur Transport (opérateurs, aéroport, gares routières) |
-| `TRIP` | Ponctualité, Sécurité à bord (un trajet, pas un lieu ni un guichet ; pas de Temps d'attente, que dit Ponctualité) | services « Un vol », « Un trajet en bus ou en train », « Une traversée en bateau » |
+| `TRANSPORT` | Explications, Frais, Service client (Accueil retiré en 0035) | secteur Transport (opérateurs, aéroport, gares routières) |
+| `TRIP` | Ponctualité, Sécurité à bord (un trajet, pas un lieu ni un guichet ; pas de Temps d'attente, que dit Ponctualité) | services « Un vol », « Un trajet en train », « Une traversée en bateau » |
+| `ROAD_TRIP` | `TRIP` plus Comportement du chauffeur (0035, 2026-10-08) | services « Un trajet en bus », « Une course en VTC », « Une course en taxi » |
 | `TRANSPORT_PLACE` | Temps d'attente, Horaires d'ouverture | types Aéroport, Gare routière ; services Achat de ticket, Achat de billet d'avion |
 
 ### evaluation_category (migration 0009)
@@ -485,7 +487,7 @@ Catégories d'évaluation, décision du 2026-10-03 : **une seule liste pour les 
 
 | Ordre | code | Libellé | Thèmes |
 |---|---|---|---|
-| 1 | `STAFF` | Personnel | Accueil, Professionnalisme, Explications du personnel, Respect de l'intimité, Respect des droits, Encadrement des élèves, Échanges avec les enseignants |
+| 1 | `STAFF` | Personnel | Accueil, Professionnalisme, Explications du personnel, Comportement du chauffeur, Respect de l'intimité, Respect des droits, Encadrement des élèves, Échanges avec les enseignants |
 | 2 | `DELAYS` | Délais | Temps d'attente, Délai de traitement, Délai d'intervention, Ponctualité |
 | 3 | `PROCEDURE` | Démarche et information | Simplicité de la démarche, Suivi du dossier, Horaires, Service client |
 | 4 | `COST` | Coût et transparence | Frais payés, Factures |
