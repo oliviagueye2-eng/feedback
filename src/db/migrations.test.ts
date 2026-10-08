@@ -112,7 +112,7 @@ describe("reference data", () => {
     expect((await db.query<{ code: string }>(`
       SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
       WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT_PLACE') ORDER BY t.position`))
-      .rows.map((r) => r.code)).toEqual(["PROFESSIONALISM", "WAIT_TIME", "OPENING_HOURS"]);
+      .rows.map((r) => r.code)).toEqual(["PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS"]);
     // A place or a ticket counter is not a trip: no « Ponctualité », no « Sécurité à bord » (0009).
     expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("PUNCTUALITY");
     expect((await db.query<{ code: string }>(`
@@ -132,8 +132,12 @@ describe("reference data", () => {
         SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
         WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = $1) ORDER BY t.position`, [list]))
         .rows.map((r) => r.code);
-    expect(await listOf("TRIP")).toEqual(["PROFESSIONALISM", "PUNCTUALITY", "ONBOARD_SAFETY"]);
+    expect(await listOf("TRIP")).toEqual(["PROFESSIONALISM", "INFORMATION", "PUNCTUALITY", "ONBOARD_SAFETY"]);
     expect(await listOf("TOLL_HIGHWAY")).toContain("PROFESSIONALISM");
+    // « Explications du personnel » in the services' lists, not TRANSPORT (0039).
+    expect(await listOf("TRANSPORT")).not.toContain("INFORMATION");
+    expect(await listOf("TOLL_HIGHWAY")).toContain("INFORMATION");
+    expect(await listOf("ROAD_TRIP")).not.toContain("INFORMATION");
     // « Politesse du personnel » is offered nowhere since 0038.
     expect((await db.query(`
       SELECT 1 FROM topic_set_item WHERE topic_id = (SELECT id FROM topic WHERE code = 'STAFF')`)).rows).toEqual([]);

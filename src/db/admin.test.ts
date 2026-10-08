@@ -248,7 +248,7 @@ describe("questionnaire", () => {
     expect(health.topics).toContainEqual({ code: "CARE_RECEIVED", label: "Soins reçus", isActive: true, categoryCode: "OUTCOME", shownIf: null });
     const airport = q.types.find((t) => t.code === "AIRPORT")!;
     expect(airport).toMatchObject({ sectorCode: "TRANSPORT", listCode: "TRANSPORT_PLACE" });
-    expect(airport.topics.map((t) => t.code)).toEqual(["PROFESSIONALISM", "WAIT_TIME", "OPENING_HOURS"]);
+    expect(airport.topics.map((t) => t.code)).toEqual(["PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS"]);
     expect(q.types.find((t) => t.code === "PHARMACY")).toMatchObject({ listCode: null, topics: [] });
     expect(q.services.find((s) => s.code === "MOBILE_MONEY")).toMatchObject({ replacesSharedLists: true });
     expect(q.sectorOptions.length).toBe(q.sectors.length);
