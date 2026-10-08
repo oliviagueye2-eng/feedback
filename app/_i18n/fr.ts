@@ -570,6 +570,7 @@ export const fr = {
       comments: "Commentaires",
       establishments: "Établissements",
       questionnaire: "Questionnaire",
+      categories: "Catégories et thèmes",
       signOut: "Se déconnecter",
     },
     signIn: {
@@ -681,7 +682,7 @@ export const fr = {
     },
     questionnaire: {
       title: "Questionnaire",
-      lead: "Les thèmes (écran 2b) et les questions (écran 6) reliés à chaque secteur, type d'établissement et service, puis la banque de questions et les catégories. À côté de chaque nom de colonne : la colonne en base.",
+      lead: "Les thèmes (écran 2b) et les questions (écran 6) reliés à chaque secteur, type d'établissement et service, puis la banque de questions. À côté de chaque nom de colonne : la colonne en base.",
       sector: "Secteur",
       type: "Type d'établissement",
       service: "Service",
@@ -700,9 +701,15 @@ export const fr = {
       bankTitle: "Banque de questions",
       bankHelp:
         "Une ligne par question, chacune écrite une seule fois. Dépliée : ses réponses possibles. « Conditions » vient de question_condition, liste par liste. Avec un filtre : les questions des listes ci-dessus, plus celles que tout avis peut recevoir (ESSENTIAL, COMMON) et celles qui ouvrent un de leurs thèmes à l'écran 2b.",
+      categoriesPageTitle: "Catégories et thèmes",
+      categoriesPageLead:
+        "Les catégories, puis tous les thèmes de l'écran 2b. Pas de filtre : une catégorie et un thème valent pour tous les secteurs. À côté de chaque nom de colonne : la colonne en base.",
       categoriesTitle: "Catégories",
       categoriesHelp:
-        "Une catégorie regroupe des thèmes de l'écran 2b et des questions de l'écran 6 sur le même sujet (topic.category_id, question.category_id). Pas de filtre : une catégorie vaut pour tous les secteurs.",
+        "Une catégorie regroupe des thèmes de l'écran 2b et des questions de l'écran 6 sur le même sujet (topic.category_id, question.category_id).",
+      topicsTitle: "Thèmes",
+      topicsHelp:
+        "Tous les thèmes, actifs ou non, dans l'ordre des catégories puis de topic.position. « Listes » : les listes de thèmes qui le contiennent (topic_set_item) ; un thème sans liste n'est proposé à personne.",
       code: "Code",
       label: "Label",
       text: "Texte",

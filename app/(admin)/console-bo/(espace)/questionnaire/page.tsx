@@ -230,48 +230,6 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
         }))}
       />
 
-      <h2 className={styles.gridTitle}>{t.categoriesTitle}</h2>
-      <p className={styles.gridHelp}>{t.categoriesHelp}</p>
-      <ListGrid
-        csvName="categories.csv"
-        text={t.grid}
-        groups={[
-          {
-            kind: "own",
-            title: t.category,
-            columns: [
-              { field: "code", header: t.code, column: "evaluation_category.code" },
-              { field: "label", header: t.label, kind: "text" },
-              { field: "position", header: t.position, column: "evaluation_category.position" },
-            ],
-          },
-          {
-            kind: "list",
-            id: "topics",
-            title: t.groups.topics,
-            item: { header: t.topic, column: "topic.code" },
-            extras: [{ header: t.active, column: "topic.is_active", kind: "bool" }, topicShownIf],
-            count: t.topicCount,
-            countOne: t.topicCountOne,
-          },
-          {
-            kind: "list",
-            id: "questions",
-            title: t.groups.questions,
-            item: { header: t.question, column: "question.code" },
-            count: t.questionCount,
-            countOne: t.questionCountOne,
-          },
-        ]}
-        rows={q.categories.map((c) => ({
-          id: c.code,
-          values: { code: c.code, label: c.label, position: String(c.position) },
-          lists: {
-            topics: { items: c.topics.map((topic) => ({ code: topic.code, extras: [topic.isActive, shownIf(topic)] })) },
-            questions: { items: c.questions.map((code) => ({ code })) },
-          },
-        }))}
-      />
     </>
   );
 }

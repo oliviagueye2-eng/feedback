@@ -8,6 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   correctComment,
   correctEstablishment,
+  getCategoriesAndTopics,
   getDashboard,
   getQuestionnaire,
   isValidSessionToken,
@@ -343,7 +344,7 @@ describe("questionnaire", () => {
   });
 
   it("lists the categories with their topics and questions", async () => {
-    const { categories } = await getQuestionnaire({});
+    const { categories } = await getCategoriesAndTopics();
     expect(categories.map((c) => c.code)).toEqual([
       "OUTCOME", "STAFF", "DELAYS", "PROCEDURE", "COST", "SERVICE_QUALITY", "PREMISES",
     ]);
@@ -351,6 +352,15 @@ describe("questionnaire", () => {
     expect(delays).toMatchObject({ label: "Délais", position: 3 });
     expect(delays.topics[0]).toEqual({ code: "WAIT_TIME", isActive: true, categoryCode: "DELAYS", shownIf: null });
     expect(delays.questions).toContain("WAIT_TIME");
+  });
+
+  it("lists every topic with its category, condition and lists", async () => {
+    const { topics } = await getCategoriesAndTopics();
+    expect(topics.map((t) => t.categoryCode).slice(0, 1)).toEqual(["OUTCOME"]);
+    const fees = topics.find((t) => t.code === "FEES")!;
+    expect(fees).toMatchObject({ isActive: true, shownIf: { dependsOn: "PAID_SOMETHING", options: ["YES"] } });
+    expect(fees.lists).toContain("COMMERCE");
+    expect(topics.find((t) => t.code === "WAIT_TIME")).toMatchObject({ label: expect.any(String), categoryCode: "DELAYS" });
   });
 
   it("lists a level's questions in the order of screen 6", async () => {
