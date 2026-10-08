@@ -578,7 +578,7 @@ describe("feedback", () => {
       return (await getDetailsScreen(feedback)).topics.map((t) => t.label);
     };
     expect(await topicsOf("f6a7b8c9-0000-4000-8000-000000000004", school!.id, services.SCHOOL_ADMIN)).toEqual([
-      "Politesse du personnel (accueil, respect)",
+      "Compétence du personnel (Politesse, respect et professionnalisme)",
       "Explications du personnel (claires, complètes)",
       "Temps d'attente",
       "Simplicité de la démarche (nombre de papiers nécessaires, allers-retours)",
@@ -653,11 +653,11 @@ describe("feedback", () => {
       questions: ["MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "REPORTED", "REPORT_WHY"],
     });
     expect(await visit("d0e1f2a3-0000-4000-8000-000000000002", services["Opération dans un point de service"]!)).toEqual({
-      topics: ["OPERATION_RELIABILITY", "STAFF", "PROFESSIONALISM", "WAIT_TIME", "FEES", "AGENT_LIQUIDITY", "AGENT_PROXIMITY"],
+      topics: ["OPERATION_RELIABILITY", "PROFESSIONALISM", "WAIT_TIME", "FEES", "AGENT_LIQUIDITY", "AGENT_PROXIMITY"],
       questions: ["MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "AGENT_CASH", "REPORTED", "REPORT_WHY"],
     });
     expect(await visit("d0e1f2a3-0000-4000-8000-000000000003", services["Service client (appel, réclamation)"]!)).toEqual({
-      topics: ["REQUEST_HANDLING", "STAFF", "PROFESSIONALISM", "INFORMATION", "RESPONSE_TIME", "SUPPORT_REACHABILITY"],
+      topics: ["REQUEST_HANDLING", "PROFESSIONALISM", "INFORMATION", "RESPONSE_TIME", "SUPPORT_REACHABILITY"],
       questions: ["MONEY_PROBLEM_SOLVED", "REPORTED", "REPORT_WHY"],
     });
   });
@@ -687,7 +687,7 @@ describe("feedback", () => {
     };
     expect(await visit("c9d0e1f2-0000-4000-8000-000000000001", services.HIGHER_EDUCATION_ADMIN!)).toEqual({
       topics: [
-        "Politesse du personnel (accueil, respect)",
+        "Compétence du personnel (Politesse, respect et professionnalisme)",
         "Explications du personnel (claires, complètes)",
         "Temps d'attente",
         "Délai de traitement du dossier",
@@ -738,7 +738,7 @@ describe("feedback", () => {
     expect(await visit("b8c9d0e1-0000-4000-8000-000000000001", service.POLICE_PREMISES!)).toEqual({
       topics: [
         "Prise en compte de la demande",
-        "Politesse du personnel (accueil, respect)",
+        "Compétence du personnel (Politesse, respect et professionnalisme)",
         "Explications du personnel (claires, complètes)",
         "Respect des droits",
         "Temps d'attente",
@@ -758,7 +758,7 @@ describe("feedback", () => {
     expect(await visit("b8c9d0e1-0000-4000-8000-000000000002", service.POLICE_FIELD!)).toEqual({
       topics: [
         "Prise en compte de la demande",
-        "Politesse du personnel (accueil, respect)",
+        "Compétence du personnel (Politesse, respect et professionnalisme)",
         "Explications du personnel (claires, complètes)",
         "Respect des droits",
       ],
@@ -767,7 +767,7 @@ describe("feedback", () => {
     expect(await visit("b8c9d0e1-0000-4000-8000-000000000005", service.POLICE_CALL!)).toEqual({
       topics: [
         "Prise en compte de la demande",
-        "Politesse du personnel (accueil, respect)",
+        "Compétence du personnel (Politesse, respect et professionnalisme)",
         "Explications du personnel (claires, complètes)",
         "Respect des droits",
         "Délai d'intervention",

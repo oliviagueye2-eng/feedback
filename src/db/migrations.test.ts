@@ -89,7 +89,7 @@ describe("reference data", () => {
         WHERE i.topic_set_id = (SELECT topic_set_id FROM service WHERE code = $1) ORDER BY t.position`, [service]))
         .rows.map((r) => r.code);
     expect(await serviceTopics("ELECTRICITY_AGENCY")).toEqual([
-      "STAFF", "INFORMATION", "WAIT_TIME", "PROCEDURE", "OPENING_HOURS", "FEES", "BILLING", "CLEANLINESS", "ACCESS_FOR_ALL",
+      "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "PROCEDURE", "OPENING_HOURS", "FEES", "BILLING", "CLEANLINESS", "ACCESS_FOR_ALL",
     ]);
     expect(await serviceTopics("WATER_AGENCY")).toEqual(await serviceTopics("ELECTRICITY_AGENCY"));
     expect(await serviceTopics("ELECTRICITY_SUPPLY")).toEqual(["INTERVENTION_TIME", "CUSTOMER_SERVICE", "POWER_CUTS"]);
@@ -134,6 +134,9 @@ describe("reference data", () => {
         .rows.map((r) => r.code);
     expect(await listOf("TRIP")).toEqual(["PROFESSIONALISM", "PUNCTUALITY", "ONBOARD_SAFETY"]);
     expect(await listOf("TOLL_HIGHWAY")).toContain("PROFESSIONALISM");
+    // « Politesse du personnel » is offered nowhere since 0038.
+    expect((await db.query(`
+      SELECT 1 FROM topic_set_item WHERE topic_id = (SELECT id FROM topic WHERE code = 'STAFF')`)).rows).toEqual([]);
     expect((await db.query<{ code: string }>(`
       SELECT code FROM service WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'ROAD_TRIP') ORDER BY code`))
       .rows.map((r) => r.code)).toEqual(["APP_RIDE", "LAND_TRIP", "STREET_TAXI_RIDE"]);

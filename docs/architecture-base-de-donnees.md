@@ -414,7 +414,7 @@ Libellés (dans `topic_translation`) :
 
 | code | Libellé |
 |---|---|
-| `STAFF` | Politesse du personnel (accueil, respect) (2026-10-03, ex-« Accueil et politesse ») |
+| `STAFF` | Politesse du personnel (accueil, respect) (2026-10-03, ex-« Accueil et politesse ») ; dans aucune liste depuis 0038 (2026-10-08), remplacé par `PROFESSIONALISM` |
 | `DRIVER_BEHAVIOUR` | Comportement du chauffeur (Politesse, respect et professionnalisme) (2026-10-08, bus, VTC et taxi) |
 | `PROFESSIONALISM` | Compétence du personnel (Politesse, respect et professionnalisme) (2026-10-08 ; ex-« Compétence du personnel (connaît son travail, traite bien la demande) », ex-« Professionnalisme du personnel ») |
 | `WAIT_TIME` | Temps d'attente |

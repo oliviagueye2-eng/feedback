@@ -299,7 +299,7 @@ describe("questionnaire", () => {
         // In the order of the categories, then of topic.position.
         topics: [
           ["REQUEST_HANDLING", "OUTCOME"],
-          ["STAFF", "STAFF"],
+          ["PROFESSIONALISM", "STAFF"],
           ["INFORMATION", "STAFF"],
           ["WAIT_TIME", "DELAYS"],
           ["FEES", "COST"],
