@@ -137,7 +137,7 @@ const SHARED_QUESTION_LISTS = ["ESSENTIAL", "COMMON"];
  * the sector. A service is shown when an establishment of that sector or
  * type offers it. An unknown code is ignored.
  */
-export async function getQuestionnaire(filter: { sector?: string; type?: string }) {
+export async function getQuestionnaire(filter: { sector?: string; type?: string; service?: string }) {
   const [sectors, types, services, bank, categories] = await Promise.all([
     db.listSectorTopics(),
     db.listTypeTopics(),
@@ -145,15 +145,33 @@ export async function getQuestionnaire(filter: { sector?: string; type?: string 
     db.listQuestionBank(),
     db.listCategories(),
   ]);
-  const type = types.find((t) => t.code === filter.type);
-  const sector = type ? sectors.find((s) => s.code === type.sectorCode) : sectors.find((s) => s.code === filter.sector);
-  const shownSectors = sector ? [sector] : sectors;
-  const shownTypes = type ? [type] : sector ? types.filter((t) => t.sectorCode === sector.code) : types;
-  const shownServices = type
-    ? services.filter((s) => s.typeCodes.includes(type.code))
-    : sector
-      ? services.filter((s) => s.sectorCodes.includes(sector.code))
-      : services;
+  // A service keeps the sector and the type only if they offer it (a service
+  // has no sector of its own: those of its establishments, 0029).
+  const service = services.find((s) => s.code === filter.service);
+  const fits = (codes: string[], code: string) => !service || codes.includes(code);
+  const type = types.find((t) => t.code === filter.type && fits(service?.typeCodes ?? [], t.code));
+  const sector = type
+    ? sectors.find((s) => s.code === type.sectorCode)
+    : sectors.find((s) => s.code === filter.sector && fits(service?.sectorCodes ?? [], s.code));
+  const shownSectors = sector
+    ? [sector]
+    : service
+      ? sectors.filter((s) => service.sectorCodes.includes(s.code))
+      : sectors;
+  const shownTypes = type
+    ? [type]
+    : service
+      ? types.filter((t) => service.typeCodes.includes(t.code) && (!sector || t.sectorCode === sector.code))
+      : sector
+        ? types.filter((t) => t.sectorCode === sector.code)
+        : types;
+  const shownServices = service
+    ? [service]
+    : type
+      ? services.filter((s) => s.typeCodes.includes(type.code))
+      : sector
+        ? services.filter((s) => s.sectorCodes.includes(sector.code))
+        : services;
   // Filtered: the questions of the lists shown above, those every feedback
   // may get (the essential question, the common ones), and those that open a
   // topic shown above at screen 2b (asked by Olivia, 2026-10-08).
@@ -164,13 +182,15 @@ export async function getQuestionnaire(filter: { sector?: string; type?: string 
   return {
     sector: sector?.code ?? null,
     type: type?.code ?? null,
-    /** Every sector and type, for the filters. */
+    service: service?.code ?? null,
+    /** Every sector, type and service, for the filters. */
     sectorOptions: sectors.map(({ code, label }) => ({ code, label })),
     typeOptions: types.map(({ code, label, sectorCode }) => ({ code, label, sectorCode })),
+    serviceOptions: services.map(({ code, label, sectorCodes, typeCodes }) => ({ code, label, sectorCodes, typeCodes })),
     sectors: shownSectors,
     types: shownTypes,
     services: shownServices,
-    questions: sector ? bank.filter(kept) : bank,
+    questions: sector || service ? bank.filter(kept) : bank,
     /** Not filtered: a category spans every sector. */
     categories,
   };
