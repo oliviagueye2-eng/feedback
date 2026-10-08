@@ -276,7 +276,18 @@ describe("questionnaire", () => {
     const banking = await getQuestionnaire({ sector: "BANKING_INSURANCE" });
     expect(banking.services.map((s) => s.code)).toEqual(["INSURANCE_CLAIM"]);
     const mobile = await getQuestionnaire({ sector: "MOBILE_PAYMENT" });
-    expect(mobile.sectors).toMatchObject([{ label: "Paiement mobile", listCode: "BANKING_INSURANCE" }]);
+    // 0031: lists of its own, for a feedback with no service (« Autre démarche »).
+    expect(mobile.sectors).toEqual([
+      {
+        code: "MOBILE_PAYMENT",
+        label: "Paiement mobile",
+        listCode: "MOBILE_PAYMENT",
+        topics: ["STAFF", "INFORMATION", "WAIT_TIME", "FEES", "REQUEST_HANDLING", "ACCOUNT_SECURITY"].map((code) => ({
+          code,
+          isActive: true,
+        })),
+      },
+    ]);
     expect(mobile.services.map((s) => s.code)).toEqual(["MOBILE_MONEY", "MOBILE_MONEY_AGENT", "MOBILE_MONEY_SUPPORT"]);
     expect(mobile.services[0]!.establishments).toEqual(["Mixx by Yas", "Orange Money", "Wave"]);
   });
