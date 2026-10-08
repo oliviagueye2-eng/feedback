@@ -315,10 +315,13 @@ export interface ListedTopic {
   categoryCode: string | null;
 }
 
-/** The topics of topic_set `$col`, by topic.position; inactive ones included. */
+/**
+ * The topics of topic_set `$col` in the order of their category, then of
+ * topic.position, as on screen 2b (asked by Olivia); inactive ones included.
+ */
 const TOPICS_OF = (col: string) => `
   coalesce((SELECT json_agg(json_build_object('code', t.code, 'isActive', t.is_active, 'categoryCode', c.code)
-                             ORDER BY t.position, t.code)
+                             ORDER BY c.position NULLS LAST, t.position, t.code)
             FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
             LEFT JOIN evaluation_category c ON c.id = t.category_id
             WHERE i.topic_set_id = ${col}), '[]'::json)`;
@@ -330,10 +333,13 @@ export interface ListedQuestion {
   categoryCode: string | null;
 }
 
-/** The questions of question_set `$col`, by question_set_item.position. */
+/**
+ * The questions of question_set `$col` in the order of their category (asked
+ * by Olivia), then of question_set_item.position; those with none last.
+ */
 const QUESTIONS_OF = (col: string) => `
   coalesce((SELECT json_agg(json_build_object('code', q.code, 'position', i.position, 'categoryCode', c.code)
-                             ORDER BY i.position)
+                             ORDER BY c.position NULLS LAST, i.position)
             FROM question_set_item i JOIN question q ON q.id = i.question_id
             LEFT JOIN evaluation_category c ON c.id = q.category_id
             WHERE i.question_set_id = ${col}), '[]'::json)`;
