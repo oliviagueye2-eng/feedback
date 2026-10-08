@@ -144,6 +144,14 @@ describe("reference data", () => {
     expect((await db.query<{ code: string }>(`
       SELECT code FROM service WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'ROAD_TRIP') ORDER BY code`))
       .rows.map((r) => r.code)).toEqual(["APP_RIDE", "LAND_TRIP", "STREET_TAXI_RIDE"]);
+    // Paying as one wished, last on a VTC or a taxi ride, as when buying a ticket (0042).
+    const questionsOf = async (list: string) =>
+      (await db.query<{ code: string }>(`
+        SELECT q.code FROM question_set_item i JOIN question q ON q.id = i.question_id
+        WHERE i.question_set_id = (SELECT id FROM question_set WHERE code = $1) ORDER BY i.position`, [list]))
+        .rows.map((r) => r.code);
+    expect(await questionsOf("APP_RIDE")).toEqual(["DRIVER_WAIT", "PRICE_AS_SHOWN", "DRIVER_AS_SHOWN", "PAYMENT_AS_WISHED"]);
+    expect(await questionsOf("STREET_TAXI_RIDE")).toEqual(["TAXI_WAIT", "PRICE_AGREED", "PRICE_KEPT", "PAYMENT_AS_WISHED"]);
   });
 
   it("gives every sector a topic list, and opening hours to the transport places (0008, 0009, 0010)", async () => {
