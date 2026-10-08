@@ -131,6 +131,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
               establishmentName={q.form.establishmentName ?? q.form.typeLabel ?? q.form.sectorLabel ?? ""}
               serviceLabel={q.form.serviceLabel}
               topics={q.form.topics}
+              topicLists={q.form.topicLists}
               questions={q.form.questions}
               commonQuestions={q.form.commonQuestions}
             />

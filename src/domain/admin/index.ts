@@ -233,6 +233,8 @@ export interface FormQuestion {
   label: string;
   options: { code: string; label: string }[];
   conditions: FormCondition[];
+  /** The lists of the form holding it, with their level. */
+  lists: feedbacks.FormList[];
 }
 
 /**
@@ -241,19 +243,34 @@ export interface FormQuestion {
  * topics (each gate question with its topics), then screen 6's questions
  * (those screen 2b asks are left out, as on the site), then screen 6b's
  * (the common ones). Every item is listed, whatever the answers: the
- * conditions say when it shows.
+ * conditions say when it shows. Each item says which of the form's lists
+ * hold it (asked by Olivia, 2026-10-08: all of them).
  */
 async function getForm(levels: feedbacks.FormLevels, bank: db.BankQuestion[]) {
   const [topics, sources] = await Promise.all([
     feedbacks.findFormTopicChoices(levels),
     feedbacks.findFormQuestionSetSources(levels),
   ]);
-  const questions = await feedbacks.findFormQuestions(selectQuestionSets(sources));
+  const setIds = selectQuestionSets(sources);
+  // The level each list comes from: the first level holding it (a sector
+  // unknown gets COMMERCE).
+  const levelOf = (id: number): feedbacks.FormList["level"] =>
+    id === (sources.sectorKnown ? sources.sectorSetId : sources.commerceSetId)
+      ? "sector"
+      : id === sources.typeSetId
+        ? "type"
+        : "service";
+  const [questions, topicLists, questionLists] = await Promise.all([
+    feedbacks.findFormQuestions(setIds),
+    feedbacks.findFormTopicLists(levels),
+    feedbacks.findFormQuestionLists(setIds.map((id) => ({ id, level: levelOf(id) }))),
+  ]);
   const askedBefore = new Set(topics.flatMap((t) => (t.gate ? [t.gate.code] : [])));
   const byCode = new Map(bank.map((q) => [q.code, q]));
   const toForm = (q: feedbacks.DetailedQuestion): FormQuestion => ({
     code: q.code,
     label: q.label,
+    lists: questionLists[q.code] ?? [],
     options: q.options,
     conditions: q.conditions.map((c) => {
       const asked = byCode.get(c.dependsOn);
@@ -265,6 +282,7 @@ async function getForm(levels: feedbacks.FormLevels, bank: db.BankQuestion[]) {
   });
   return {
     topics,
+    topicLists,
     questions: questions.filter((q) => !q.common && !askedBefore.has(q.code)).map(toForm),
     commonQuestions: questions.filter((q) => q.common && !askedBefore.has(q.code)).map(toForm),
   };
