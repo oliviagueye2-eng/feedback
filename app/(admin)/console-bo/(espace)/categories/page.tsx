@@ -42,8 +42,12 @@ export default async function CategoriesPage() {
             kind: "list",
             id: "topics",
             title: t.groups.topics,
-            item: { header: t.topic, column: "topic.code" },
-            extras: [{ header: t.active, column: "topic.is_active", kind: "bool" }, topicShownIf],
+            item: { header: t.code, column: "topic.code" },
+            extras: [
+              { header: t.label, kind: "text" },
+              { header: t.active, column: "topic.is_active", kind: "bool" },
+              topicShownIf,
+            ],
             count: t.topicCount,
             countOne: t.topicCountOne,
           },
@@ -60,7 +64,7 @@ export default async function CategoriesPage() {
           id: c.code,
           values: { code: c.code, label: c.label, position: String(c.position) },
           lists: {
-            topics: { items: c.topics.map((topic) => ({ code: topic.code, extras: [topic.isActive, shownIf(topic)] })) },
+            topics: { items: c.topics.map((topic) => ({ code: topic.code, extras: [topic.label, topic.isActive, shownIf(topic)] })) },
             questions: { items: c.questions.map((code) => ({ code })) },
           },
         }))}

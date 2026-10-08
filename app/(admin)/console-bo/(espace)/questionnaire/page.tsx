@@ -33,8 +33,9 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
       id: "topics",
       title: t.groups.topics,
       list: { header: t.list, column: "topic_set.code" },
-      item: { header: t.topic, column: "topic.code" },
+      item: { header: t.code, column: "topic.code" },
       extras: [
+        { header: t.label, kind: "text" },
         { header: t.active, column: "topic.is_active", kind: "bool" },
         { header: t.category, column: "evaluation_category.code", kind: "code" },
         topicShownIf,
@@ -65,7 +66,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
   }): ListGridRow["lists"] => ({
     topics: {
       code: level.listCode,
-      items: level.topics.map((topic) => ({ code: topic.code, extras: [topic.isActive, topic.categoryCode, shownIf(topic)] })),
+      items: level.topics.map((topic) => ({ code: topic.code, extras: [topic.label, topic.isActive, topic.categoryCode, shownIf(topic)] })),
     },
     questions: {
       code: level.questionListCode,
