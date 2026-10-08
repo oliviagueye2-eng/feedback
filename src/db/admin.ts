@@ -312,24 +312,30 @@ export async function countCompleteByWeek(weeks: number): Promise<{ week: string
 export interface ListedTopic {
   code: string;
   isActive: boolean;
+  categoryCode: string | null;
 }
 
 /** The topics of topic_set `$col`, by topic.position; inactive ones included. */
 const TOPICS_OF = (col: string) => `
-  coalesce((SELECT json_agg(json_build_object('code', t.code, 'isActive', t.is_active) ORDER BY t.position, t.code)
+  coalesce((SELECT json_agg(json_build_object('code', t.code, 'isActive', t.is_active, 'categoryCode', c.code)
+                             ORDER BY t.position, t.code)
             FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
+            LEFT JOIN evaluation_category c ON c.id = t.category_id
             WHERE i.topic_set_id = ${col}), '[]'::json)`;
 
 /** A question of a list, in the list's order. */
 export interface ListedQuestion {
   code: string;
   position: number;
+  categoryCode: string | null;
 }
 
 /** The questions of question_set `$col`, by question_set_item.position. */
 const QUESTIONS_OF = (col: string) => `
-  coalesce((SELECT json_agg(json_build_object('code', q.code, 'position', i.position) ORDER BY i.position)
+  coalesce((SELECT json_agg(json_build_object('code', q.code, 'position', i.position, 'categoryCode', c.code)
+                             ORDER BY i.position)
             FROM question_set_item i JOIN question q ON q.id = i.question_id
+            LEFT JOIN evaluation_category c ON c.id = q.category_id
             WHERE i.question_set_id = ${col}), '[]'::json)`;
 
 export interface SectorTopics {
