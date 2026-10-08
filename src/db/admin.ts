@@ -320,19 +320,36 @@ const TOPICS_OF = (col: string) => `
             FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
             WHERE i.topic_set_id = ${col}), '[]'::json)`;
 
+/** A question of a list, in the list's order. */
+export interface ListedQuestion {
+  code: string;
+  position: number;
+}
+
+/** The questions of question_set `$col`, by question_set_item.position. */
+const QUESTIONS_OF = (col: string) => `
+  coalesce((SELECT json_agg(json_build_object('code', q.code, 'position', i.position) ORDER BY i.position)
+            FROM question_set_item i JOIN question q ON q.id = i.question_id
+            WHERE i.question_set_id = ${col}), '[]'::json)`;
+
 export interface SectorTopics {
   code: string;
   label: string | null;
   listCode: string | null;
   topics: ListedTopic[];
+  /** Screen 6 (asked by Olivia, 2026-10-08): the level's question list. */
+  questionListCode: string | null;
+  questions: ListedQuestion[];
 }
 
 export async function listSectorTopics(): Promise<SectorTopics[]> {
   return query<SectorTopics>(
-    `SELECT s.code, st.label, ts.code AS "listCode", ${TOPICS_OF("s.topic_set_id")} AS topics
+    `SELECT s.code, st.label, ts.code AS "listCode", ${TOPICS_OF("s.topic_set_id")} AS topics,
+            qs.code AS "questionListCode", ${QUESTIONS_OF("s.question_set_id")} AS questions
      FROM sector s
      LEFT JOIN sector_translation st ON st.sector_id = s.id AND st.language = 'fr'
      LEFT JOIN topic_set ts ON ts.id = s.topic_set_id
+     LEFT JOIN question_set qs ON qs.id = s.question_set_id
      ORDER BY st.label, s.code`,
   );
 }
@@ -347,6 +364,7 @@ export async function listTypeTopics(): Promise<TypeTopics[]> {
   return query<TypeTopics>(
     `SELECT et.code, ett.label, s.code AS "sectorCode", ts.code AS "listCode",
             ${TOPICS_OF("et.topic_set_id")} AS topics,
+            qs.code AS "questionListCode", ${QUESTIONS_OF("et.question_set_id")} AS questions,
             coalesce((SELECT array_agg(DISTINCT sv.code ORDER BY sv.code)
                       FROM establishment e
                       JOIN establishment_service es ON es.establishment_id = e.id
@@ -356,6 +374,7 @@ export async function listTypeTopics(): Promise<TypeTopics[]> {
      JOIN sector s ON s.id = et.sector_id
      LEFT JOIN establishment_type_translation ett ON ett.establishment_type_id = et.id AND ett.language = 'fr'
      LEFT JOIN topic_set ts ON ts.id = et.topic_set_id
+     LEFT JOIN question_set qs ON qs.id = et.question_set_id
      ORDER BY s.code, et.code`,
   );
 }
@@ -366,6 +385,8 @@ export interface ServiceTopics {
   replacesSharedLists: boolean;
   listCode: string | null;
   topics: ListedTopic[];
+  questionListCode: string | null;
+  questions: ListedQuestion[];
   /** Active establishments offering it (establishment_service), by name. */
   establishments: string[];
   /** Their sectors and types: used by the page's filters. */
@@ -384,6 +405,7 @@ export async function listServiceTopics(): Promise<ServiceTopics[]> {
      )
      SELECT sv.code, st.label, sv.replaces_shared_lists AS "replacesSharedLists", ts.code AS "listCode",
             ${TOPICS_OF("sv.topic_set_id")} AS topics,
+            qs.code AS "questionListCode", ${QUESTIONS_OF("sv.question_set_id")} AS questions,
             coalesce((SELECT array_agg(o.name ORDER BY o.name) FROM offered o WHERE o.service_id = sv.id), '{}')
               AS establishments,
             coalesce((SELECT array_agg(DISTINCT o.sector_code) FROM offered o
@@ -393,6 +415,82 @@ export async function listServiceTopics(): Promise<ServiceTopics[]> {
      FROM service sv
      LEFT JOIN service_translation st ON st.service_id = sv.id AND st.language = 'fr'
      LEFT JOIN topic_set ts ON ts.id = sv.topic_set_id
+     LEFT JOIN question_set qs ON qs.id = sv.question_set_id
      ORDER BY sv.code`,
+  );
+}
+
+export interface BankOption {
+  code: string;
+  label: string | null;
+  isActive: boolean;
+}
+
+/** « In this list, shown only after one of these answers » (question_condition). */
+export interface BankCondition {
+  listCode: string;
+  dependsOn: string;
+  options: string[];
+}
+
+export interface BankQuestion {
+  code: string;
+  label: string | null;
+  type: string;
+  categoryCode: string | null;
+  /** The question lists holding it; none for a question asked elsewhere or withdrawn. */
+  lists: string[];
+  options: BankOption[];
+  conditions: BankCondition[];
+}
+
+/** Every question, written once (the bank), with its answers and conditions. */
+export async function listQuestionBank(): Promise<BankQuestion[]> {
+  return query<BankQuestion>(
+    `SELECT q.code, qt.label, q.type, c.code AS "categoryCode",
+            coalesce((SELECT array_agg(qs.code ORDER BY qs.code)
+                      FROM question_set_item i JOIN question_set qs ON qs.id = i.question_set_id
+                      WHERE i.question_id = q.id), '{}') AS lists,
+            coalesce((SELECT json_agg(json_build_object('code', o.code, 'label', ot.label, 'isActive', o.is_active)
+                                      ORDER BY o.position)
+                      FROM answer_option o
+                      LEFT JOIN answer_option_translation ot ON ot.answer_option_id = o.id AND ot.language = 'fr'
+                      WHERE o.question_id = q.id), '[]'::json) AS options,
+            coalesce((SELECT json_agg(json_build_object('listCode', x.list_code, 'dependsOn', x.depends_on,
+                                                        'options', x.options) ORDER BY x.list_code, x.depends_on)
+                      FROM (SELECT qs.code AS list_code, dq.code AS depends_on,
+                                   array_agg(o.code ORDER BY o.position) AS options
+                            FROM question_condition qc
+                            JOIN question_set qs ON qs.id = qc.question_set_id
+                            JOIN question dq ON dq.id = qc.depends_on_question_id
+                            JOIN answer_option o ON o.id = qc.option_id
+                            WHERE qc.question_id = q.id
+                            GROUP BY qs.code, dq.code) x), '[]'::json) AS conditions
+     FROM question q
+     LEFT JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
+     LEFT JOIN evaluation_category c ON c.id = q.category_id
+     ORDER BY q.code`,
+  );
+}
+
+export interface CategoryContent {
+  code: string;
+  label: string | null;
+  position: number;
+  topics: ListedTopic[];
+  questions: string[];
+}
+
+/** The categories, linking topics of screen 2b and questions of screen 6 on the same subject. */
+export async function listCategories(): Promise<CategoryContent[]> {
+  return query<CategoryContent>(
+    `SELECT c.code, ct.label, c.position,
+            coalesce((SELECT json_agg(json_build_object('code', t.code, 'isActive', t.is_active) ORDER BY t.position, t.code)
+                      FROM topic t WHERE t.category_id = c.id), '[]'::json) AS topics,
+            coalesce((SELECT array_agg(q.code ORDER BY q.code) FROM question q WHERE q.category_id = c.id), '{}')
+              AS questions
+     FROM evaluation_category c
+     LEFT JOIN evaluation_category_translation ct ON ct.evaluation_category_id = c.id AND ct.language = 'fr'
+     ORDER BY c.position`,
   );
 }

@@ -10,6 +10,13 @@ const fill = (text: string, values: Record<string, string | number>) =>
 const shortDate = (iso: string) =>
   new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${iso}T00:00:00Z`));
 
+/** « 1er octobre », « 8 octobre 2026 »: French writes the first day of a month « 1er ». */
+const day = (date: Date, withYear: boolean) => {
+  const n = date.getUTCDate();
+  const month = new Intl.DateTimeFormat("fr-FR", { month: "long", timeZone: "UTC" }).format(date);
+  return `${n === 1 ? "1er" : n} ${month}${withYear ? ` ${date.getUTCFullYear()}` : ""}`;
+};
+
 /** What to handle, then this month's feedbacks: sent, not sent, and where they stop. */
 export default async function DashboardPage() {
   await requireAdmin();
@@ -35,10 +42,17 @@ export default async function DashboardPage() {
   ].filter(Boolean);
 
   const lastWeek = d.weeks.at(-1);
+  // The month the figures count, as the database counts it (UTC, the time in Dakar).
+  const today = new Date();
+  const period =
+    today.getUTCDate() === 1
+      ? fill(t.periodOneDay, { date: day(today, true) })
+      : fill(t.period, { from: day(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1)), false), to: day(today, true) });
 
   return (
     <>
       <h1>{t.title}</h1>
+      <p className={styles.meta}>{period}</p>
       <p className={styles.lead}>
         {todo.length === 0 ? (
           t.nothingTodo

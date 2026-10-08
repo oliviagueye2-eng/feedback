@@ -397,7 +397,7 @@ Contenu : `PAID_SOMETHING` = Oui ouvre « Frais payés » ; `FILE_SUBMITTED` = O
 | `LAND_TRIP`, `BOAT_CROSSING`, `TICKET_PURCHASE` | les services du transport du même nom |
 | `GENERIC` | secteurs Commerce, Culture, Hôtellerie, Immobilier, Restauration, Sport, Tourisme, et secteur inconnu |
 
-Ajoutées depuis : `AIRPORT`, `BUS_STATION` (0005), `FLIGHT` (0006), `POLICE_PREMISES` et `POLICE_FIELD` (0010, services de la police et de la gendarmerie). Sans liste : secteurs Sécurité et Transport (les questions viennent du service), service État civil.
+Ajoutées depuis : `AIRPORT`, `BUS_STATION` (0005), `FLIGHT` (0006), `POLICE_PREMISES` et `POLICE_FIELD` (0010, services de la police et de la gendarmerie), `MOBILE_PAYMENT` (0031 : « Avez-vous obtenu ce que vous étiez venu(e) chercher ? », pour un avis Paiement mobile sans service). Sans liste : secteurs Sécurité et Transport (les questions viennent du service), service État civil.
 
 ### topic
 Thèmes proposés après la question essentielle (écran 2b), sous « Comment évaluez-vous les points suivants ? ». Pour chaque thème, l'usager peut toucher « Bien » ou « Pas bien », ou ne rien toucher (option D, 2026-09-30) : une visite mitigée se dit (bon accueil, attente trop longue).
@@ -466,7 +466,8 @@ Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_
 | `POLICE_PREMISES` | Temps d'attente, Délai de traitement, Simplicité, Suivi du dossier, Horaires, Frais, Propreté, Accessibilité | service « Une démarche dans les locaux » (police, gendarmerie) |
 | `POLICE_FIELD` | Délai d'intervention | service « Un contrôle ou une intervention sur le terrain » (police, gendarmerie) |
 | `EDUCATION` | Propreté, entretien et confort, Accessibilité (0010) | secteur Éducation |
-| `BANKING_INSURANCE` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Délai de traitement, Suivi du dossier, Service client | secteurs Banques et assurances, Paiement mobile (pour un avis sans service ; les services de mobile money ont leurs propres listes) |
+| `BANKING_INSURANCE` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Délai de traitement, Suivi du dossier, Service client | secteur Banques et assurances |
+| `MOBILE_PAYMENT` | Accueil, Explications, Temps d'attente, Frais, Prise en compte de la demande, Sécurité du compte (0031, validé par Olivia le 2026-10-08) | secteur Paiement mobile : un avis sans service (« Autre démarche ») ; les trois services de mobile money remplacent les listes partagées |
 | `ELECTRICITY` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Coupures de courant, Délai d'intervention, Factures, Service client | secteur Électricité |
 | `WATER` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Coupures d'eau, Qualité de l'eau, Factures, Service client | secteur Eau |
 | `TELECOM` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Qualité du réseau, Factures, Service client | secteur Télécoms |
