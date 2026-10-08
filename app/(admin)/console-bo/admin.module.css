@@ -792,6 +792,12 @@
   line-height: 1.5;
 }
 
+/* The category: grey outline, not filled, apart from the « Commun » level. */
+.categoryTag {
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
 .levelCommon {
   background: var(--level-common-tint);
   color: var(--level-common);

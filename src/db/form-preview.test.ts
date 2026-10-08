@@ -80,6 +80,8 @@ it("shows the form of an establishment, with its sector and type", async () => {
   expect(q.form?.commonQuestions[0]?.lists).toEqual([{ code: "COMMON", level: "common" }]);
   for (const topic of q.form?.topics ?? []) expect(q.form?.topicLists[topic.code]?.length).toBeGreaterThan(0);
   for (const question of q.form?.questions ?? []) expect(question.lists.length).toBeGreaterThan(0);
+  // And its category, by its label.
+  expect(q.form?.questions.find((x) => x.code === "WAIT_TIME")?.category).toBe("Délais");
 });
 
 it("shows no form until an establishment or a sector is chosen", async () => {
