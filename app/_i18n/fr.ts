@@ -699,7 +699,7 @@ export const fr = {
         "Les établissements viennent de establishment_service. Quand « Désactive COMMON et secteur » vaut true : pas de thèmes COMMON ni du secteur, pas de questions du secteur (les questions COMMON restent) ; les listes du type sont toujours ajoutées. Thèmes et questions viennent de service.topic_set_id et question_set_id.",
       bankTitle: "Banque de questions",
       bankHelp:
-        "Une ligne par question, chacune écrite une seule fois. Dépliée : ses réponses possibles. « Conditions » vient de question_condition, liste par liste. Avec un filtre : les questions des listes ci-dessus, plus celles que tout avis peut recevoir (ESSENTIAL, COMMON).",
+        "Une ligne par question, chacune écrite une seule fois. Dépliée : ses réponses possibles. « Conditions » vient de question_condition, liste par liste. Avec un filtre : les questions des listes ci-dessus, plus celles que tout avis peut recevoir (ESSENTIAL, COMMON) et celles qui ouvrent un de leurs thèmes à l'écran 2b.",
       categoriesTitle: "Catégories",
       categoriesHelp:
         "Une catégorie regroupe des thèmes de l'écran 2b et des questions de l'écran 6 sur le même sujet (topic.category_id, question.category_id). Pas de filtre : une catégorie vaut pour tous les secteurs.",

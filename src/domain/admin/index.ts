@@ -154,11 +154,13 @@ export async function getQuestionnaire(filter: { sector?: string; type?: string 
     : sector
       ? services.filter((s) => s.sectorCodes.includes(sector.code))
       : services;
-  // Filtered: the questions of the lists shown above, and those every feedback
-  // may get (the essential question, the common ones).
-  const lists = new Set(
-    [...shownSectors, ...shownTypes, ...shownServices].map((x) => x.questionListCode).concat(SHARED_QUESTION_LISTS),
-  );
+  // Filtered: the questions of the lists shown above, those every feedback
+  // may get (the essential question, the common ones), and those that open a
+  // topic shown above at screen 2b (asked by Olivia, 2026-10-08).
+  const shown = [...shownSectors, ...shownTypes, ...shownServices];
+  const lists = new Set(shown.map((x) => x.questionListCode).concat(SHARED_QUESTION_LISTS));
+  const topics = new Set(shown.flatMap((x) => x.topics.map((t) => t.code)));
+  const kept = (q: db.BankQuestion) => q.lists.some((l) => lists.has(l)) || q.opensTopics.some((t) => topics.has(t));
   return {
     sector: sector?.code ?? null,
     type: type?.code ?? null,
@@ -168,7 +170,7 @@ export async function getQuestionnaire(filter: { sector?: string; type?: string 
     sectors: shownSectors,
     types: shownTypes,
     services: shownServices,
-    questions: sector ? bank.filter((q) => q.lists.some((l) => lists.has(l))) : bank,
+    questions: sector ? bank.filter(kept) : bank,
     /** Not filtered: a category spans every sector. */
     categories,
   };
