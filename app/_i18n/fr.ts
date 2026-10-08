@@ -591,6 +591,8 @@ export const fr = {
       todoAnd: "et",
       nothingTodo: "Rien à traiter.",
       monthLabel: "Avis du mois en cours",
+      period: "Du {from} au {to}",
+      periodOneDay: "Le {date}",
       complete: "Avis complets ce mois-ci",
       notSent: "Avis non envoyés",
       abandon: "Abandon",
