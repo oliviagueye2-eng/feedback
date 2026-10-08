@@ -10,7 +10,10 @@ import { isUuid, requireUuid } from "../../lib/validation";
 import { createSessionToken, isRightPassword } from "./session";
 
 export { isValidSessionToken, SESSION_DAYS } from "./session";
-export type { AdminComment, CommentStatus, EstablishmentComments, ListedTopic, PendingEstablishment, ServiceTopics, SectorTopics, StopPage, TypeTopics } from "../../db/admin";
+export type {
+  AdminComment, BankCondition, BankOption, BankQuestion, CategoryContent, CommentStatus, EstablishmentComments,
+  ListedQuestion, ListedTopic, PendingEstablishment, ServiceTopics, SectorTopics, StopPage, TypeTopics,
+} from "../../db/admin";
 
 /** 5 failed sign-ins in 15 minutes from one address block it for 15 minutes. */
 export const LOGIN_MAX_FAILURES = 5;
@@ -125,6 +128,9 @@ export async function getDashboard() {
 
 // Questionnaire --------------------------------------------------------------------
 
+/** Question lists every feedback may get, whatever its sector. */
+const SHARED_QUESTION_LISTS = ["ESSENTIAL", "COMMON"];
+
 /**
  * The topic lists of every sector, type and service. `sector` and `type`
  * (codes, from the page's filters) narrow the three tables; a type decides
@@ -132,25 +138,38 @@ export async function getDashboard() {
  * type offers it. An unknown code is ignored.
  */
 export async function getQuestionnaire(filter: { sector?: string; type?: string }) {
-  const [sectors, types, services] = await Promise.all([
+  const [sectors, types, services, bank, categories] = await Promise.all([
     db.listSectorTopics(),
     db.listTypeTopics(),
     db.listServiceTopics(),
+    db.listQuestionBank(),
+    db.listCategories(),
   ]);
   const type = types.find((t) => t.code === filter.type);
   const sector = type ? sectors.find((s) => s.code === type.sectorCode) : sectors.find((s) => s.code === filter.sector);
+  const shownSectors = sector ? [sector] : sectors;
+  const shownTypes = type ? [type] : sector ? types.filter((t) => t.sectorCode === sector.code) : types;
+  const shownServices = type
+    ? services.filter((s) => s.typeCodes.includes(type.code))
+    : sector
+      ? services.filter((s) => s.sectorCodes.includes(sector.code))
+      : services;
+  // Filtered: the questions of the lists shown above, and those every feedback
+  // may get (the essential question, the common ones).
+  const lists = new Set(
+    [...shownSectors, ...shownTypes, ...shownServices].map((x) => x.questionListCode).concat(SHARED_QUESTION_LISTS),
+  );
   return {
     sector: sector?.code ?? null,
     type: type?.code ?? null,
     /** Every sector and type, for the filters. */
     sectorOptions: sectors.map(({ code, label }) => ({ code, label })),
     typeOptions: types.map(({ code, label, sectorCode }) => ({ code, label, sectorCode })),
-    sectors: sector ? [sector] : sectors,
-    types: type ? [type] : sector ? types.filter((t) => t.sectorCode === sector.code) : types,
-    services: type
-      ? services.filter((s) => s.typeCodes.includes(type.code))
-      : sector
-        ? services.filter((s) => s.sectorCodes.includes(sector.code))
-        : services,
+    sectors: shownSectors,
+    types: shownTypes,
+    services: shownServices,
+    questions: sector ? bank.filter((q) => q.lists.some((l) => lists.has(l))) : bank,
+    /** Not filtered: a category spans every sector. */
+    categories,
   };
 }

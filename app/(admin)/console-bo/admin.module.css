@@ -601,6 +601,13 @@
   color: var(--muted);
 }
 
+/* An answer's text, under its code. */
+.gridItemLabel {
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--muted);
+}
+
 /* Few rows: no room kept for the empty-table message. */
 .grid :global(.ag-grid-scrolling-rows.ag-layout-auto-height) {
   min-height: 0;

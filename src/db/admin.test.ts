@@ -286,10 +286,40 @@ describe("questionnaire", () => {
           code,
           isActive: true,
         })),
+        questionListCode: "MOBILE_PAYMENT",
+        questions: [{ code: "GOAL_ACHIEVED", position: 1 }],
       },
     ]);
     expect(mobile.services.map((s) => s.code)).toEqual(["MOBILE_MONEY", "MOBILE_MONEY_AGENT", "MOBILE_MONEY_SUPPORT"]);
     expect(mobile.services[0]!.establishments).toEqual(["Mixx by Yas", "Orange Money", "Wave"]);
+  });
+
+  it("lists the question bank, narrowed by the filters to the lists shown", async () => {
+    const all = await getQuestionnaire({});
+    expect(all.questions).toHaveLength(78);
+    const receipt = all.questions.find((q) => q.code === "RECEIPT_GIVEN")!;
+    expect(receipt).toMatchObject({ type: "single_choice", categoryCode: "COST" });
+    expect(receipt.lists).toContain("HEALTH");
+    expect(receipt.conditions).toContainEqual({ listCode: "HEALTH", dependsOn: "PAID_SOMETHING", options: ["YES"] });
+    // A question asked elsewhere than screen 6 is in no list, and still in the bank.
+    expect(all.questions.find((q) => q.code === "FILE_SUBMITTED")!.lists).toEqual([]);
+
+    const mobile = await getQuestionnaire({ sector: "MOBILE_PAYMENT" });
+    expect(mobile.questions.map((q) => q.code)).toEqual([
+      "AGENT_CASH", "GOAL_ACHIEVED", "MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "OVERALL_SATISFACTION",
+      "REPORTED", "REPORT_WHY",
+    ]);
+  });
+
+  it("lists the categories with their topics and questions", async () => {
+    const { categories } = await getQuestionnaire({});
+    expect(categories.map((c) => c.code)).toEqual([
+      "OUTCOME", "STAFF", "DELAYS", "PROCEDURE", "COST", "SERVICE_QUALITY", "PREMISES",
+    ]);
+    const delays = categories.find((c) => c.code === "DELAYS")!;
+    expect(delays).toMatchObject({ label: "Délais", position: 3 });
+    expect(delays.topics[0]).toEqual({ code: "WAIT_TIME", isActive: true });
+    expect(delays.questions).toContain("WAIT_TIME");
   });
 
   it("shows an inactive topic as such", async () => {
