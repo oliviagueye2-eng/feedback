@@ -71,8 +71,7 @@ describe("reference data", () => {
         ORDER BY t.position`, [sector])).rows;
 
     expect((await topicsFor("RETAIL")).map((t) => t.label)).toEqual([
-      "Politesse du personnel (accueil, respect)",
-      "Compétence du personnel (connaît son travail, traite bien la demande)",
+      "Compétence du personnel (Politesse, respect et professionnalisme)",
       "Explications du personnel (claires, complètes)",
       "Temps d'attente",
       "Horaires d'ouverture",
@@ -81,15 +80,16 @@ describe("reference data", () => {
       "Accessibilité aux personnes handicapées ou âgées",
     ]);
 
-    // Electricity and water: nothing in the sector, all in the agency or at home (0019).
-    expect(await topicsFor("ELECTRICITY")).toHaveLength(1);
+    // Electricity and water: nothing in the sector, all in the agency or at home
+    // (0019); nothing in COMMON either since 0034.
+    expect(await topicsFor("ELECTRICITY")).toHaveLength(0);
     const serviceTopics = async (service: string) =>
       (await db.query<{ code: string }>(`
         SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
         WHERE i.topic_set_id = (SELECT topic_set_id FROM service WHERE code = $1) ORDER BY t.position`, [service]))
         .rows.map((r) => r.code);
     expect(await serviceTopics("ELECTRICITY_AGENCY")).toEqual([
-      "STAFF", "INFORMATION", "WAIT_TIME", "PROCEDURE", "OPENING_HOURS", "FEES", "BILLING", "CLEANLINESS", "ACCESS_FOR_ALL",
+      "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "PROCEDURE", "OPENING_HOURS", "FEES", "BILLING", "CLEANLINESS", "ACCESS_FOR_ALL",
     ]);
     expect(await serviceTopics("WATER_AGENCY")).toEqual(await serviceTopics("ELECTRICITY_AGENCY"));
     expect(await serviceTopics("ELECTRICITY_SUPPLY")).toEqual(["INTERVENTION_TIME", "CUSTOMER_SERVICE", "POWER_CUTS"]);
@@ -97,11 +97,11 @@ describe("reference data", () => {
       "INTERVENTION_TIME", "CUSTOMER_SERVICE", "WATER_CUTS", "WATER_QUALITY",
     ]);
     expect((await topicsFor("BANKING_INSURANCE")).map((t) => t.code)).toEqual([
-      "STAFF", "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "PROCESSING_TIME", "PROCEDURE", "CASE_TRACKING",
+      "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "PROCESSING_TIME", "PROCEDURE", "CASE_TRACKING",
       "OPENING_HOURS", "CUSTOMER_SERVICE", "FEES", "CLEANLINESS", "ACCESS_FOR_ALL",
     ]);
     // « Simplicité de la démarche » only where there are papers.
-    expect(await topicsFor("HEALTH")).toHaveLength(11);
+    expect(await topicsFor("HEALTH")).toHaveLength(10);
     expect((await topicsFor("ADMINISTRATION")).map((t) => t.code)).toContain("PROCEDURE");
     // A trip has no opening hours: the transport places add them (TRANSPORT_PLACE).
     expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("OPENING_HOURS");
@@ -112,12 +112,46 @@ describe("reference data", () => {
     expect((await db.query<{ code: string }>(`
       SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
       WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT_PLACE') ORDER BY t.position`))
-      .rows.map((r) => r.code)).toEqual(["WAIT_TIME", "OPENING_HOURS"]);
+      .rows.map((r) => r.code)).toEqual(["PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS"]);
     // A place or a ticket counter is not a trip: no « Ponctualité », no « Sécurité à bord » (0009).
     expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("PUNCTUALITY");
     expect((await db.query<{ code: string }>(`
       SELECT code FROM service WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRIP') ORDER BY code`))
-      .rows.map((r) => r.code)).toEqual(["APP_RIDE", "BOAT_CROSSING", "FLIGHT", "LAND_TRIP", "STREET_TAXI_RIDE", "TRAIN_TRIP"]);
+      .rows.map((r) => r.code)).toEqual(["BOAT_CROSSING", "FLIGHT", "TRAIN_TRIP"]);
+    // On the road, the driver instead of the staff (0035): TRIP plus « Comportement du chauffeur ».
+    expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("STAFF");
+    const roadTrip = async () =>
+      (await db.query<{ code: string }>(`
+        SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
+        WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = 'ROAD_TRIP') ORDER BY t.position`))
+        .rows.map((r) => r.code);
+    expect(await roadTrip()).toEqual(["DRIVER_BEHAVIOUR", "PUNCTUALITY", "ROUTE", "ONBOARD_SAFETY"]);
+    // The boat, the plane, the train and the highway: « Compétence du personnel » (0036).
+    const listOf = async (list: string) =>
+      (await db.query<{ code: string }>(`
+        SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
+        WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = $1) ORDER BY t.position`, [list]))
+        .rows.map((r) => r.code);
+    expect(await listOf("TRIP")).toEqual(["PROFESSIONALISM", "INFORMATION", "PUNCTUALITY", "ONBOARD_SAFETY"]);
+    expect(await listOf("TOLL_HIGHWAY")).toContain("PROFESSIONALISM");
+    // « Explications du personnel » in the services' lists, not TRANSPORT (0039).
+    expect(await listOf("TRANSPORT")).not.toContain("INFORMATION");
+    expect(await listOf("TOLL_HIGHWAY")).toContain("INFORMATION");
+    expect(await listOf("ROAD_TRIP")).not.toContain("INFORMATION");
+    // « Politesse du personnel » is offered nowhere since 0038.
+    expect((await db.query(`
+      SELECT 1 FROM topic_set_item WHERE topic_id = (SELECT id FROM topic WHERE code = 'STAFF')`)).rows).toEqual([]);
+    expect((await db.query<{ code: string }>(`
+      SELECT code FROM service WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'ROAD_TRIP') ORDER BY code`))
+      .rows.map((r) => r.code)).toEqual(["APP_RIDE", "LAND_TRIP", "STREET_TAXI_RIDE"]);
+    // Paying as one wished, last on a VTC or a taxi ride, as when buying a ticket (0042).
+    const questionsOf = async (list: string) =>
+      (await db.query<{ code: string }>(`
+        SELECT q.code FROM question_set_item i JOIN question q ON q.id = i.question_id
+        WHERE i.question_set_id = (SELECT id FROM question_set WHERE code = $1) ORDER BY i.position`, [list]))
+        .rows.map((r) => r.code);
+    expect(await questionsOf("APP_RIDE")).toEqual(["DRIVER_WAIT", "PRICE_AS_SHOWN", "DRIVER_AS_SHOWN", "PAYMENT_AS_WISHED"]);
+    expect(await questionsOf("STREET_TAXI_RIDE")).toEqual(["TAXI_WAIT", "PRICE_AGREED", "PRICE_KEPT", "PAYMENT_AS_WISHED"]);
   });
 
   it("gives every sector a topic list, and opening hours to the transport places (0008, 0009, 0010)", async () => {

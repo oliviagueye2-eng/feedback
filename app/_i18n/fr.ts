@@ -711,6 +711,7 @@ export const fr = {
         },
       },
       all: "Tous",
+      noType: "Aucun type",
       apply: "Afficher",
       reset: "Tout afficher",
       sectorsTitle: "Secteurs",

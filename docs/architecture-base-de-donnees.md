@@ -414,8 +414,9 @@ Libellés (dans `topic_translation`) :
 
 | code | Libellé |
 |---|---|
-| `STAFF` | Politesse du personnel (accueil, respect) (2026-10-03, ex-« Accueil et politesse ») |
-| `PROFESSIONALISM` | Compétence du personnel (connaît son travail, traite bien la demande) (2026-10-03, ex-« Professionnalisme du personnel ») |
+| `STAFF` | Politesse du personnel (accueil, respect) (2026-10-03, ex-« Accueil et politesse ») ; dans aucune liste depuis 0038 (2026-10-08), remplacé par `PROFESSIONALISM` |
+| `DRIVER_BEHAVIOUR` | Comportement du chauffeur (Politesse, respect et professionnalisme) (2026-10-08, bus, VTC et taxi) |
+| `PROFESSIONALISM` | Compétence du personnel (Politesse, respect et professionnalisme) (2026-10-08 ; ex-« Compétence du personnel (connaît son travail, traite bien la demande) », ex-« Professionnalisme du personnel ») |
 | `WAIT_TIME` | Temps d'attente |
 | `INFORMATION` | Explications du personnel (claires, complètes) (2026-10-03 : ce que l'agent a dit) |
 | `PROCEDURE` | Simplicité de la démarche (nombre de papiers nécessaires, allers-retours) (2026-10-03 : la règle elle-même) |
@@ -429,6 +430,7 @@ Libellés (dans `topic_translation`) :
 | `TEACHING_QUALITY` | Qualité de l'enseignement |
 | `STUDENT_SUPERVISION` | Encadrement des élèves |
 | `PUNCTUALITY` | Ponctualité |
+| `ROUTE` | Respect de l'itinéraire et durée du trajet (2026-10-08, bus, VTC et taxi) |
 | `ONBOARD_SAFETY` | Sécurité à bord |
 | `VEHICLE_CONDITION` | État des véhicules (plus proposé depuis 0009 : « Propreté, entretien et confort » le dit) |
 | `POWER_CUTS` | Coupures de courant |
@@ -459,7 +461,7 @@ Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_
 
 | Liste | Thèmes | Rattachée à |
 |---|---|---|
-| `COMMON` | Professionnalisme (Accueil et Frais en sont sortis en 0009 : un élève en classe ne passe pas au guichet ; Propreté et Accessibilité en 0010 : un contrôle routier n'a pas de locaux ; ils sont dans toutes les autres listes, sauf `SECURITY` et `POLICE_FIELD`) | tout le monde |
+| `COMMON` | vide depuis 0034 (2026-10-08) : Compétence du personnel en est sortie et remplace Politesse du personnel dans `FILE_SERVICES`, `HEALTH`, `BANKING_INSURANCE`, `COMMERCE` et `REAL_ESTATE`. Avant : Accueil et Frais sortis en 0009 (un élève en classe ne passe pas au guichet) ; Propreté et Accessibilité en 0010 (un contrôle routier n'a pas de locaux) | tout le monde |
 | `COMMERCE` | Accueil et politesse, Temps d'attente, Explications reçues, Horaires, Frais payés | secteurs Culture, Restauration, Hôtellerie, Commerce, Sport, Tourisme ; secteur inconnu |
 | `FILE_SERVICES` | Accueil, Temps d'attente, Explications, Simplicité de la démarche, Horaires, Frais, Délai de traitement, Suivi du dossier | secteurs Administration, Justice, Impôts, Social |
 | `SECURITY` | Accueil, Explications, Respect des droits, Prise en compte de la demande (ce que partagent les deux visites, 0010) | secteur Sécurité |
@@ -476,16 +478,17 @@ Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_
 | `OTHER_EDUCATION` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Qualité de l'enseignement, Encadrement des élèves | types Université, École supérieure, Formation professionnelle, Maternelle, Daara |
 | `SCHOOL_ADMIN` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais | service « Inscription ou démarche administrative » des écoles |
 | `SCHOOL_LIFE` | Qualité de l'enseignement, Encadrement des élèves, Sécurité dans l'établissement, Tables-bancs et manuels, Échanges avec les enseignants et la direction | service « Les cours et la vie de l'école » des écoles |
-| `TRANSPORT` | Accueil, Explications, Frais, Service client | secteur Transport (opérateurs, aéroport, gares routières) |
-| `TRIP` | Ponctualité, Sécurité à bord (un trajet, pas un lieu ni un guichet ; pas de Temps d'attente, que dit Ponctualité) | services « Un vol », « Un trajet en bus ou en train », « Une traversée en bateau » |
-| `TRANSPORT_PLACE` | Temps d'attente, Horaires d'ouverture | types Aéroport, Gare routière ; services Achat de ticket, Achat de billet d'avion |
+| `TRANSPORT` | Frais, Service client, Propreté, Accessibilité (Accueil retiré en 0035, Explications en 0039) | secteur Transport (opérateurs, aéroport, gares routières) |
+| `TRIP` | Compétence du personnel (0036), Explications du personnel (0039), Ponctualité, Sécurité à bord (un trajet, pas un lieu ni un guichet ; pas de Temps d'attente, que dit Ponctualité) | services « Un vol », « Un trajet en train », « Une traversée en bateau » |
+| `ROAD_TRIP` | Comportement du chauffeur, Ponctualité, Respect de l'itinéraire et durée du trajet (0040), Sécurité à bord (0035, 2026-10-08) | services « Un trajet en bus », « Une course en VTC », « Une course en taxi » |
+| `TRANSPORT_PLACE` | Compétence du personnel (0037), Explications du personnel (0039), Temps d'attente, Horaires d'ouverture | types Aéroport, Gare routière ; services Achat de ticket, Achat de billet d'avion |
 
 ### evaluation_category (migration 0009)
 Catégories d'évaluation, décision du 2026-10-03 : **une seule liste pour les thèmes et les questions** (colonne `category_id` sur `topic` et sur `question`), pour un résultat par catégorie qui additionne le thème « Temps d'attente » et la question « Combien de temps avez-vous attendu ? ». Aucun titre à l'écran : les thèmes s'affichent seulement dans l'ordre des catégories. Libellés dans `evaluation_category_translation`. Rangement complet : `/mnt/project-files/questionnaire/categories.md`.
 
 | Ordre | code | Libellé | Thèmes |
 |---|---|---|---|
-| 1 | `STAFF` | Personnel | Accueil, Professionnalisme, Explications du personnel, Respect de l'intimité, Respect des droits, Encadrement des élèves, Échanges avec les enseignants |
+| 1 | `STAFF` | Personnel | Accueil, Professionnalisme, Explications du personnel, Comportement du chauffeur, Respect de l'intimité, Respect des droits, Encadrement des élèves, Échanges avec les enseignants |
 | 2 | `DELAYS` | Délais | Temps d'attente, Délai de traitement, Délai d'intervention, Ponctualité |
 | 3 | `PROCEDURE` | Démarche et information | Simplicité de la démarche, Suivi du dossier, Horaires, Service client |
 | 4 | `COST` | Coût et transparence | Frais payés, Factures |
