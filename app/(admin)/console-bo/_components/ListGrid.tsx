@@ -65,8 +65,8 @@ export interface ListGroup {
   title: string;
   list?: { header: string; column: string };
   item: { header: string; column: string };
-  /** A value per item: « Actif » (is_active) or « Position ». */
-  extra?: { header: string; column: string; kind: "bool" | "number" };
+  /** Values per item: « Actif » (is_active), « Position », « Catégorie ». */
+  extras?: { header: string; column: string; kind: "bool" | "number" | "code" }[];
   /** « {n} thèmes », « 1 thème ». */
   count: string;
   countOne: string;
@@ -78,7 +78,8 @@ export interface ListGridItem {
   code: string;
   /** Shown under the code (an answer's text). */
   label?: string | null;
-  extra?: boolean | number | null;
+  /** One per column of the group's `extras`, in order. */
+  extras?: (boolean | number | string | null)[];
 }
 
 export interface ListGridRow {
@@ -102,7 +103,7 @@ export interface ListGridText {
 
 const LIST = (id: string) => `${id}·list`;
 const ITEM = (id: string) => `${id}·item`;
-const EXTRA = (id: string) => `${id}·extra`;
+const EXTRA = (id: string, n: number) => `${id}·extra${n}`;
 const COUNT = (id: string) => `${id}·count`;
 
 /**
@@ -138,7 +139,7 @@ export function ListGrid({
           const content = r.lists[l.id];
           parent[LIST(l.id)] = content?.code ?? null;
           parent[ITEM(l.id)] = (content?.items ?? []).map((i) => i.code).join(" ");
-          parent[EXTRA(l.id)] = null;
+          (l.extras ?? []).forEach((_, n) => (parent[EXTRA(l.id, n)] = null));
           parent[COUNT(l.id)] = content?.items.length ?? 0;
         }
         if (!open.has(r.id)) return [parent];
@@ -150,7 +151,7 @@ export function ListGrid({
               const mine = other.id === l.id;
               line[LIST(other.id)] = mine ? (r.lists[l.id]?.code ?? null) : null;
               line[ITEM(other.id)] = mine ? item.code : null;
-              line[EXTRA(other.id)] = mine ? (item.extra ?? null) : null;
+              (other.extras ?? []).forEach((_, n) => (line[EXTRA(other.id, n)] = mine ? (item.extras?.[n] ?? null) : null));
               line[COUNT(other.id)] = 0;
               if (mine && item.label) line[`${ITEM(other.id)}·label`] = item.label;
             }
@@ -293,20 +294,29 @@ export function ListGrid({
         },
         comparator: (_a, _b, nodeA, nodeB) => Number(nodeA.data?.[COUNT(l.id)] ?? 0) - Number(nodeB.data?.[COUNT(l.id)] ?? 0),
       });
-      if (l.extra) {
-        const extra = l.extra;
+      (l.extras ?? []).forEach((extra, n) => {
+        const field = EXTRA(l.id, n);
         cols.push({
-          field: EXTRA(l.id),
+          field,
           headerName: extra.header,
           headerComponentParams: header(extra.column),
           cellDataType: false,
           cellClass: `${styles.gridCode} ${styles.gridWrap}`,
-          valueFormatter: (p) => (p.value == null ? "" : String(p.value)),
-          filterValueGetter: (p) => (p.data?.[EXTRA(l.id)] == null ? "" : String(p.data[EXTRA(l.id)])),
-          minWidth: 80,
-          flex: 0.5,
+          wrapText: true,
+          autoHeight: true,
+          ...(extra.kind === "code"
+            ? {
+                cellRenderer: (p: ICellRendererParams<GridLine>) => {
+                  if (!p.data?._child || p.data[ITEM(l.id)] == null) return null;
+                  if (p.value == null) return <span className={styles.gridMuted}>NULL</span>;
+                  return breakable(String(p.value));
+                },
+                minWidth: 120,
+              }
+            : { valueFormatter: (p: ValueFormatterParams<GridLine>) => (p.value == null ? "" : String(p.value)), minWidth: 100, flex: 0.5 }),
+          filterValueGetter: (p) => (p.data?.[field] == null ? "" : String(p.data[field])),
         });
-      }
+      });
       // The group's first column draws its left border.
       cols[0]!.cellClass = `${cols[0]!.cellClass as string} ${styles.gridGroupStart}`;
       cols[0]!.headerClass = styles.gridGroupStart;
@@ -337,7 +347,7 @@ export function ListGrid({
   const exportCsv = () => {
     const header = [
       ...own.map((c) => c.column ?? c.field),
-      ...lists.flatMap((l) => [...(l.list ? [l.list.column] : []), l.item.column, ...(l.extra ? [l.extra.column] : [])]),
+      ...lists.flatMap((l) => [...(l.list ? [l.list.column] : []), l.item.column, ...(l.extras ?? []).map((e) => e.column)]),
     ];
     const cell = (v: unknown) => {
       const s = Array.isArray(v) ? v.join(", ") : v == null ? "" : String(v);
@@ -349,7 +359,7 @@ export function ListGrid({
         return [
           ...(l.list ? [cell(only && !mine ? null : r.lists[l.id]?.code)] : []),
           mine ? cell(only.item.code) : "",
-          ...(l.extra ? [mine ? cell(only.item.extra) : ""] : []),
+          ...(l.extras ?? []).map((_, n) => (mine ? cell(only.item.extras?.[n]) : "")),
         ];
       });
     const lines = rows.flatMap((r) => {
@@ -393,7 +403,7 @@ export function ListGrid({
         localeText={AG_GRID_LOCALE_FR}
         rowData={rowData}
         columnDefs={columnDefs}
-        defaultColDef={{ filter: "agTextColumnFilter", floatingFilter: true, flex: 1, minWidth: 100, autoHeaderHeight: true, wrapHeaderText: true, suppressMovable: true }}
+        defaultColDef={{ filter: "agTextColumnFilter", flex: 1, minWidth: 100, autoHeaderHeight: true, wrapHeaderText: true, suppressMovable: true }}
         getRowId={(p) => p.data._line}
         getRowClass={(p) => (p.data?._child ? undefined : styles.gridParent)}
         postSortRows={postSortRows}

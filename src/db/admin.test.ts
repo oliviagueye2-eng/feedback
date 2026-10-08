@@ -244,7 +244,7 @@ describe("questionnaire", () => {
     expect(q.sector).toBeNull();
     const health = q.sectors.find((s) => s.code === "HEALTH")!;
     expect(health).toMatchObject({ label: "Santé", listCode: "HEALTH" });
-    expect(health.topics).toContainEqual({ code: "CARE_RECEIVED", isActive: true });
+    expect(health.topics).toContainEqual({ code: "CARE_RECEIVED", isActive: true, categoryCode: "OUTCOME" });
     const airport = q.types.find((t) => t.code === "AIRPORT")!;
     expect(airport).toMatchObject({ sectorCode: "TRANSPORT", listCode: "TRANSPORT_PLACE" });
     expect(airport.topics.map((t) => t.code)).toEqual(["WAIT_TIME", "OPENING_HOURS"]);
@@ -282,12 +282,16 @@ describe("questionnaire", () => {
         code: "MOBILE_PAYMENT",
         label: "Paiement mobile",
         listCode: "MOBILE_PAYMENT",
-        topics: ["STAFF", "INFORMATION", "WAIT_TIME", "FEES", "REQUEST_HANDLING", "ACCOUNT_SECURITY"].map((code) => ({
-          code,
-          isActive: true,
-        })),
+        topics: [
+          ["STAFF", "STAFF"],
+          ["INFORMATION", "STAFF"],
+          ["WAIT_TIME", "DELAYS"],
+          ["FEES", "COST"],
+          ["REQUEST_HANDLING", "OUTCOME"],
+          ["ACCOUNT_SECURITY", "SERVICE_QUALITY"],
+        ].map(([code, categoryCode]) => ({ code, isActive: true, categoryCode })),
         questionListCode: "MOBILE_PAYMENT",
-        questions: [{ code: "GOAL_ACHIEVED", position: 1 }],
+        questions: [{ code: "GOAL_ACHIEVED", position: 1, categoryCode: "OUTCOME" }],
       },
     ]);
     expect(mobile.services.map((s) => s.code)).toEqual(["MOBILE_MONEY", "MOBILE_MONEY_AGENT", "MOBILE_MONEY_SUPPORT"]);
@@ -326,7 +330,7 @@ describe("questionnaire", () => {
     await db.query(`UPDATE topic SET is_active = false WHERE code = 'CARE_RECEIVED'`);
     try {
       const q = await getQuestionnaire({ sector: "HEALTH" });
-      expect(q.sectors[0]!.topics).toContainEqual({ code: "CARE_RECEIVED", isActive: false });
+      expect(q.sectors[0]!.topics).toContainEqual({ code: "CARE_RECEIVED", isActive: false, categoryCode: "OUTCOME" });
     } finally {
       await db.query(`UPDATE topic SET is_active = true WHERE code = 'CARE_RECEIVED'`);
     }

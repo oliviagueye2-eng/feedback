@@ -30,7 +30,10 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
       title: t.groups.topics,
       list: { header: t.list, column: "topic_set.code" },
       item: { header: t.topic, column: "topic.code" },
-      extra: { header: t.active, column: "topic.is_active", kind: "bool" },
+      extras: [
+        { header: t.active, column: "topic.is_active", kind: "bool" },
+        { header: t.category, column: "evaluation_category.code", kind: "code" },
+      ],
       count: t.topicCount,
       countOne: t.topicCountOne,
     },
@@ -40,7 +43,10 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
       title: t.groups.questions,
       list: { header: t.list, column: "question_set.code" },
       item: { header: t.question, column: "question.code" },
-      extra: { header: t.position, column: "question_set_item.position", kind: "number" },
+      extras: [
+        { header: t.position, column: "question_set_item.position", kind: "number" },
+        { header: t.category, column: "evaluation_category.code", kind: "code" },
+      ],
       count: t.questionCount,
       countOne: t.questionCountOne,
     },
@@ -51,10 +57,10 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
     questionListCode: string | null;
     questions: ListedQuestion[];
   }): ListGridRow["lists"] => ({
-    topics: { code: level.listCode, items: level.topics.map((topic) => ({ code: topic.code, extra: topic.isActive })) },
+    topics: { code: level.listCode, items: level.topics.map((topic) => ({ code: topic.code, extras: [topic.isActive, topic.categoryCode] })) },
     questions: {
       code: level.questionListCode,
-      items: level.questions.map((question) => ({ code: question.code, extra: question.position })),
+      items: level.questions.map((question) => ({ code: question.code, extras: [question.position, question.categoryCode] })),
     },
   });
 
@@ -176,7 +182,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
             id: "answers",
             title: t.groups.answers,
             item: { header: t.answer, column: "answer_option.code" },
-            extra: { header: t.active, column: "answer_option.is_active", kind: "bool" },
+            extras: [{ header: t.active, column: "answer_option.is_active", kind: "bool" }],
             count: t.answerCount,
             countOne: t.answerCountOne,
           },
@@ -198,7 +204,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
           },
           lists: {
             answers: {
-              items: question.options.map((o) => ({ code: o.code, label: o.label, extra: o.isActive })),
+              items: question.options.map((o) => ({ code: o.code, label: o.label, extras: [o.isActive] })),
             },
           },
         }))}
@@ -224,7 +230,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
             id: "topics",
             title: t.groups.topics,
             item: { header: t.topic, column: "topic.code" },
-            extra: { header: t.active, column: "topic.is_active", kind: "bool" },
+            extras: [{ header: t.active, column: "topic.is_active", kind: "bool" }],
             count: t.topicCount,
             countOne: t.topicCountOne,
           },
@@ -241,7 +247,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
           id: c.code,
           values: { code: c.code, label: c.label, position: String(c.position) },
           lists: {
-            topics: { items: c.topics.map((topic) => ({ code: topic.code, extra: topic.isActive })) },
+            topics: { items: c.topics.map((topic) => ({ code: topic.code, extras: [topic.isActive] })) },
             questions: { items: c.questions.map((code) => ({ code })) },
           },
         }))}
