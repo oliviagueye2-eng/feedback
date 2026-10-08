@@ -590,3 +590,31 @@ export async function listCategories(): Promise<CategoryContent[]> {
      ORDER BY c.position`,
   );
 }
+
+export interface FormEstablishment {
+  id: string;
+  name: string;
+  /** The sector of its type, else its own; null when unknown. */
+  sectorCode: string | null;
+  typeCode: string | null;
+  /** The services it offers at screen 1 (establishment_service). */
+  services: string[];
+}
+
+/**
+ * The active establishments, for the filter « Établissement » of the
+ * Questionnaire page (asked by Olivia, 2026-10-08), by name.
+ */
+export async function listFormEstablishments(): Promise<FormEstablishment[]> {
+  return query<FormEstablishment>(
+    `SELECT e.id, e.name, s.code AS "sectorCode", et.code AS "typeCode",
+            coalesce((SELECT array_agg(sv.code ORDER BY sv.code)
+                      FROM establishment_service es JOIN service sv ON sv.id = es.service_id
+                      WHERE es.establishment_id = e.id), '{}') AS services
+     FROM establishment e
+     LEFT JOIN establishment_type et ON et.id = e.type_id
+     LEFT JOIN sector s ON s.id = coalesce(et.sector_id, e.sector_id)
+     WHERE e.status = 'active'
+     ORDER BY e.name`,
+  );
+}

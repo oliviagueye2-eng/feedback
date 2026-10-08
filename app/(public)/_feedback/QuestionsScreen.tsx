@@ -12,7 +12,7 @@ import { questionPageHref } from "./links";
 import styles from "./screen.module.css";
 
 /** Over this many characters, an answer is a sentence: one per row. */
-const LONG_ANSWER = 24;
+export const LONG_ANSWER = 24;
 
 /**
  * Screen 6 (the questions of the feedback's service or sector) and screen 6b
