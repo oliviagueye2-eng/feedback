@@ -66,7 +66,7 @@ export interface ListGroup {
   list?: { header: string; column: string };
   item: { header: string; column: string };
   /** Values per item: « Actif » (is_active), « Position », « Catégorie ». */
-  extras?: { header: string; column: string; kind: "bool" | "number" | "code" }[];
+  extras?: { header: string; column: string; kind: "bool" | "number" | "code"; emptyText?: string }[];
   /** « {n} thèmes », « 1 thème ». */
   count: string;
   countOne: string;
@@ -308,7 +308,7 @@ export function ListGrid({
             ? {
                 cellRenderer: (p: ICellRendererParams<GridLine>) => {
                   if (!p.data?._child || p.data[ITEM(l.id)] == null) return null;
-                  if (p.value == null) return <span className={styles.gridMuted}>NULL</span>;
+                  if (p.value == null) return <span className={styles.gridMuted}>{extra.emptyText ?? "NULL"}</span>;
                   return breakable(String(p.value));
                 },
                 minWidth: 120,
