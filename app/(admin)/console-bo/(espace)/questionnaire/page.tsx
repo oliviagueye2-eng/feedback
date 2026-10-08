@@ -1,5 +1,6 @@
 import { getQuestionnaire } from "@/src/domain/admin";
 import { getDictionary } from "../../../../_i18n";
+import { QuestionnaireFilters } from "../../_components/QuestionnaireFilters";
 import { TopicGrid, type TopicGridText } from "../../_components/TopicGrid";
 import { requireAdmin } from "../../_lib/auth";
 import styles from "../../admin.module.css";
@@ -22,48 +23,19 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
   ]);
   const t = admin.questionnaire;
   const text = (ownGroup: string): TopicGridText => ({ ...t.grid, ownGroup });
-  const label = (fr: string, column: string) => (
-    <>
-      <strong>{fr}</strong>
-      <code>{column}</code>
-    </>
-  );
 
   return (
     <>
       <h1>{t.title}</h1>
       <p className={styles.lead}>{t.lead}</p>
       <form className={styles.gridFilters} method="get" action={PATH}>
-        <label>
-          {label(t.sector, "sector.code")}
-          <select name="secteur" defaultValue={q.sector ?? ""} className={styles.input}>
-            <option value="">{t.all}</option>
-            {q.sectorOptions.map((s) => (
-              <option key={s.code} value={s.code}>
-                {s.label ?? s.code}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {label(t.type, "establishment_type.code")}
-          <select name="type" defaultValue={q.type ?? ""} className={styles.input}>
-            <option value="">{t.all}</option>
-            {q.sectorOptions
-              .filter((s) => !q.sector || s.code === q.sector)
-              .map((s) => (
-                <optgroup key={s.code} label={s.label ?? s.code}>
-                  {q.typeOptions
-                    .filter((type) => type.sectorCode === s.code)
-                    .map((type) => (
-                      <option key={type.code} value={type.code}>
-                        {type.label ?? type.code}
-                      </option>
-                    ))}
-                </optgroup>
-              ))}
-          </select>
-        </label>
+        <QuestionnaireFilters
+          sectors={q.sectorOptions}
+          types={q.typeOptions}
+          sector={q.sector}
+          type={q.type}
+          text={{ sector: t.sector, type: t.type, all: t.all }}
+        />
         <button type="submit" className={styles.button}>
           {t.apply}
         </button>
@@ -81,7 +53,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
         text={text(t.sector)}
         columns={[
           { field: "code", header: t.code, column: "sector.code" },
-          { field: "label", header: t.label, column: "sector_translation.label", kind: "text" },
+          { field: "label", header: t.label, kind: "text" },
         ]}
         rows={q.sectors.map((s) => ({
           id: s.code,
@@ -98,7 +70,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
         text={text(t.type)}
         columns={[
           { field: "code", header: t.code, column: "establishment_type.code" },
-          { field: "label", header: t.label, column: "establishment_type_translation.label", kind: "text" },
+          { field: "label", header: t.label, kind: "text" },
           { field: "sectorCode", header: t.sector, column: "sector.code" },
           { field: "services", header: t.services, column: "service.code", kind: "lines", mono: true, maxLines: 4 },
         ]}
@@ -117,7 +89,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
         text={text(t.service)}
         columns={[
           { field: "code", header: t.code, column: "service.code" },
-          { field: "label", header: t.label, column: "service_translation.label", kind: "text" },
+          { field: "label", header: t.label, kind: "text" },
           { field: "replacesSharedLists", header: t.replaces, column: "service.replaces_shared_lists", kind: "bool" },
           { field: "establishments", header: t.establishments, column: "establishment.name", kind: "lines", maxLines: 3 },
         ]}

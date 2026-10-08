@@ -681,7 +681,7 @@ export const fr = {
     },
     questionnaire: {
       title: "Questionnaire",
-      lead: "Les thèmes reliés à chaque secteur, type d'établissement et service. Sous chaque nom de colonne : la colonne en base.",
+      lead: "Les thèmes reliés à chaque secteur, type d'établissement et service. À côté de chaque nom de colonne : la colonne en base.",
       sector: "Secteur",
       type: "Type d'établissement",
       service: "Service",

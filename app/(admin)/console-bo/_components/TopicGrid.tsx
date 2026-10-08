@@ -36,8 +36,8 @@ export interface TopicGridColumn {
   field: string;
   /** French name, shown first. */
   header: string;
-  /** The column in the database, shown under it. */
-  column: string;
+  /** The column in the database, shown beside it; none for a label (asked by Olivia). */
+  column?: string;
   kind?: "code" | "text" | "bool" | "lines";
   /** For "lines": codes rather than names. */
   mono?: boolean;
@@ -266,7 +266,7 @@ export function TopicGrid({
   };
 
   const exportCsv = () => {
-    const header = [...columns.map((c) => c.column), "topic_set.code", "topic.code", "topic.is_active"];
+    const header = [...columns.map((c) => c.column ?? c.field), "topic_set.code", "topic.code", "topic.is_active"];
     const cell = (v: unknown) => {
       const s = Array.isArray(v) ? v.join(", ") : v == null ? "" : String(v);
       return /[";\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
@@ -343,12 +343,12 @@ function breakable(code: string) {
   return parts.flatMap((part, i) => (i < parts.length - 1 ? [part, <wbr key={i} />] : [part]));
 }
 
-/** French name, then the database column. */
-function Header(params: IHeaderParams & { dbColumn: string }) {
+/** French name, then the database column on the same line (none for a label). */
+function Header(params: IHeaderParams & { dbColumn?: string }) {
   return (
     <span className={styles.gridHeader}>
       <strong>{params.displayName}</strong>
-      <code>{breakable(params.dbColumn)}</code>
+      {params.dbColumn && <code>{breakable(params.dbColumn)}</code>}
     </span>
   );
 }
