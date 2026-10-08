@@ -549,6 +549,28 @@ export interface CategoryContent {
   questions: string[];
 }
 
+/** A topic of screen 2b, with the topic lists it is in. */
+export interface TopicRow extends ListedTopic {
+  label: string | null;
+  position: number;
+  /** topic_set_item: the topic lists that hold it. */
+  lists: string[];
+}
+
+/** Every topic, in the order of the categories, then of topic.position. */
+export async function listTopics(): Promise<TopicRow[]> {
+  return query<TopicRow>(
+    `SELECT t.code, tt.label, t.position, t.is_active AS "isActive", c.code AS "categoryCode",
+            ${TOPIC_SHOWN_IF} AS "shownIf",
+            coalesce((SELECT array_agg(ts.code ORDER BY ts.code) FROM topic_set_item i
+                      JOIN topic_set ts ON ts.id = i.topic_set_id WHERE i.topic_id = t.id), '{}') AS lists
+     FROM topic t
+     LEFT JOIN topic_translation tt ON tt.topic_id = t.id AND tt.language = 'fr'
+     LEFT JOIN evaluation_category c ON c.id = t.category_id
+     ORDER BY c.position NULLS LAST, t.position, t.code`,
+  );
+}
+
 /** The categories, linking topics of screen 2b and questions of screen 6 on the same subject. */
 export async function listCategories(): Promise<CategoryContent[]> {
   return query<CategoryContent>(

@@ -12,7 +12,7 @@ import { createSessionToken, isRightPassword } from "./session";
 export { isValidSessionToken, SESSION_DAYS } from "./session";
 export type {
   AdminComment, BankCondition, BankOption, BankQuestion, CategoryContent, CommentStatus, EstablishmentComments,
-  ListedQuestion, ListedTopic, PendingEstablishment, ServiceTopics, SectorTopics, StopPage, TypeTopics,
+  ListedQuestion, ListedTopic, PendingEstablishment, ServiceTopics, SectorTopics, StopPage, TopicRow, TypeTopics,
 } from "../../db/admin";
 
 /** 5 failed sign-ins in 15 minutes from one address block it for 15 minutes. */
@@ -138,12 +138,11 @@ const SHARED_QUESTION_LISTS = ["ESSENTIAL", "COMMON"];
  * type offers it. An unknown code is ignored.
  */
 export async function getQuestionnaire(filter: { sector?: string; type?: string; service?: string }) {
-  const [sectors, types, services, bank, categories] = await Promise.all([
+  const [sectors, types, services, bank] = await Promise.all([
     db.listSectorTopics(),
     db.listTypeTopics(),
     db.listServiceTopics(),
     db.listQuestionBank(),
-    db.listCategories(),
   ]);
   // A service keeps the sector and the type only if they offer it (a service
   // has no sector of its own: those of its establishments, 0029).
@@ -191,7 +190,11 @@ export async function getQuestionnaire(filter: { sector?: string; type?: string;
     types: shownTypes,
     services: shownServices,
     questions: sector || service ? bank.filter(kept) : bank,
-    /** Not filtered: a category spans every sector. */
-    categories,
   };
+}
+
+/** The page « Catégories et thèmes » (asked by Olivia, 2026-10-08): not filtered, both span every sector. */
+export async function getCategoriesAndTopics() {
+  const [categories, topics] = await Promise.all([db.listCategories(), db.listTopics()]);
+  return { categories, topics };
 }

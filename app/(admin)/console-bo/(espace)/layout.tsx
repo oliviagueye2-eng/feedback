@@ -25,6 +25,7 @@ export default async function SpaceLayout({ children }: LayoutProps<"/console-bo
         <NavLink href="/console-bo/commentaires" label={t.nav.comments} count={comments} />
         <NavLink href="/console-bo/etablissements" label={t.nav.establishments} count={establishments} />
         <NavLink href="/console-bo/questionnaire" label={t.nav.questionnaire} />
+        <NavLink href="/console-bo/categories" label={t.nav.categories} />
         <form action={signOutAction} className={styles.signOut}>
           <button type="submit">{t.nav.signOut}</button>
         </form>
