@@ -65,8 +65,8 @@ export interface ListGroup {
   title: string;
   list?: { header: string; column: string };
   item: { header: string; column: string };
-  /** Values per item: « Actif » (is_active), « Position », « Catégorie ». */
-  extras?: { header: string; column: string; kind: "bool" | "number" | "code"; emptyText?: string }[];
+  /** Values per item: « Label » (text, no database column), « Actif » (is_active), « Position », « Catégorie ». */
+  extras?: { header: string; column?: string; kind: "bool" | "number" | "code" | "text"; emptyText?: string }[];
   /** « {n} thèmes », « 1 thème ». */
   count: string;
   countOne: string;
@@ -301,7 +301,7 @@ export function ListGrid({
           headerName: extra.header,
           headerComponentParams: header(extra.column),
           cellDataType: false,
-          cellClass: `${styles.gridCode} ${styles.gridWrap}`,
+          cellClass: extra.kind === "text" ? styles.gridWrap : `${styles.gridCode} ${styles.gridWrap}`,
           wrapText: true,
           autoHeight: true,
           ...(extra.kind === "code"
@@ -313,7 +313,9 @@ export function ListGrid({
                 },
                 minWidth: 120,
               }
-            : { valueFormatter: (p: ValueFormatterParams<GridLine>) => (p.value == null ? "" : String(p.value)), minWidth: 100, flex: 0.5 }),
+            : extra.kind === "text"
+              ? { valueFormatter: (p: ValueFormatterParams<GridLine>) => (p.value == null ? "" : String(p.value)), minWidth: 160, flex: 1 }
+              : { valueFormatter: (p: ValueFormatterParams<GridLine>) => (p.value == null ? "" : String(p.value)), minWidth: 100, flex: 0.5 }),
           filterValueGetter: (p) => (p.data?.[field] == null ? "" : String(p.data[field])),
         });
       });
@@ -347,7 +349,7 @@ export function ListGrid({
   const exportCsv = () => {
     const header = [
       ...own.map((c) => c.column ?? c.field),
-      ...lists.flatMap((l) => [...(l.list ? [l.list.column] : []), l.item.column, ...(l.extras ?? []).map((e) => e.column)]),
+      ...lists.flatMap((l) => [...(l.list ? [l.list.column] : []), l.item.column, ...(l.extras ?? []).map((e) => e.column ?? e.header)]),
     ];
     const cell = (v: unknown) => {
       const s = Array.isArray(v) ? v.join(", ") : v == null ? "" : String(v);

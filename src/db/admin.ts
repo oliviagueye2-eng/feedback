@@ -318,6 +318,8 @@ export interface TopicShownIf {
 
 export interface ListedTopic {
   code: string;
+  /** topic_translation, in French. */
+  label: string | null;
   isActive: boolean;
   categoryCode: string | null;
   shownIf: TopicShownIf | null;
@@ -337,10 +339,11 @@ const TOPIC_SHOWN_IF = `
  * topic.position, as on screen 2b (asked by Olivia); inactive ones included.
  */
 const TOPICS_OF = (col: string) => `
-  coalesce((SELECT json_agg(json_build_object('code', t.code, 'isActive', t.is_active, 'categoryCode', c.code,
-                                              'shownIf', ${TOPIC_SHOWN_IF})
+  coalesce((SELECT json_agg(json_build_object('code', t.code, 'label', tt.label, 'isActive', t.is_active,
+                                              'categoryCode', c.code, 'shownIf', ${TOPIC_SHOWN_IF})
                              ORDER BY c.position NULLS LAST, t.position, t.code)
             FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
+            LEFT JOIN topic_translation tt ON tt.topic_id = t.id AND tt.language = 'fr'
             LEFT JOIN evaluation_category c ON c.id = t.category_id
             WHERE i.topic_set_id = ${col}), '[]'::json)`;
 
@@ -551,7 +554,6 @@ export interface CategoryContent {
 
 /** A topic of screen 2b, with the topic lists it is in. */
 export interface TopicRow extends ListedTopic {
-  label: string | null;
   position: number;
   /** topic_set_item: the topic lists that hold it. */
   lists: string[];
@@ -575,10 +577,12 @@ export async function listTopics(): Promise<TopicRow[]> {
 export async function listCategories(): Promise<CategoryContent[]> {
   return query<CategoryContent>(
     `SELECT c.code, ct.label, c.position,
-            coalesce((SELECT json_agg(json_build_object('code', t.code, 'isActive', t.is_active, 'categoryCode', c.code,
-                                                        'shownIf', ${TOPIC_SHOWN_IF})
+            coalesce((SELECT json_agg(json_build_object('code', t.code, 'label', tt.label, 'isActive', t.is_active,
+                                                        'categoryCode', c.code, 'shownIf', ${TOPIC_SHOWN_IF})
                                       ORDER BY t.position, t.code)
-                      FROM topic t WHERE t.category_id = c.id), '[]'::json) AS topics,
+                      FROM topic t
+                      LEFT JOIN topic_translation tt ON tt.topic_id = t.id AND tt.language = 'fr'
+                      WHERE t.category_id = c.id), '[]'::json) AS topics,
             coalesce((SELECT array_agg(q.code ORDER BY q.code) FROM question q WHERE q.category_id = c.id), '{}')
               AS questions
      FROM evaluation_category c
