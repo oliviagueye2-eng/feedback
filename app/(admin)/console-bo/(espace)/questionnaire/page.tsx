@@ -22,6 +22,10 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
     getQuestionnaire({ sector: one(params.secteur), type: one(params.type) }),
   ]);
   const t = admin.questionnaire;
+  // The question whose answers show a topic at screen 2b (topic_condition).
+  const topicShownIf = { header: t.topicShownIf, column: "topic_condition", kind: "code" as const, emptyText: t.always };
+  const shownIf = (topic: ListedTopic) =>
+    topic.shownIf && `${topic.shownIf.dependsOn} = ${topic.shownIf.options.join(t.or)}`;
   // Sectors, types and services: their topics (screen 2b), then their questions (screen 6).
   const levelLists: ListGroup[] = [
     {
@@ -33,6 +37,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
       extras: [
         { header: t.active, column: "topic.is_active", kind: "bool" },
         { header: t.category, column: "evaluation_category.code", kind: "code" },
+        topicShownIf,
       ],
       count: t.topicCount,
       countOne: t.topicCountOne,
@@ -57,7 +62,10 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
     questionListCode: string | null;
     questions: ListedQuestion[];
   }): ListGridRow["lists"] => ({
-    topics: { code: level.listCode, items: level.topics.map((topic) => ({ code: topic.code, extras: [topic.isActive, topic.categoryCode] })) },
+    topics: {
+      code: level.listCode,
+      items: level.topics.map((topic) => ({ code: topic.code, extras: [topic.isActive, topic.categoryCode, shownIf(topic)] })),
+    },
     questions: {
       code: level.questionListCode,
       items: level.questions.map((question) => ({ code: question.code, extras: [question.position, question.categoryCode] })),
@@ -189,7 +197,10 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
           {
             kind: "own",
             title: t.groups.condition,
-            columns: [{ field: "conditions", header: t.shownIf, column: "question_condition", kind: "lines", mono: true, maxLines: 6, emptyText: t.always }],
+            columns: [
+              { field: "conditions", header: t.shownIf, column: "question_condition", kind: "lines", mono: true, maxLines: 6, emptyText: t.always },
+              { field: "opensTopics", header: t.opensTopics, column: "topic_condition", kind: "lines", mono: true, emptyText: t.noTopic },
+            ],
           },
         ]}
         rows={q.questions.map((question) => ({
@@ -201,6 +212,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
             categoryCode: question.categoryCode,
             lists: question.lists,
             conditions: question.conditions.map((c) => `${c.listCode} : ${c.dependsOn} = ${c.options.join(t.or)}`),
+            opensTopics: question.opensTopics,
           },
           lists: {
             answers: {
@@ -230,7 +242,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
             id: "topics",
             title: t.groups.topics,
             item: { header: t.topic, column: "topic.code" },
-            extras: [{ header: t.active, column: "topic.is_active", kind: "bool" }],
+            extras: [{ header: t.active, column: "topic.is_active", kind: "bool" }, topicShownIf],
             count: t.topicCount,
             countOne: t.topicCountOne,
           },
@@ -247,7 +259,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
           id: c.code,
           values: { code: c.code, label: c.label, position: String(c.position) },
           lists: {
-            topics: { items: c.topics.map((topic) => ({ code: topic.code, extras: [topic.isActive] })) },
+            topics: { items: c.topics.map((topic) => ({ code: topic.code, extras: [topic.isActive, shownIf(topic)] })) },
             questions: { items: c.questions.map((code) => ({ code })) },
           },
         }))}

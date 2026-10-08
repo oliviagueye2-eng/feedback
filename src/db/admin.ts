@@ -310,18 +310,35 @@ export async function countCompleteByWeek(weeks: number): Promise<{ week: string
 // and service brings to screen 2b.
 // ---------------------------------------------------------------------------
 
+/** The answers to a question that show a topic at screen 2b (topic_condition, 0011). */
+export interface TopicShownIf {
+  dependsOn: string;
+  options: string[];
+}
+
 export interface ListedTopic {
   code: string;
   isActive: boolean;
   categoryCode: string | null;
+  shownIf: TopicShownIf | null;
 }
+
+/** The condition of topic `t`, or null: a topic depends on one question at most. */
+const TOPIC_SHOWN_IF = `
+  (SELECT json_build_object('dependsOn', dq.code, 'options', array_agg(o.code ORDER BY o.position))
+   FROM topic_condition tc
+   JOIN question dq ON dq.id = tc.depends_on_question_id
+   JOIN answer_option o ON o.id = tc.option_id
+   WHERE tc.topic_id = t.id
+   GROUP BY dq.code)`;
 
 /**
  * The topics of topic_set `$col` in the order of their category, then of
  * topic.position, as on screen 2b (asked by Olivia); inactive ones included.
  */
 const TOPICS_OF = (col: string) => `
-  coalesce((SELECT json_agg(json_build_object('code', t.code, 'isActive', t.is_active, 'categoryCode', c.code)
+  coalesce((SELECT json_agg(json_build_object('code', t.code, 'isActive', t.is_active, 'categoryCode', c.code,
+                                              'shownIf', ${TOPIC_SHOWN_IF})
                              ORDER BY c.position NULLS LAST, t.position, t.code)
             FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
             LEFT JOIN evaluation_category c ON c.id = t.category_id
@@ -478,6 +495,8 @@ export interface BankQuestion {
   lists: string[];
   options: BankOption[];
   conditions: BankCondition[];
+  /** The topics of screen 2b it shows (topic_condition). */
+  opensTopics: string[];
 }
 
 /**
@@ -504,7 +523,9 @@ export async function listQuestionBank(): Promise<BankQuestion[]> {
                             JOIN question dq ON dq.id = qc.depends_on_question_id
                             JOIN answer_option o ON o.id = qc.option_id
                             WHERE qc.question_id = q.id
-                            GROUP BY qs.code, dq.code) x), '[]'::json) AS conditions
+                            GROUP BY qs.code, dq.code) x), '[]'::json) AS conditions,
+            coalesce((SELECT array_agg(DISTINCT t.code) FROM topic_condition tc JOIN topic t ON t.id = tc.topic_id
+                      WHERE tc.depends_on_question_id = q.id), '{}') AS "opensTopics"
      FROM question q
      LEFT JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
      LEFT JOIN evaluation_category c ON c.id = q.category_id
@@ -524,7 +545,9 @@ export interface CategoryContent {
 export async function listCategories(): Promise<CategoryContent[]> {
   return query<CategoryContent>(
     `SELECT c.code, ct.label, c.position,
-            coalesce((SELECT json_agg(json_build_object('code', t.code, 'isActive', t.is_active) ORDER BY t.position, t.code)
+            coalesce((SELECT json_agg(json_build_object('code', t.code, 'isActive', t.is_active, 'categoryCode', c.code,
+                                                        'shownIf', ${TOPIC_SHOWN_IF})
+                                      ORDER BY t.position, t.code)
                       FROM topic t WHERE t.category_id = c.id), '[]'::json) AS topics,
             coalesce((SELECT array_agg(q.code ORDER BY q.code) FROM question q WHERE q.category_id = c.id), '{}')
               AS questions
