@@ -235,6 +235,8 @@ export interface FormQuestion {
   conditions: FormCondition[];
   /** The lists of the form holding it, with their level. */
   lists: feedbacks.FormList[];
+  /** French label of its evaluation category; null when none. */
+  category: string | null;
 }
 
 /**
@@ -260,17 +262,20 @@ async function getForm(levels: feedbacks.FormLevels, bank: db.BankQuestion[]) {
       : id === sources.typeSetId
         ? "type"
         : "service";
-  const [questions, topicLists, questionLists] = await Promise.all([
+  const [questions, topicLists, questionLists, categories] = await Promise.all([
     feedbacks.findFormQuestions(setIds),
     feedbacks.findFormTopicLists(levels),
     feedbacks.findFormQuestionLists(setIds.map((id) => ({ id, level: levelOf(id) }))),
+    db.listCategories(),
   ]);
+  const categoryLabel = new Map(categories.map((c) => [c.code, c.label]));
   const askedBefore = new Set(topics.flatMap((t) => (t.gate ? [t.gate.code] : [])));
   const byCode = new Map(bank.map((q) => [q.code, q]));
   const toForm = (q: feedbacks.DetailedQuestion): FormQuestion => ({
     code: q.code,
     label: q.label,
     lists: questionLists[q.code] ?? [],
+    category: categoryLabel.get(byCode.get(q.code)?.categoryCode ?? "") ?? null,
     options: q.options,
     conditions: q.conditions.map((c) => {
       const asked = byCode.get(c.dependsOn);

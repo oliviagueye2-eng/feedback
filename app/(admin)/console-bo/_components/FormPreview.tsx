@@ -50,8 +50,9 @@ export async function FormPreview({
     type: styles.levelType,
     service: styles.levelService,
   };
-  const listTags = (lists: FormList[]) =>
-    lists.length > 0 && (
+  // The lists holding an item, then its category (asked by Olivia: its label).
+  const listTags = (lists: FormList[], category: string | null) =>
+    (lists.length > 0 || category) && (
       <span key="lists" className={styles.listTags}>
         {lists.map((list) => (
           <code
@@ -62,6 +63,11 @@ export async function FormPreview({
             {list.code}
           </code>
         ))}
+        {category && (
+          <span className={`${styles.listTag} ${styles.categoryTag}`} title={t.category}>
+            {category}
+          </span>
+        )}
       </span>
     );
   const gateNotes = Object.fromEntries(
@@ -116,7 +122,7 @@ export async function FormPreview({
           <fieldset key={question.code} className={`${screen.group} ${screen.questionBlock}`}>
             <legend>
               {frenchSpaces(question.label)}
-              {listTags(question.lists)}
+              {listTags(question.lists, question.category)}
               {question.conditions.map((c) => (
                 <span key={c.question} className={styles.shownIf}>
                   {shownIf(c.question, c.answers)}
@@ -156,6 +162,7 @@ export async function FormPreview({
             {t.levelNames[level]}
           </span>
         ))}
+        <span className={`${styles.listTag} ${styles.categoryTag}`}>{t.category}</span>
       </p>
       <div className={styles.phones}>
         {/* The phone layout of the 2b answers (screen.module.css, under 480 px),
@@ -186,7 +193,7 @@ export async function FormPreview({
                   notes={{
                     gates: gateNotes,
                     topics: Object.fromEntries(
-                      topics.map((topic) => [topic.code, listTags(topicLists[topic.code] ?? [])]),
+                      topics.map((topic) => [topic.code, listTags(topicLists[topic.code] ?? [], topic.category)]),
                     ),
                   }}
                 />

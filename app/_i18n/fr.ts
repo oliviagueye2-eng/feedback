@@ -701,7 +701,8 @@ export const fr = {
         screenCommon: "Écran 6b · questions communes",
         none: "Aucune question : cet écran ne s'affiche pas.",
         shownIf: "Seulement si « {question} » : {answers}",
-        listsLegend: "D'où vient chaque thème et chaque question : le code de sa liste, de la couleur de son niveau.",
+        listsLegend: "D'où vient chaque thème et chaque question : le code de sa liste, de la couleur de son niveau, puis sa catégorie en gris.",
+        category: "Catégorie",
         levelNames: {
           common: "Commun",
           sector: "Secteur",
