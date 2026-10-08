@@ -37,14 +37,14 @@ describe("reference data", () => {
     expect(row).toEqual({ options: 5, prompts: 5 });
   });
 
-  it("has the nineteen sectors, each with a French label", async () => {
+  it("has the twenty sectors, each with a French label", async () => {
     const row = await one<{ sectors: number; labelled: number; old_code: number }>(`
       SELECT count(*)::int AS sectors,
              count(t.label)::int AS labelled,
              count(*) FILTER (WHERE s.code = 'PUBLIC_TRANSPORT')::int AS old_code
       FROM sector s
       LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'`);
-    expect(row).toEqual({ sectors: 19, labelled: 19, old_code: 0 });
+    expect(row).toEqual({ sectors: 20, labelled: 20, old_code: 0 });
   });
 
   it("files the driving licence centre under Administration, a service with a file", async () => {
@@ -173,7 +173,7 @@ describe("reference data", () => {
       )).rows.map((r) => [r.code, r.list]));
     expect(await attached("sector")).toEqual({
       ADMINISTRATION: "FILE_SERVICES", TAX: "FILE_SERVICES", JUSTICE: "FILE_SERVICES", SOCIAL: "FILE_SERVICES",
-      HEALTH: "HEALTH", BANKING_INSURANCE: "BANKING_INSURANCE", EDUCATION: null,
+      HEALTH: "HEALTH", BANKING_INSURANCE: "BANKING_INSURANCE", MOBILE_PAYMENT: "BANKING_INSURANCE", EDUCATION: null,
       ELECTRICITY: null, WATER: null, TELECOM: null,
       RETAIL: "GENERIC", CULTURE: "GENERIC", HOSPITALITY: "GENERIC", REAL_ESTATE: "GENERIC",
       FOOD_SERVICE: "GENERIC", SPORT: "GENERIC", TOURISM: "GENERIC",

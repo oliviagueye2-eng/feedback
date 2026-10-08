@@ -104,7 +104,7 @@ Domaine général. Partagé par les types d'établissement (et par les établiss
 | Colonne | Type | Note |
 |---|---|---|
 | id | smallint | |
-| code | text unique | `HEALTH`, `EDUCATION`, `ADMINISTRATION`, `JUSTICE`, `SECURITY`, `TAX`, `ELECTRICITY`, `WATER`, `TRANSPORT`, `SOCIAL`, `FOOD_SERVICE`, `HOSPITALITY`, `REAL_ESTATE`, `RETAIL`, `BANKING_INSURANCE`, `CULTURE`, `SPORT`, `TELECOM`, `TOURISM` (agences de voyages, guides, sites touristiques ; l'hébergement reste en `HOSPITALITY`, les musées en `CULTURE`). `ELECTRICITY` et `WATER` sont deux secteurs (décision du 2026-09-29). Un secteur n'est ni public ni privé : c'est `establishment.ownership` qui le précise |
+| code | text unique | `HEALTH`, `EDUCATION`, `ADMINISTRATION`, `JUSTICE`, `SECURITY`, `TAX`, `ELECTRICITY`, `WATER`, `TRANSPORT`, `SOCIAL`, `FOOD_SERVICE`, `HOSPITALITY`, `REAL_ESTATE`, `RETAIL`, `BANKING_INSURANCE`, `MOBILE_PAYMENT` (Wave, Orange Money, Mixx by Yas : secteur à part depuis le 2026-10-08), `CULTURE`, `SPORT`, `TELECOM`, `TOURISM` (agences de voyages, guides, sites touristiques ; l'hébergement reste en `HOSPITALITY`, les musées en `CULTURE`). `ELECTRICITY` et `WATER` sont deux secteurs (décision du 2026-09-29). Un secteur n'est ni public ni privé : c'est `establishment.ownership` qui le précise |
 | question_set_id | fk question_set | liste de questions du secteur (écran 6), facultative |
 
 Le libellé affiché passe par sa table de traduction (`*_translation`).
@@ -144,7 +144,7 @@ Exemples écartés par la règle : « Agence commerciale » (Senelec regroupe d�
 | Sport | Stade ou arène (lutte comprise), Salle de sport, Piscine |
 | Tourisme | Agence de voyages, Site touristique (pas les guides : des personnes) |
 | Électricité, Eau, Télécoms | aucun : l'organisme (Senelec, Orange…) regroupe déjà ses agences |
-| Restauration, Hôtellerie, Immobilier, Banques et assurances | aucun : lieux semblables, ou regroupés par leur organisme ; pour les hôtels, une catégorie en étoiles plus tard ; pas de type pour les points de mobile money (on évalue Wave ou Orange Money en général) |
+| Restauration, Hôtellerie, Immobilier, Banques et assurances, Paiement mobile | aucun : lieux semblables, ou regroupés par leur organisme ; pour les hôtels, une catégorie en étoiles plus tard ; pas de type pour les points de mobile money (on évalue Wave ou Orange Money en général) |
 
 Écartés : Case de santé ; établissement pénitentiaire (à voir avec l'organisme porteur) ; Gouvernance et Conseil départemental (pas de guichet courant pour l'usager) ; École franco-arabe (elle prend le type de son niveau, « franco-arabe » va dans ses alias). Les 18 lieux publics de `0003` ont reçu leur type (hôpitaux, mairies, DAF, universités, lycée). Tous les secteurs sont faits (59 types, Aéroport compris). Le type **n'est pas affiché** sous le nom (redondant avec le nom, écarté le 2026-10-02) : on garde commune et secteur.
 
@@ -466,7 +466,7 @@ Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_
 | `POLICE_PREMISES` | Temps d'attente, Délai de traitement, Simplicité, Suivi du dossier, Horaires, Frais, Propreté, Accessibilité | service « Une démarche dans les locaux » (police, gendarmerie) |
 | `POLICE_FIELD` | Délai d'intervention | service « Un contrôle ou une intervention sur le terrain » (police, gendarmerie) |
 | `EDUCATION` | Propreté, entretien et confort, Accessibilité (0010) | secteur Éducation |
-| `BANKING_INSURANCE` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Délai de traitement, Suivi du dossier, Service client | secteur Banques et assurances |
+| `BANKING_INSURANCE` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Délai de traitement, Suivi du dossier, Service client | secteurs Banques et assurances, Paiement mobile (pour un avis sans service ; les services de mobile money ont leurs propres listes) |
 | `ELECTRICITY` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Coupures de courant, Délai d'intervention, Factures, Service client | secteur Électricité |
 | `WATER` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Coupures d'eau, Qualité de l'eau, Factures, Service client | secteur Eau |
 | `TELECOM` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais, Qualité du réseau, Factures, Service client | secteur Télécoms |

@@ -272,6 +272,15 @@ describe("questionnaire", () => {
     expect(all.sectors.length).toBeGreaterThan(1);
   });
 
+  it("puts mobile money in its own sector, apart from banks and insurers", async () => {
+    const banking = await getQuestionnaire({ sector: "BANKING_INSURANCE" });
+    expect(banking.services.map((s) => s.code)).toEqual(["INSURANCE_CLAIM"]);
+    const mobile = await getQuestionnaire({ sector: "MOBILE_PAYMENT" });
+    expect(mobile.sectors).toMatchObject([{ label: "Paiement mobile", listCode: "BANKING_INSURANCE" }]);
+    expect(mobile.services.map((s) => s.code)).toEqual(["MOBILE_MONEY", "MOBILE_MONEY_AGENT", "MOBILE_MONEY_SUPPORT"]);
+    expect(mobile.services[0]!.establishments).toEqual(["Mixx by Yas", "Orange Money", "Wave"]);
+  });
+
   it("shows an inactive topic as such", async () => {
     await db.query(`UPDATE topic SET is_active = false WHERE code = 'CARE_RECEIVED'`);
     try {
