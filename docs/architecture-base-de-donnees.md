@@ -430,6 +430,7 @@ Libellés (dans `topic_translation`) :
 | `TEACHING_QUALITY` | Qualité de l'enseignement |
 | `STUDENT_SUPERVISION` | Encadrement des élèves |
 | `PUNCTUALITY` | Ponctualité |
+| `ROUTE` | Pertinence de l'itinéraire et durée de la course (2026-10-08, bus, VTC et taxi) |
 | `ONBOARD_SAFETY` | Sécurité à bord |
 | `VEHICLE_CONDITION` | État des véhicules (plus proposé depuis 0009 : « Propreté, entretien et confort » le dit) |
 | `POWER_CUTS` | Coupures de courant |
@@ -479,7 +480,7 @@ Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_
 | `SCHOOL_LIFE` | Qualité de l'enseignement, Encadrement des élèves, Sécurité dans l'établissement, Tables-bancs et manuels, Échanges avec les enseignants et la direction | service « Les cours et la vie de l'école » des écoles |
 | `TRANSPORT` | Frais, Service client, Propreté, Accessibilité (Accueil retiré en 0035, Explications en 0039) | secteur Transport (opérateurs, aéroport, gares routières) |
 | `TRIP` | Compétence du personnel (0036), Explications du personnel (0039), Ponctualité, Sécurité à bord (un trajet, pas un lieu ni un guichet ; pas de Temps d'attente, que dit Ponctualité) | services « Un vol », « Un trajet en train », « Une traversée en bateau » |
-| `ROAD_TRIP` | Comportement du chauffeur, Ponctualité, Sécurité à bord (0035, 2026-10-08) | services « Un trajet en bus », « Une course en VTC », « Une course en taxi » |
+| `ROAD_TRIP` | Comportement du chauffeur, Ponctualité, Pertinence de l'itinéraire et durée de la course (0040), Sécurité à bord (0035, 2026-10-08) | services « Un trajet en bus », « Une course en VTC », « Une course en taxi » |
 | `TRANSPORT_PLACE` | Compétence du personnel (0037), Explications du personnel (0039), Temps d'attente, Horaires d'ouverture | types Aéroport, Gare routière ; services Achat de ticket, Achat de billet d'avion |
 
 ### evaluation_category (migration 0009)
