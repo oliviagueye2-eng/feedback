@@ -4,6 +4,8 @@
  * published nor deleted; a contact is erased directly in the database when asked.
  */
 import * as db from "../../db/admin";
+import * as feedbacks from "../../db/feedbacks";
+import { selectQuestionSets } from "../questionnaire/select";
 import { COMMENT_MAX_LENGTH } from "../feedback";
 import { invalidInput } from "../errors";
 import { isUuid, requireUuid } from "../../lib/validation";
@@ -11,7 +13,7 @@ import { createSessionToken, isRightPassword } from "./session";
 
 export { isValidSessionToken, SESSION_DAYS } from "./session";
 export type {
-  AdminComment, BankCondition, BankOption, BankQuestion, CategoryContent, CommentStatus, EstablishmentComments,
+  AdminComment, BankCondition, BankOption, BankQuestion, CategoryContent, CommentStatus, EstablishmentComments, FormEstablishment,
   ListedQuestion, ListedTopic, PendingEstablishment, ServiceTopics, SectorTopics, StopPage, TopicRow, TypeTopics,
 } from "../../db/admin";
 
@@ -137,21 +139,31 @@ const SHARED_QUESTION_LISTS = ["ESSENTIAL", "COMMON"];
  * the sector. A service is shown when an establishment of that sector or
  * type offers it. An unknown code is ignored.
  */
-export async function getQuestionnaire(filter: { sector?: string; type?: string; service?: string }) {
-  const [sectors, types, services, bank] = await Promise.all([
+export async function getQuestionnaire(filter: { sector?: string; type?: string; service?: string; establishment?: string }) {
+  const [sectors, types, services, bank, establishments] = await Promise.all([
     db.listSectorTopics(),
     db.listTypeTopics(),
     db.listServiceTopics(),
     db.listQuestionBank(),
+    db.listFormEstablishments(),
   ]);
+  // An establishment sets the sector and the type (its own), and keeps the
+  // service only if it offers it.
+  const establishment = establishments.find((e) => e.id === filter.establishment);
+  const service = services.find(
+    (s) => s.code === filter.service && (!establishment || establishment.services.includes(s.code)),
+  );
   // A service keeps the sector and the type only if they offer it (a service
   // has no sector of its own: those of its establishments, 0029).
-  const service = services.find((s) => s.code === filter.service);
   const fits = (codes: string[], code: string) => !service || codes.includes(code);
-  const type = types.find((t) => t.code === filter.type && fits(service?.typeCodes ?? [], t.code));
-  const sector = type
-    ? sectors.find((s) => s.code === type.sectorCode)
-    : sectors.find((s) => s.code === filter.sector && fits(service?.sectorCodes ?? [], s.code));
+  const type = establishment
+    ? types.find((t) => t.code === establishment.typeCode)
+    : types.find((t) => t.code === filter.type && fits(service?.typeCodes ?? [], t.code));
+  const sector = establishment
+    ? sectors.find((s) => s.code === establishment.sectorCode)
+    : type
+      ? sectors.find((s) => s.code === type.sectorCode)
+      : sectors.find((s) => s.code === filter.sector && fits(service?.sectorCodes ?? [], s.code));
   const shownSectors = sector
     ? [sector]
     : service
@@ -178,10 +190,26 @@ export async function getQuestionnaire(filter: { sector?: string; type?: string;
   const lists = new Set(shown.map((x) => x.questionListCode).concat(SHARED_QUESTION_LISTS));
   const topics = new Set(shown.flatMap((x) => x.topics.map((t) => t.code)));
   const kept = (q: db.BankQuestion) => q.lists.some((l) => lists.has(l)) || q.opensTopics.some((t) => topics.has(t));
+  // The form shown once the filters name one: an establishment, or a sector
+  // (with or without a type), with the service chosen or none.
+  const levels =
+    establishment || sector
+      ? { sector: sector?.code ?? null, type: type?.code ?? null, service: service?.code ?? null }
+      : null;
   return {
     sector: sector?.code ?? null,
     type: type?.code ?? null,
     service: service?.code ?? null,
+    establishment: establishment?.id ?? null,
+    establishmentOptions: establishments,
+    form: levels && {
+      levels,
+      establishmentName: establishment?.name ?? null,
+      sectorLabel: sector?.label ?? null,
+      typeLabel: type?.label ?? null,
+      serviceLabel: service?.label ?? null,
+      ...(await getForm(levels, bank)),
+    },
     /** Every sector, type and service, for the filters. */
     sectorOptions: sectors.map(({ code, label }) => ({ code, label })),
     typeOptions: types.map(({ code, label, sectorCode }) => ({ code, label, sectorCode })),
@@ -190,6 +218,55 @@ export async function getQuestionnaire(filter: { sector?: string; type?: string;
     types: shownTypes,
     services: shownServices,
     questions: sector || service ? bank.filter(kept) : bank,
+  };
+}
+
+/** A condition, in words: the question it depends on and the answers that show the item. */
+export interface FormCondition {
+  question: string;
+  answers: string[];
+}
+
+/** One question of a generated form, with its answers and the conditions that show it. */
+export interface FormQuestion {
+  code: string;
+  label: string;
+  options: { code: string; label: string }[];
+  conditions: FormCondition[];
+}
+
+/**
+ * The form a feedback with these levels gets (asked by Olivia, 2026-10-08),
+ * computed by the same queries as the site, without any feedback: screen 2b's
+ * topics (each gate question with its topics), then screen 6's questions
+ * (those screen 2b asks are left out, as on the site), then screen 6b's
+ * (the common ones). Every item is listed, whatever the answers: the
+ * conditions say when it shows.
+ */
+async function getForm(levels: feedbacks.FormLevels, bank: db.BankQuestion[]) {
+  const [topics, sources] = await Promise.all([
+    feedbacks.findFormTopicChoices(levels),
+    feedbacks.findFormQuestionSetSources(levels),
+  ]);
+  const questions = await feedbacks.findFormQuestions(selectQuestionSets(sources));
+  const askedBefore = new Set(topics.flatMap((t) => (t.gate ? [t.gate.code] : [])));
+  const byCode = new Map(bank.map((q) => [q.code, q]));
+  const toForm = (q: feedbacks.DetailedQuestion): FormQuestion => ({
+    code: q.code,
+    label: q.label,
+    options: q.options,
+    conditions: q.conditions.map((c) => {
+      const asked = byCode.get(c.dependsOn);
+      return {
+        question: asked?.label ?? c.dependsOn,
+        answers: c.options.map((o) => asked?.options.find((x) => x.code === o)?.label ?? o),
+      };
+    }),
+  });
+  return {
+    topics,
+    questions: questions.filter((q) => !q.common && !askedBefore.has(q.code)).map(toForm),
+    commonQuestions: questions.filter((q) => q.common && !askedBefore.has(q.code)).map(toForm),
   };
 }
 

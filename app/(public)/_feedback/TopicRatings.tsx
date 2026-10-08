@@ -51,12 +51,15 @@ export function TopicRatings({
   otherCode,
   otherMaxLength,
   t,
+  gateNotes,
 }: {
   topics: TopicChoice[];
   otherCode: string;
   otherMaxLength: number;
   /** Texts given by the page. */
   t: { good: string; bad: string; notConcerned: string; otherLabel: string; otherPlaceholder: string };
+  /** Back office only (form shown with every topic): a note under each question, by its code. */
+  gateNotes?: { className: string; text: Record<string, string> };
 }) {
   const [chosen, setChosen] = useState<Record<string, TopicSentiment | null>>(() =>
     Object.fromEntries(topics.map((topic) => [topic.code, topic.sentiment])),
@@ -139,6 +142,7 @@ export function TopicRatings({
               </label>
             ))}
           </span>
+          {gateNotes?.text[gate.code] && <span className={gateNotes.className}>{gateNotes.text[gate.code]}</span>}
         </div>
         <div className={styles.gated} data-gated="">
           {gated.map(topicRow)}

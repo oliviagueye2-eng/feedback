@@ -117,32 +117,61 @@ export async function upsertAnswer(input: {
 }
 
 /**
- * Active topics shown for feedback $1: the sum of the topic lists of its
- * levels, like the questions. The COMMON list, then the list of its sector
- * (COMMERCE when the sector is unknown), of its establishment type and of its
- * service. The sector is the establishment's (its type's, else its own),
- * never the service's (decided by Olivia, 2026-10-08). A service that
- * replaces the shared lists (mobile money, 0026) leaves out COMMON and the
- * sector's. A topic in several lists comes once.
+ * The levels of feedback $n, as FORM_LEVELS gives them: its service, the
+ * sector of the establishment (its type's, else its own; never the
+ * service's, decided by Olivia, 2026-10-08), its establishment type.
  */
-const topicsForFeedback = (feedbackParam: string) => `
+const feedbackLevels = (feedbackParam: string) => `
+  SELECT s.replaces_shared_lists AS replaces, sec.id AS sector_id, sec.topic_set_id AS sector_topic_set,
+         sec.question_set_id AS sector_question_set, et.topic_set_id AS type_topic_set,
+         et.question_set_id AS type_question_set, s.topic_set_id AS service_topic_set,
+         s.question_set_id AS service_question_set
+  FROM feedback f
+  JOIN establishment e ON e.id = f.establishment_id
+  LEFT JOIN service s ON s.id = f.service_id
+  LEFT JOIN establishment_type et ON et.id = e.type_id
+  LEFT JOIN sector sec ON sec.id = coalesce(et.sector_id, e.sector_id)
+  WHERE f.id = ${feedbackParam}`;
+
+/**
+ * The same levels without a feedback, by their codes ($n: sector, $n+1:
+ * establishment type, $n+2: service; null for none): the form a feedback
+ * would get, shown in the back office (asked by Olivia, 2026-10-08).
+ */
+const formLevels = (first: number) => `
+  SELECT s.replaces_shared_lists AS replaces, sec.id AS sector_id, sec.topic_set_id AS sector_topic_set,
+         sec.question_set_id AS sector_question_set, et.topic_set_id AS type_topic_set,
+         et.question_set_id AS type_question_set, s.topic_set_id AS service_topic_set,
+         s.question_set_id AS service_question_set
+  FROM (SELECT 1) one
+  LEFT JOIN sector sec ON sec.code = $${first}
+  LEFT JOIN establishment_type et ON et.code = $${first + 1}
+  LEFT JOIN service s ON s.code = $${first + 2}`;
+
+/**
+ * Active topics shown for the levels given (a feedback's, or a form's): the
+ * sum of the topic lists of its levels, like the questions. The COMMON list,
+ * then the list of its sector (COMMERCE when the sector is unknown), of its
+ * establishment type and of its service. A service that replaces the shared
+ * lists (mobile money, 0026) leaves out COMMON and the sector's. A topic in
+ * several lists comes once.
+ */
+const topicsOfLevels = (levels: string) => `
   SELECT t.* FROM topic t
   WHERE t.is_active
     AND EXISTS (
       SELECT 1
-      FROM feedback f
-      JOIN establishment e ON e.id = f.establishment_id
-      LEFT JOIN service s ON s.id = f.service_id
-      LEFT JOIN establishment_type et ON et.id = e.type_id
-      LEFT JOIN sector sec ON sec.id = coalesce(et.sector_id, e.sector_id)
+      FROM (${levels}) l
       JOIN topic_set_item i ON i.topic_id = t.id
-      WHERE f.id = ${feedbackParam}
-        AND i.topic_set_id IN (
-          CASE WHEN s.replaces_shared_lists THEN NULL ELSE (SELECT id FROM topic_set WHERE code = 'COMMON') END,
-          CASE WHEN s.replaces_shared_lists THEN NULL
-               ELSE coalesce(sec.topic_set_id, CASE WHEN sec.id IS NULL THEN (SELECT id FROM topic_set WHERE code = 'COMMERCE') END) END,
-          et.topic_set_id,
-          s.topic_set_id))`;
+      WHERE i.topic_set_id IN (
+          CASE WHEN l.replaces THEN NULL ELSE (SELECT id FROM topic_set WHERE code = 'COMMON') END,
+          CASE WHEN l.replaces THEN NULL
+               ELSE coalesce(l.sector_topic_set, CASE WHEN l.sector_id IS NULL THEN (SELECT id FROM topic_set WHERE code = 'COMMERCE') END) END,
+          l.type_topic_set,
+          l.service_topic_set))`;
+
+/** Active topics shown for feedback $n (topicsOfLevels). */
+const topicsForFeedback = (feedbackParam: string) => topicsOfLevels(feedbackLevels(feedbackParam));
 
 /**
  * Replaces all topics of a feedback. Codes must be unique (checked in src/domain).
@@ -257,6 +286,26 @@ export interface TopicChoice {
 
 /** Screen 2b: the topics to show, in order, with what the user already touched. */
 export async function findTopicChoices(feedbackId: string): Promise<TopicChoice[]> {
+  return topicChoices(topicsForFeedback("$1"), [feedbackId]);
+}
+
+/** No feedback: nothing touched nor answered (a form shown in the back office). */
+const NO_FEEDBACK = "00000000-0000-0000-0000-000000000000";
+
+/** The form's levels, by their codes (null for none): sector, establishment type, service. */
+export interface FormLevels {
+  sector: string | null;
+  type: string | null;
+  service: string | null;
+}
+
+/** Screen 2b of a form (back office): its topics, in order, as a feedback with these levels gets them. */
+export async function findFormTopicChoices(levels: FormLevels): Promise<TopicChoice[]> {
+  return topicChoices(topicsOfLevels(formLevels(2)), [NO_FEEDBACK, levels.sector, levels.type, levels.service]);
+}
+
+/** The topics of `topics` (SQL; $1: the feedback whose choices to show), in order. */
+async function topicChoices(topics: string, params: unknown[]): Promise<TopicChoice[]> {
   const [rows, gates] = await Promise.all([
     query<{
       code: string;
@@ -266,13 +315,13 @@ export async function findTopicChoices(feedbackId: string): Promise<TopicChoice[
       category: string | null;
     }>(
       `SELECT t.code, tr.label, ft.sentiment, ft.other_text, ct.label AS category
-       FROM (${topicsForFeedback("$1")}) t
+       FROM (${topics}) t
        JOIN topic_translation tr ON tr.topic_id = t.id AND tr.language = 'fr'
        LEFT JOIN evaluation_category_translation ct ON ct.evaluation_category_id = t.category_id AND ct.language = 'fr'
        LEFT JOIN feedback_topic ft ON ft.feedback_id = $1 AND ft.topic_id = t.id
        LEFT JOIN evaluation_category c ON c.id = t.category_id
        ORDER BY c.position NULLS LAST, t.position`,
-      [feedbackId],
+      params,
     ),
     query<{
       topic: string;
@@ -286,14 +335,14 @@ export async function findTopicChoices(feedbackId: string): Promise<TopicChoice[
       `SELECT t.code AS topic, q.code, qt.label, ao.code AS option_code, ot.label AS option_label,
               EXISTS (SELECT 1 FROM topic_condition ok WHERE ok.topic_id = t.id AND ok.option_id = ao.id) AS opens,
               EXISTS (SELECT 1 FROM answer a WHERE a.feedback_id = $1 AND a.option_id = ao.id) AS chosen
-       FROM (${topicsForFeedback("$1")}) t
+       FROM (${topics}) t
        JOIN (SELECT DISTINCT topic_id, depends_on_question_id FROM topic_condition) tc ON tc.topic_id = t.id
        JOIN question q ON q.id = tc.depends_on_question_id
        JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
        JOIN answer_option ao ON ao.question_id = q.id AND ao.is_active
        JOIN answer_option_translation ot ON ot.answer_option_id = ao.id AND ot.language = 'fr'
        ORDER BY t.code, ao.position`,
-      [feedbackId],
+      params,
     ),
   ]);
   const gateOf = new Map<string, TopicGate>();
@@ -330,6 +379,15 @@ export async function findCommentText(feedbackId: string): Promise<string | null
  * A service that replaces the shared lists (0026) leaves the sector's out.
  */
 export async function findQuestionSetSources(feedbackId: string): Promise<QuestionSetSources | null> {
+  return questionSetSources(feedbackLevels("$1"), [feedbackId]);
+}
+
+/** The lists of questions of a form (back office), as a feedback with these levels gets them. */
+export async function findFormQuestionSetSources(levels: FormLevels): Promise<QuestionSetSources> {
+  return (await questionSetSources(formLevels(1), [levels.sector, levels.type, levels.service]))!;
+}
+
+async function questionSetSources(levels: string, params: unknown[]): Promise<QuestionSetSources | null> {
   const rows = await query<{
     sector_known: boolean;
     sector_set: number | null;
@@ -337,17 +395,12 @@ export async function findQuestionSetSources(feedbackId: string): Promise<Questi
     service_set: number | null;
     commerce_set: number | null;
   }>(
-    `SELECT sec.id IS NOT NULL AS sector_known,
-            CASE WHEN s.replaces_shared_lists THEN NULL ELSE sec.question_set_id END AS sector_set,
-            et.question_set_id AS type_set, s.question_set_id AS service_set,
+    `SELECT l.sector_id IS NOT NULL AS sector_known,
+            CASE WHEN l.replaces THEN NULL ELSE l.sector_question_set END AS sector_set,
+            l.type_question_set AS type_set, l.service_question_set AS service_set,
             ${QUESTION_SET("COMMERCE")} AS commerce_set
-     FROM feedback f
-     JOIN establishment e ON e.id = f.establishment_id
-     LEFT JOIN service s ON s.id = f.service_id
-     LEFT JOIN establishment_type et ON et.id = e.type_id
-     LEFT JOIN sector sec ON sec.id = coalesce(et.sector_id, e.sector_id)
-     WHERE f.id = $1`,
-    [feedbackId],
+     FROM (${levels}) l`,
+    params,
   );
   const row = rows[0];
   if (!row) return null;
@@ -662,6 +715,11 @@ export async function findDetailedQuestions(feedbackId: string, setIds: number[]
     condition.options.push(row.option_code);
   }
   return byCategory(questions, categoryOf);
+}
+
+/** Screens 6 and 6b of a form (back office): its questions, nothing answered. */
+export async function findFormQuestions(setIds: number[]): Promise<DetailedQuestion[]> {
+  return findDetailedQuestions(NO_FEEDBACK, setIds);
 }
 
 /**

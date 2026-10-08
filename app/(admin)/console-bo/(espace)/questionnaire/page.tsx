@@ -1,5 +1,6 @@
 import { getQuestionnaire, type ListedQuestion, type ListedTopic } from "@/src/domain/admin";
 import { getDictionary } from "../../../../_i18n";
+import { FormPreview } from "../../_components/FormPreview";
 import { QuestionnaireFilters } from "../../_components/QuestionnaireFilters";
 import { ListGrid, type ListGroup, type ListGridRow } from "../../_components/ListGrid";
 import { requireAdmin } from "../../_lib/auth";
@@ -11,7 +12,9 @@ const PATH = "/console-bo/questionnaire";
  * The topics of screen 2b, where they come from: one table for the sectors,
  * the establishment types and the services (asked by Olivia, 2026-10-08).
  * For someone technical: the database's column names under each header.
- * Read only. The filters (?secteur=, ?type=, ?service=) work without JavaScript.
+ * Read only. The filters (?secteur=, ?type=, ?etablissement=, ?service=) work
+ * without JavaScript. Once they name an establishment or a sector, the form
+ * a user gets comes first (asked by Olivia, 2026-10-08).
  */
 export default async function QuestionnairePage({ searchParams }: PageProps<"/console-bo/questionnaire">) {
   await requireAdmin();
@@ -19,7 +22,12 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
   const one = (value: string | string[] | undefined) => (typeof value === "string" && value !== "" ? value : undefined);
   const [{ admin }, q] = await Promise.all([
     getDictionary(),
-    getQuestionnaire({ sector: one(params.secteur), type: one(params.type), service: one(params.service) }),
+    getQuestionnaire({
+      sector: one(params.secteur),
+      type: one(params.type),
+      service: one(params.service),
+      establishment: one(params.etablissement),
+    }),
   ]);
   const t = admin.questionnaire;
   // The question whose answers show a topic at screen 2b (topic_condition).
@@ -88,20 +96,49 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
           sectors={q.sectorOptions}
           types={q.typeOptions}
           services={q.serviceOptions}
+          establishments={q.establishmentOptions}
           sector={q.sector}
           type={q.type}
           service={q.service}
-          text={{ sector: t.sector, type: t.type, service: t.service, all: t.all }}
+          establishment={q.establishment}
+          text={{ sector: t.sector, type: t.type, service: t.service, establishment: t.establishment, all: t.all }}
         />
         <button type="submit" className={styles.button}>
           {t.apply}
         </button>
-        {(q.sector || q.type || q.service) && (
+        {(q.sector || q.type || q.service || q.establishment) && (
           <a href={PATH} className={styles.link}>
             {t.reset}
           </a>
         )}
       </form>
+
+      <section className={styles.formBlock}>
+        <h2 className={styles.gridTitle}>{t.form.title}</h2>
+        {q.form ? (
+          <>
+            <p className={styles.gridHelp}>{t.form.help}</p>
+            <p className={styles.formLevels}>
+              {t.form.levels} : {q.form.sectorLabel ?? t.form.noSector}
+              {q.form.sectorLabel && ` · ${q.form.typeLabel ?? t.form.noType}`}
+              {" · "}
+              {q.form.serviceLabel ??
+                (q.form.establishmentName && !q.establishmentOptions.find((e) => e.id === q.establishment)?.services.length
+                  ? t.form.noReason
+                  : t.form.otherReason)}
+            </p>
+            <FormPreview
+              establishmentName={q.form.establishmentName ?? q.form.typeLabel ?? q.form.sectorLabel ?? ""}
+              serviceLabel={q.form.serviceLabel}
+              topics={q.form.topics}
+              questions={q.form.questions}
+              commonQuestions={q.form.commonQuestions}
+            />
+          </>
+        ) : (
+          <p className={styles.gridHelp}>{t.form.hint}</p>
+        )}
+      </section>
 
       <h2 className={styles.gridTitle}>{t.sectorsTitle}</h2>
       <p className={styles.gridHelp}>{t.sectorsHelp}</p>
