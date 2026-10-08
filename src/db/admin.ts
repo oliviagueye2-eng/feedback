@@ -349,6 +349,8 @@ export interface ListedQuestion {
   code: string;
   position: number;
   categoryCode: string | null;
+  /** In this list (question_condition): the answers that show it; none when always asked. */
+  conditions: TopicShownIf[];
 }
 
 /**
@@ -358,17 +360,23 @@ export interface ListedQuestion {
 const QUESTIONS_OF = (col: string) => `
   coalesce((SELECT json_agg(json_build_object('code', q.code, 'position', i.position, 'categoryCode', c.code,
                                               'categoryPosition', c.position,
-                                              'dependsOn', (SELECT coalesce(json_agg(DISTINCT dq.code), '[]'::json)
-                                                            FROM question_condition qc
-                                                            JOIN question dq ON dq.id = qc.depends_on_question_id
-                                                            WHERE qc.question_set_id = i.question_set_id
-                                                              AND qc.question_id = i.question_id))
+                                              'conditions', (SELECT coalesce(json_agg(json_build_object(
+                                                                      'dependsOn', x.depends_on, 'options', x.options)
+                                                                    ORDER BY x.depends_on), '[]'::json)
+                                                             FROM (SELECT dq.code AS depends_on,
+                                                                          array_agg(o.code ORDER BY o.position) AS options
+                                                                   FROM question_condition qc
+                                                                   JOIN question dq ON dq.id = qc.depends_on_question_id
+                                                                   JOIN answer_option o ON o.id = qc.option_id
+                                                                   WHERE qc.question_set_id = i.question_set_id
+                                                                     AND qc.question_id = i.question_id
+                                                                   GROUP BY dq.code) x))
                              ORDER BY i.position)
             FROM question_set_item i JOIN question q ON q.id = i.question_id
             LEFT JOIN evaluation_category c ON c.id = q.category_id
             WHERE i.question_set_id = ${col}), '[]'::json)`;
 
-type RawQuestion = ListedQuestion & { categoryPosition: number | null; dependsOn: string[] };
+type RawQuestion = ListedQuestion & { categoryPosition: number | null };
 
 /**
  * A level's questions in the order screen 6 asks them (asked by Olivia,
@@ -377,11 +385,11 @@ type RawQuestion = ListedQuestion & { categoryPosition: number | null; dependsOn
 function inScreenOrder<L extends { questions: ListedQuestion[] }>(levels: L[]): L[] {
   return levels.map((level) => {
     const raw = level.questions as RawQuestion[];
-    const ordered = byCategory(
-      raw.map((q) => ({ ...q, conditions: q.dependsOn.map((dependsOn) => ({ dependsOn })) })),
-      new Map(raw.map((q) => [q.code, q.categoryPosition])),
-    );
-    return { ...level, questions: ordered.map(({ code, position, categoryCode }) => ({ code, position, categoryCode })) };
+    const ordered = byCategory(raw, new Map(raw.map((q) => [q.code, q.categoryPosition])));
+    return {
+      ...level,
+      questions: ordered.map(({ code, position, categoryCode, conditions }) => ({ code, position, categoryCode, conditions })),
+    };
   });
 }
 

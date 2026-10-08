@@ -298,7 +298,7 @@ describe("questionnaire", () => {
           shownIf: code === "FEES" ? { dependsOn: "PAID_SOMETHING", options: ["YES"] } : null,
         })),
         questionListCode: "MOBILE_PAYMENT",
-        questions: [{ code: "GOAL_ACHIEVED", position: 1, categoryCode: "OUTCOME" }],
+        questions: [{ code: "GOAL_ACHIEVED", position: 1, categoryCode: "OUTCOME", conditions: [] }],
       },
     ]);
     expect(mobile.services.map((s) => s.code)).toEqual(["MOBILE_MONEY", "MOBILE_MONEY_AGENT", "MOBILE_MONEY_SUPPORT"]);
@@ -346,6 +346,8 @@ describe("questionnaire", () => {
     expect(q.sectors[0]!.questions.map((x) => x.code)).toEqual([
       "GOAL_ACHIEVED", "WAIT_TIME", "VISITS_COUNT", "DOCUMENTS_KNOWN", "PAID_SOMETHING", "RECEIPT_GIVEN",
     ]);
+    // With its condition in this list.
+    expect(q.sectors[0]!.questions.at(-1)!.conditions).toEqual([{ dependsOn: "PAID_SOMETHING", options: ["YES"] }]);
   });
 
   it("shows an inactive topic as such", async () => {

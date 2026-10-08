@@ -51,6 +51,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
       extras: [
         { header: t.position, column: "question_set_item.position", kind: "number" },
         { header: t.category, column: "evaluation_category.code", kind: "code" },
+        { header: t.shownIf, column: "question_condition", kind: "code", emptyText: t.always },
       ],
       count: t.questionCount,
       countOne: t.questionCountOne,
@@ -68,7 +69,12 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
     },
     questions: {
       code: level.questionListCode,
-      items: level.questions.map((question) => ({ code: question.code, extras: [question.position, question.categoryCode] })),
+      items: level.questions.map((question) => ({ code: question.code, extras: [
+          question.position,
+          question.categoryCode,
+          question.conditions.map((c) => `${c.dependsOn} = ${c.options.join(t.or)}`).join(" ; ") || null,
+        ],
+      })),
     },
   });
 
