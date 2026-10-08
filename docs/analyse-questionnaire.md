@@ -15,7 +15,7 @@ Analyse du 2026-10-03, faite sur les données de référence des migrations 0001
 |---|---|---|
 | 1. Question essentielle | « Êtes-vous satisfait(e) du service reçu ? », 5 réponses | liste `ESSENTIAL`, pour tout le monde |
 | 2. Thèmes (écran 2b) | « Comment ça s'est passé ? » : pour chaque thème, « Bien », « Pas bien » ou rien | (avant la migration 0008) 9 thèmes communs + ceux du secteur de l'avis (`topic_sector`). **Un seul secteur** : celui du service, sinon du type, sinon de l'établissement. **Depuis 0008** : somme de listes, comme les questions (commune + secteur + type + service). **Depuis le 2026-10-08** (décision d'Olivia) : le secteur est toujours celui de l'établissement (son type, sinon le sien), jamais celui du service |
-| 3. Questions détaillées (écran 6) | 2 à 5 questions de fait | **plusieurs listes additionnées** : celle du secteur, celle du type d'établissement et celle du service (`question_set_item`) ; `GENERIC` quand le secteur n'a pas de liste à lui |
+| 3. Questions détaillées (écran 6) | 2 à 5 questions de fait | **plusieurs listes additionnées** : celle du secteur, celle du type d'établissement et celle du service (`question_set_item`) ; `COMMERCE` quand le secteur n'a pas de liste à lui |
 | 3b. Questions communes (écran 6b) | « Avez-vous signalé cette situation ? » puis « Pourquoi ? » | liste `COMMON`, seulement après « Peu » ou « Pas du tout satisfait(e) » |
 
 À noter : les thèmes suivent **un seul** secteur, les questions **plusieurs** listes. Un avis sur le service « Un vol » dans un aéroport reçoit les questions de l'aéroport **et** du vol, mais les thèmes du seul secteur Transport.
@@ -86,7 +86,7 @@ Ils sont pensés pour un guichet (mairie, préfecture, banque). Ailleurs :
 
 ### 4.3 Secteurs sans thème qui parle de leur cœur de métier
 
-Restauration, hôtellerie, commerce, culture, sport, tourisme, immobilier n'ont **aucun thème de secteur**. L'usager d'un restaurant voit « Simplicité de la démarche » et « Horaires d'ouverture », mais rien sur les plats ; un client de supermarché rien sur les produits ou les prix. Le thème « Prix » a été désactivé le 2026-09-30 ; la question `FAIR_PRICE` (liste `GENERIC`) le remplace en partie.
+Restauration, hôtellerie, commerce, culture, sport, tourisme, immobilier n'ont **aucun thème de secteur**. L'usager d'un restaurant voit « Simplicité de la démarche » et « Horaires d'ouverture », mais rien sur les plats ; un client de supermarché rien sur les produits ou les prix. Le thème « Prix » a été désactivé le 2026-09-30 ; la question `FAIR_PRICE` (liste `COMMERCE`) le remplace en partie.
 
 ### 4.4 Questions posées sans tenir compte de la réponse précédente
 

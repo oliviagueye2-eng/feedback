@@ -481,7 +481,7 @@ describe("feedback", () => {
     await db.exec("UPDATE establishment_type SET question_set_id = NULL WHERE code = 'HOSPITAL'");
   });
 
-  it("gives GENERIC questions and topics to an establishment whose sector is unknown", async () => {
+  it("gives COMMERCE questions and topics to an establishment whose sector is unknown", async () => {
     const [{ id }] = (await rows<{ id: string }>(
       "INSERT INTO establishment (name, source, raw_input) VALUES ('Boutique de Moussa', 'user', 'Boutique de Moussa') RETURNING id",
     )) as [{ id: string }];
@@ -489,7 +489,7 @@ describe("feedback", () => {
     await upsertFeedback(unknown, { channel: "search", establishmentId: id, language: "fr", visitPeriod: "today" });
     expect((await getDetailedQuestionnaire(unknown)).questions.slice(0, 4).map((q) => q.code))
       .toEqual(["FAIR_PRICE", "PAID_SOMETHING", "RECEIPT_OR_INVOICE", "RECOMMEND"]);
-    // And the GENERIC topics: the common ones plus those of a counter.
+    // And the COMMERCE topics: the common ones plus those of a counter.
     expect((await getDetailsScreen(unknown)).topics.map((t) => t.code)).toEqual([
       "STAFF", "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS", "FEES", "CLEANLINESS",
       "ACCESS_FOR_ALL",

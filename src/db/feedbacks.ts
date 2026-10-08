@@ -21,8 +21,8 @@ export interface FeedbackRow {
   startedAt: Date;
 }
 
-/** A special list of questions, found by its code (ESSENTIAL, COMMON, GENERIC). */
-const QUESTION_SET = (code: "ESSENTIAL" | "COMMON" | "GENERIC") =>
+/** A special list of questions, found by its code (ESSENTIAL, COMMON, COMMERCE). */
+const QUESTION_SET = (code: "ESSENTIAL" | "COMMON" | "COMMERCE") =>
   `(SELECT id FROM question_set WHERE code = '${code}')`;
 
 /**
@@ -119,7 +119,7 @@ export async function upsertAnswer(input: {
 /**
  * Active topics shown for feedback $1: the sum of the topic lists of its
  * levels, like the questions. The COMMON list, then the list of its sector
- * (GENERIC when the sector is unknown), of its establishment type and of its
+ * (COMMERCE when the sector is unknown), of its establishment type and of its
  * service. The sector is the establishment's (its type's, else its own),
  * never the service's (decided by Olivia, 2026-10-08). A service that
  * replaces the shared lists (mobile money, 0026) leaves out COMMON and the
@@ -140,7 +140,7 @@ const topicsForFeedback = (feedbackParam: string) => `
         AND i.topic_set_id IN (
           CASE WHEN s.replaces_shared_lists THEN NULL ELSE (SELECT id FROM topic_set WHERE code = 'COMMON') END,
           CASE WHEN s.replaces_shared_lists THEN NULL
-               ELSE coalesce(sec.topic_set_id, CASE WHEN sec.id IS NULL THEN (SELECT id FROM topic_set WHERE code = 'GENERIC') END) END,
+               ELSE coalesce(sec.topic_set_id, CASE WHEN sec.id IS NULL THEN (SELECT id FROM topic_set WHERE code = 'COMMERCE') END) END,
           et.topic_set_id,
           s.topic_set_id))`;
 
@@ -326,7 +326,7 @@ export async function findCommentText(feedbackId: string): Promise<string | null
 /**
  * The lists of questions attached to the feedback's levels: its sector (the
  * establishment type's, else the establishment's; never the service's), its
- * establishment type and its service; and GENERIC, for a sector unknown.
+ * establishment type and its service; and COMMERCE, for a sector unknown.
  * A service that replaces the shared lists (0026) leaves the sector's out.
  */
 export async function findQuestionSetSources(feedbackId: string): Promise<QuestionSetSources | null> {
@@ -335,12 +335,12 @@ export async function findQuestionSetSources(feedbackId: string): Promise<Questi
     sector_set: number | null;
     type_set: number | null;
     service_set: number | null;
-    generic_set: number | null;
+    commerce_set: number | null;
   }>(
     `SELECT sec.id IS NOT NULL AS sector_known,
             CASE WHEN s.replaces_shared_lists THEN NULL ELSE sec.question_set_id END AS sector_set,
             et.question_set_id AS type_set, s.question_set_id AS service_set,
-            ${QUESTION_SET("GENERIC")} AS generic_set
+            ${QUESTION_SET("COMMERCE")} AS commerce_set
      FROM feedback f
      JOIN establishment e ON e.id = f.establishment_id
      LEFT JOIN service s ON s.id = f.service_id
@@ -356,7 +356,7 @@ export async function findQuestionSetSources(feedbackId: string): Promise<Questi
     sectorSetId: row.sector_set,
     typeSetId: row.type_set,
     serviceSetId: row.service_set,
-    genericSetId: row.generic_set,
+    commerceSetId: row.commerce_set,
   };
 }
 

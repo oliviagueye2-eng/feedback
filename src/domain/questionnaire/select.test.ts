@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { selectQuestionSets } from "./select";
 
-const none = { sectorKnown: true, sectorSetId: null, typeSetId: null, serviceSetId: null, genericSetId: 9 };
+const none = { sectorKnown: true, sectorSetId: null, typeSetId: null, serviceSetId: null, commerceSetId: 9 };
 
 describe("selectQuestionSets", () => {
   it("adds up the sector's, the type's and the service's lists, from the most general", () => {
@@ -13,7 +13,7 @@ describe("selectQuestionSets", () => {
     expect(selectQuestionSets(none)).toEqual([]);
   });
 
-  it("gives GENERIC to an establishment whose sector is unknown", () => {
+  it("gives COMMERCE to an establishment whose sector is unknown", () => {
     expect(selectQuestionSets({ ...none, sectorKnown: false })).toEqual([9]);
   });
 

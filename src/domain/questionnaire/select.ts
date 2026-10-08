@@ -8,19 +8,19 @@ export interface QuestionSetSources {
   typeSetId: number | null;
   /** service.question_set_id, when a service was chosen. */
   serviceSetId: number | null;
-  /** The list GENERIC. */
-  genericSetId: number | null;
+  /** The list COMMERCE. */
+  commerceSetId: number | null;
 }
 
 /**
  * Lists of questions of screen 6, in order: the sector's, then the type's,
  * then the service's, added up from the most general to the most specific
  * (a level without a list adds nothing). An establishment whose sector is
- * unknown gets GENERIC.
+ * unknown gets COMMERCE.
  */
 export function selectQuestionSets(sources: QuestionSetSources): number[] {
   const levels = [
-    sources.sectorKnown ? sources.sectorSetId : sources.genericSetId,
+    sources.sectorKnown ? sources.sectorSetId : sources.commerceSetId,
     sources.typeSetId,
     sources.serviceSetId,
   ];
