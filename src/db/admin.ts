@@ -5,6 +5,7 @@
 import { invalidInput, notFound } from "../domain/errors";
 import { OTHER_TYPE } from "../domain/types";
 import { query } from "./client";
+import { byCategory } from "./feedbacks";
 
 // ---------------------------------------------------------------------------
 // Sign-in
@@ -334,15 +335,38 @@ export interface ListedQuestion {
 }
 
 /**
- * The questions of question_set `$col` in the order of their category (asked
- * by Olivia), then of question_set_item.position; those with none last.
+ * The questions of question_set `$col` by question_set_item.position, with
+ * what `inScreenOrder` needs.
  */
 const QUESTIONS_OF = (col: string) => `
-  coalesce((SELECT json_agg(json_build_object('code', q.code, 'position', i.position, 'categoryCode', c.code)
-                             ORDER BY c.position NULLS LAST, i.position)
+  coalesce((SELECT json_agg(json_build_object('code', q.code, 'position', i.position, 'categoryCode', c.code,
+                                              'categoryPosition', c.position,
+                                              'dependsOn', (SELECT coalesce(json_agg(DISTINCT dq.code), '[]'::json)
+                                                            FROM question_condition qc
+                                                            JOIN question dq ON dq.id = qc.depends_on_question_id
+                                                            WHERE qc.question_set_id = i.question_set_id
+                                                              AND qc.question_id = i.question_id))
+                             ORDER BY i.position)
             FROM question_set_item i JOIN question q ON q.id = i.question_id
             LEFT JOIN evaluation_category c ON c.id = q.category_id
             WHERE i.question_set_id = ${col}), '[]'::json)`;
+
+type RawQuestion = ListedQuestion & { categoryPosition: number | null; dependsOn: string[] };
+
+/**
+ * A level's questions in the order screen 6 asks them (asked by Olivia,
+ * 2026-10-08): by category, a question right after the one that opens it.
+ */
+function inScreenOrder<L extends { questions: ListedQuestion[] }>(levels: L[]): L[] {
+  return levels.map((level) => {
+    const raw = level.questions as RawQuestion[];
+    const ordered = byCategory(
+      raw.map((q) => ({ ...q, conditions: q.dependsOn.map((dependsOn) => ({ dependsOn })) })),
+      new Map(raw.map((q) => [q.code, q.categoryPosition])),
+    );
+    return { ...level, questions: ordered.map(({ code, position, categoryCode }) => ({ code, position, categoryCode })) };
+  });
+}
 
 export interface SectorTopics {
   code: string;
@@ -355,7 +379,7 @@ export interface SectorTopics {
 }
 
 export async function listSectorTopics(): Promise<SectorTopics[]> {
-  return query<SectorTopics>(
+  return inScreenOrder(await query<SectorTopics>(
     `SELECT s.code, st.label, ts.code AS "listCode", ${TOPICS_OF("s.topic_set_id")} AS topics,
             qs.code AS "questionListCode", ${QUESTIONS_OF("s.question_set_id")} AS questions
      FROM sector s
@@ -363,7 +387,7 @@ export async function listSectorTopics(): Promise<SectorTopics[]> {
      LEFT JOIN topic_set ts ON ts.id = s.topic_set_id
      LEFT JOIN question_set qs ON qs.id = s.question_set_id
      ORDER BY st.label, s.code`,
-  );
+  ));
 }
 
 export interface TypeTopics extends SectorTopics {
@@ -373,7 +397,7 @@ export interface TypeTopics extends SectorTopics {
 }
 
 export async function listTypeTopics(): Promise<TypeTopics[]> {
-  return query<TypeTopics>(
+  return inScreenOrder(await query<TypeTopics>(
     `SELECT et.code, ett.label, s.code AS "sectorCode", ts.code AS "listCode",
             ${TOPICS_OF("et.topic_set_id")} AS topics,
             qs.code AS "questionListCode", ${QUESTIONS_OF("et.question_set_id")} AS questions,
@@ -388,7 +412,7 @@ export async function listTypeTopics(): Promise<TypeTopics[]> {
      LEFT JOIN topic_set ts ON ts.id = et.topic_set_id
      LEFT JOIN question_set qs ON qs.id = et.question_set_id
      ORDER BY s.code, et.code`,
-  );
+  ));
 }
 
 export interface ServiceTopics {
@@ -407,7 +431,7 @@ export interface ServiceTopics {
 }
 
 export async function listServiceTopics(): Promise<ServiceTopics[]> {
-  return query<ServiceTopics>(
+  return inScreenOrder(await query<ServiceTopics>(
     `WITH offered AS (
        SELECT es.service_id, e.name, s.code AS sector_code, et.code AS type_code
        FROM establishment_service es
@@ -429,7 +453,7 @@ export async function listServiceTopics(): Promise<ServiceTopics[]> {
      LEFT JOIN topic_set ts ON ts.id = sv.topic_set_id
      LEFT JOIN question_set qs ON qs.id = sv.question_set_id
      ORDER BY sv.code`,
-  );
+  ));
 }
 
 export interface BankOption {
@@ -456,7 +480,10 @@ export interface BankQuestion {
   conditions: BankCondition[];
 }
 
-/** Every question, written once (the bank), with its answers and conditions. */
+/**
+ * Every question, written once (the bank), with its answers and conditions;
+ * by category, then by code (asked by Olivia, 2026-10-08).
+ */
 export async function listQuestionBank(): Promise<BankQuestion[]> {
   return query<BankQuestion>(
     `SELECT q.code, qt.label, q.type, c.code AS "categoryCode",
@@ -481,7 +508,7 @@ export async function listQuestionBank(): Promise<BankQuestion[]> {
      FROM question q
      LEFT JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
      LEFT JOIN evaluation_category c ON c.id = q.category_id
-     ORDER BY q.code`,
+     ORDER BY c.position NULLS LAST, q.code`,
   );
 }
 
