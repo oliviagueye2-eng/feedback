@@ -272,6 +272,19 @@ describe("questionnaire", () => {
     expect(all.sectors.length).toBeGreaterThan(1);
   });
 
+  it("narrows to a service, the sectors and types offering it", async () => {
+    const q = await getQuestionnaire({ type: "AIRPORT", service: "SCHOOL_LIFE" });
+    expect(q).toMatchObject({ sector: null, type: null, service: "SCHOOL_LIFE" });
+    expect(q.services.map((s) => s.code)).toEqual(["SCHOOL_LIFE"]);
+    expect(q.sectors.map((s) => s.code)).toEqual(["EDUCATION"]);
+    expect(q.types.map((t) => t.code)).toContain("HIGH_SCHOOL");
+    expect(q.types.every((t) => q.services[0]!.typeCodes.includes(t.code))).toBe(true);
+    expect(q.questions.length).toBeLessThan((await getQuestionnaire({})).questions.length);
+    const both = await getQuestionnaire({ type: "HIGH_SCHOOL", service: "SCHOOL_LIFE" });
+    expect(both).toMatchObject({ sector: "EDUCATION", type: "HIGH_SCHOOL" });
+    expect(both.types.map((t) => t.code)).toEqual(["HIGH_SCHOOL"]);
+  });
+
   it("puts mobile money in its own sector, apart from banks and insurers", async () => {
     const banking = await getQuestionnaire({ sector: "BANKING_INSURANCE" });
     expect(banking.services.map((s) => s.code)).toEqual(["INSURANCE_CLAIM"]);

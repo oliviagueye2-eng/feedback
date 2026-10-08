@@ -11,7 +11,7 @@ const PATH = "/console-bo/questionnaire";
  * The topics of screen 2b, where they come from: one table for the sectors,
  * the establishment types and the services (asked by Olivia, 2026-10-08).
  * For someone technical: the database's column names under each header.
- * Read only. The filters (?secteur=, ?type=) work without JavaScript.
+ * Read only. The filters (?secteur=, ?type=, ?service=) work without JavaScript.
  */
 export default async function QuestionnairePage({ searchParams }: PageProps<"/console-bo/questionnaire">) {
   await requireAdmin();
@@ -19,7 +19,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
   const one = (value: string | string[] | undefined) => (typeof value === "string" && value !== "" ? value : undefined);
   const [{ admin }, q] = await Promise.all([
     getDictionary(),
-    getQuestionnaire({ sector: one(params.secteur), type: one(params.type) }),
+    getQuestionnaire({ sector: one(params.secteur), type: one(params.type), service: one(params.service) }),
   ]);
   const t = admin.questionnaire;
   // The question whose answers show a topic at screen 2b (topic_condition).
@@ -86,14 +86,16 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
         <QuestionnaireFilters
           sectors={q.sectorOptions}
           types={q.typeOptions}
+          services={q.serviceOptions}
           sector={q.sector}
           type={q.type}
-          text={{ sector: t.sector, type: t.type, all: t.all }}
+          service={q.service}
+          text={{ sector: t.sector, type: t.type, service: t.service, all: t.all }}
         />
         <button type="submit" className={styles.button}>
           {t.apply}
         </button>
-        {(q.sector || q.type) && (
+        {(q.sector || q.type || q.service) && (
           <a href={PATH} className={styles.link}>
             {t.reset}
           </a>
