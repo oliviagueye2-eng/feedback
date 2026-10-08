@@ -10,7 +10,7 @@ import { isUuid, requireUuid } from "../../lib/validation";
 import { createSessionToken, isRightPassword } from "./session";
 
 export { isValidSessionToken, SESSION_DAYS } from "./session";
-export type { AdminComment, CommentStatus, EstablishmentComments, PendingEstablishment, StopPage } from "../../db/admin";
+export type { AdminComment, CommentStatus, EstablishmentComments, ListedTopic, PendingEstablishment, ServiceTopics, SectorTopics, StopPage, TypeTopics } from "../../db/admin";
 
 /** 5 failed sign-ins in 15 minutes from one address block it for 15 minutes. */
 export const LOGIN_MAX_FAILURES = 5;
@@ -120,5 +120,37 @@ export async function getDashboard() {
     weeks,
     /** Establishments with comments this month (asked by Olivia, 2026-10-07). */
     commented,
+  };
+}
+
+// Questionnaire --------------------------------------------------------------------
+
+/**
+ * The topic lists of every sector, type and service. `sector` and `type`
+ * (codes, from the page's filters) narrow the three tables; a type decides
+ * the sector. A service is shown when an establishment of that sector or
+ * type offers it. An unknown code is ignored.
+ */
+export async function getQuestionnaire(filter: { sector?: string; type?: string }) {
+  const [sectors, types, services] = await Promise.all([
+    db.listSectorTopics(),
+    db.listTypeTopics(),
+    db.listServiceTopics(),
+  ]);
+  const type = types.find((t) => t.code === filter.type);
+  const sector = type ? sectors.find((s) => s.code === type.sectorCode) : sectors.find((s) => s.code === filter.sector);
+  return {
+    sector: sector?.code ?? null,
+    type: type?.code ?? null,
+    /** Every sector and type, for the filters. */
+    sectorOptions: sectors.map(({ code, label }) => ({ code, label })),
+    typeOptions: types.map(({ code, label, sectorCode }) => ({ code, label, sectorCode })),
+    sectors: sector ? [sector] : sectors,
+    types: type ? [type] : sector ? types.filter((t) => t.sectorCode === sector.code) : types,
+    services: type
+      ? services.filter((s) => s.typeCodes.includes(type.code))
+      : sector
+        ? services.filter((s) => s.sectorCodes.includes(sector.code))
+        : services,
   };
 }
