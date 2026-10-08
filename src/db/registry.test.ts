@@ -101,9 +101,9 @@ describe("first establishments of the registry", () => {
     const { rows } = await db.query<{ n: number }>(`
       SELECT count(*)::int AS n FROM organization o JOIN sector s ON s.id = o.sector_id
       WHERE s.code = 'BANKING_INSURANCE'`);
-    // 29 banks, then Wave, 16 insurers and 6 microfinance institutions (0025),
-    // Orange Money and Mixx by Yas (0027).
-    expect(rows[0]?.n).toBe(54);
+    // 29 banks, 16 insurers and 6 microfinance institutions (0025); Wave,
+    // Orange Money and Mixx by Yas moved to « Paiement mobile » (0030).
+    expect(rows[0]?.n).toBe(51);
   });
 
   it("finds the new organisations by their name or an everyday word (0025)", async () => {
