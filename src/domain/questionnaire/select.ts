@@ -2,7 +2,7 @@
 export interface QuestionSetSources {
   /** False when the establishment has no sector (typed by a user without one). */
   sectorKnown: boolean;
-  /** sector.question_set_id: the sector of the service, else of the type, else of the establishment. */
+  /** sector.question_set_id: the sector of the establishment's type, else of the establishment. */
   sectorSetId: number | null;
   /** establishment_type.question_set_id. */
   typeSetId: number | null;

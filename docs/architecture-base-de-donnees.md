@@ -220,7 +220,7 @@ Catalogue national des services : état civil (extrait de naissance, mariage…)
 |---|---|---|
 | id | int | |
 | code | text unique | `CIVIL_REGISTRY_BIRTH` |
-| sector_id | fk sector | domaine du service |
+| sector_id | fk sector | domaine du service : range le catalogue. Ne choisit pas les listes du secteur : un avis prend toujours le secteur de l'établissement (décision du 2026-10-08) |
 | question_set_id | fk question_set | liste de questions du service, ajoutée à celles du secteur et du type (facultative) |
 | synonyms | text[] | mots que l'usager peut taper pour désigner ce service (voir plus bas) |
 | search_text | text | libellé français + synonymes, en minuscules et sans accents, rempli automatiquement (index trigramme) |
