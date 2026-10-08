@@ -101,7 +101,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
           type={q.type}
           service={q.service}
           establishment={q.establishment}
-          text={{ sector: t.sector, type: t.type, service: t.service, establishment: t.establishment, all: t.all }}
+          text={{ sector: t.sector, type: t.type, service: t.service, establishment: t.establishment, all: t.all, noType: t.noType }}
         />
         <button type="submit" className={styles.button}>
           {t.apply}

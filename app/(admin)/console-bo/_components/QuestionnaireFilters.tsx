@@ -37,7 +37,7 @@ export function QuestionnaireFilters({
   type: string | null;
   service: string | null;
   establishment: string | null;
-  text: { sector: string; type: string; service: string; establishment: string; all: string };
+  text: { sector: string; type: string; service: string; establishment: string; all: string; noType: string };
 }) {
   const [sector, setSector] = useState(initialSector ?? "");
   const [type, setType] = useState(initialType ?? "");
@@ -101,7 +101,8 @@ export function QuestionnaireFilters({
         <strong>{text.type}</strong>
         <code>establishment_type.code</code>
         <select name="type" value={type} onChange={(e) => chooseType(e.target.value)} className={styles.input}>
-          <option value="">{text.all}</option>
+          {/* An establishment without a type (Air Sénégal): said, not « Tous ». */}
+          <option value="">{chosen && !chosen.typeCode ? text.noType : text.all}</option>
           {sectors
             .filter((s) => !sector || s.code === sector)
             .map((s) => {
