@@ -126,6 +126,14 @@ describe("reference data", () => {
         WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = 'ROAD_TRIP') ORDER BY t.position`))
         .rows.map((r) => r.code);
     expect(await roadTrip()).toEqual(["DRIVER_BEHAVIOUR", "PUNCTUALITY", "ONBOARD_SAFETY"]);
+    // The boat, the plane, the train and the highway: « Compétence du personnel » (0036).
+    const listOf = async (list: string) =>
+      (await db.query<{ code: string }>(`
+        SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
+        WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = $1) ORDER BY t.position`, [list]))
+        .rows.map((r) => r.code);
+    expect(await listOf("TRIP")).toEqual(["PROFESSIONALISM", "PUNCTUALITY", "ONBOARD_SAFETY"]);
+    expect(await listOf("TOLL_HIGHWAY")).toContain("PROFESSIONALISM");
     expect((await db.query<{ code: string }>(`
       SELECT code FROM service WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'ROAD_TRIP') ORDER BY code`))
       .rows.map((r) => r.code)).toEqual(["APP_RIDE", "LAND_TRIP", "STREET_TAXI_RIDE"]);

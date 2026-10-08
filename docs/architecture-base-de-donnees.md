@@ -478,8 +478,8 @@ Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_
 | `SCHOOL_ADMIN` | Accueil, Temps d'attente, Explications, Simplicité, Horaires, Frais | service « Inscription ou démarche administrative » des écoles |
 | `SCHOOL_LIFE` | Qualité de l'enseignement, Encadrement des élèves, Sécurité dans l'établissement, Tables-bancs et manuels, Échanges avec les enseignants et la direction | service « Les cours et la vie de l'école » des écoles |
 | `TRANSPORT` | Explications, Frais, Service client (Accueil retiré en 0035) | secteur Transport (opérateurs, aéroport, gares routières) |
-| `TRIP` | Ponctualité, Sécurité à bord (un trajet, pas un lieu ni un guichet ; pas de Temps d'attente, que dit Ponctualité) | services « Un vol », « Un trajet en train », « Une traversée en bateau » |
-| `ROAD_TRIP` | `TRIP` plus Comportement du chauffeur (0035, 2026-10-08) | services « Un trajet en bus », « Une course en VTC », « Une course en taxi » |
+| `TRIP` | Compétence du personnel (0036), Ponctualité, Sécurité à bord (un trajet, pas un lieu ni un guichet ; pas de Temps d'attente, que dit Ponctualité) | services « Un vol », « Un trajet en train », « Une traversée en bateau » |
+| `ROAD_TRIP` | Comportement du chauffeur, Ponctualité, Sécurité à bord (0035, 2026-10-08) | services « Un trajet en bus », « Une course en VTC », « Une course en taxi » |
 | `TRANSPORT_PLACE` | Temps d'attente, Horaires d'ouverture | types Aéroport, Gare routière ; services Achat de ticket, Achat de billet d'avion |
 
 ### evaluation_category (migration 0009)
