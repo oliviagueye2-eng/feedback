@@ -669,12 +669,16 @@ export async function findDetailedQuestions(feedbackId: string, setIds: number[]
  * (« Résultat obtenu » first, 0021). A
  * question that another opens stays right after it, so each question goes
  * with the first one of its chain. Otherwise the lists' order is kept. The
- * common questions stay last, on their own page.
+ * common questions stay last, on their own page. Also the order of a list in
+ * the back office's Questionnaire tables.
  */
-function byCategory(questions: DetailedQuestion[], categoryOf: Map<string, number | null>): DetailedQuestion[] {
+export function byCategory<Q extends { code: string; conditions: { dependsOn: string }[]; common?: boolean }>(
+  questions: Q[],
+  categoryOf: Map<string, number | null>,
+): Q[] {
   const index = new Map(questions.map((q, i) => [q.code, i]));
   // The question asked before on this page that opens this one, if any.
-  const rootOf = (q: DetailedQuestion): string => {
+  const rootOf = (q: Q): string => {
     const parent = q.conditions.find((c) => (index.get(c.dependsOn) ?? Infinity) < index.get(q.code)!);
     return parent ? rootOf(questions[index.get(parent.dependsOn)!]) : q.code;
   };
@@ -694,10 +698,10 @@ function byCategory(questions: DetailedQuestion[], categoryOf: Map<string, numbe
       categoryOf.get(root) ?? (previous === -1 ? -1 : opened.length ? Math.min(...opened) : previous);
     keys.set(root, previous);
   }
-  const keyOf = (q: DetailedQuestion) => keys.get(roots.get(q.code)!)!;
+  const keyOf = (q: Q) => keys.get(roots.get(q.code)!)!;
   return [...questions].sort(
     (a, b) =>
-      Number(a.common) - Number(b.common) ||
+      Number(a.common ?? false) - Number(b.common ?? false) ||
       keyOf(a) - keyOf(b) ||
       index.get(roots.get(a.code)!)! - index.get(roots.get(b.code)!)! ||
       index.get(a.code)! - index.get(b.code)!,

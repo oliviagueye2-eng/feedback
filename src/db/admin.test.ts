@@ -311,7 +311,8 @@ describe("questionnaire", () => {
 
     const mobile = await getQuestionnaire({ sector: "MOBILE_PAYMENT" });
     expect(mobile.questions.map((q) => q.code)).toEqual([
-      "AGENT_CASH", "GOAL_ACHIEVED", "MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "OVERALL_SATISFACTION",
+      // By category, then by code.
+      "GOAL_ACHIEVED", "MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "AGENT_CASH", "OVERALL_SATISFACTION",
       "REPORTED", "REPORT_WHY",
     ]);
   });
@@ -325,6 +326,14 @@ describe("questionnaire", () => {
     expect(delays).toMatchObject({ label: "Délais", position: 3 });
     expect(delays.topics[0]).toEqual({ code: "WAIT_TIME", isActive: true });
     expect(delays.questions).toContain("WAIT_TIME");
+  });
+
+  it("lists a level's questions in the order of screen 6", async () => {
+    const q = await getQuestionnaire({ sector: "ADMINISTRATION" });
+    // « Avez-vous payé… ? » stays right before the receipt it opens.
+    expect(q.sectors[0]!.questions.map((x) => x.code)).toEqual([
+      "GOAL_ACHIEVED", "WAIT_TIME", "VISITS_COUNT", "DOCUMENTS_KNOWN", "PAID_SOMETHING", "RECEIPT_GIVEN",
+    ]);
   });
 
   it("shows an inactive topic as such", async () => {
