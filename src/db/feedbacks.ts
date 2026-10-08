@@ -149,26 +149,32 @@ const formLevels = (first: number) => `
   LEFT JOIN service s ON s.code = $${first + 2}`;
 
 /**
- * Active topics shown for the levels given (a feedback's, or a form's): the
- * sum of the topic lists of its levels, like the questions. The COMMON list,
- * then the list of its sector (COMMERCE when the sector is unknown), of its
- * establishment type and of its service. A service that replaces the shared
- * lists (mobile money, 0026) leaves out COMMON and the sector's. A topic in
- * several lists comes once.
+ * The topic lists of the levels given (a feedback's, or a form's), one row
+ * per level that has one (level, id): COMMON, then the list of its sector
+ * (COMMERCE when the sector is unknown), of its establishment type and of
+ * its service. A service that replaces the shared lists (mobile money, 0026)
+ * leaves out COMMON and the sector's.
  */
+const topicListsOfLevels = (levels: string) => `
+  SELECT v.level, v.id
+  FROM (${levels}) l,
+       LATERAL (VALUES
+         ('common', CASE WHEN l.replaces THEN NULL ELSE (SELECT id FROM topic_set WHERE code = 'COMMON') END),
+         ('sector', CASE WHEN l.replaces THEN NULL
+                         ELSE coalesce(l.sector_topic_set, CASE WHEN l.sector_id IS NULL THEN (SELECT id FROM topic_set WHERE code = 'COMMERCE') END) END),
+         ('type', l.type_topic_set),
+         ('service', l.service_topic_set)) AS v (level, id)
+  WHERE v.id IS NOT NULL`;
+
+/** Active topics shown for the levels given: those of their lists (topicListsOfLevels), each once. */
 const topicsOfLevels = (levels: string) => `
   SELECT t.* FROM topic t
   WHERE t.is_active
     AND EXISTS (
       SELECT 1
-      FROM (${levels}) l
-      JOIN topic_set_item i ON i.topic_id = t.id
-      WHERE i.topic_set_id IN (
-          CASE WHEN l.replaces THEN NULL ELSE (SELECT id FROM topic_set WHERE code = 'COMMON') END,
-          CASE WHEN l.replaces THEN NULL
-               ELSE coalesce(l.sector_topic_set, CASE WHEN l.sector_id IS NULL THEN (SELECT id FROM topic_set WHERE code = 'COMMERCE') END) END,
-          l.type_topic_set,
-          l.service_topic_set))`;
+      FROM (${topicListsOfLevels(levels)}) ls
+      JOIN topic_set_item i ON i.topic_set_id = ls.id
+      WHERE i.topic_id = t.id)`;
 
 /** Active topics shown for feedback $n (topicsOfLevels). */
 const topicsForFeedback = (feedbackParam: string) => topicsOfLevels(feedbackLevels(feedbackParam));
@@ -715,6 +721,57 @@ export async function findDetailedQuestions(feedbackId: string, setIds: number[]
     condition.options.push(row.option_code);
   }
   return byCategory(questions, categoryOf);
+}
+
+/** Where a form's items come from: a list and its level. */
+export interface FormList {
+  code: string;
+  level: "common" | "sector" | "type" | "service";
+}
+
+/**
+ * The lists a form's topics come from (back office), by topic code: every
+ * list of its levels holding it, in the order of topicListsOfLevels.
+ */
+export async function findFormTopicLists(levels: FormLevels): Promise<Record<string, FormList[]>> {
+  const rows = await query<{ topic: string; code: string; level: FormList["level"] }>(
+    `SELECT t.code AS topic, ts.code, ls.level
+     FROM (${topicListsOfLevels(formLevels(1))}) ls
+     JOIN topic_set ts ON ts.id = ls.id
+     JOIN topic_set_item i ON i.topic_set_id = ls.id
+     JOIN topic t ON t.id = i.topic_id
+     ORDER BY CASE ls.level WHEN 'common' THEN 1 WHEN 'sector' THEN 2 WHEN 'type' THEN 3 ELSE 4 END`,
+    [levels.sector, levels.type, levels.service],
+  );
+  return groupLists(rows.map((r) => ({ item: r.topic, code: r.code, level: r.level })));
+}
+
+/**
+ * The lists a form's questions come from (back office), by question code:
+ * every list of the page holding it (setIds with their levels, then COMMON).
+ */
+export async function findFormQuestionLists(
+  sets: { id: number; level: FormList["level"] }[],
+): Promise<Record<string, FormList[]>> {
+  const rows = await query<{ question: string; code: string; ord: number }>(
+    `SELECT q.code AS question, qs.code, p.ord::int AS ord
+     FROM (SELECT s.id, s.ord FROM unnest($1::smallint[]) WITH ORDINALITY AS s (id, ord)
+           UNION ALL SELECT id, 1000 FROM question_set WHERE code = 'COMMON') p
+     JOIN question_set qs ON qs.id = p.id
+     JOIN question_set_item i ON i.question_set_id = p.id
+     JOIN question q ON q.id = i.question_id
+     ORDER BY p.ord`,
+    [sets.map((s) => s.id)],
+  );
+  return groupLists(
+    rows.map((r) => ({ item: r.question, code: r.code, level: r.ord === 1000 ? "common" : sets[r.ord - 1]!.level })),
+  );
+}
+
+function groupLists(rows: { item: string; code: string; level: FormList["level"] }[]): Record<string, FormList[]> {
+  const lists: Record<string, FormList[]> = {};
+  for (const row of rows) (lists[row.item] ??= []).push({ code: row.code, level: row.level });
+  return lists;
 }
 
 /** Screens 6 and 6b of a form (back office): its questions, nothing answered. */

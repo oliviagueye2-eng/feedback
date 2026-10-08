@@ -76,6 +76,10 @@ it("shows the form of an establishment, with its sector and type", async () => {
     { question: "Avez-vous payé quelque chose ?", answers: ["Oui"] },
   ]);
   expect(q.form?.commonQuestions.map((x) => x.code)).toEqual(["REPORTED", "REPORT_WHY"]);
+  // Where each item comes from: every list of the form holding it, with its level.
+  expect(q.form?.commonQuestions[0]?.lists).toEqual([{ code: "COMMON", level: "common" }]);
+  for (const topic of q.form?.topics ?? []) expect(q.form?.topicLists[topic.code]?.length).toBeGreaterThan(0);
+  for (const question of q.form?.questions ?? []) expect(question.lists.length).toBeGreaterThan(0);
 });
 
 it("shows no form until an establishment or a sector is chosen", async () => {

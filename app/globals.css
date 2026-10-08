@@ -43,6 +43,16 @@
   --satisfaction-4-tint: #fcebdd;
   --satisfaction-5: #cd1e22;
   --satisfaction-5-tint: #fbe4e4;
+
+  /* Back office, generated form: the level a list belongs to (2026-10-08). */
+  --level-common: var(--muted);
+  --level-common-tint: var(--line-light);
+  --level-sector: var(--green-dark);
+  --level-sector-tint: var(--green-tint);
+  --level-type: #6b3fa0;
+  --level-type-tint: #f1e9f8;
+  --level-service: #1d5c9e;
+  --level-service-tint: #e4eef8;
 }
 
 * {

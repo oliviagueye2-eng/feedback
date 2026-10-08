@@ -765,3 +765,49 @@
   font-size: 13px;
   font-weight: 400;
 }
+
+/* Where each item comes from: one tag per list, in its level's colour. */
+.legend {
+  margin: 0 0 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.listTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.listTag {
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.levelCommon {
+  background: var(--level-common-tint);
+  color: var(--level-common);
+}
+
+.levelSector {
+  background: var(--level-sector-tint);
+  color: var(--level-sector);
+}
+
+.levelType {
+  background: var(--level-type-tint);
+  color: var(--level-type);
+}
+
+.levelService {
+  background: var(--level-service-tint);
+  color: var(--level-service);
+}

@@ -51,15 +51,18 @@ export function TopicRatings({
   otherCode,
   otherMaxLength,
   t,
-  gateNotes,
+  notes,
 }: {
   topics: TopicChoice[];
   otherCode: string;
   otherMaxLength: number;
   /** Texts given by the page. */
   t: { good: string; bad: string; notConcerned: string; otherLabel: string; otherPlaceholder: string };
-  /** Back office only (form shown with every topic): a note under each question, by its code. */
-  gateNotes?: { className: string; text: Record<string, string> };
+  /**
+   * Back office only (generated form): notes under a topic's label and
+   * under a question, by their codes (where they come from, when they show).
+   */
+  notes?: { topics?: Record<string, ReactNode>; gates?: Record<string, ReactNode> };
 }) {
   const [chosen, setChosen] = useState<Record<string, TopicSentiment | null>>(() =>
     Object.fromEntries(topics.map((topic) => [topic.code, topic.sentiment])),
@@ -96,6 +99,7 @@ export function TopicRatings({
           <span id={labelId} className={styles.topicLabel}>
             {topic.label}
           </span>
+          {notes?.topics?.[topic.code]}
           <span className={styles.ratings}>
             {choice("positive", t.good, <ThumbIcon />)}
             {choice("negative", t.bad, <ThumbIcon down />)}
@@ -142,7 +146,7 @@ export function TopicRatings({
               </label>
             ))}
           </span>
-          {gateNotes?.text[gate.code] && <span className={gateNotes.className}>{gateNotes.text[gate.code]}</span>}
+          {notes?.gates?.[gate.code]}
         </div>
         <div className={styles.gated} data-gated="">
           {gated.map(topicRow)}
