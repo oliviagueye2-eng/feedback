@@ -1,0 +1,522 @@
+/* Back-office (maquettes validées par Olivia le 2026-10-07): the site's font
+   and palette (globals.css), lists in rows rather than cards, small icon
+   buttons for the actions, a panel under the row for corrections. */
+
+.shell {
+  display: flex;
+  min-height: calc(100vh - 5px);
+}
+
+.nav {
+  width: 232px;
+  flex: none;
+  border-right: 1px solid var(--line-light);
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 18px;
+  padding: 4px 12px 2px;
+}
+
+.brand small {
+  display: block;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.nav hr {
+  border: 0;
+  border-top: 1px solid var(--line-light);
+  margin: 14px 0;
+}
+
+.navLink {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.navLink:hover {
+  background: var(--page);
+  color: var(--ink);
+}
+
+.navLink[aria-current="page"] {
+  background: var(--green-tint);
+  color: var(--green-dark);
+  font-weight: 700;
+}
+
+.count {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green-dark);
+}
+
+.signOut {
+  margin-top: auto;
+}
+
+.signOut button {
+  background: none;
+  border: 0;
+  font: inherit;
+  color: var(--muted);
+  padding: 9px 12px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  border-radius: 6px;
+}
+
+.signOut button:hover {
+  background: var(--page);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 28px 40px 40px;
+}
+
+.main h1 {
+  font-size: 28px;
+  line-height: 1.2;
+  margin: 0 0 6px;
+}
+
+.main h2 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.lead {
+  margin: 0;
+  color: var(--muted);
+  max-width: 68ch;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin: 0;
+}
+
+.meta strong {
+  color: var(--ink);
+}
+
+.input {
+  font: inherit;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 9px 12px;
+  background: #fff;
+  width: 100%;
+}
+
+.button {
+  background: var(--green);
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--green-dark);
+}
+
+.danger {
+  background: var(--error);
+}
+
+.danger:hover {
+  background: #8f1e18;
+}
+
+.link {
+  background: none;
+  border: 0;
+  font: inherit;
+  color: var(--green);
+  text-decoration: underline;
+  padding: 10px 4px;
+  cursor: pointer;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Icon actions: a name for screen readers and on hover (title). */
+.actions {
+  display: flex;
+  gap: 6px;
+}
+
+.actions form {
+  display: contents;
+}
+
+.icon {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--muted);
+  padding: 0;
+  cursor: pointer;
+}
+
+.icon:hover {
+  background: var(--page);
+  color: var(--muted);
+}
+
+.ok {
+  color: var(--green);
+}
+
+.ko {
+  color: var(--error);
+}
+
+.ok:hover {
+  color: var(--green);
+}
+
+.ko:hover {
+  color: var(--error);
+}
+
+.filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 20px 0 12px;
+}
+
+.filters .input {
+  width: auto;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
+.list > li {
+  border-bottom: 1px solid var(--line-light);
+  padding: 16px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 24px;
+  align-items: start;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.entry p {
+  margin: 0;
+  max-width: 72ch;
+}
+
+.notice {
+  align-self: flex-start;
+  background: var(--notice-tint);
+  border: 1px solid var(--notice-line);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 14px;
+}
+
+.empty {
+  color: var(--muted);
+  padding: 16px 0;
+}
+
+/* Correction, merge or confirmation, under the row it is about. */
+.panel {
+  grid-column: 1 / -1;
+  background: var(--page);
+  border-left: 3px solid var(--green);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panelDanger {
+  border-left-color: var(--error);
+}
+
+.panel label,
+.label {
+  font-weight: 700;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+}
+
+.fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.fields .input {
+  font-weight: 400;
+  font-size: 16px;
+}
+
+.error {
+  color: var(--error);
+  font-weight: 700;
+  margin: 0;
+}
+
+.results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.results label {
+  font-weight: 400;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+/* Dashboard ---------------------------------------------------------------- */
+
+.month {
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.month > div {
+  padding: 16px 20px;
+}
+
+.month > div:first-child {
+  padding-left: 0;
+}
+
+.month > div + div {
+  border-left: 1px solid var(--line-light);
+}
+
+.figure {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr));
+  gap: 28px 48px;
+  margin-top: 28px;
+}
+
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chartColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.chart svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.legend {
+  display: flex;
+  gap: 18px;
+  font-size: 14px;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.satisfied {
+  background: var(--satisfaction-1);
+}
+
+.notSatisfied {
+  background: var(--satisfaction-4);
+}
+
+.bar {
+  display: grid;
+  grid-template-columns: minmax(0, 150px) 1fr 48px;
+  gap: 12px;
+  align-items: center;
+}
+
+.track {
+  height: 14px;
+  background: var(--track);
+  border-radius: 4px;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  background: var(--satisfaction-1);
+  border-radius: 4px;
+}
+
+/* Comments of the month, by establishment: a plain table, numbers on the right. */
+
+.commented {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 28px;
+  max-width: 720px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid var(--line-light);
+  text-align: right;
+  font-weight: 400;
+}
+
+.table th:first-child {
+  text-align: left;
+}
+
+.table thead th {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.table tbody th a {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.muted {
+  display: block;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Sign-in -------------------------------------------------------------------- */
+
+.signInPage {
+  min-height: calc(100vh - 5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: var(--page);
+}
+
+.signInForm {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (max-width: 760px) {
+  .shell {
+    flex-direction: column;
+  }
+
+  .nav {
+    width: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-light);
+    padding: 12px;
+  }
+
+  .nav hr,
+  .brand small {
+    display: none;
+  }
+
+  .signOut {
+    margin-top: 0;
+  }
+
+  .main {
+    padding: 20px 16px;
+  }
+
+  .list > li,
+  .fields {
+    grid-template-columns: 1fr;
+  }
+}

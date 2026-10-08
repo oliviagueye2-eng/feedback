@@ -432,11 +432,11 @@ describe("collection rules", () => {
       [establishmentId, merged],
     );
     await db.query(
-      `INSERT INTO feedback (id, establishment_id, channel, language, visit_period, visit_month, step, completed_at)
-       VALUES ($1, $2, 'qr', 'fr', 'today', '2026-03-01', 'completed', date_trunc('hour', now()))`,
+      `INSERT INTO feedback (id, establishment_id, channel, language, visit_period, visit_month, step, completed_at, attested_at)
+       VALUES ($1, $2, 'qr', 'fr', 'today', '2026-03-01', 'completed', date_trunc('hour', now()), date_trunc('hour', now()))`,
       [recent, merged],
     );
-    // Sent from the last screen: only those count in the published results (0024).
+    // Sent from the last screen: only those count in the published results (0024, 0028).
     await db.query(
       "INSERT INTO feedback_contact (feedback_id, kind, value) VALUES ($1, 'email', 'awa@exemple.sn')",
       [recent],

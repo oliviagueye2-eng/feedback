@@ -3,7 +3,7 @@ import { BackLink } from "../../../../_components/BackLink";
 import { FormValidation } from "../../../../_components/FormValidation";
 import { PendingLoader } from "../../../../_components/PendingLoader";
 import { DomainError } from "@/src/domain/errors";
-import { CONTACT_MAX_LENGTH, getSendScreen } from "@/src/domain/feedback";
+import { CONTACT_MAX_LENGTH, getSendScreen, recordPageShown } from "@/src/domain/feedback";
 import { getDictionary } from "../../../../_i18n";
 import { sendFeedback } from "../../../_feedback/actions";
 import { FeedbackHeader } from "../../../_feedback/FeedbackHeader";
@@ -33,6 +33,7 @@ export default async function SendPage({ params, searchParams }: PageProps<"/don
   if (!context.essentialOption) redirect(`/donner/${feedbackId}`);
   // Already sent: nothing more to do here.
   if (context.completed) redirect(`/donner/${feedbackId}/merci`);
+  await recordPageShown(feedbackId, "send");
   const previousHref =
     previous === "details" ? `/donner/${feedbackId}/precisions` : questionPageHref(feedbackId, previous);
   const { common, send: t } = await getDictionary();
