@@ -613,6 +613,13 @@
   min-height: 0;
 }
 
+/* A wide table: where the browser draws scrollbars over the page (phones,
+   Linux), AG Grid lays its horizontal one over the last row and hides it.
+   Put the bar under the rows instead. */
+.grid :global(.ag-layout-auto-height .ag-body-horizontal-scroll.ag-scrollbar-invisible) {
+  position: relative;
+}
+
 .gridGroupStart {
   border-left: 2px solid var(--line);
 }

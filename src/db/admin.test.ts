@@ -282,12 +282,13 @@ describe("questionnaire", () => {
         code: "MOBILE_PAYMENT",
         label: "Paiement mobile",
         listCode: "MOBILE_PAYMENT",
+        // In the order of the categories, then of topic.position.
         topics: [
+          ["REQUEST_HANDLING", "OUTCOME"],
           ["STAFF", "STAFF"],
           ["INFORMATION", "STAFF"],
           ["WAIT_TIME", "DELAYS"],
           ["FEES", "COST"],
-          ["REQUEST_HANDLING", "OUTCOME"],
           ["ACCOUNT_SECURITY", "SERVICE_QUALITY"],
         ].map(([code, categoryCode]) => ({ code, isActive: true, categoryCode })),
         questionListCode: "MOBILE_PAYMENT",
