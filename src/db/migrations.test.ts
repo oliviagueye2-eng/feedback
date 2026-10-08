@@ -181,9 +181,9 @@ describe("reference data", () => {
     });
     expect(await attached("service")).toEqual({
       CIVIL_REGISTRY: null, LAND_TRIP: "LAND_TRIP", BOAT_CROSSING: "BOAT_CROSSING", TICKET_PURCHASE: "TICKET_PURCHASE",
-      FLIGHT: "FLIGHT", PLANE_TICKET: "TICKET_PURCHASE", SCHOOL_ADMIN: "SCHOOL_ADMIN", SCHOOL_LIFE: "SCHOOL_LIFE",
+      FLIGHT: "FLIGHT", PLANE_TICKET: "TICKET_PURCHASE", SCHOOL_ADMIN: "FILE_SERVICES", SCHOOL_LIFE: "SCHOOL_LIFE",
       POLICE_PREMISES: "POLICE_PREMISES", POLICE_FIELD: "POLICE_FIELD", POLICE_CALL: "POLICE_CALL",
-      HIGHER_EDUCATION_ADMIN: "SCHOOL_ADMIN", HIGHER_EDUCATION_COURSES: "SCHOOL_LIFE", TRAIN_TRIP: "TRAIN_TRIP",
+      HIGHER_EDUCATION_ADMIN: "FILE_SERVICES", HIGHER_EDUCATION_COURSES: "SCHOOL_LIFE", TRAIN_TRIP: "TRAIN_TRIP",
       APP_RIDE: "APP_RIDE", STREET_TAXI_RIDE: "STREET_TAXI_RIDE",
       ELECTRICITY_AGENCY: "ELECTRICITY_AGENCY", ELECTRICITY_SUPPLY: "ELECTRICITY_SUPPLY",
       WATER_AGENCY: "WATER_AGENCY", WATER_SUPPLY: "WATER_SUPPLY",
@@ -209,7 +209,7 @@ describe("reference data", () => {
       `SELECT qs.code AS list FROM question_set_item i
        JOIN question_set qs ON qs.id = i.question_set_id JOIN question q ON q.id = i.question_id
        WHERE q.code = 'WAIT_TIME' ORDER BY qs.code`)).rows.map((r) => r.list);
-    expect(lists).toEqual(["BANKING_INSURANCE", "FILE_SERVICES", "HEALTH", "POLICE_PREMISES", "SCHOOL_ADMIN", "TICKET_PURCHASE"]);
+    expect(lists).toEqual(["BANKING_INSURANCE", "FILE_SERVICES", "HEALTH", "POLICE_PREMISES", "TICKET_PURCHASE"]);
     const order = (await db.query<{ code: string }>(
       `SELECT q.code FROM question_set_item i
        JOIN question_set qs ON qs.id = i.question_set_id JOIN question q ON q.id = i.question_id
@@ -263,7 +263,6 @@ describe("reference data", () => {
       "POLICE_PREMISES: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON COMPLAINT",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON LOSS",
-      "SCHOOL_ADMIN: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "STREET_TAXI_RIDE: PRICE_KEPT ← PRICE_AGREED YES",
       "TELECOM: NETWORK_LOSS ← TELECOM_SUBJECT CALLS_SMS",
       "TELECOM: NETWORK_LOSS ← TELECOM_SUBJECT MOBILE_INTERNET",
@@ -293,7 +292,7 @@ describe("reference data", () => {
        JOIN question_set_item p ON p.question_set_id = i.question_set_id AND p.position = i.position - 1
        JOIN question pq ON pq.id = p.question_id
        WHERE dq.code IN ('PAID_SOMETHING', 'INTERVENTION_AWAITED')`)).rows;
-    expect(before).toHaveLength(7);
+    expect(before).toHaveLength(6); // 0032: SCHOOL_ADMIN merged into FILE_SERVICES.
     expect(before.every((r) => ["PAID_SOMETHING", "INTERVENTION_AWAITED"].includes(r.previous))).toBe(true);
     // A real service keeps its French label (then its synonyms) in its search_text.
     expect((await one<{ search_text: string }>(

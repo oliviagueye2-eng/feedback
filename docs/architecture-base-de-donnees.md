@@ -392,7 +392,7 @@ Contenu : `PAID_SOMETHING` = Oui ouvre « Frais payés » ; `FILE_SUBMITTED` = O
 |---|---|
 | `ESSENTIAL` | tous les avis (écran 2) |
 | `COMMON` | tous les avis, si peu ou pas satisfait(e) (écran 6b) |
-| `FILE_SERVICES` | secteurs Administration et état civil, Impôts et domaines, Justice, Emploi et protection sociale |
+| `FILE_SERVICES` | secteurs Administration et état civil, Impôts et domaines, Justice, Emploi et protection sociale ; type Centre des permis ; services Port, Administration scolaire et Administration universitaire (0032 : la liste `SCHOOL_ADMIN`, identique, est supprimée) |
 | `HEALTH`, `BANKING_INSURANCE`, `EDUCATION`, `ELECTRICITY`, `WATER`, `TELECOM` | le secteur du même nom |
 | `LAND_TRIP`, `BOAT_CROSSING`, `TICKET_PURCHASE` | les services du transport du même nom |
 | `GENERIC` | secteurs Commerce, Culture, Hôtellerie, Immobilier, Restauration, Sport, Tourisme, et secteur inconnu |
