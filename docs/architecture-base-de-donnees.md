@@ -316,7 +316,7 @@ Réorganisées le 2026-10-02, avant le lancement (validé sur la page « Questio
 
 **Règle de rangement** : une question se place au niveau le plus général où elle vaut pour tous ceux qui sont en dessous ; si un seul cas ne doit pas l'avoir, on la descend d'un niveau (les questions de bus sont sur le service « Un trajet en bus ou en train », pas sur le secteur Transport). Un niveau sans liste n'ajoute rien.
 
-**Listes spéciales** (trouvées par leur code) : `ESSENTIAL` (écran 2, la satisfaction, pour tous), `COMMON` (écran 6b, « Avez-vous signalé cette situation… ? », seulement aux usagers peu ou pas satisfaits), `GENERIC` (rattachée aux 7 secteurs privés, et utilisée quand le secteur de l'établissement est inconnu).
+**Listes spéciales** (trouvées par leur code) : `ESSENTIAL` (écran 2, la satisfaction, pour tous), `COMMON` (écran 6b, « Avez-vous signalé cette situation… ? », seulement aux usagers peu ou pas satisfaits), `COMMERCE` (rattachée aux 7 secteurs privés, et utilisée quand le secteur de l'établissement est inconnu).
 
 **Versions** : une question déjà utilisée ne se modifie plus (sauf une formulation qui garde le sens) ; une nouvelle question la remplace dans les listes, et les anciens avis restent lisibles.
 
@@ -348,9 +348,9 @@ Chaque option de `OVERALL_SATISFACTION` a aussi un **libellé de relance** (colo
 | Colonne | Type | Note |
 |---|---|---|
 | id | smallint | |
-| code | text unique | `ESSENTIAL`, `COMMON`, `FILE_SERVICES`, `HEALTH`, `LAND_TRIP`, `GENERIC`… |
+| code | text unique | `ESSENTIAL`, `COMMON`, `FILE_SERVICES`, `HEALTH`, `LAND_TRIP`, `COMMERCE`… |
 
-Rattachée par `sector.question_set_id`, `establishment_type.question_set_id` ou `service.question_set_id` ; une même liste peut servir à plusieurs niveaux (« Services à dossier » pour l'Administration, les Impôts, la Justice et l'Emploi ; `GENERIC` pour les 7 secteurs privés).
+Rattachée par `sector.question_set_id`, `establishment_type.question_set_id` ou `service.question_set_id` ; une même liste peut servir à plusieurs niveaux (« Services à dossier » pour l'Administration, les Impôts, la Justice et l'Emploi ; `COMMERCE` pour les 7 secteurs privés).
 
 ### question_set_item
 | Colonne | Type | Note |
@@ -395,7 +395,7 @@ Contenu : `PAID_SOMETHING` = Oui ouvre « Frais payés » ; `FILE_SUBMITTED` = O
 | `FILE_SERVICES` | secteurs Administration et état civil, Impôts et domaines, Justice, Emploi et protection sociale ; type Centre des permis ; services Port, Administration scolaire et Administration universitaire (0032 : la liste `SCHOOL_ADMIN`, identique, est supprimée) |
 | `HEALTH`, `BANKING_INSURANCE`, `EDUCATION`, `ELECTRICITY`, `WATER`, `TELECOM` | le secteur du même nom |
 | `LAND_TRIP`, `BOAT_CROSSING`, `TICKET_PURCHASE` | les services du transport du même nom |
-| `GENERIC` | secteurs Commerce, Culture, Hôtellerie, Immobilier, Restauration, Sport, Tourisme, et secteur inconnu |
+| `COMMERCE` | secteurs Commerce, Culture, Hôtellerie, Immobilier, Restauration, Sport, Tourisme, et secteur inconnu (0033 : ancien code `GENERIC`) |
 
 Ajoutées depuis : `AIRPORT`, `BUS_STATION` (0005), `FLIGHT` (0006), `POLICE_PREMISES` et `POLICE_FIELD` (0010, services de la police et de la gendarmerie), `MOBILE_PAYMENT` (0031 : « Avez-vous obtenu ce que vous étiez venu(e) chercher ? », pour un avis Paiement mobile sans service). Sans liste : secteurs Sécurité et Transport (les questions viennent du service), service État civil.
 
@@ -450,7 +450,7 @@ Libellés (dans `topic_translation`) :
 Désactivés le 2026-09-30, gardés pour les avis déjà donnés : `PRICE` (Prix), `ACCESSIBILITY` (Accessibilité), `SAFETY` (Sécurité), `SERVICE_QUALITY` (Qualité du service).
 
 ### topic_set et topic_set_item (migrations 0008, 0009 et 0010)
-Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_set`), décision du 2026-10-03. Ce qu'un avis affiche est **la somme** de listes, jamais un retrait : la liste `COMMON`, puis celle du secteur de l'avis (`GENERIC` si le secteur est inconnu), celle de son type d'établissement et celle de son service, chacune rattachée par une colonne `topic_set_id` sur `sector`, `establishment_type` et `service`. Un thème présent dans plusieurs listes ne s'affiche qu'une fois, dans l'ordre de `topic.position`. Une liste se partage (`FILE_SERVICES` pour quatre secteurs, `OTHER_EDUCATION` pour cinq types). Une école est évaluée sur l'une de deux visites (0009, 2026-10-03), choisie à l'écran 1 : l'inscription ou une démarche au secrétariat, ou la scolarité ; ses thèmes viennent du service choisi. De même pour la police et la gendarmerie (0010) : une démarche dans les locaux, ou un contrôle ou une intervention sur le terrain. Remplace `topic_sector` (supprimée), où un thème sans ligne était commun à tous.
+Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_set`), décision du 2026-10-03. Ce qu'un avis affiche est **la somme** de listes, jamais un retrait : la liste `COMMON`, puis celle du secteur de l'avis (`COMMERCE` si le secteur est inconnu), celle de son type d'établissement et celle de son service, chacune rattachée par une colonne `topic_set_id` sur `sector`, `establishment_type` et `service`. Un thème présent dans plusieurs listes ne s'affiche qu'une fois, dans l'ordre de `topic.position`. Une liste se partage (`FILE_SERVICES` pour quatre secteurs, `OTHER_EDUCATION` pour cinq types). Une école est évaluée sur l'une de deux visites (0009, 2026-10-03), choisie à l'écran 1 : l'inscription ou une démarche au secrétariat, ou la scolarité ; ses thèmes viennent du service choisi. De même pour la police et la gendarmerie (0010) : une démarche dans les locaux, ou un contrôle ou une intervention sur le terrain. Remplace `topic_sector` (supprimée), où un thème sans ligne était commun à tous.
 
 | Table | Colonnes |
 |---|---|
@@ -460,7 +460,7 @@ Les thèmes sont rangés en **listes**, sur le modèle des questions (`question_
 | Liste | Thèmes | Rattachée à |
 |---|---|---|
 | `COMMON` | Professionnalisme (Accueil et Frais en sont sortis en 0009 : un élève en classe ne passe pas au guichet ; Propreté et Accessibilité en 0010 : un contrôle routier n'a pas de locaux ; ils sont dans toutes les autres listes, sauf `SECURITY` et `POLICE_FIELD`) | tout le monde |
-| `GENERIC` | Accueil et politesse, Temps d'attente, Explications reçues, Horaires, Frais payés | secteurs Culture, Restauration, Hôtellerie, Commerce, Sport, Tourisme ; secteur inconnu |
+| `COMMERCE` | Accueil et politesse, Temps d'attente, Explications reçues, Horaires, Frais payés | secteurs Culture, Restauration, Hôtellerie, Commerce, Sport, Tourisme ; secteur inconnu |
 | `FILE_SERVICES` | Accueil, Temps d'attente, Explications, Simplicité de la démarche, Horaires, Frais, Délai de traitement, Suivi du dossier | secteurs Administration, Justice, Impôts, Social |
 | `SECURITY` | Accueil, Explications, Respect des droits, Prise en compte de la demande (ce que partagent les deux visites, 0010) | secteur Sécurité |
 | `POLICE_PREMISES` | Temps d'attente, Délai de traitement, Simplicité, Suivi du dossier, Horaires, Frais, Propreté, Accessibilité | service « Une démarche dans les locaux » (police, gendarmerie) |
@@ -636,7 +636,7 @@ Historique des actions des agents : validation ou fusion d'un établissement sai
 | 1. Établissement identifié | establishment, establishment_service | feedback (création, dont `visit_period` et `visit_month`) |
 | 2. Question essentielle | liste ESSENTIAL | answer |
 | 2b. Thèmes et texte libre | topic, topic_set, topic_set_item, topic_translation | feedback_topic, comment |
-| 6. Questions du niveau | listes du secteur, du type et du service (ou GENERIC) | answer |
+| 6. Questions du niveau | listes du secteur, du type et du service (ou COMMERCE) | answer |
 | 6b. Signalement | liste COMMON | answer |
 | 7. Remerciement | | feedback.step, feedback.completed_at |
 
