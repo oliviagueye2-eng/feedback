@@ -187,8 +187,8 @@ async function loadPageQuestions(feedbackId: string) {
 }
 
 /**
- * The pages of questions after screen 2b: the sector's (or service's)
- * questions (screen 6), then the common ones on their own page (screen 6b),
+ * The pages of questions after screen 2b: the questions of the sector, type
+ * and service (screen 6), then the common ones on their own page (screen 6b),
  * so that « cette situation » is not read as the previous question's subject.
  */
 export type QuestionPage = "sector" | "common";

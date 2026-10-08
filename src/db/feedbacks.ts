@@ -120,10 +120,10 @@ export async function upsertAnswer(input: {
  * Active topics shown for feedback $1: the sum of the topic lists of its
  * levels, like the questions. The COMMON list, then the list of its sector
  * (GENERIC when the sector is unknown), of its establishment type and of its
- * service. The sector is the visit reason's, else the establishment type's,
- * else the establishment's. A service that replaces the shared lists
- * (mobile money, 0026) leaves out COMMON and the sector's. A topic in several
- * lists comes once.
+ * service. The sector is the establishment's (its type's, else its own),
+ * never the service's (decided by Olivia, 2026-10-08). A service that
+ * replaces the shared lists (mobile money, 0026) leaves out COMMON and the
+ * sector's. A topic in several lists comes once.
  */
 const topicsForFeedback = (feedbackParam: string) => `
   SELECT t.* FROM topic t
@@ -134,7 +134,7 @@ const topicsForFeedback = (feedbackParam: string) => `
       JOIN establishment e ON e.id = f.establishment_id
       LEFT JOIN service s ON s.id = f.service_id
       LEFT JOIN establishment_type et ON et.id = e.type_id
-      LEFT JOIN sector sec ON sec.id = coalesce(s.sector_id, et.sector_id, e.sector_id)
+      LEFT JOIN sector sec ON sec.id = coalesce(et.sector_id, e.sector_id)
       JOIN topic_set_item i ON i.topic_id = t.id
       WHERE f.id = ${feedbackParam}
         AND i.topic_set_id IN (
@@ -325,7 +325,7 @@ export async function findCommentText(feedbackId: string): Promise<string | null
 
 /**
  * The lists of questions attached to the feedback's levels: its sector (the
- * service's, else the establishment type's, else the establishment's), its
+ * establishment type's, else the establishment's; never the service's), its
  * establishment type and its service; and GENERIC, for a sector unknown.
  * A service that replaces the shared lists (0026) leaves the sector's out.
  */
@@ -345,7 +345,7 @@ export async function findQuestionSetSources(feedbackId: string): Promise<Questi
      JOIN establishment e ON e.id = f.establishment_id
      LEFT JOIN service s ON s.id = f.service_id
      LEFT JOIN establishment_type et ON et.id = e.type_id
-     LEFT JOIN sector sec ON sec.id = coalesce(s.sector_id, et.sector_id, e.sector_id)
+     LEFT JOIN sector sec ON sec.id = coalesce(et.sector_id, e.sector_id)
      WHERE f.id = $1`,
     [feedbackId],
   );

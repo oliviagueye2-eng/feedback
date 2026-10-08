@@ -303,3 +303,96 @@ export async function countCompleteByWeek(weeks: number): Promise<{ week: string
     [weeks],
   );
 }
+
+// ---------------------------------------------------------------------------
+// Questionnaire (page asked by Olivia, 2026-10-08): what each sector, type
+// and service brings to screen 2b.
+// ---------------------------------------------------------------------------
+
+export interface ListedTopic {
+  code: string;
+  isActive: boolean;
+}
+
+/** The topics of topic_set `$col`, by topic.position; inactive ones included. */
+const TOPICS_OF = (col: string) => `
+  coalesce((SELECT json_agg(json_build_object('code', t.code, 'isActive', t.is_active) ORDER BY t.position, t.code)
+            FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
+            WHERE i.topic_set_id = ${col}), '[]'::json)`;
+
+export interface SectorTopics {
+  code: string;
+  label: string | null;
+  listCode: string | null;
+  topics: ListedTopic[];
+}
+
+export async function listSectorTopics(): Promise<SectorTopics[]> {
+  return query<SectorTopics>(
+    `SELECT s.code, st.label, ts.code AS "listCode", ${TOPICS_OF("s.topic_set_id")} AS topics
+     FROM sector s
+     LEFT JOIN sector_translation st ON st.sector_id = s.id AND st.language = 'fr'
+     LEFT JOIN topic_set ts ON ts.id = s.topic_set_id
+     ORDER BY st.label, s.code`,
+  );
+}
+
+export interface TypeTopics extends SectorTopics {
+  sectorCode: string;
+  /** No direct link: the services of the active establishments of this type. */
+  services: string[];
+}
+
+export async function listTypeTopics(): Promise<TypeTopics[]> {
+  return query<TypeTopics>(
+    `SELECT et.code, ett.label, s.code AS "sectorCode", ts.code AS "listCode",
+            ${TOPICS_OF("et.topic_set_id")} AS topics,
+            coalesce((SELECT array_agg(DISTINCT sv.code ORDER BY sv.code)
+                      FROM establishment e
+                      JOIN establishment_service es ON es.establishment_id = e.id
+                      JOIN service sv ON sv.id = es.service_id
+                      WHERE e.type_id = et.id AND e.status = 'active'), '{}') AS services
+     FROM establishment_type et
+     JOIN sector s ON s.id = et.sector_id
+     LEFT JOIN establishment_type_translation ett ON ett.establishment_type_id = et.id AND ett.language = 'fr'
+     LEFT JOIN topic_set ts ON ts.id = et.topic_set_id
+     ORDER BY s.code, et.code`,
+  );
+}
+
+export interface ServiceTopics {
+  code: string;
+  label: string | null;
+  replacesSharedLists: boolean;
+  listCode: string | null;
+  topics: ListedTopic[];
+  /** Active establishments offering it (establishment_service), by name. */
+  establishments: string[];
+  /** Their sectors and types: used by the page's filters. */
+  sectorCodes: string[];
+  typeCodes: string[];
+}
+
+export async function listServiceTopics(): Promise<ServiceTopics[]> {
+  return query<ServiceTopics>(
+    `WITH offered AS (
+       SELECT es.service_id, e.name, s.code AS sector_code, et.code AS type_code
+       FROM establishment_service es
+       JOIN establishment e ON e.id = es.establishment_id AND e.status = 'active'
+       LEFT JOIN establishment_type et ON et.id = e.type_id
+       LEFT JOIN sector s ON s.id = coalesce(et.sector_id, e.sector_id)
+     )
+     SELECT sv.code, st.label, sv.replaces_shared_lists AS "replacesSharedLists", ts.code AS "listCode",
+            ${TOPICS_OF("sv.topic_set_id")} AS topics,
+            coalesce((SELECT array_agg(o.name ORDER BY o.name) FROM offered o WHERE o.service_id = sv.id), '{}')
+              AS establishments,
+            coalesce((SELECT array_agg(DISTINCT o.sector_code) FROM offered o
+                      WHERE o.service_id = sv.id AND o.sector_code IS NOT NULL), '{}') AS "sectorCodes",
+            coalesce((SELECT array_agg(DISTINCT o.type_code) FROM offered o
+                      WHERE o.service_id = sv.id AND o.type_code IS NOT NULL), '{}') AS "typeCodes"
+     FROM service sv
+     LEFT JOIN service_translation st ON st.service_id = sv.id AND st.language = 'fr'
+     LEFT JOIN topic_set ts ON ts.id = sv.topic_set_id
+     ORDER BY sv.code`,
+  );
+}

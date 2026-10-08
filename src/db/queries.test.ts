@@ -54,8 +54,7 @@ beforeAll(async () => {
     WHERE d.code = 'DK1';
 
     -- Types CIVIL_REGISTRY_CENTER and HOSPITAL come from migration 0005.
-    INSERT INTO service (code, sector_id, synonyms)
-    SELECT 'CIVIL_REGISTRY_BIRTH', id, '{extrait de naissance}' FROM sector WHERE code = 'ADMINISTRATION';
+    INSERT INTO service (code, synonyms) VALUES ('CIVIL_REGISTRY_BIRTH', '{extrait de naissance}');
     INSERT INTO service_translation (service_id, language, label)
     SELECT id, 'fr', 'État civil' FROM service WHERE code = 'CIVIL_REGISTRY_BIRTH';
   `);

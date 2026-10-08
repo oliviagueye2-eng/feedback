@@ -9,6 +9,7 @@ import {
   correctComment,
   correctEstablishment,
   getDashboard,
+  getQuestionnaire,
   isValidSessionToken,
   listComments,
   listPendingEstablishments,
@@ -234,5 +235,50 @@ describe("dashboard", () => {
     const sent = "b2b2b2b2-0028-4000-8000-000000000001";
     await recordPageShown(sent, "details");
     expect(await rows(`SELECT last_page FROM feedback WHERE id = $1`, [sent])).toEqual([{ last_page: "send" }]);
+  });
+});
+
+describe("questionnaire", () => {
+  it("lists every sector, type and service with its topic list", async () => {
+    const q = await getQuestionnaire({});
+    expect(q.sector).toBeNull();
+    const health = q.sectors.find((s) => s.code === "HEALTH")!;
+    expect(health).toMatchObject({ label: "Santé", listCode: "HEALTH" });
+    expect(health.topics).toContainEqual({ code: "CARE_RECEIVED", isActive: true });
+    const airport = q.types.find((t) => t.code === "AIRPORT")!;
+    expect(airport).toMatchObject({ sectorCode: "TRANSPORT", listCode: "TRANSPORT_PLACE" });
+    expect(airport.topics.map((t) => t.code)).toEqual(["WAIT_TIME", "OPENING_HOURS"]);
+    expect(q.types.find((t) => t.code === "PHARMACY")).toMatchObject({ listCode: null, topics: [] });
+    expect(q.services.find((s) => s.code === "MOBILE_MONEY")).toMatchObject({ replacesSharedLists: true });
+    expect(q.sectorOptions.length).toBe(q.sectors.length);
+  });
+
+  it("narrows to a type, its sector and the services of its establishments", async () => {
+    const q = await getQuestionnaire({ sector: "HEALTH", type: "HIGH_SCHOOL" });
+    expect(q).toMatchObject({ sector: "EDUCATION", type: "HIGH_SCHOOL" });
+    expect(q.sectors.map((s) => s.code)).toEqual(["EDUCATION"]);
+    expect(q.types.map((t) => t.code)).toEqual(["HIGH_SCHOOL"]);
+    expect(q.types[0]!.services).toEqual(["SCHOOL_ADMIN", "SCHOOL_LIFE"]);
+    expect(q.services.map((s) => s.code)).toEqual(["SCHOOL_ADMIN", "SCHOOL_LIFE"]);
+    expect(q.services[0]!.establishments).toContain("Lycée Lamine Guèye");
+  });
+
+  it("narrows to a sector, and ignores an unknown code", async () => {
+    const q = await getQuestionnaire({ sector: "EDUCATION" });
+    expect(q.types.every((t) => t.sectorCode === "EDUCATION")).toBe(true);
+    expect(q.services.every((s) => s.sectorCodes.includes("EDUCATION"))).toBe(true);
+    const all = await getQuestionnaire({ sector: "NOPE", type: "NOPE" });
+    expect(all).toMatchObject({ sector: null, type: null });
+    expect(all.sectors.length).toBeGreaterThan(1);
+  });
+
+  it("shows an inactive topic as such", async () => {
+    await db.query(`UPDATE topic SET is_active = false WHERE code = 'CARE_RECEIVED'`);
+    try {
+      const q = await getQuestionnaire({ sector: "HEALTH" });
+      expect(q.sectors[0]!.topics).toContainEqual({ code: "CARE_RECEIVED", isActive: false });
+    } finally {
+      await db.query(`UPDATE topic SET is_active = true WHERE code = 'CARE_RECEIVED'`);
+    }
   });
 });

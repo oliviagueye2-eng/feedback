@@ -347,8 +347,8 @@ describe("search", () => {
 
   it("adds a service's French label to its search_text when the label arrives later", async () => {
     const { id } = (await one<{ id: number }>(`
-      INSERT INTO service (code, sector_id, synonyms)
-      SELECT 'CIVIL_REGISTRY_BIRTH', id, '{extrait de naissance}' FROM sector WHERE code = 'ADMINISTRATION'
+      INSERT INTO service (code, synonyms)
+      VALUES ('CIVIL_REGISTRY_BIRTH', '{extrait de naissance}')
       RETURNING id`))!;
     await db.query(
       "INSERT INTO service_translation (service_id, language, label) VALUES ($1, 'fr', 'État civil')",

@@ -99,7 +99,7 @@ Trois niveaux, du plus général au plus précis :
 Le caractère **public ou privé** n'est ni un secteur ni un type : un hôpital ou une école peuvent être publics ou privés. C'est donc une propriété de chaque établissement (`establishment.ownership`).
 
 ### sector
-Domaine général. Partagé par les types d'établissement et par les services.
+Domaine général. Partagé par les types d'établissement (et par les établissements sans type). Un service n'a pas de secteur depuis la migration 0029 : un avis prend toujours le secteur de l'établissement (décision du 2026-10-08).
 
 | Colonne | Type | Note |
 |---|---|---|
@@ -220,7 +220,6 @@ Catalogue national des services : état civil (extrait de naissance, mariage…)
 |---|---|---|
 | id | int | |
 | code | text unique | `CIVIL_REGISTRY_BIRTH` |
-| sector_id | fk sector | domaine du service |
 | question_set_id | fk question_set | liste de questions du service, ajoutée à celles du secteur et du type (facultative) |
 | synonyms | text[] | mots que l'usager peut taper pour désigner ce service (voir plus bas) |
 | search_text | text | libellé français + synonymes, en minuscules et sans accents, rempli automatiquement (index trigramme) |
