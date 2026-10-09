@@ -195,7 +195,7 @@ describe("reference data", () => {
       without_list: null,
       places: [
         "AIRPORT", "BUS_STATION", "ELECTRICITY_AGENCY", "HIGHER_EDUCATION_ADMIN", "PLANE_TICKET",
-        "POLICE_PREMISES", "PORT_PROCEDURE", "SCHOOL_ADMIN", "TICKET_PURCHASE", "WATER_AGENCY",
+        "POLICE_PREMISES", "PORT_PROCEDURE", "SANITATION_AGENCY", "SCHOOL_ADMIN", "TICKET_PURCHASE", "WATER_AGENCY",
       ],
     });
   });
@@ -214,13 +214,13 @@ describe("reference data", () => {
         "AGENCY_SUBJECT", "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "FIELD_SITUATION",
         "FILE_SUBMITTED", "INTERVENTION_AWAITED", "MONEY_CHANNEL", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
         "POLICE_VISIT_REASON", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
-        "SEWER_PROBLEM", "TELECOM_SUBJECT", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "UTILITY_SUBJECT",
+        "SANITATION_SUBJECT", "SEWER_PROBLEM", "TELECOM_SUBJECT", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "UTILITY_SUBJECT",
       ],
       order: true,
     });
   });
 
-  it("has the bank of 78 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025), each written once, every text in French", async () => {
+  it("has the bank of 79 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -234,7 +234,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 78, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 79, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -267,7 +267,7 @@ describe("reference data", () => {
       ELECTRICITY_AGENCY: "ELECTRICITY_AGENCY", ELECTRICITY_SUPPLY: "ELECTRICITY_SUPPLY",
       WATER_AGENCY: "WATER_AGENCY", WATER_SUPPLY: "WATER_SUPPLY",
       // 0025: the telecom questions move from the sector to « Téléphone ou internet ».
-      MOBILE_MONEY: "MOBILE_MONEY", SEWER_ISSUE: "SEWER_ISSUE", INSURANCE_CLAIM: "INSURANCE_CLAIM",
+      MOBILE_MONEY: "MOBILE_MONEY", SEWER_ISSUE: "SEWER_ISSUE", SANITATION_AGENCY: "SANITATION_AGENCY", INSURANCE_CLAIM: "INSURANCE_CLAIM",
       PORT_PROCEDURE: "FILE_SERVICES + PAID_AND_RECEIPT", HIGHWAY_TRIP: "TOLL_HIGHWAY", TV_SUBSCRIPTION: "TV_SUBSCRIPTION",
       PHONE_INTERNET: "TELECOM",
       // 0026: mobile money in three services.
