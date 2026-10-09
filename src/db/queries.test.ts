@@ -658,12 +658,14 @@ describe("feedback", () => {
       questions: ["MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "REPORTED", "REPORT_WHY"],
     });
     expect(await visit("d0e1f2a3-0000-4000-8000-000000000002", services["Opération dans un point de service"]!)).toEqual({
-      topics: ["OPERATION_RELIABILITY", "PROFESSIONALISM", "WAIT_TIME", "FEES", "AGENT_LIQUIDITY", "AGENT_PROXIMITY"],
-      questions: ["MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "AGENT_CASH", "REPORTED", "REPORT_WHY"],
+      // 0068: the agent's cash asked after a withdrawal, instead of a topic.
+      topics: ["OPERATION_RELIABILITY", "PROFESSIONALISM", "WAIT_TIME", "FEES", "AGENT_PROXIMITY"],
+      questions: ["MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "MONEY_OPERATION_KIND", "AGENT_CASH", "REPORTED", "REPORT_WHY"],
     });
     expect(await visit("d0e1f2a3-0000-4000-8000-000000000003", services["Service client (appel, réclamation)"]!)).toEqual({
       topics: ["REQUEST_HANDLING", "PROFESSIONALISM", "INFORMATION", "RESPONSE_TIME", "SUPPORT_REACHABILITY"],
-      questions: ["MONEY_PROBLEM_SOLVED", "REPORTED", "REPORT_WHY"],
+      // 0068: why one contacted it first.
+      questions: ["SUPPORT_REASON", "MONEY_PROBLEM_SOLVED", "REPORTED", "REPORT_WHY"],
     });
   });
 

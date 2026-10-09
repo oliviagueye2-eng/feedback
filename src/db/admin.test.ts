@@ -362,7 +362,7 @@ describe("questionnaire", () => {
 
   it("lists the question bank, narrowed by the filters to the lists shown", async () => {
     const all = await getQuestionnaire({});
-    expect(all.questions).toHaveLength(93);
+    expect(all.questions).toHaveLength(95);
     const receipt = all.questions.find((q) => q.code === "RECEIPT_GIVEN")!;
     expect(all.questions.find((q) => q.code === "PAID_SOMETHING")!.opensTopics).toEqual(["FEES"]);
     // FILE_SUBMITTED is in no list, but opens two topics of the civil registry centres.
@@ -378,10 +378,10 @@ describe("questionnaire", () => {
     const mobile = await getQuestionnaire({ sector: "MOBILE_PAYMENT" });
     expect(mobile.questions.map((q) => q.code)).toEqual([
       // By category, then by code.
-      "GOAL_ACHIEVED", "MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "AGENT_CASH", "OVERALL_SATISFACTION",
+      "GOAL_ACHIEVED", "MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "AGENT_CASH", "MONEY_OPERATION_KIND", "OVERALL_SATISFACTION",
       // Opens FEES, a topic of the Paiement mobile list, at screen 2b.
       "PAID_SOMETHING",
-      "REPORTED", "REPORT_WHY",
+      "REPORTED", "REPORT_WHY", "SUPPORT_REASON",
     ]);
   });
 

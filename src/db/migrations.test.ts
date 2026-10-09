@@ -228,15 +228,15 @@ describe("reference data", () => {
       topics: null,
       questions: [
         "AGENCY_SUBJECT", "ARRIVAL_MODE", "BANK_SUBJECT", "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "DELIVERY_KIND", "FIELD_SITUATION",
-        "FILE_SUBMITTED", "INTERVENTION_AWAITED", "MONEY_CHANNEL", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
+        "FILE_SUBMITTED", "INTERVENTION_AWAITED", "MONEY_CHANNEL", "MONEY_OPERATION_KIND", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
         "POLICE_VISIT_REASON", "POSTAL_COUNTER_SUBJECT", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
-        "SANITATION_SUBJECT", "SEWER_PROBLEM", "TELECOM_SHOP_SUBJECT", "TELECOM_SUBJECT", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "TV_SHOP_SUBJECT", "UTILITY_SUBJECT",
+        "SANITATION_SUBJECT", "SEWER_PROBLEM", "SUPPORT_REASON", "TELECOM_SHOP_SUBJECT", "TELECOM_SUBJECT", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "TV_SHOP_SUBJECT", "UTILITY_SUBJECT",
       ],
       order: true,
     });
   });
 
-  it("has the bank of 93 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058, 2 of 0062, 2 of 0065, 6 of 0066), each written once, every text in French", async () => {
+  it("has the bank of 95 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058, 2 of 0062, 2 of 0065, 6 of 0066, 2 of 0068), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -250,7 +250,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 93, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 95, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -364,6 +364,8 @@ describe("reference data", () => {
       "LAND_TRIP: INCIDENT_SOLUTION ← TRIP_INCIDENT YES",
       "MOBILE_MONEY: MONEY_PROBLEM_SOLVED ← MONEY_OPERATION_OK FAILED",
       "MOBILE_MONEY: MONEY_PROBLEM_SOLVED ← MONEY_OPERATION_OK BLOCKED",
+      "MOBILE_MONEY_AGENT: AGENT_CASH ← MONEY_OPERATION_KIND WITHDRAWAL",
+      "MOBILE_MONEY_SUPPORT: MONEY_PROBLEM_SOLVED ← SUPPORT_REASON PROBLEM",
       "PAID_AND_RECEIPT: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON COMPLAINT",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON LOSS",
