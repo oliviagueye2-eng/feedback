@@ -519,7 +519,7 @@ export interface TypeTopics extends LevelTopics {
   /** Those of listCodes and questionListCodes given only without a service, « Autre démarche » (0072). */
   withoutServiceListCodes: string[];
   withoutServiceQuestionListCodes: string[];
-  /** No direct link: the services of the active establishments of this type. */
+  /** Its services (establishment_type_service, 0073), and those of its active establishments. */
   services: string[];
 }
 
@@ -532,10 +532,12 @@ export async function listTypeTopics(): Promise<TypeTopics[]> {
             ${ONLY_WITHOUT_CODES_OF("topic", "only_without_service", "establishment_type")} AS "withoutServiceListCodes",
             ${ONLY_WITHOUT_CODES_OF("question", "only_without_service", "establishment_type")} AS "withoutServiceQuestionListCodes",
             coalesce((SELECT array_agg(DISTINCT sv.code ORDER BY sv.code)
-                      FROM establishment e
-                      JOIN establishment_service es ON es.establishment_id = e.id
-                      JOIN service sv ON sv.id = es.service_id
-                      WHERE e.type_id = et.id AND e.status = 'active'), '{}') AS services
+                      FROM (SELECT ts.service_id FROM establishment_type_service ts WHERE ts.type_id = et.id
+                            UNION
+                            SELECT es.service_id FROM establishment e
+                            JOIN establishment_offer es ON es.establishment_id = e.id
+                            WHERE e.type_id = et.id AND e.status = 'active') o
+                      JOIN service sv ON sv.id = o.service_id), '{}') AS services
      FROM establishment_type et
      JOIN sector s ON s.id = et.sector_id
      LEFT JOIN establishment_type_translation ett ON ett.establishment_type_id = et.id AND ett.language = 'fr'
@@ -550,7 +552,7 @@ export interface ServiceTopics {
   topics: ListedTopic[];
   questionListCodes: string[];
   questions: ListedQuestion[];
-  /** Active establishments offering it (establishment_service), by name. */
+  /** Active establishments offering it (establishment_offer: its own and its type's, 0073), by name. */
   establishments: string[];
   /** Their sectors and types: used by the page's filters. */
   sectorCodes: string[];
@@ -561,7 +563,7 @@ export async function listServiceTopics(): Promise<ServiceTopics[]> {
   return inScreenOrder(await query<ServiceTopics>(
     `WITH offered AS (
        SELECT es.service_id, e.name, s.code AS sector_code, et.code AS type_code
-       FROM establishment_service es
+       FROM establishment_offer es
        JOIN establishment e ON e.id = es.establishment_id AND e.status = 'active'
        LEFT JOIN establishment_type et ON et.id = e.type_id
        LEFT JOIN sector s ON s.id = coalesce(et.sector_id, e.sector_id)
@@ -696,7 +698,7 @@ export interface FormEstablishment {
   /** The sector of its type, else its own; null when unknown. */
   sectorCode: string | null;
   typeCode: string | null;
-  /** The services it offers at screen 1 (establishment_service). */
+  /** The services it offers at screen 1 (establishment_offer: its own and its type's, 0073). */
   services: string[];
 }
 
@@ -708,7 +710,7 @@ export async function listFormEstablishments(): Promise<FormEstablishment[]> {
   return query<FormEstablishment>(
     `SELECT e.id, e.name, s.code AS "sectorCode", et.code AS "typeCode",
             coalesce((SELECT array_agg(sv.code ORDER BY sv.code)
-                      FROM establishment_service es JOIN service sv ON sv.id = es.service_id
+                      FROM establishment_offer es JOIN service sv ON sv.id = es.service_id
                       WHERE es.establishment_id = e.id), '{}') AS services
      FROM establishment e
      LEFT JOIN establishment_type et ON et.id = e.type_id

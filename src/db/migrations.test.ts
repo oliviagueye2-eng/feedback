@@ -612,13 +612,13 @@ describe("the hospital's paths (0071)", () => {
   it("gives the four paths to every hospital, the care form staying for « Autre démarche »", async () => {
     const row = await one<{ hospitals: number; paths: string[] }>(`
       SELECT count(DISTINCT e.id)::int AS hospitals,
-             (SELECT array_agg(DISTINCT s.code ORDER BY s.code) FROM establishment_service es
+             (SELECT array_agg(DISTINCT s.code ORDER BY s.code) FROM establishment_offer es
               JOIN service s ON s.id = es.service_id
               JOIN establishment h ON h.id = es.establishment_id
               WHERE h.type_id = (SELECT id FROM establishment_type WHERE code = 'HOSPITAL')) AS paths
       FROM establishment e JOIN establishment_type et ON et.id = e.type_id
       WHERE et.code = 'HOSPITAL'
-        AND (SELECT count(*) FROM establishment_service es WHERE es.establishment_id = e.id) = 4`);
+        AND (SELECT count(*) FROM establishment_offer es WHERE es.establishment_id = e.id) = 4`);
     expect(row).toEqual({ hospitals: 8, paths: ["CONSULTATION", "EMERGENCY", "HOSPITAL_STAY", "MATERNITY"] });
   });
 });

@@ -193,14 +193,22 @@ describe("establishment", () => {
     expect(await getEstablishment(typed.id)).toMatchObject({ typeCode: "HOSPITAL", sectorLabel: "Santé" });
     const other = await createUserEstablishment({ name: "Centre de dialyse", sector: "HEALTH", type: "OTHER" });
     expect(await getEstablishment(other.id)).toMatchObject({ typeCode: null, sectorLabel: "Santé" });
+    // A bank needs one too since 0073.
+    await expect(createUserEstablishment({ name: "Banque X", sector: "BANKING_INSURANCE" })).rejects.toMatchObject(invalid);
     // No types in this sector: none asked.
-    const noTypes = await createUserEstablishment({ name: "Banque X", sector: "BANKING_INSURANCE" });
+    const noTypes = await createUserEstablishment({ name: "Hôtel X", sector: "HOSPITALITY" });
     expect((await getEstablishment(noTypes.id)).typeCode).toBeNull();
   });
 
   it("needs a name of 3 letters at least (UBA fits)", async () => {
     await expect(createUserEstablishment({ name: "UB", sector: "BANKING_INSURANCE" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
-    await expect(createUserEstablishment({ name: "UBA", sector: "BANKING_INSURANCE" })).resolves.toHaveProperty("id");
+    await expect(createUserEstablishment({ name: "UBA", sector: "BANKING_INSURANCE", type: "BANK" })).resolves.toHaveProperty("id");
+  });
+
+  it("gives a bank added later the paths of its type (0073)", async () => {
+    const bank = await createUserEstablishment({ name: "Banque Nouvelle", sector: "BANKING_INSURANCE", type: "BANK" });
+    const codes = (await getEstablishment(bank.id)).services.map((s) => s.code).sort();
+    expect(codes).toEqual(["ATM_WITHDRAWAL", "BANK_AGENCY", "BANK_APP"]);
   });
 
   it("lists the twenty-one sectors in alphabetical order, accents ignored", async () => {

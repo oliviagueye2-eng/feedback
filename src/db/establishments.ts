@@ -144,7 +144,7 @@ export async function searchActiveEstablishments(
      by_service AS (
        SELECT es.establishment_id AS id, max(sv.tier) AS tier, max(sv.score) AS score
        FROM services sv
-       JOIN establishment_service es ON es.service_id = sv.id
+       JOIN establishment_offer es ON es.service_id = sv.id
        GROUP BY es.establishment_id
      ),
      scored AS (
@@ -237,7 +237,7 @@ const DETAIL_COLUMNS = `
   ${SUMMARY_COLUMNS},
   coalesce((SELECT json_agg(json_build_object('id', s.id, 'code', s.code, 'label', st.label)
                            ORDER BY coalesce(st.label, s.code))
-            FROM establishment_service es JOIN service s ON s.id = es.service_id
+            FROM establishment_offer es JOIN service s ON s.id = es.service_id
             LEFT JOIN service_translation st ON st.service_id = s.id AND st.language = 'fr'
             WHERE es.establishment_id = e.id), '[]') AS services`;
 
