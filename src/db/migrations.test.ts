@@ -399,7 +399,8 @@ describe("« Non concerné » and the questions that open a topic (0011)", () =>
     const inactive = (await db.query<{ code: string }>(
       `SELECT q.code || ' ' || ao.code AS code FROM answer_option ao JOIN question q ON q.id = ao.question_id
        WHERE NOT ao.is_active ORDER BY 1`)).rows.map((r) => r.code);
-    expect(inactive).toEqual(["RECEIPT_GIVEN NOTHING_PAID", "RECEIPT_OR_INVOICE NOTHING_PAID"]);
+    // « Mobile money » has its own service since 0025 (0026).
+    expect(inactive).toEqual(["RECEIPT_GIVEN NOTHING_PAID", "RECEIPT_OR_INVOICE NOTHING_PAID", "TELECOM_SUBJECT MOBILE_MONEY"]);
   });
 
   it("accepts « Non concerné » as a sentiment, and nothing else", async () => {
