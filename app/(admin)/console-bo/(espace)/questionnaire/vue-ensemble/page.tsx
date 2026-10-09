@@ -339,6 +339,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/console
                   <th>{v.list}</th>
                   <th>{v.state}</th>
                   <th>{v.count}</th>
+                  <th>{v.categories}</th>
                   <th>{v.usedBy}</th>
                   <th>{v.content}</th>
                 </tr>
@@ -348,6 +349,8 @@ export default async function OverviewPage({ searchParams }: PageProps<"/console
                   const users = used(l);
                   const special = l.code === "COMMON" || l.code === "ESSENTIAL";
                   const content = contentByCategory(l);
+                  // A list alone may cover few categories: the others come from the lists it is combined with.
+                  const missing = o.categories.filter((c) => !content.some((g) => g.category === (c.label ?? c.code)));
                   return (
                     <tr key={`${l.kind}-${l.code}`}>
                       <td>
@@ -359,6 +362,14 @@ export default async function OverviewPage({ searchParams }: PageProps<"/console
                         {!special && users.length === 0 && <span className={styles.notice}>{v.unused}</span>}
                       </td>
                       <td>{l.items.length}</td>
+                      <td>
+                        {fill(v.categoriesOf, { count: o.categories.length - missing.length, total: o.categories.length })}
+                        {l.items.length > 0 && missing.length > 0 && (
+                          <span className={styles.muted}>
+                            {v.missingCategories} {missing.map((c) => c.label ?? c.code).join(", ")}
+                          </span>
+                        )}
+                      </td>
                       <td>
                         {users.map((u, i) => (
                           <span key={i} className={`${styles.overviewTag} ${levelClass[u.level]}`}>
