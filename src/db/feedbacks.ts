@@ -125,8 +125,12 @@ const listsOf = (
   filter = "",
 ) => `ARRAY(SELECT x.${kind}_set_id FROM ${level}_${kind}_set x WHERE x.${owner} = ${alias}.id ${filter} ORDER BY x.position)`;
 
-/** A sector's list marked only_without_service goes only to a feedback without a service (0053). */
-const SECTOR_LISTS_FILTER = "AND (NOT x.only_without_service OR s.id IS NULL)";
+/**
+ * A sector's list marked only_without_service goes only to a feedback without a
+ * service (0053), one marked only_without_type to an establishment without a type (0070).
+ */
+const SECTOR_LISTS_FILTER =
+  "AND (NOT x.only_without_service OR s.id IS NULL) AND (NOT x.only_without_type OR et.id IS NULL)";
 
 /** The lists of the three levels (sec, et, s): sector_topic_sets, type_question_sets… */
 const LEVEL_LISTS = `

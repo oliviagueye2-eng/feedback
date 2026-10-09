@@ -8,7 +8,10 @@
 --   tests (laboratory, imaging centre): results' delay and quality; test done
 --     on the planned day, results received.
 -- The sector keeps what the three share (COUNTER, PREMISES); the rest of its
--- lists move to the care types.
+-- lists go to the care types. A sector's list marked only_without_type (new,
+-- like only_without_service in 0053) goes only to an establishment without a
+-- type (« Autre » when a user adds it): a health one keeps the care form
+-- (decided by Olivia, 2026-10-09).
 
 -- ---------------------------------------------------------------------------
 -- Topics
@@ -128,11 +131,15 @@ WHERE qs.code = 'PHARMACY' AND q.code = 'PHARMACIST_ADVICE_GIVEN' AND d.code = '
 -- ---------------------------------------------------------------------------
 -- The lists of each type
 -- ---------------------------------------------------------------------------
-DELETE FROM sector_topic_set
+ALTER TABLE sector_topic_set ADD COLUMN only_without_type boolean NOT NULL DEFAULT false;
+ALTER TABLE sector_question_set ADD COLUMN only_without_type boolean NOT NULL DEFAULT false;
+
+UPDATE sector_topic_set SET only_without_type = true
 WHERE sector_id = (SELECT id FROM sector WHERE code = 'HEALTH')
   AND topic_set_id IN (SELECT id FROM topic_set WHERE code IN ('HEALTH', 'STAFF_SKILLS', 'FEES'));
 
-DELETE FROM sector_question_set WHERE sector_id = (SELECT id FROM sector WHERE code = 'HEALTH');
+UPDATE sector_question_set SET only_without_type = true
+WHERE sector_id = (SELECT id FROM sector WHERE code = 'HEALTH');
 
 INSERT INTO establishment_type_topic_set (type_id, topic_set_id, position)
 SELECT et.id, ts.id, v.position

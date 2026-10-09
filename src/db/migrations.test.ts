@@ -105,6 +105,17 @@ describe("reference data", () => {
       "TRANSPORT:TRANSPORT", "TRANSPORT:FEES",
       "WATER:STAFF_SKILLS", "WATER:COUNTER", "WATER:PREMISES", "WATER:FEES",
     ]);
+    // 0070: the health sector's care lists, only for a health place without a type.
+    expect((await db.query<{ list: string }>(`
+      SELECT s.code || ':' || l.code AS list FROM sector_topic_set x
+      JOIN sector s ON s.id = x.sector_id JOIN topic_set l ON l.id = x.topic_set_id
+      WHERE x.only_without_type
+      UNION ALL
+      SELECT s.code || ':' || l.code || ' (questions)' FROM sector_question_set x
+      JOIN sector s ON s.id = x.sector_id JOIN question_set l ON l.id = x.question_set_id
+      WHERE x.only_without_type ORDER BY 1`)).rows.map((r) => r.list)).toEqual([
+      "HEALTH:FEES", "HEALTH:HEALTH", "HEALTH:HEALTH (questions)", "HEALTH:PAID_AND_RECEIPT (questions)", "HEALTH:STAFF_SKILLS",
+    ]);
     const serviceTopics = async (service: string) =>
       (await db.query<{ code: string }>(`
         SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
@@ -229,14 +240,14 @@ describe("reference data", () => {
       questions: [
         "AGENCY_SUBJECT", "ARRIVAL_MODE", "BANK_SUBJECT", "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "DELIVERY_KIND", "FIELD_SITUATION",
         "FILE_SUBMITTED", "INTERVENTION_AWAITED", "MONEY_CHANNEL", "MONEY_OPERATION_KIND", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
-        "POLICE_VISIT_REASON", "POSTAL_COUNTER_SUBJECT", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
+        "PHARMACY_VISIT_REASON", "POLICE_VISIT_REASON", "POSTAL_COUNTER_SUBJECT", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
         "SANITATION_SUBJECT", "SEWER_PROBLEM", "SUPPORT_REASON", "TELECOM_SHOP_SUBJECT", "TELECOM_SUBJECT", "TELECOM_SUPPORT_REASON", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "TV_SHOP_SUBJECT", "UTILITY_SUBJECT",
       ],
       order: true,
     });
   });
 
-  it("has the bank of 96 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058, 2 of 0062, 2 of 0065, 6 of 0066, 2 of 0068, 1 of 0069), each written once, every text in French", async () => {
+  it("has the bank of 102 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058, 2 of 0062, 2 of 0065, 6 of 0066, 2 of 0068, 1 of 0069, 6 of 0070), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -250,7 +261,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 96, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 102, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -307,6 +318,10 @@ describe("reference data", () => {
         HIGH_SCHOOL: "EDUCATION", MIDDLE_SCHOOL: "EDUCATION", PRIMARY_SCHOOL: "EDUCATION", SCHOOL_GROUP: "EDUCATION",
         UNIVERSITY: "EDUCATION", HIGHER_EDUCATION_SCHOOL: "EDUCATION", VOCATIONAL_TRAINING_CENTER: "EDUCATION",
         DAARA: "EDUCATION", PRESCHOOL: "PRESCHOOL",
+        // 0070: the three health forms.
+        HOSPITAL: "HEALTH + PAID_AND_RECEIPT", CLINIC: "HEALTH + PAID_AND_RECEIPT", HEALTH_CENTER: "HEALTH + PAID_AND_RECEIPT",
+        HEALTH_POST: "HEALTH + PAID_AND_RECEIPT", MEDICAL_OFFICE: "HEALTH + PAID_AND_RECEIPT", PHARMACY: "PHARMACY",
+        MEDICAL_LABORATORY: "MEDICAL_TESTS + PAID_AND_RECEIPT", MEDICAL_IMAGING_CENTER: "MEDICAL_TESTS + PAID_AND_RECEIPT",
       });
   });
 
@@ -315,7 +330,7 @@ describe("reference data", () => {
       `SELECT qs.code AS list FROM question_set_item i
        JOIN question_set qs ON qs.id = i.question_set_id JOIN question q ON q.id = i.question_id
        WHERE q.code = 'WAIT_TIME' ORDER BY qs.code`)).rows.map((r) => r.list);
-    expect(lists).toEqual(["BANKING_INSURANCE", "FILE_SERVICES", "HEALTH", "POLICE_PREMISES", "POSTAL_COUNTER", "TICKET_PURCHASE"]);
+    expect(lists).toEqual(["BANKING_INSURANCE", "FILE_SERVICES", "HEALTH", "MEDICAL_TESTS", "POLICE_PREMISES", "POSTAL_COUNTER", "TICKET_PURCHASE"]);
     const order = (await db.query<{ code: string }>(
       `SELECT q.code FROM question_set_item i
        JOIN question_set qs ON qs.id = i.question_set_id JOIN question q ON q.id = i.question_id
@@ -369,6 +384,7 @@ describe("reference data", () => {
       "MOBILE_MONEY_AGENT: AGENT_CASH ← MONEY_OPERATION_KIND WITHDRAWAL",
       "MOBILE_MONEY_SUPPORT: MONEY_PROBLEM_SOLVED ← SUPPORT_REASON PROBLEM",
       "PAID_AND_RECEIPT: RECEIPT_GIVEN ← PAID_SOMETHING YES",
+      "PHARMACY: PHARMACIST_ADVICE_GIVEN ← PHARMACY_VISIT_REASON NO_PRESCRIPTION",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON COMPLAINT",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON LOSS",
       "POSTAL_COUNTER: ITEM_AVAILABLE ← POSTAL_COUNTER_SUBJECT COLLECT",

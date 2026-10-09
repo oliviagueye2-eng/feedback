@@ -481,12 +481,15 @@ export interface SectorTopics extends LevelTopics {
   /** Those of listCodes and questionListCodes given only without a service, « Autre démarche » (0053). */
   withoutServiceListCodes: string[];
   withoutServiceQuestionListCodes: string[];
+  /** Those given only to an establishment without a type, « Autre » (0070). */
+  withoutTypeListCodes: string[];
+  withoutTypeQuestionListCodes: string[];
 }
 
-/** The codes of a sector's lists given only without a service (0053). */
-const WITHOUT_SERVICE_CODES_OF = (kind: "topic" | "question") => `
+/** The codes of a sector's lists given only without a service (0053) or without a type (0070). */
+const ONLY_WITHOUT_CODES_OF = (kind: "topic" | "question", flag: "only_without_service" | "only_without_type") => `
   ARRAY(SELECT l.code FROM sector_${kind}_set x JOIN ${kind}_set l ON l.id = x.${kind}_set_id
-        WHERE x.sector_id = s.id AND x.only_without_service ORDER BY x.position)`;
+        WHERE x.sector_id = s.id AND x.${flag} ORDER BY x.position)`;
 
 export async function listSectorTopics(): Promise<SectorTopics[]> {
   return inScreenOrder(await query<SectorTopics>(
@@ -494,8 +497,10 @@ export async function listSectorTopics(): Promise<SectorTopics[]> {
             ${TOPICS_OF(LISTS_OF("sector", "s", "topic"))} AS topics,
             ${CODES_OF("sector", "s", "question")} AS "questionListCodes",
             ${QUESTIONS_OF(LISTS_OF("sector", "s", "question"))} AS questions,
-            ${WITHOUT_SERVICE_CODES_OF("topic")} AS "withoutServiceListCodes",
-            ${WITHOUT_SERVICE_CODES_OF("question")} AS "withoutServiceQuestionListCodes"
+            ${ONLY_WITHOUT_CODES_OF("topic", "only_without_service")} AS "withoutServiceListCodes",
+            ${ONLY_WITHOUT_CODES_OF("question", "only_without_service")} AS "withoutServiceQuestionListCodes",
+            ${ONLY_WITHOUT_CODES_OF("topic", "only_without_type")} AS "withoutTypeListCodes",
+            ${ONLY_WITHOUT_CODES_OF("question", "only_without_type")} AS "withoutTypeQuestionListCodes"
      FROM sector s
      LEFT JOIN sector_translation st ON st.sector_id = s.id AND st.language = 'fr'
      ORDER BY st.label, s.code`,

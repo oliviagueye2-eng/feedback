@@ -277,12 +277,17 @@ describe("questionnaire", () => {
     expect(q.sector).toBeNull();
     const health = q.sectors.find((s) => s.code === "HEALTH")!;
     expect(health).toMatchObject({ label: "Santé", listCodes: ["HEALTH", "STAFF_SKILLS", "COUNTER", "PREMISES", "FEES"] });
+    // 0070: the care lists go to the health types and, on the sector, to a health place without a type only.
+    expect(health).toMatchObject({
+      withoutTypeListCodes: ["HEALTH", "STAFF_SKILLS", "FEES"],
+      withoutTypeQuestionListCodes: ["HEALTH", "PAID_AND_RECEIPT"],
+    });
     expect(health.topics).toContainEqual({ code: "CARE_RECEIVED", label: "Soins reçus", isActive: true, categoryCode: "OUTCOME", shownIf: null });
     const airport = q.types.find((t) => t.code === "AIRPORT")!;
     // 0061: no « Guichet » block at the airport.
     expect(airport).toMatchObject({ sectorCode: "TRANSPORT", listCodes: ["STAFF_SKILLS"] });
     expect(airport.topics.map((t) => t.code)).toEqual(["PROFESSIONALISM", "INFORMATION"]);
-    expect(q.types.find((t) => t.code === "PHARMACY")).toMatchObject({ listCodes: [], topics: [] });
+    expect(q.types.find((t) => t.code === "PHARMACY")).toMatchObject({ listCodes: ["PHARMACY"], questionListCodes: ["PHARMACY"] });
     // 0053: the mobile payment sector's lists are for « Autre démarche » only.
     expect(q.sectors.find((s) => s.code === "MOBILE_PAYMENT")).toMatchObject({
       withoutServiceListCodes: ["MOBILE_PAYMENT", "STAFF_SKILLS", "FEES"],
@@ -354,6 +359,8 @@ describe("questionnaire", () => {
         questions: [{ code: "GOAL_ACHIEVED", position: 1, categoryCode: "OUTCOME", conditions: [] }],
         withoutServiceListCodes: ["MOBILE_PAYMENT", "STAFF_SKILLS", "FEES"],
         withoutServiceQuestionListCodes: ["MOBILE_PAYMENT"],
+        withoutTypeListCodes: [],
+        withoutTypeQuestionListCodes: [],
       },
     ]);
     expect(mobile.services.map((s) => s.code)).toEqual(["MOBILE_MONEY", "MOBILE_MONEY_AGENT", "MOBILE_MONEY_SUPPORT"]);
@@ -362,7 +369,7 @@ describe("questionnaire", () => {
 
   it("lists the question bank, narrowed by the filters to the lists shown", async () => {
     const all = await getQuestionnaire({});
-    expect(all.questions).toHaveLength(96);
+    expect(all.questions).toHaveLength(102);
     const receipt = all.questions.find((q) => q.code === "RECEIPT_GIVEN")!;
     expect(all.questions.find((q) => q.code === "PAID_SOMETHING")!.opensTopics).toEqual(["FEES"]);
     // FILE_SUBMITTED is in no list, but opens two topics of the civil registry centres.

@@ -67,9 +67,16 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
       countOne: t.questionCountOne,
     },
   ];
-  // A sector's lists given only without a service, « Autre démarche » (0053), are marked.
-  const codes = (lists: string[], withoutService: string[] = []) =>
-    lists.map((c) => (withoutService.includes(c) ? `${c} (${t.withoutService})` : c)).join(" + ") || null;
+  // A sector's lists given only without a service, « Autre démarche » (0053), or
+  // only without a type (0070), are marked.
+  const codes = (lists: string[], withoutService: string[] = [], withoutType: string[] = []) =>
+    lists
+      .map((c) => {
+        const marks = [withoutService.includes(c) && t.withoutService, withoutType.includes(c) && t.withoutType];
+        const shown = marks.filter(Boolean);
+        return shown.length ? `${c} (${shown.join(", ")})` : c;
+      })
+      .join(" + ") || null;
   const levelContent = (level: {
     listCodes: string[];
     topics: ListedTopic[];
@@ -77,13 +84,15 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
     questions: ListedQuestion[];
     withoutServiceListCodes?: string[];
     withoutServiceQuestionListCodes?: string[];
+    withoutTypeListCodes?: string[];
+    withoutTypeQuestionListCodes?: string[];
   }): ListGridRow["lists"] => ({
     topics: {
-      code: codes(level.listCodes, level.withoutServiceListCodes),
+      code: codes(level.listCodes, level.withoutServiceListCodes, level.withoutTypeListCodes),
       items: level.topics.map((topic) => ({ code: topic.code, extras: [topic.label, topic.isActive, topic.categoryCode, shownIf(topic)] })),
     },
     questions: {
-      code: codes(level.questionListCodes, level.withoutServiceQuestionListCodes),
+      code: codes(level.questionListCodes, level.withoutServiceQuestionListCodes, level.withoutTypeQuestionListCodes),
       items: level.questions.map((question) => ({ code: question.code, extras: [
           question.position,
           question.categoryCode,
