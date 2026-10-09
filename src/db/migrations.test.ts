@@ -82,9 +82,14 @@ describe("reference data", () => {
       "Accessibilité aux personnes handicapées ou âgées",
     ]);
 
-    // Electricity and water: nothing in the sector, all in the agency or at home
-    // (0019); nothing in COMMON either since 0034.
-    expect(await topicsFor("ELECTRICITY")).toHaveLength(0);
+    // Electricity and water: the agency's blocks for « Autre démarche » only (0048);
+    // their services keep their own lists (0019).
+    expect((await topicsFor("ELECTRICITY")).map((t) => t.code)).toEqual([
+      "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS", "FEES", "CLEANLINESS", "ACCESS_FOR_ALL",
+    ]);
+    expect((await db.query<{ code: string }>(`
+      SELECT code FROM service WHERE replaces_shared_lists AND code LIKE ANY ('{WATER%,ELECTRICITY%,SEWER%}') ORDER BY code`))
+      .rows.map((r) => r.code)).toEqual(["ELECTRICITY_AGENCY", "ELECTRICITY_SUPPLY", "SEWER_ISSUE", "WATER_AGENCY", "WATER_SUPPLY"]);
     const serviceTopics = async (service: string) =>
       (await db.query<{ code: string }>(`
         SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
