@@ -53,6 +53,8 @@
   --level-type-tint: #f1e9f8;
   --level-service: #1d5c9e;
   --level-service-tint: #e4eef8;
+  /* Back office, overview: the page's white, under a sticky column (2026-10-09). */
+  --paper: #fff;
 }
 
 * {

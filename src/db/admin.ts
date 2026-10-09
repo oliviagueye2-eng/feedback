@@ -618,3 +618,32 @@ export async function listFormEstablishments(): Promise<FormEstablishment[]> {
      ORDER BY e.name`,
   );
 }
+
+/** A topic or question list: what it holds and who uses it (the overview, asked by Olivia, 2026-10-09). */
+export interface ListUsage {
+  code: string;
+  kind: "topics" | "questions";
+  /** The codes of its topics or questions, in order. */
+  items: string[];
+  sectors: string[];
+  types: string[];
+  services: string[];
+}
+
+/** Every topic list, then every question list, by code. */
+export async function listListUsage(): Promise<ListUsage[]> {
+  const usage = (kind: "topics" | "questions", set: string, item: string, order: string, column: string) => `
+    SELECT l.code, '${kind}' AS kind,
+           coalesce((SELECT array_agg(x.code ORDER BY ${order}) FROM ${set}_item i
+                     JOIN ${item} x ON x.id = i.${item}_id WHERE i.${set}_id = l.id), '{}') AS items,
+           coalesce((SELECT array_agg(code ORDER BY code) FROM sector WHERE ${column} = l.id), '{}') AS sectors,
+           coalesce((SELECT array_agg(code ORDER BY code) FROM establishment_type WHERE ${column} = l.id), '{}') AS types,
+           coalesce((SELECT array_agg(code ORDER BY code) FROM service WHERE ${column} = l.id), '{}') AS services
+    FROM ${set} l`;
+  return query<ListUsage>(
+    `SELECT * FROM (${usage("topics", "topic_set", "topic", "x.position", "topic_set_id")}) t
+     UNION ALL
+     SELECT * FROM (${usage("questions", "question_set", "question", "i.position", "question_set_id")}) q
+     ORDER BY kind DESC, code`,
+  );
+}

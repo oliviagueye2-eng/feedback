@@ -6,7 +6,9 @@ import styles from "../admin.module.css";
 
 /** A link of the back-office menu, marked as the current page where it is. */
 export function NavLink({ href, label, count }: { href: string; label: string; count?: number }) {
-  const current = usePathname() === href;
+  const pathname = usePathname();
+  // A page under a menu entry keeps it marked (Questionnaire › Vue d'ensemble), the dashboard aside.
+  const current = pathname === href || (href !== "/console-bo" && pathname.startsWith(`${href}/`));
   return (
     <Link href={href} className={styles.navLink} aria-current={current ? "page" : undefined}>
       {label}
