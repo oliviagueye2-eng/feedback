@@ -193,14 +193,22 @@ describe("establishment", () => {
     expect(await getEstablishment(typed.id)).toMatchObject({ typeCode: "HOSPITAL", sectorLabel: "Santé" });
     const other = await createUserEstablishment({ name: "Centre de dialyse", sector: "HEALTH", type: "OTHER" });
     expect(await getEstablishment(other.id)).toMatchObject({ typeCode: null, sectorLabel: "Santé" });
+    // A bank needs one too since 0073.
+    await expect(createUserEstablishment({ name: "Banque X", sector: "BANKING_INSURANCE" })).rejects.toMatchObject(invalid);
     // No types in this sector: none asked.
-    const noTypes = await createUserEstablishment({ name: "Banque X", sector: "BANKING_INSURANCE" });
+    const noTypes = await createUserEstablishment({ name: "Hôtel X", sector: "HOSPITALITY" });
     expect((await getEstablishment(noTypes.id)).typeCode).toBeNull();
   });
 
   it("needs a name of 3 letters at least (UBA fits)", async () => {
     await expect(createUserEstablishment({ name: "UB", sector: "BANKING_INSURANCE" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
-    await expect(createUserEstablishment({ name: "UBA", sector: "BANKING_INSURANCE" })).resolves.toHaveProperty("id");
+    await expect(createUserEstablishment({ name: "UBA", sector: "BANKING_INSURANCE", type: "BANK" })).resolves.toHaveProperty("id");
+  });
+
+  it("gives a bank added later the paths of its type (0073)", async () => {
+    const bank = await createUserEstablishment({ name: "Banque Nouvelle", sector: "BANKING_INSURANCE", type: "BANK" });
+    const codes = (await getEstablishment(bank.id)).services.map((s) => s.code).sort();
+    expect(codes).toEqual(["ATM_WITHDRAWAL", "BANK_AGENCY", "BANK_APP"]);
   });
 
   it("lists the twenty-one sectors in alphabetical order, accents ignored", async () => {
@@ -596,6 +604,7 @@ describe("feedback", () => {
       "Qualité de l'enseignement",
       "Encadrement des élèves",
       "Échanges avec les enseignants et la direction",
+      "Frais de scolarité et cotisations (montant connu à l'avance, reçu remis)",
       "Propreté, entretien et confort",
       "Accessibilité aux personnes handicapées ou âgées",
       "Sécurité dans l'établissement",
@@ -623,9 +632,10 @@ describe("feedback", () => {
       "RESPONDENT", "CLASSES_HELD", "CLASS_SIZE", "FACILITIES", "REPORTED", "REPORT_WHY",
     ]);
     await topicsOf("a7b8c9d0-0000-4000-8000-000000000006", preschool!.id, services.SCHOOL_ADMIN);
+    // Since 0072, the preschool's own questions come with any visit.
     expect(await questionsOf("a7b8c9d0-0000-4000-8000-000000000006")).toEqual([
-      "PRESCHOOL_RESPONDENT", "GOAL_ACHIEVED", "WAIT_TIME", "VISITS_COUNT", "DOCUMENTS_KNOWN", "PAID_SOMETHING",
-      "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY",
+      "PRESCHOOL_RESPONDENT", "CHILD_HAPPY", "GOAL_ACHIEVED", "WAIT_TIME", "VISITS_COUNT", "DOCUMENTS_KNOWN",
+      "PAID_SOMETHING", "RECEIPT_GIVEN", "FACILITIES", "REPORTED", "REPORT_WHY",
     ]);
   });
 
@@ -719,14 +729,18 @@ describe("feedback", () => {
     expect(await visit("c9d0e1f2-0000-4000-8000-000000000002", services.HIGHER_EDUCATION_COURSES!)).toEqual({
       topics: [
         "Qualité de l'enseignement",
-        "Encadrement des élèves",
         "Échanges avec les enseignants et la direction",
+        "Encadrement des étudiants",
         "Respect du calendrier (examens, publication des notes)",
+        "Frais de scolarité et cotisations (montant connu à l'avance, reçu remis)",
         "Propreté, entretien et confort",
         "Accessibilité aux personnes handicapées ou âgées",
         "Sécurité dans l'établissement",
+        "Bibliothèque (accès, horaires, ouvrages)",
+        "Salles informatiques et matériel (accès, état)",
       ],
-      questions: ["RESPONDENT", "CLASSES_HELD", "CLASS_SIZE", "FACILITIES", "REPORTED", "REPORT_WHY"],
+      // 0072: enough seats instead of the class size.
+      questions: ["RESPONDENT", "CLASSES_HELD", "ENOUGH_SEATS", "FACILITIES", "REPORTED", "REPORT_WHY"],
     });
   });
 

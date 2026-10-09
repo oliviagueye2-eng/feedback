@@ -38,18 +38,25 @@ describe("first establishments of the registry", () => {
       JOIN establishment_type_translation tt ON tt.establishment_type_id = t.id AND tt.language = 'fr'
       GROUP BY s.code ORDER BY s.code`);
     expect(rows).toEqual([
+      // 0073: nineteen more, a type for every establishment.
       { sector: "ADMINISTRATION", n: 8 },
+      { sector: "BANKING_INSURANCE", n: 2 },
       { sector: "CULTURE", n: 4 },
+      { sector: "DELIVERY", n: 1 },
       { sector: "EDUCATION", n: 9 },
+      { sector: "ELECTRICITY", n: 1 },
       { sector: "HEALTH", n: 8 },
       { sector: "JUSTICE", n: 5 },
-      { sector: "RETAIL", n: 4 },
-      { sector: "SECURITY", n: 3 },
+      { sector: "MOBILE_PAYMENT", n: 1 },
+      { sector: "RETAIL", n: 5 },
+      { sector: "SECURITY", n: 4 },
       { sector: "SOCIAL", n: 5 },
       { sector: "SPORT", n: 3 },
       { sector: "TAX", n: 6 },
+      { sector: "TELECOM", n: 2 },
       { sector: "TOURISM", n: 2 },
-      { sector: "TRANSPORT", n: 2 },
+      { sector: "TRANSPORT", n: 10 },
+      { sector: "WATER", n: 2 },
     ]);
   });
 

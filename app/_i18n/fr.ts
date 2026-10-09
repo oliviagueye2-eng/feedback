@@ -777,7 +777,7 @@ export const fr = {
         "Une ligne par secteur, à déplier : ses thèmes, puis ses questions. Ils viennent de sector_topic_set et sector_question_set ; un niveau peut avoir plusieurs listes, réunies par « + ». Une liste marquée « sans service » (only_without_service) ne s'ajoute qu'à un avis sans service : « Autre démarche », ou un établissement qui n'en propose aucun. Une liste marquée « sans type » (only_without_type) ne s'ajoute qu'à un établissement sans type (« Autre »).",
       typesTitle: "Types d'établissement",
       typesHelp:
-        "Les services ne sont pas reliés au type en base : ce sont ceux des établissements de ce type (establishment_service). Les thèmes et les questions viennent de establishment_type_topic_set et establishment_type_question_set.",
+        "Les services du type (establishment_type_service) sont proposés par tous ses établissements ; un établissement peut en avoir d'autres à lui (establishment_service). Les thèmes et les questions viennent de establishment_type_topic_set et establishment_type_question_set. Une liste marquée « sans service » ne s'ajoute qu'à « Autre démarche ».",
       servicesTitle: "Services",
       servicesHelp:
         "Les établissements viennent de establishment_service. Un service reçoit aussi les listes de son secteur, sauf celles marquées « sans service », et celles du type. Thèmes et questions viennent de service_topic_set et service_question_set.",

@@ -132,12 +132,15 @@ const listsOf = (
 const SECTOR_LISTS_FILTER =
   "AND (NOT x.only_without_service OR s.id IS NULL) AND (NOT x.only_without_type OR et.id IS NULL)";
 
+/** A type's list marked only_without_service goes only to a feedback without a service (0072). */
+const TYPE_LISTS_FILTER = "AND (NOT x.only_without_service OR s.id IS NULL)";
+
 /** The lists of the three levels (sec, et, s): sector_topic_sets, type_question_sets… */
 const LEVEL_LISTS = `
   ${listsOf("sector", "sector_id", "sec", "topic", SECTOR_LISTS_FILTER)} AS sector_topic_sets,
   ${listsOf("sector", "sector_id", "sec", "question", SECTOR_LISTS_FILTER)} AS sector_question_sets,
-  ${listsOf("establishment_type", "type_id", "et", "topic")} AS type_topic_sets,
-  ${listsOf("establishment_type", "type_id", "et", "question")} AS type_question_sets,
+  ${listsOf("establishment_type", "type_id", "et", "topic", TYPE_LISTS_FILTER)} AS type_topic_sets,
+  ${listsOf("establishment_type", "type_id", "et", "question", TYPE_LISTS_FILTER)} AS type_question_sets,
   ${listsOf("service", "service_id", "s", "topic")} AS service_topic_sets,
   ${listsOf("service", "service_id", "s", "question")} AS service_question_sets`;
 

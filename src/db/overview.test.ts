@@ -73,7 +73,8 @@ it("gives each path the form of its establishments and flags what needs a look",
   expect(port.topics.find((t) => t.code === "FEES")!.gated).toBe(true);
   expect(o.paths.filter((p) => p.topics.some((t) => t.code === "FEES" && !t.gated)).map((p) => p.service).sort()).toEqual([
     "APP_RIDE", "BOAT_CROSSING", "FLIGHT", "HIGHWAY_TRIP", "LAND_TRIP", "PLANE_TICKET", "SEWER_ISSUE", "STREET_TAXI_RIDE",
-    "TICKET_PURCHASE", "TRAIN_TRIP",
+    // The ticket purchase once per type offering it since 0073: bus network, train, ferry.
+    "TICKET_PURCHASE", "TICKET_PURCHASE", "TICKET_PURCHASE", "TRAIN_TRIP",
   ]);
   // The airport: the stations' questions, then its own.
   const airport = o.paths.find((p) => p.type === "AIRPORT")!;
