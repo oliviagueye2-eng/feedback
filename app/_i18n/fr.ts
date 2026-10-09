@@ -774,7 +774,7 @@ export const fr = {
       reset: "Tout afficher",
       sectorsTitle: "Secteurs",
       sectorsHelp:
-        "Une ligne par secteur, à déplier : ses thèmes, puis ses questions. Ils viennent de sector_topic_set et sector_question_set ; un niveau peut avoir plusieurs listes, réunies par « + ». Une liste marquée « sans service » (only_without_service) ne s'ajoute qu'à un avis sans service : « Autre démarche », ou un établissement qui n'en propose aucun.",
+        "Une ligne par secteur, à déplier : ses thèmes, puis ses questions. Ils viennent de sector_topic_set et sector_question_set ; un niveau peut avoir plusieurs listes, réunies par « + ». Une liste marquée « sans service » (only_without_service) ne s'ajoute qu'à un avis sans service : « Autre démarche », ou un établissement qui n'en propose aucun. Une liste marquée « sans type » (only_without_type) ne s'ajoute qu'à un établissement sans type (« Autre »).",
       typesTitle: "Types d'établissement",
       typesHelp:
         "Les services ne sont pas reliés au type en base : ce sont ceux des établissements de ce type (establishment_service). Les thèmes et les questions viennent de establishment_type_topic_set et establishment_type_question_set.",
@@ -810,6 +810,7 @@ export const fr = {
       services: "Services",
       establishments: "Établissements",
       withoutService: "sans service",
+      withoutType: "sans type",
       groups: {
         topics: "Thème",
         questions: "Questions",

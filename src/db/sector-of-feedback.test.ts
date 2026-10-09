@@ -25,8 +25,9 @@ afterAll(async () => {
 it("takes the establishment's sector when its service belongs to another sector", async () => {
   const [{ id: establishmentId }] = (
     await db.query<{ id: string }>(
-      `INSERT INTO establishment (name, type_id)
-       VALUES ('Centre de santé de Test', (SELECT id FROM establishment_type WHERE code = 'HEALTH_CENTER'))
+      // No type: the health sector's care lists go to it (0070, only_without_type).
+      `INSERT INTO establishment (name, sector_id)
+       VALUES ('Centre de santé de Test', (SELECT id FROM sector WHERE code = 'HEALTH'))
        RETURNING id`,
     )
   ).rows as [{ id: string }];
@@ -48,4 +49,22 @@ it("takes the establishment's sector when its service belongs to another sector"
   const topics = (await findTopicChoices(feedbackId)).map((t) => t.code);
   expect(topics).toContain("CARE_RECEIVED"); // HEALTH, the establishment's sector
   expect(topics).toContain("TEACHING_QUALITY"); // the service's own list stays
+});
+
+it("gives a pharmacy its own form, without the care lists of a health place without a type (0070)", async () => {
+  const [{ id: establishmentId }] = (
+    await db.query<{ id: string }>(
+      `INSERT INTO establishment (name, type_id)
+       VALUES ('Pharmacie de Test', (SELECT id FROM establishment_type WHERE code = 'PHARMACY'))
+       RETURNING id`,
+    )
+  ).rows as [{ id: string }];
+  const feedbackId = "c3c3c3c3-0070-4000-8000-000000000001";
+  await upsertFeedback(feedbackId, { channel: "search", establishmentId, language: "fr", visitPeriod: "today" });
+
+  const topics = (await findTopicChoices(feedbackId)).map((t) => t.code);
+  expect(topics).toContain("MEDICINES_IN_STOCK");
+  expect(topics).toContain("WAIT_TIME"); // the sector's COUNTER, shared by the three forms
+  expect(topics).not.toContain("CARE_RECEIVED");
+  expect(topics).not.toContain("FEES");
 });

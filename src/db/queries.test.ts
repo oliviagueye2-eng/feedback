@@ -469,19 +469,21 @@ describe("feedback", () => {
   it("adds up the lists of the sector, the type and the service, a question asked once", async () => {
     // For the test, the hospital type also gets the ticket purchase list.
     await db.exec(`INSERT INTO establishment_type_question_set (type_id, question_set_id, position)
-                   SELECT et.id, qs.id, 1 FROM establishment_type et, question_set qs
+                   SELECT et.id, qs.id, 3 FROM establishment_type et, question_set qs
                    WHERE et.code = 'HOSPITAL' AND qs.code = 'TICKET_PURCHASE'`);
     const both = "d4e5f6a7-0000-4000-8000-000000000001";
     await upsertFeedback(both, { channel: "search", establishmentId: ids.dantec, language: "fr", visitPeriod: "today" });
     const { questions } = await getDetailedQuestionnaire(both);
-    // Health's, then the purchase's (its WAIT_TIME already asked), then the common ones. Paying as
+    // Health's (the hospital's own since 0070), then the purchase's (its WAIT_TIME already asked),
+    // then the common ones. Paying as
     // one wished is the service's PAYMENT list since 0045, not the purchase's.
     expect(questions.map((q) => q.code)).toEqual([
       "PATIENT", "CARE_RECEIVED", "PRESCRIPTION_AVAILABLE", "GOAL_ACHIEVED", "WAIT_TIME", "PAID_SOMETHING",
       "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY",
     ]);
     await db.exec(`DELETE FROM establishment_type_question_set
-                   WHERE type_id = (SELECT id FROM establishment_type WHERE code = 'HOSPITAL')`);
+                   WHERE type_id = (SELECT id FROM establishment_type WHERE code = 'HOSPITAL')
+                     AND question_set_id = (SELECT id FROM question_set WHERE code = 'TICKET_PURCHASE')`);
   });
 
   it("gives COMMERCE questions and topics to an establishment whose sector is unknown", async () => {
