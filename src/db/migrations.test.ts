@@ -37,14 +37,14 @@ describe("reference data", () => {
     expect(row).toEqual({ options: 5, prompts: 5 });
   });
 
-  it("has the twenty sectors, each with a French label", async () => {
+  it("has the twenty-one sectors (0066: deliveries), each with a French label", async () => {
     const row = await one<{ sectors: number; labelled: number; old_code: number }>(`
       SELECT count(*)::int AS sectors,
              count(t.label)::int AS labelled,
              count(*) FILTER (WHERE s.code = 'PUBLIC_TRANSPORT')::int AS old_code
       FROM sector s
       LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'`);
-    expect(row).toEqual({ sectors: 20, labelled: 20, old_code: 0 });
+    expect(row).toEqual({ sectors: 21, labelled: 21, old_code: 0 });
   });
 
   it("files the driving licence centre under Administration, a service with a file", async () => {
@@ -95,9 +95,13 @@ describe("reference data", () => {
       // 0057: the banks' services.
       "BANKING_INSURANCE:BANKING_INSURANCE", "BANKING_INSURANCE:STAFF_SKILLS", "BANKING_INSURANCE:COUNTER",
       "BANKING_INSURANCE:CASE_FILE", "BANKING_INSURANCE:PREMISES", "BANKING_INSURANCE:FEES",
+      // 0066: the deliveries.
+      "DELIVERY:STAFF_SKILLS", "DELIVERY:COUNTER", "DELIVERY:PREMISES", "DELIVERY:FEES",
       "ELECTRICITY:STAFF_SKILLS", "ELECTRICITY:COUNTER", "ELECTRICITY:PREMISES", "ELECTRICITY:FEES",
       "MOBILE_PAYMENT:MOBILE_PAYMENT", "MOBILE_PAYMENT:STAFF_SKILLS", "MOBILE_PAYMENT:FEES",
       "SECURITY:SECURITY_REQUEST",
+      // 0065: the telecom paths, the TELECOM list gone from the sector.
+      "TELECOM:STAFF_SKILLS", "TELECOM:COUNTER", "TELECOM:PREMISES", "TELECOM:FEES", "TELECOM:CUSTOMER_SERVICE",
       "TRANSPORT:TRANSPORT", "TRANSPORT:FEES",
       "WATER:STAFF_SKILLS", "WATER:COUNTER", "WATER:PREMISES", "WATER:FEES",
     ]);
@@ -207,7 +211,7 @@ describe("reference data", () => {
       without_list: null,
       places: [
         "BANK_AGENCY", "BUS_STATION", "ELECTRICITY_AGENCY", "HIGHER_EDUCATION_ADMIN", "INSURANCE_CLAIM",
-        "PLANE_TICKET", "POLICE_PREMISES", "PORT_PROCEDURE", "SANITATION_AGENCY", "SCHOOL_ADMIN", "TICKET_PURCHASE", "WATER_AGENCY",
+        "PLANE_TICKET", "POLICE_PREMISES", "PORT_PROCEDURE", "POSTAL_COUNTER", "SANITATION_AGENCY", "SCHOOL_ADMIN", "TELECOM_SHOP", "TICKET_PURCHASE", "TV_SHOP", "WATER_AGENCY",
       ],
     });
   });
@@ -223,16 +227,16 @@ describe("reference data", () => {
     expect(row).toEqual({
       topics: null,
       questions: [
-        "AGENCY_SUBJECT", "ARRIVAL_MODE", "BANK_SUBJECT", "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "FIELD_SITUATION",
-        "FILE_SUBMITTED", "INTERVENTION_AWAITED", "MONEY_CHANNEL", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
-        "POLICE_VISIT_REASON", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
-        "SANITATION_SUBJECT", "SEWER_PROBLEM", "TELECOM_SUBJECT", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "UTILITY_SUBJECT",
+        "AGENCY_SUBJECT", "ARRIVAL_MODE", "BANK_SUBJECT", "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "DELIVERY_KIND", "FIELD_SITUATION",
+        "FILE_SUBMITTED", "INTERVENTION_AWAITED", "MONEY_CHANNEL", "MONEY_OPERATION_KIND", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
+        "POLICE_VISIT_REASON", "POSTAL_COUNTER_SUBJECT", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
+        "SANITATION_SUBJECT", "SEWER_PROBLEM", "SUPPORT_REASON", "TELECOM_SHOP_SUBJECT", "TELECOM_SUBJECT", "TELECOM_SUPPORT_REASON", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "TV_SHOP_SUBJECT", "UTILITY_SUBJECT",
       ],
       order: true,
     });
   });
 
-  it("has the bank of 85 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058, 2 of 0062), each written once, every text in French", async () => {
+  it("has the bank of 96 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058, 2 of 0062, 2 of 0065, 6 of 0066, 2 of 0068, 1 of 0069), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -246,7 +250,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 85, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 96, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -263,7 +267,8 @@ describe("reference data", () => {
       ADMINISTRATION: "FILE_SERVICES + PAID_AND_RECEIPT", TAX: "FILE_SERVICES + PAID_AND_RECEIPT",
       JUSTICE: "FILE_SERVICES + PAID_AND_RECEIPT", SOCIAL: "FILE_SERVICES + PAID_AND_RECEIPT",
       HEALTH: "HEALTH + PAID_AND_RECEIPT", BANKING_INSURANCE: "BANKING_INSURANCE", MOBILE_PAYMENT: "MOBILE_PAYMENT", EDUCATION: null,
-      ELECTRICITY: "FILE_SERVICES + PAID_AND_RECEIPT", WATER: "FILE_SERVICES + PAID_AND_RECEIPT", TELECOM: null,
+      ELECTRICITY: "FILE_SERVICES + PAID_AND_RECEIPT", WATER: "FILE_SERVICES + PAID_AND_RECEIPT",
+      TELECOM: "FILE_SERVICES + PAID_AND_RECEIPT", DELIVERY: "FILE_SERVICES + PAID_AND_RECEIPT",
       RETAIL: "COMMERCE", CULTURE: "COMMERCE", HOSPITALITY: "COMMERCE", REAL_ESTATE: "COMMERCE",
       FOOD_SERVICE: "COMMERCE", SPORT: "COMMERCE", TOURISM: "COMMERCE",
       SECURITY: null, TRANSPORT: null,
@@ -287,6 +292,13 @@ describe("reference data", () => {
       // 0057: the sector's list by name for the claim, and the banks' three services.
       INSURANCE_CLAIM: "BANKING_INSURANCE + INSURANCE_CLAIM", BANK_AGENCY: "BANK_AGENCY + BANKING_INSURANCE",
       ATM_WITHDRAWAL: "ATM_WITHDRAWAL", BANK_APP: "MOBILE_MONEY",
+      // 0065: the telecom paths.
+      HOME_INTERNET: "HOME_INTERNET", TELECOM_SHOP: "TELECOM_SHOP + FILE_SERVICES + PAID_AND_RECEIPT",
+      TV_SHOP: "TV_SHOP + FILE_SERVICES + PAID_AND_RECEIPT",
+      // 0066: the deliveries.
+      POSTAL_COUNTER: "POSTAL_COUNTER + PAID_AND_RECEIPT", DELIVERY: "DELIVERY",
+      // 0069: the telecom's customer service.
+      TELECOM_SUPPORT: "TELECOM_SUPPORT",
     });
     // Types with a list of their own (0005), and « Vous êtes » on the education places (0018).
     expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))
@@ -303,7 +315,7 @@ describe("reference data", () => {
       `SELECT qs.code AS list FROM question_set_item i
        JOIN question_set qs ON qs.id = i.question_set_id JOIN question q ON q.id = i.question_id
        WHERE q.code = 'WAIT_TIME' ORDER BY qs.code`)).rows.map((r) => r.list);
-    expect(lists).toEqual(["BANKING_INSURANCE", "FILE_SERVICES", "HEALTH", "POLICE_PREMISES", "TICKET_PURCHASE"]);
+    expect(lists).toEqual(["BANKING_INSURANCE", "FILE_SERVICES", "HEALTH", "POLICE_PREMISES", "POSTAL_COUNTER", "TICKET_PURCHASE"]);
     const order = (await db.query<{ code: string }>(
       `SELECT q.code FROM question_set_item i
        JOIN question_set qs ON qs.id = i.question_set_id JOIN question q ON q.id = i.question_id
@@ -336,6 +348,8 @@ describe("reference data", () => {
       "COMMON: REPORTED ← OVERALL_SATISFACTION DISSATISFIED",
       "COMMON: REPORTED ← OVERALL_SATISFACTION VERY_DISSATISFIED",
       "COMMON: REPORT_WHY ← REPORTED NO",
+      "DELIVERY: COURIER_ON_TIME ← DELIVERY_KIND PICKUP",
+      "DELIVERY: PARCEL_RECEIVED ← DELIVERY_KIND DROP_OFF",
       "ELECTRICITY_SUPPLY: CUT_NOTICE ← CUTS_COUNT 1_TO_3",
       "ELECTRICITY_SUPPLY: CUT_NOTICE ← CUTS_COUNT 4_TO_10",
       "ELECTRICITY_SUPPLY: CUT_NOTICE ← CUTS_COUNT OVER_10",
@@ -352,13 +366,17 @@ describe("reference data", () => {
       "LAND_TRIP: INCIDENT_SOLUTION ← TRIP_INCIDENT YES",
       "MOBILE_MONEY: MONEY_PROBLEM_SOLVED ← MONEY_OPERATION_OK FAILED",
       "MOBILE_MONEY: MONEY_PROBLEM_SOLVED ← MONEY_OPERATION_OK BLOCKED",
+      "MOBILE_MONEY_AGENT: AGENT_CASH ← MONEY_OPERATION_KIND WITHDRAWAL",
+      "MOBILE_MONEY_SUPPORT: MONEY_PROBLEM_SOLVED ← SUPPORT_REASON PROBLEM",
       "PAID_AND_RECEIPT: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON COMPLAINT",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON LOSS",
+      "POSTAL_COUNTER: ITEM_AVAILABLE ← POSTAL_COUNTER_SUBJECT COLLECT",
+      "POSTAL_COUNTER: TRACKING_NUMBER_GIVEN ← POSTAL_COUNTER_SUBJECT SEND",
       "STREET_TAXI_RIDE: PRICE_KEPT ← PRICE_AGREED YES",
       "TELECOM: NETWORK_LOSS ← TELECOM_SUBJECT CALLS_SMS",
       "TELECOM: NETWORK_LOSS ← TELECOM_SUBJECT MOBILE_INTERNET",
-      "TELECOM: NETWORK_LOSS ← TELECOM_SUBJECT HOME_INTERNET",
+      "TELECOM_SUPPORT: MONEY_PROBLEM_SOLVED ← TELECOM_SUPPORT_REASON PROBLEM",
       "TRAIN_TRIP: INCIDENT_EXPLAINED ← TRIP_INCIDENT YES",
       "TRAIN_TRIP: INCIDENT_SOLUTION ← TRIP_INCIDENT YES",
       "TRAIN_TRIP: TRAIN_INCIDENT_TYPE ← TRIP_INCIDENT YES",
@@ -413,7 +431,11 @@ describe("« Non concerné » and the questions that open a topic (0011)", () =>
       `SELECT q.code || ' ' || ao.code AS code FROM answer_option ao JOIN question q ON q.id = ao.question_id
        WHERE NOT ao.is_active ORDER BY 1`)).rows.map((r) => r.code);
     // « Mobile money » has its own service since 0025 (0026).
-    expect(inactive).toEqual(["RECEIPT_GIVEN NOTHING_PAID", "RECEIPT_OR_INVOICE NOTHING_PAID", "TELECOM_SUBJECT MOBILE_MONEY"]);
+    // Home internet and the bill have their own services since 0065.
+    expect(inactive).toEqual([
+      "RECEIPT_GIVEN NOTHING_PAID", "RECEIPT_OR_INVOICE NOTHING_PAID", "TELECOM_SUBJECT BILLING", "TELECOM_SUBJECT HOME_INTERNET",
+      "TELECOM_SUBJECT MOBILE_MONEY",
+    ]);
   });
 
   it("accepts « Non concerné » as a sentiment, and nothing else", async () => {

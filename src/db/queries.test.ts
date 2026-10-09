@@ -203,9 +203,9 @@ describe("establishment", () => {
     await expect(createUserEstablishment({ name: "UBA", sector: "BANKING_INSURANCE" })).resolves.toHaveProperty("id");
   });
 
-  it("lists the twenty sectors in alphabetical order, accents ignored", async () => {
+  it("lists the twenty-one sectors in alphabetical order, accents ignored", async () => {
     const sectors = await listSectors();
-    expect(sectors).toHaveLength(20);
+    expect(sectors).toHaveLength(21);
     expect(sectors.slice(0, 3).map((s) => s.label)).toEqual([
       "Administration et état civil",
       "Banques et assurances",
@@ -642,8 +642,14 @@ describe("feedback", () => {
     };
     expect(await servicesOf("Orange Money")).toEqual(Object.keys(services));
     expect(await servicesOf("Mixx by Yas")).toEqual(Object.keys(services));
-    expect(await servicesOf("Orange")).toEqual(["Téléphone ou internet"]);
-    expect(await servicesOf("Yas")).toEqual(["Téléphone ou internet"]);
+    // 0065: the network, the internet at home and the shop.
+    // 0069: and the customer service.
+    const telephone = [
+      "Internet à la maison (fibre, box)", "Le réseau mobile (appels, SMS, internet)", "Service client (appel, réclamation)",
+      "Une démarche en boutique",
+    ];
+    expect(await servicesOf("Orange")).toEqual(telephone);
+    expect(await servicesOf("Yas")).toEqual(telephone);
     const visit = async (feedback: string, serviceId: number) => {
       await upsertFeedback(feedback, { channel: "search", establishmentId: wave!.id, serviceId, language: "fr", visitPeriod: "today" });
       return {
@@ -656,12 +662,14 @@ describe("feedback", () => {
       questions: ["MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "REPORTED", "REPORT_WHY"],
     });
     expect(await visit("d0e1f2a3-0000-4000-8000-000000000002", services["Opération dans un point de service"]!)).toEqual({
-      topics: ["OPERATION_RELIABILITY", "PROFESSIONALISM", "WAIT_TIME", "FEES", "AGENT_LIQUIDITY", "AGENT_PROXIMITY"],
-      questions: ["MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "AGENT_CASH", "REPORTED", "REPORT_WHY"],
+      // 0068: the agent's cash asked after a withdrawal, instead of a topic.
+      topics: ["OPERATION_RELIABILITY", "PROFESSIONALISM", "WAIT_TIME", "FEES", "AGENT_PROXIMITY"],
+      questions: ["MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "MONEY_OPERATION_KIND", "AGENT_CASH", "REPORTED", "REPORT_WHY"],
     });
     expect(await visit("d0e1f2a3-0000-4000-8000-000000000003", services["Service client (appel, réclamation)"]!)).toEqual({
       topics: ["REQUEST_HANDLING", "PROFESSIONALISM", "INFORMATION", "RESPONSE_TIME", "SUPPORT_REACHABILITY"],
-      questions: ["MONEY_PROBLEM_SOLVED", "REPORTED", "REPORT_WHY"],
+      // 0068: why one contacted it first.
+      questions: ["SUPPORT_REASON", "MONEY_PROBLEM_SOLVED", "REPORTED", "REPORT_WHY"],
     });
   });
 
