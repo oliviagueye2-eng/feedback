@@ -100,7 +100,28 @@ export async function mergeEstablishment(id: string, targetId: string) {
 /** The order of the pages a feedback goes through after the essential question. */
 export const STOP_PAGES: db.StopPage[] = ["details", "sector", "common", "send"];
 
-export async function getDashboard() {
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+/** A real day: « 2026-02-30 » would otherwise roll over to March. */
+const isDay = (value: unknown): value is string => {
+  if (typeof value !== "string" || !ISO_DAY.test(value)) return false;
+  const time = Date.parse(value);
+  return !Number.isNaN(time) && new Date(time).toISOString().startsWith(value);
+};
+
+/**
+ * The period of the table « Avis par établissement » (asked by Olivia,
+ * 2026-10-09): `from` and `to` as typed (YYYY-MM-DD), else this month, from
+ * the 1st to today (UTC, the time in Dakar). Swapped when typed backwards.
+ */
+export function feedbackPeriod(from: unknown, to: unknown, now = new Date()): { from: string; to: string } {
+  const today = now.toISOString().slice(0, 10);
+  const first = `${today.slice(0, 8)}01`;
+  const start = isDay(from) ? from : first;
+  const end = isDay(to) ? to : today;
+  return start <= end ? { from: start, to: end } : { from: end, to: start };
+}
+
+export async function getDashboard(period: { from: string; to: string } = feedbackPeriod(undefined, undefined)) {
   const [pendingComments, pendingEstablishments, month, stops, weeks, commented, byEstablishment] = await Promise.all([
     db.countPendingComments(),
     db.countPendingEstablishments(),
@@ -108,7 +129,7 @@ export async function getDashboard() {
     db.countStopPages(NOT_SENT_AFTER_HOURS),
     db.countCompleteByWeek(DASHBOARD_WEEKS),
     db.countCommentsByEstablishmentThisMonth(),
-    db.countFeedbacksByEstablishmentThisMonth(NOT_SENT_AFTER_HOURS),
+    db.countFeedbacksByEstablishment(NOT_SENT_AFTER_HOURS, period.from, period.to),
   ]);
   const started = month.complete + month.notSent;
   return {
@@ -126,7 +147,7 @@ export async function getDashboard() {
     weeks,
     /** Establishments with comments this month (asked by Olivia, 2026-10-07). */
     commented,
-    /** This month's complete and not sent feedbacks by establishment (asked by Olivia, 2026-10-09). */
+    /** Complete and not sent feedbacks by establishment over `period` (asked by Olivia, 2026-10-09). */
     byEstablishment,
   };
 }

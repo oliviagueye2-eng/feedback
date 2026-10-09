@@ -1,4 +1,4 @@
-import { getDashboard } from "@/src/domain/admin";
+import { feedbackPeriod, getDashboard } from "@/src/domain/admin";
 import { getDictionary } from "../../../_i18n";
 import { ShareBar, StopBars, StopLegend, WeekLine } from "../_components/Charts";
 import { requireAdmin } from "../_lib/auth";
@@ -18,9 +18,12 @@ const day = (date: Date, withYear: boolean) => {
 };
 
 /** What to handle, then this month's feedbacks: sent, not sent, and where they stop. */
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: PageProps<"/console-bo">) {
   await requireAdmin();
-  const [{ admin }, d] = await Promise.all([getDictionary(), getDashboard()]);
+  // The period of « Avis par établissement » (?du=&au=), this month by default.
+  const { du, au } = await searchParams;
+  const period = feedbackPeriod(du, au);
+  const [{ admin }, d] = await Promise.all([getDictionary(), getDashboard(period)]);
   const t = admin.dashboard;
   const dash = "—";
 
@@ -44,7 +47,7 @@ export default async function DashboardPage() {
   const lastWeek = d.weeks.at(-1);
   // The month the figures count, as the database counts it (UTC, the time in Dakar).
   const today = new Date();
-  const period =
+  const monthPeriod =
     today.getUTCDate() === 1
       ? fill(t.periodOneDay, { date: day(today, true) })
       : fill(t.period, { from: day(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1)), false), to: day(today, true) });
@@ -52,7 +55,7 @@ export default async function DashboardPage() {
   return (
     <>
       <h1>{t.title}</h1>
-      <p className={styles.meta}>{period}</p>
+      <p className={styles.meta}>{monthPeriod}</p>
       <p className={styles.lead}>
         {todo.length === 0 ? (
           t.nothingTodo
@@ -120,8 +123,21 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className={styles.commented}>
+      <section className={styles.commented} id="avis">
         <h2>{t.byEstablishmentTitle}</h2>
+        <form className={styles.period} method="get" action="/console-bo#avis">
+          <label>
+            {t.byEstablishmentFrom}
+            <input type="date" name="du" defaultValue={period.from} className={styles.input} required />
+          </label>
+          <label>
+            {t.byEstablishmentTo}
+            <input type="date" name="au" defaultValue={period.to} className={styles.input} required />
+          </label>
+          <button type="submit" className={styles.link}>
+            {t.byEstablishmentApply}
+          </button>
+        </form>
         {d.byEstablishment.length === 0 ? (
           <p className={styles.empty}>{t.byEstablishmentEmpty}</p>
         ) : (

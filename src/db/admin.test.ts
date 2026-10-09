@@ -8,6 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   correctComment,
   correctEstablishment,
+  feedbackPeriod,
   getCategoriesAndTopics,
   getDashboard,
   getQuestionnaire,
@@ -233,6 +234,22 @@ describe("dashboard", () => {
     expect(d.byEstablishment).toEqual([
       { establishmentId: active, name: "Centre de santé de Test", municipality: null, complete: 1, notSent: 3 },
     ]);
+  });
+
+  it("counts by establishment over the period chosen", async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    expect((await getDashboard({ from: today, to: today })).byEstablishment).toEqual([
+      { establishmentId: active, name: "Centre de santé de Test", municipality: null, complete: 1, notSent: 0 },
+    ]);
+    expect((await getDashboard({ from: "2020-01-01", to: "2020-12-31" })).byEstablishment).toEqual([]);
+  });
+
+  it("reads the period typed, else this month", () => {
+    const now = new Date("2026-10-09T12:00:00Z");
+    expect(feedbackPeriod(undefined, undefined, now)).toEqual({ from: "2026-10-01", to: "2026-10-09" });
+    expect(feedbackPeriod("2026-09-01", "2026-09-30", now)).toEqual({ from: "2026-09-01", to: "2026-09-30" });
+    expect(feedbackPeriod("2026-09-30", "2026-09-01", now)).toEqual({ from: "2026-09-01", to: "2026-09-30" });
+    expect(feedbackPeriod("2026-02-30", "n'importe quoi", now)).toEqual({ from: "2026-10-01", to: "2026-10-09" });
   });
 
   it("does not move the page once the feedback is sent", async () => {

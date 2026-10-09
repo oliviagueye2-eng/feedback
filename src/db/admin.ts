@@ -275,19 +275,24 @@ export interface EstablishmentFeedbacks {
   notSent: number;
 }
 
-/** This month's complete and not sent feedbacks by establishment, the most feedbacks first. */
-export async function countFeedbacksByEstablishmentThisMonth(hours: number): Promise<EstablishmentFeedbacks[]> {
+/**
+ * Complete and not sent feedbacks by establishment, the most feedbacks first,
+ * from `from` to `to` included (dates YYYY-MM-DD, days counted in UTC: the
+ * time in Dakar). Complete: sent during those days; not sent: started during
+ * those days and not sent `hours` hours later.
+ */
+export async function countFeedbacksByEstablishment(hours: number, from: string, to: string): Promise<EstablishmentFeedbacks[]> {
   return query<EstablishmentFeedbacks>(
     `WITH s AS (${SATISFACTION}),
-     month AS (SELECT date_trunc('month', now()) AS start),
+     period AS (SELECT $2::date::timestamptz AS start, ($3::date + 1)::timestamptz AS stop),
      counted AS (
        SELECT coalesce(e.merged_into_id, e.id) AS id,
-              (f.step = 'completed' AND f.completed_at >= month.start) AS complete,
-              (${NOT_SENT} AND f.started_at >= month.start) AS not_sent
+              (f.step = 'completed' AND f.completed_at >= period.start AND f.completed_at < period.stop) AS complete,
+              (${NOT_SENT} AND f.started_at >= period.start AND f.started_at < period.stop) AS not_sent
        FROM feedback f
        JOIN s ON s.feedback_id = f.id
        JOIN establishment e ON e.id = f.establishment_id
-       CROSS JOIN month
+       CROSS JOIN period
      )
      SELECT t.id AS "establishmentId", t.name,
             coalesce(m.name, t.municipality_input) AS municipality,
@@ -299,7 +304,7 @@ export async function countFeedbacksByEstablishmentThisMonth(hours: number): Pro
      WHERE c.complete OR c.not_sent
      GROUP BY t.id, t.name, m.name, t.municipality_input
      ORDER BY count(*) DESC, t.name`,
-    [hours],
+    [hours, from, to],
   );
 }
 
