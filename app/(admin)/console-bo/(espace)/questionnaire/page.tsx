@@ -67,18 +67,23 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
       countOne: t.questionCountOne,
     },
   ];
+  // A sector's lists given only without a service, « Autre démarche » (0053), are marked.
+  const codes = (lists: string[], withoutService: string[] = []) =>
+    lists.map((c) => (withoutService.includes(c) ? `${c} (${t.withoutService})` : c)).join(" + ") || null;
   const levelContent = (level: {
     listCodes: string[];
     topics: ListedTopic[];
     questionListCodes: string[];
     questions: ListedQuestion[];
+    withoutServiceListCodes?: string[];
+    withoutServiceQuestionListCodes?: string[];
   }): ListGridRow["lists"] => ({
     topics: {
-      code: level.listCodes.join(" + ") || null,
+      code: codes(level.listCodes, level.withoutServiceListCodes),
       items: level.topics.map((topic) => ({ code: topic.code, extras: [topic.label, topic.isActive, topic.categoryCode, shownIf(topic)] })),
     },
     questions: {
-      code: level.questionListCodes.join(" + ") || null,
+      code: codes(level.questionListCodes, level.withoutServiceQuestionListCodes),
       items: level.questions.map((question) => ({ code: question.code, extras: [
           question.position,
           question.categoryCode,
@@ -199,7 +204,6 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
             columns: [
               { field: "code", header: t.code, column: "service.code" },
               { field: "label", header: t.label, kind: "text" },
-              { field: "replacesSharedLists", header: t.replaces, column: "service.replaces_shared_lists", kind: "bool" },
               { field: "establishments", header: t.establishments, column: "establishment.name", kind: "lines", maxLines: 3 },
             ],
           },
@@ -210,7 +214,6 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
           values: {
             code: s.code,
             label: s.label,
-            replacesSharedLists: s.replacesSharedLists,
             establishments: s.establishments,
           },
           lists: levelContent(s),

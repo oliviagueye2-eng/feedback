@@ -117,13 +117,21 @@ export async function upsertAnswer(input: {
 }
 
 /** The lists of a level's row `alias` (0044: several per level), in their order, as an array. */
-const listsOf = (level: "sector" | "establishment_type" | "service", owner: string, alias: string, kind: "topic" | "question") =>
-  `ARRAY(SELECT x.${kind}_set_id FROM ${level}_${kind}_set x WHERE x.${owner} = ${alias}.id ORDER BY x.position)`;
+const listsOf = (
+  level: "sector" | "establishment_type" | "service",
+  owner: string,
+  alias: string,
+  kind: "topic" | "question",
+  filter = "",
+) => `ARRAY(SELECT x.${kind}_set_id FROM ${level}_${kind}_set x WHERE x.${owner} = ${alias}.id ${filter} ORDER BY x.position)`;
+
+/** A sector's list marked only_without_service goes only to a feedback without a service (0053). */
+const SECTOR_LISTS_FILTER = "AND (NOT x.only_without_service OR s.id IS NULL)";
 
 /** The lists of the three levels (sec, et, s): sector_topic_sets, type_question_sets… */
 const LEVEL_LISTS = `
-  ${listsOf("sector", "sector_id", "sec", "topic")} AS sector_topic_sets,
-  ${listsOf("sector", "sector_id", "sec", "question")} AS sector_question_sets,
+  ${listsOf("sector", "sector_id", "sec", "topic", SECTOR_LISTS_FILTER)} AS sector_topic_sets,
+  ${listsOf("sector", "sector_id", "sec", "question", SECTOR_LISTS_FILTER)} AS sector_question_sets,
   ${listsOf("establishment_type", "type_id", "et", "topic")} AS type_topic_sets,
   ${listsOf("establishment_type", "type_id", "et", "question")} AS type_question_sets,
   ${listsOf("service", "service_id", "s", "topic")} AS service_topic_sets,
@@ -135,7 +143,7 @@ const LEVEL_LISTS = `
  * service's, decided by Olivia, 2026-10-08), its establishment type.
  */
 const feedbackLevels = (feedbackParam: string) => `
-  SELECT s.replaces_shared_lists AS replaces, sec.id AS sector_id, ${LEVEL_LISTS}
+  SELECT sec.id AS sector_id, ${LEVEL_LISTS}
   FROM feedback f
   JOIN establishment e ON e.id = f.establishment_id
   LEFT JOIN service s ON s.id = f.service_id
@@ -149,7 +157,7 @@ const feedbackLevels = (feedbackParam: string) => `
  * would get, shown in the back office (asked by Olivia, 2026-10-08).
  */
 const formLevels = (first: number) => `
-  SELECT s.replaces_shared_lists AS replaces, sec.id AS sector_id, ${LEVEL_LISTS}
+  SELECT sec.id AS sector_id, ${LEVEL_LISTS}
   FROM (SELECT 1) one
   LEFT JOIN sector sec ON sec.code = $${first}
   LEFT JOIN establishment_type et ON et.code = $${first + 1}
@@ -158,18 +166,16 @@ const formLevels = (first: number) => `
 /**
  * The topic lists of the levels given (a feedback's, or a form's), one row
  * per list (level, id): COMMON, then the lists of its sector (COMMERCE when
- * the sector is unknown), of its establishment type and of its service. A
- * service that replaces the shared lists (mobile money, 0026) leaves out
- * COMMON and the sector's.
+ * the sector is unknown; with a service, not those for « Autre démarche »,
+ * 0053), of its establishment type and of its service.
  */
 const topicListsOfLevels = (levels: string) => `
   SELECT v.level, v.id
   FROM (${levels}) l,
        LATERAL (
-         SELECT 'common', id FROM topic_set WHERE code = 'COMMON' AND NOT coalesce(l.replaces, false)
+         SELECT 'common', id FROM topic_set WHERE code = 'COMMON'
          UNION ALL
-         SELECT 'sector', unnest(CASE WHEN l.replaces THEN '{}'::smallint[]
-                                      WHEN l.sector_id IS NULL THEN ARRAY(SELECT id FROM topic_set WHERE code = 'COMMERCE')
+         SELECT 'sector', unnest(CASE WHEN l.sector_id IS NULL THEN ARRAY(SELECT id FROM topic_set WHERE code = 'COMMERCE')
                                       ELSE l.sector_topic_sets END)
          UNION ALL
          SELECT 'type', unnest(l.type_topic_sets)
@@ -396,7 +402,7 @@ export async function findCommentText(feedbackId: string): Promise<string | null
  * The lists of questions attached to the feedback's levels: its sector (the
  * establishment type's, else the establishment's; never the service's), its
  * establishment type and its service; and COMMERCE, for a sector unknown.
- * A service that replaces the shared lists (0026) leaves the sector's out.
+ * With a service, the sector's lists for « Autre démarche » are left out (0053).
  */
 export async function findQuestionSetSources(feedbackId: string): Promise<QuestionSetSources | null> {
   return questionSetSources(feedbackLevels("$1"), [feedbackId]);
@@ -416,7 +422,7 @@ async function questionSetSources(levels: string, params: unknown[]): Promise<Qu
     commerce_set: number | null;
   }>(
     `SELECT l.sector_id IS NOT NULL AS sector_known,
-            CASE WHEN l.replaces THEN '{}'::smallint[] ELSE l.sector_question_sets END AS sector_sets,
+            l.sector_question_sets AS sector_sets,
             l.type_question_sets AS type_sets, l.service_question_sets AS service_sets,
             ${QUESTION_SET("COMMERCE")} AS commerce_set
      FROM (${levels}) l`,

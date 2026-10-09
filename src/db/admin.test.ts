@@ -250,7 +250,11 @@ describe("questionnaire", () => {
     expect(airport).toMatchObject({ sectorCode: "TRANSPORT", listCodes: ["STAFF_SKILLS", "COUNTER"] });
     expect(airport.topics.map((t) => t.code)).toEqual(["PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS"]);
     expect(q.types.find((t) => t.code === "PHARMACY")).toMatchObject({ listCodes: [], topics: [] });
-    expect(q.services.find((s) => s.code === "MOBILE_MONEY")).toMatchObject({ replacesSharedLists: true });
+    // 0053: the mobile payment sector's lists are for « Autre démarche » only.
+    expect(q.sectors.find((s) => s.code === "MOBILE_PAYMENT")).toMatchObject({
+      withoutServiceListCodes: ["MOBILE_PAYMENT", "STAFF_SKILLS", "FEES"],
+      withoutServiceQuestionListCodes: ["MOBILE_PAYMENT"],
+    });
     expect(q.sectorOptions.length).toBe(q.sectors.length);
   });
 
@@ -314,6 +318,8 @@ describe("questionnaire", () => {
         })),
         questionListCodes: ["MOBILE_PAYMENT"],
         questions: [{ code: "GOAL_ACHIEVED", position: 1, categoryCode: "OUTCOME", conditions: [] }],
+        withoutServiceListCodes: ["MOBILE_PAYMENT", "STAFF_SKILLS", "FEES"],
+        withoutServiceQuestionListCodes: ["MOBILE_PAYMENT"],
       },
     ]);
     expect(mobile.services.map((s) => s.code)).toEqual(["MOBILE_MONEY", "MOBILE_MONEY_AGENT", "MOBILE_MONEY_SUPPORT"]);

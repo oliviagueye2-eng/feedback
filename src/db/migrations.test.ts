@@ -82,14 +82,21 @@ describe("reference data", () => {
       "Accessibilité aux personnes handicapées ou âgées",
     ]);
 
-    // Electricity and water: the agency's blocks for « Autre démarche » only (0048);
+    // Electricity and water: the agency's blocks for « Autre démarche » only (0048, 0053);
     // their services keep their own lists (0019).
     expect((await topicsFor("ELECTRICITY")).map((t) => t.code)).toEqual([
       "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS", "FEES", "CLEANLINESS", "ACCESS_FOR_ALL",
     ]);
-    expect((await db.query<{ code: string }>(`
-      SELECT code FROM service WHERE replaces_shared_lists AND code LIKE ANY ('{WATER%,ELECTRICITY%,SEWER%}') ORDER BY code`))
-      .rows.map((r) => r.code)).toEqual(["ELECTRICITY_AGENCY", "ELECTRICITY_SUPPLY", "SEWER_ISSUE", "WATER_AGENCY", "WATER_SUPPLY"]);
+    // 0053: a sector's lists for « Autre démarche » only.
+    expect((await db.query<{ list: string }>(`
+      SELECT s.code || ':' || l.code AS list FROM sector_topic_set x
+      JOIN sector s ON s.id = x.sector_id JOIN topic_set l ON l.id = x.topic_set_id
+      WHERE x.only_without_service ORDER BY s.code, x.position`)).rows.map((r) => r.list)).toEqual([
+      "ELECTRICITY:STAFF_SKILLS", "ELECTRICITY:COUNTER", "ELECTRICITY:PREMISES", "ELECTRICITY:FEES",
+      "MOBILE_PAYMENT:MOBILE_PAYMENT", "MOBILE_PAYMENT:STAFF_SKILLS", "MOBILE_PAYMENT:FEES",
+      "TRANSPORT:FEES",
+      "WATER:STAFF_SKILLS", "WATER:COUNTER", "WATER:PREMISES", "WATER:FEES",
+    ]);
     const serviceTopics = async (service: string) =>
       (await db.query<{ code: string }>(`
         SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
