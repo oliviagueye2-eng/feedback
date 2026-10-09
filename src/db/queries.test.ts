@@ -586,7 +586,7 @@ describe("feedback", () => {
       "Temps d'attente",
       "Simplicité de la démarche (nombre de papiers nécessaires, allers-retours)",
       "Horaires d'ouverture",
-      "Frais payés (montant, reçu)",
+      "Frais payés (montant justifié et conforme au tarif annoncé, reçu remis)",
       "Propreté, entretien et confort",
       "Accessibilité aux personnes handicapées ou âgées",
     ]);
@@ -697,7 +697,7 @@ describe("feedback", () => {
         "Simplicité de la démarche (nombre de papiers nécessaires, allers-retours)",
         "Suivi et transparence du dossier",
         "Horaires d'ouverture",
-        "Frais payés (montant, reçu)",
+        "Frais payés (montant justifié et conforme au tarif annoncé, reçu remis)",
         "Propreté, entretien et confort",
         "Accessibilité aux personnes handicapées ou âgées",
       ],
@@ -749,7 +749,7 @@ describe("feedback", () => {
         "Simplicité de la démarche (nombre de papiers nécessaires, allers-retours)",
         "Suivi et transparence du dossier",
         "Horaires d'ouverture",
-        "Frais payés (montant, reçu)",
+        "Frais payés (montant justifié et conforme au tarif annoncé, reçu remis)",
         "Propreté, entretien et confort",
         "Accessibilité aux personnes handicapées ou âgées",
       ],
@@ -827,6 +827,18 @@ describe("feedback", () => {
       [office],
     )).map((r) => r.code);
     expect(answered).toEqual(["FILE_SUBMITTED", "OVERALL_SATISFACTION"]);
+  });
+
+  it("shows « Frais payés » straight away on a ride, without asking whether one paid (0047)", async () => {
+    const [taxi] = await rows<{ id: string }>("SELECT id FROM establishment WHERE name = 'Taxis jaunes et noirs'");
+    const ride = "b8c9d0e1-0000-4000-8000-000000000010";
+    const service = Object.fromEntries((await getEstablishment(taxi!.id)).services.map((s) => [s.code, s.id]));
+    await upsertFeedback(ride, { channel: "search", establishmentId: taxi!.id, serviceId: service.STREET_TAXI_RIDE!, language: "fr", visitPeriod: "today" });
+    await saveAnswer(ride, "OVERALL_SATISFACTION", { option: "DISSATISFIED" });
+    expect((await getDetailsScreen(ride)).topics.find((t) => t.code === "FEES")?.gate).toBeNull();
+    await expect(saveTopicGates(ride, { PAID_SOMETHING: "YES" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
+    await saveTopics(ride, { topics: [{ code: "FEES", sentiment: "negative" }] });
+    expect((await getDetailsScreen(ride)).topics.filter((t) => t.sentiment).map((t) => t.code)).toEqual(["FEES"]);
   });
 
   it("adds the lists of the type and of the service to the sector's, never removing one", async () => {

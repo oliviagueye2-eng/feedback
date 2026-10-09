@@ -349,11 +349,16 @@ const CODES_OF = (level: Level, alias: string, kind: "topic" | "question") => `
 /**
  * The topics of the lists `sets` (id, position), each once, in the order of
  * their category, then of topic.position, as on screen 2b (asked by Olivia);
- * inactive ones included.
+ * inactive ones included. No condition when one of them shows it always (0047).
  */
 const TOPICS_OF = (sets: string) => `
   coalesce((SELECT json_agg(json_build_object('code', t.code, 'label', tt.label, 'isActive', t.is_active,
-                                              'categoryCode', c.code, 'shownIf', ${TOPIC_SHOWN_IF})
+                                              'categoryCode', c.code,
+                                              'shownIf', CASE WHEN EXISTS (
+                                                SELECT 1 FROM topic_set_item a
+                                                WHERE a.topic_id = t.id AND a.shown_always
+                                                  AND a.topic_set_id IN (SELECT id FROM (${sets}) s))
+                                              THEN NULL ELSE ${TOPIC_SHOWN_IF} END)
                              ORDER BY c.position NULLS LAST, t.position, t.code)
             FROM topic t
             LEFT JOIN topic_translation tt ON tt.topic_id = t.id AND tt.language = 'fr'

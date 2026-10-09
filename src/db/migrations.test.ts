@@ -77,7 +77,7 @@ describe("reference data", () => {
       "Explications du personnel (claires, complètes)",
       "Temps d'attente",
       "Horaires d'ouverture",
-      "Frais payés (montant, reçu)",
+      "Frais payés (montant justifié et conforme au tarif annoncé, reçu remis)",
       "Propreté, entretien et confort",
       "Accessibilité aux personnes handicapées ou âgées",
     ]);

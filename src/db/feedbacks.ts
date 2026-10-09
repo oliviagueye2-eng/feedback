@@ -86,7 +86,7 @@ export async function upsertAnswer(input: {
                            OR i.question_set_id IN (${QUESTION_SET("ESSENTIAL")}, ${QUESTION_SET("COMMON")})))
             OR q.id IN (SELECT tc.depends_on_question_id
                         FROM (${topicsForFeedback("$3")}) t
-                        JOIN topic_condition tc ON tc.topic_id = t.id))`,
+                        JOIN topic_condition tc ON tc.topic_id = t.id AND t.gated))`,
     [input.questionCode, input.setIds, input.feedbackId],
   );
   const question = questions[0];
@@ -176,15 +176,19 @@ const topicListsOfLevels = (levels: string) => `
          UNION ALL
          SELECT 'service', unnest(l.service_topic_sets)) AS v (level, id)`;
 
-/** Active topics shown for the levels given: those of their lists (topicListsOfLevels), each once. */
+/**
+ * Active topics shown for the levels given: those of their lists
+ * (topicListsOfLevels), each once. `gated`: shown only after its question
+ * (topic_condition), unless one of these lists holds it shown_always (0047).
+ */
 const topicsOfLevels = (levels: string) => `
-  SELECT t.* FROM topic t
+  SELECT t.*,
+         EXISTS (SELECT 1 FROM topic_condition tc WHERE tc.topic_id = t.id) AND NOT bool_or(i.shown_always) AS gated
+  FROM topic t
+  JOIN topic_set_item i ON i.topic_id = t.id
+  JOIN (${topicListsOfLevels(levels)}) ls ON ls.id = i.topic_set_id
   WHERE t.is_active
-    AND EXISTS (
-      SELECT 1
-      FROM (${topicListsOfLevels(levels)}) ls
-      JOIN topic_set_item i ON i.topic_set_id = ls.id
-      WHERE i.topic_id = t.id)`;
+  GROUP BY t.id`;
 
 /** Active topics shown for feedback $n (topicsOfLevels). */
 const topicsForFeedback = (feedbackParam: string) => topicsOfLevels(feedbackLevels(feedbackParam));
@@ -210,7 +214,7 @@ export async function replaceTopics(input: {
          WHERE t.code = ANY($2::text[])
            AND NOT EXISTS (
              SELECT 1 FROM topic_condition tc
-             WHERE tc.topic_id = t.id
+             WHERE tc.topic_id = t.id AND t.gated
                AND NOT EXISTS (
                  SELECT 1 FROM answer a
                  JOIN topic_condition ok ON ok.topic_id = t.id AND ok.option_id = a.option_id
@@ -352,7 +356,7 @@ async function topicChoices(topics: string, params: unknown[]): Promise<TopicCho
               EXISTS (SELECT 1 FROM topic_condition ok WHERE ok.topic_id = t.id AND ok.option_id = ao.id) AS opens,
               EXISTS (SELECT 1 FROM answer a WHERE a.feedback_id = $1 AND a.option_id = ao.id) AS chosen
        FROM (${topics}) t
-       JOIN (SELECT DISTINCT topic_id, depends_on_question_id FROM topic_condition) tc ON tc.topic_id = t.id
+       JOIN (SELECT DISTINCT topic_id, depends_on_question_id FROM topic_condition) tc ON tc.topic_id = t.id AND t.gated
        JOIN question q ON q.id = tc.depends_on_question_id
        JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
        JOIN answer_option ao ON ao.question_id = q.id AND ao.is_active
@@ -845,7 +849,7 @@ export async function findTopicGateCodes(feedbackId: string): Promise<string[]> 
   const rows = await query<{ code: string }>(
     `SELECT DISTINCT q.code
      FROM (${topicsForFeedback("$1")}) t
-     JOIN topic_condition tc ON tc.topic_id = t.id
+     JOIN topic_condition tc ON tc.topic_id = t.id AND t.gated
      JOIN question q ON q.id = tc.depends_on_question_id
      ORDER BY q.code`,
     [feedbackId],
