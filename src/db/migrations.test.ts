@@ -113,7 +113,7 @@ describe("reference data", () => {
     ]);
     expect(await serviceTopics("WATER_AGENCY")).toEqual(await serviceTopics("ELECTRICITY_AGENCY"));
     // 0052: « Personnel » for the technicians on site.
-    expect(await serviceTopics("ELECTRICITY_SUPPLY")).toEqual(["PROFESSIONALISM", "INFORMATION", "INTERVENTION_TIME", "CUSTOMER_SERVICE", "POWER_CUTS"]);
+    expect(await serviceTopics("ELECTRICITY_SUPPLY")).toEqual(["PROFESSIONALISM", "INFORMATION", "INTERVENTION_TIME", "CUSTOMER_SERVICE", "POWER_CUTS", "POWER_QUALITY"]);
     expect(await serviceTopics("WATER_SUPPLY")).toEqual([
       "PROFESSIONALISM", "INFORMATION", "INTERVENTION_TIME", "CUSTOMER_SERVICE", "WATER_CUTS", "WATER_QUALITY",
     ]);
