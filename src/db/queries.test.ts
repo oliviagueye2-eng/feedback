@@ -468,17 +468,20 @@ describe("feedback", () => {
 
   it("adds up the lists of the sector, the type and the service, a question asked once", async () => {
     // For the test, the hospital type also gets the ticket purchase list.
-    await db.exec(`UPDATE establishment_type SET question_set_id = (SELECT id FROM question_set WHERE code = 'TICKET_PURCHASE')
-                   WHERE code = 'HOSPITAL'`);
+    await db.exec(`INSERT INTO establishment_type_question_set (type_id, question_set_id, position)
+                   SELECT et.id, qs.id, 1 FROM establishment_type et, question_set qs
+                   WHERE et.code = 'HOSPITAL' AND qs.code = 'TICKET_PURCHASE'`);
     const both = "d4e5f6a7-0000-4000-8000-000000000001";
     await upsertFeedback(both, { channel: "search", establishmentId: ids.dantec, language: "fr", visitPeriod: "today" });
     const { questions } = await getDetailedQuestionnaire(both);
-    // Health's five, then the purchase's (its WAIT_TIME already asked), then the common ones.
+    // Health's, then the purchase's (its WAIT_TIME already asked), then the common ones. Paying as
+    // one wished is the service's PAYMENT list since 0045, not the purchase's.
     expect(questions.map((q) => q.code)).toEqual([
       "PATIENT", "CARE_RECEIVED", "PRESCRIPTION_AVAILABLE", "GOAL_ACHIEVED", "WAIT_TIME", "PAID_SOMETHING",
-      "RECEIPT_GIVEN", "PAYMENT_AS_WISHED", "REPORTED", "REPORT_WHY",
+      "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY",
     ]);
-    await db.exec("UPDATE establishment_type SET question_set_id = NULL WHERE code = 'HOSPITAL'");
+    await db.exec(`DELETE FROM establishment_type_question_set
+                   WHERE type_id = (SELECT id FROM establishment_type WHERE code = 'HOSPITAL')`);
   });
 
   it("gives COMMERCE questions and topics to an establishment whose sector is unknown", async () => {
@@ -583,7 +586,7 @@ describe("feedback", () => {
       "Temps d'attente",
       "Simplicité de la démarche (nombre de papiers nécessaires, allers-retours)",
       "Horaires d'ouverture",
-      "Frais payés (montant, reçu)",
+      "Frais payés (montant justifié et conforme au tarif annoncé, reçu remis)",
       "Propreté, entretien et confort",
       "Accessibilité aux personnes handicapées ou âgées",
     ]);
@@ -694,7 +697,7 @@ describe("feedback", () => {
         "Simplicité de la démarche (nombre de papiers nécessaires, allers-retours)",
         "Suivi et transparence du dossier",
         "Horaires d'ouverture",
-        "Frais payés (montant, reçu)",
+        "Frais payés (montant justifié et conforme au tarif annoncé, reçu remis)",
         "Propreté, entretien et confort",
         "Accessibilité aux personnes handicapées ou âgées",
       ],
@@ -746,7 +749,7 @@ describe("feedback", () => {
         "Simplicité de la démarche (nombre de papiers nécessaires, allers-retours)",
         "Suivi et transparence du dossier",
         "Horaires d'ouverture",
-        "Frais payés (montant, reçu)",
+        "Frais payés (montant justifié et conforme au tarif annoncé, reçu remis)",
         "Propreté, entretien et confort",
         "Accessibilité aux personnes handicapées ou âgées",
       ],
@@ -826,6 +829,18 @@ describe("feedback", () => {
     expect(answered).toEqual(["FILE_SUBMITTED", "OVERALL_SATISFACTION"]);
   });
 
+  it("shows « Frais payés » straight away on a ride, without asking whether one paid (0047)", async () => {
+    const [taxi] = await rows<{ id: string }>("SELECT id FROM establishment WHERE name = 'Taxis jaunes et noirs'");
+    const ride = "b8c9d0e1-0000-4000-8000-000000000010";
+    const service = Object.fromEntries((await getEstablishment(taxi!.id)).services.map((s) => [s.code, s.id]));
+    await upsertFeedback(ride, { channel: "search", establishmentId: taxi!.id, serviceId: service.STREET_TAXI_RIDE!, language: "fr", visitPeriod: "today" });
+    await saveAnswer(ride, "OVERALL_SATISFACTION", { option: "DISSATISFIED" });
+    expect((await getDetailsScreen(ride)).topics.find((t) => t.code === "FEES")?.gate).toBeNull();
+    await expect(saveTopicGates(ride, { PAID_SOMETHING: "YES" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
+    await saveTopics(ride, { topics: [{ code: "FEES", sentiment: "negative" }] });
+    expect((await getDetailsScreen(ride)).topics.filter((t) => t.sentiment).map((t) => t.code)).toEqual(["FEES"]);
+  });
+
   it("adds the lists of the type and of the service to the sector's, never removing one", async () => {
     await db.exec(`
       INSERT INTO topic_set (code) VALUES ('TEST_TYPE'), ('TEST_SERVICE');
@@ -833,10 +848,11 @@ describe("feedback", () => {
       SELECT s.id, t.id FROM (VALUES ('TEST_TYPE', 'WATER_QUALITY'), ('TEST_SERVICE', 'PRIVACY'),
                                      ('TEST_SERVICE', 'STAFF')) AS v (list, topic)
       JOIN topic_set s ON s.code = v.list JOIN topic t ON t.code = v.topic;
-      UPDATE establishment_type SET topic_set_id = (SELECT id FROM topic_set WHERE code = 'TEST_TYPE')
-      WHERE code = 'CIVIL_REGISTRY_CENTER';
-      UPDATE service SET topic_set_id = (SELECT id FROM topic_set WHERE code = 'TEST_SERVICE')
-      WHERE code = 'CIVIL_REGISTRY_BIRTH';
+      INSERT INTO establishment_type_topic_set (type_id, topic_set_id, position)
+      SELECT et.id, ts.id, 1 FROM establishment_type et, topic_set ts
+      WHERE et.code = 'CIVIL_REGISTRY_CENTER' AND ts.code = 'TEST_TYPE';
+      INSERT INTO service_topic_set (service_id, topic_set_id, position)
+      SELECT s.id, ts.id, 1 FROM service s, topic_set ts WHERE s.code = 'CIVIL_REGISTRY_BIRTH' AND ts.code = 'TEST_SERVICE';
     `);
     try {
       // No service: common + Administration + the type's list.
@@ -860,8 +876,8 @@ describe("feedback", () => {
       expect((await getDetailsScreen(feedbackId)).topics.filter((t) => t.sentiment)).toEqual([]);
     } finally {
       await db.exec(`
-        UPDATE establishment_type SET topic_set_id = NULL WHERE code = 'CIVIL_REGISTRY_CENTER';
-        UPDATE service SET topic_set_id = NULL WHERE code = 'CIVIL_REGISTRY_BIRTH';
+        DELETE FROM establishment_type_topic_set WHERE topic_set_id IN (SELECT id FROM topic_set WHERE code LIKE 'TEST_%');
+        DELETE FROM service_topic_set WHERE topic_set_id IN (SELECT id FROM topic_set WHERE code LIKE 'TEST_%');
         DELETE FROM topic_set_item WHERE topic_set_id IN (SELECT id FROM topic_set WHERE code LIKE 'TEST_%');
         DELETE FROM topic_set WHERE code LIKE 'TEST_%';
       `);

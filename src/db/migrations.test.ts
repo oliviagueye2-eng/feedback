@@ -52,7 +52,8 @@ describe("reference data", () => {
       SELECT s.code AS sector, qs.code AS question_set
       FROM establishment_type et
       JOIN sector s ON s.id = et.sector_id
-      JOIN question_set qs ON qs.id = et.question_set_id
+      JOIN establishment_type_question_set x ON x.type_id = et.id AND x.position = 1
+      JOIN question_set qs ON qs.id = x.question_set_id
       WHERE et.code = 'DRIVING_LICENCE_CENTER'`);
     expect(row).toEqual({ sector: "ADMINISTRATION", question_set: "FILE_SERVICES" });
   });
@@ -67,7 +68,8 @@ describe("reference data", () => {
         WHERE t.is_active AND EXISTS (
           SELECT 1 FROM topic_set_item i JOIN topic_set ts ON ts.id = i.topic_set_id
           WHERE i.topic_id = t.id
-            AND (ts.code = 'COMMON' OR ts.id = (SELECT topic_set_id FROM sector WHERE code = $1)))
+            AND (ts.code = 'COMMON' OR ts.id IN (SELECT x.topic_set_id FROM sector_topic_set x
+                                                 JOIN sector s ON s.id = x.sector_id WHERE s.code = $1)))
         ORDER BY t.position`, [sector])).rows;
 
     expect((await topicsFor("RETAIL")).map((t) => t.label)).toEqual([
@@ -75,7 +77,7 @@ describe("reference data", () => {
       "Explications du personnel (claires, complètes)",
       "Temps d'attente",
       "Horaires d'ouverture",
-      "Frais payés (montant, reçu)",
+      "Frais payés (montant justifié et conforme au tarif annoncé, reçu remis)",
       "Propreté, entretien et confort",
       "Accessibilité aux personnes handicapées ou âgées",
     ]);
@@ -86,7 +88,9 @@ describe("reference data", () => {
     const serviceTopics = async (service: string) =>
       (await db.query<{ code: string }>(`
         SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
-        WHERE i.topic_set_id = (SELECT topic_set_id FROM service WHERE code = $1) ORDER BY t.position`, [service]))
+        WHERE i.topic_set_id IN (SELECT x.topic_set_id FROM service_topic_set x
+                                 JOIN service s ON s.id = x.service_id WHERE s.code = $1)
+        ORDER BY t.position`, [service]))
         .rows.map((r) => r.code);
     expect(await serviceTopics("ELECTRICITY_AGENCY")).toEqual([
       "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "PROCEDURE", "OPENING_HOURS", "FEES", "BILLING", "CLEANLINESS", "ACCESS_FOR_ALL",
@@ -111,12 +115,13 @@ describe("reference data", () => {
     expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("WAIT_TIME");
     expect((await db.query<{ code: string }>(`
       SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
-      WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT_PLACE') ORDER BY t.position`))
-      .rows.map((r) => r.code)).toEqual(["PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS"]);
+      WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = 'COUNTER') ORDER BY t.position`))
+      .rows.map((r) => r.code)).toEqual(["WAIT_TIME", "OPENING_HOURS"]);
     // A place or a ticket counter is not a trip: no « Ponctualité », no « Sécurité à bord » (0009).
     expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("PUNCTUALITY");
     expect((await db.query<{ code: string }>(`
-      SELECT code FROM service WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRIP') ORDER BY code`))
+      SELECT s.code FROM service s JOIN service_topic_set x ON x.service_id = s.id
+      WHERE x.topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRIP') ORDER BY s.code`))
       .rows.map((r) => r.code)).toEqual(["BOAT_CROSSING", "FLIGHT", "TRAIN_TRIP"]);
     // On the road, the driver instead of the staff (0035): TRIP plus « Comportement du chauffeur ».
     expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("STAFF");
@@ -125,42 +130,69 @@ describe("reference data", () => {
         SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
         WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = 'ROAD_TRIP') ORDER BY t.position`))
         .rows.map((r) => r.code);
-    expect(await roadTrip()).toEqual(["DRIVER_BEHAVIOUR", "PUNCTUALITY", "ROUTE", "ONBOARD_SAFETY"]);
+    // A safe driving rather than « Sécurité à bord » on the road (0043).
+    expect(await roadTrip()).toEqual(["DRIVER_BEHAVIOUR", "PUNCTUALITY", "ROUTE", "DRIVING_SAFETY"]);
     // The boat, the plane, the train and the highway: « Compétence du personnel » (0036).
     const listOf = async (list: string) =>
       (await db.query<{ code: string }>(`
         SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
         WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = $1) ORDER BY t.position`, [list]))
         .rows.map((r) => r.code);
-    expect(await listOf("TRIP")).toEqual(["PROFESSIONALISM", "INFORMATION", "PUNCTUALITY", "ONBOARD_SAFETY"]);
-    expect(await listOf("TOLL_HIGHWAY")).toContain("PROFESSIONALISM");
-    // « Explications du personnel » in the services' lists, not TRANSPORT (0039).
+    // 0046: through the « Personnel » block (STAFF_SKILLS), with « Explications du personnel » (0039).
+    expect(await listOf("STAFF_SKILLS")).toEqual(["PROFESSIONALISM", "INFORMATION"]);
+    expect(await listOf("TRIP")).toEqual(["PUNCTUALITY", "ONBOARD_SAFETY"]);
+    expect((await db.query<{ code: string }>(`
+      SELECT s.code FROM service s JOIN service_topic_set x ON x.service_id = s.id
+      WHERE x.topic_set_id = (SELECT id FROM topic_set WHERE code = 'STAFF_SKILLS')
+        AND s.code IN ('BOAT_CROSSING', 'FLIGHT', 'TRAIN_TRIP', 'HIGHWAY_TRIP') ORDER BY s.code`))
+      .rows.map((r) => r.code)).toEqual(["BOAT_CROSSING", "FLIGHT", "HIGHWAY_TRIP", "TRAIN_TRIP"]);
+    // Not in TRANSPORT (0039).
     expect(await listOf("TRANSPORT")).not.toContain("INFORMATION");
-    expect(await listOf("TOLL_HIGHWAY")).toContain("INFORMATION");
     expect(await listOf("ROAD_TRIP")).not.toContain("INFORMATION");
     // « Politesse du personnel » is offered nowhere since 0038.
     expect((await db.query(`
       SELECT 1 FROM topic_set_item WHERE topic_id = (SELECT id FROM topic WHERE code = 'STAFF')`)).rows).toEqual([]);
     expect((await db.query<{ code: string }>(`
-      SELECT code FROM service WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'ROAD_TRIP') ORDER BY code`))
+      SELECT s.code FROM service s JOIN service_topic_set x ON x.service_id = s.id
+      WHERE x.topic_set_id = (SELECT id FROM topic_set WHERE code = 'ROAD_TRIP') ORDER BY s.code`))
       .rows.map((r) => r.code)).toEqual(["APP_RIDE", "LAND_TRIP", "STREET_TAXI_RIDE"]);
+    // The VTC: the road trip's topics plus its own list, « Prise en charge » (0043, 0045).
+    expect(await listOf("APP_RIDE")).toEqual(["PICKUP"]);
+    expect(await listOf("TRIP")).toContain("ONBOARD_SAFETY");
+    expect((await db.query<{ code: string }>(`
+      SELECT s.code FROM service s JOIN service_topic_set x ON x.service_id = s.id
+      WHERE x.topic_set_id = (SELECT id FROM topic_set WHERE code = 'APP_RIDE')`))
+      .rows.map((r) => r.code)).toEqual(["APP_RIDE"]);
     // Paying as one wished, last on a VTC or a taxi ride, as when buying a ticket (0042).
     const questionsOf = async (list: string) =>
       (await db.query<{ code: string }>(`
         SELECT q.code FROM question_set_item i JOIN question q ON q.id = i.question_id
         WHERE i.question_set_id = (SELECT id FROM question_set WHERE code = $1) ORDER BY i.position`, [list]))
         .rows.map((r) => r.code);
-    expect(await questionsOf("APP_RIDE")).toEqual(["DRIVER_WAIT", "PRICE_AS_SHOWN", "DRIVER_AS_SHOWN", "PAYMENT_AS_WISHED"]);
-    expect(await questionsOf("STREET_TAXI_RIDE")).toEqual(["TAXI_WAIT", "PRICE_AGREED", "PRICE_KEPT", "PAYMENT_AS_WISHED"]);
+    // 0045: paying as one wished in a list of its own, after the ride's.
+    expect(await questionsOf("APP_RIDE")).toEqual(["DRIVER_WAIT", "PRICE_AS_SHOWN", "DRIVER_AS_SHOWN"]);
+    expect(await questionsOf("STREET_TAXI_RIDE")).toEqual(["TAXI_WAIT", "PRICE_AGREED", "PRICE_KEPT"]);
+    expect(await questionsOf("PAYMENT")).toEqual(["PAYMENT_AS_WISHED"]);
   });
 
   it("gives every sector a topic list, and opening hours to the transport places (0008, 0009, 0010)", async () => {
     const row = await one<{ without_list: string[]; places: string[] }>(`
-      SELECT (SELECT array_agg(code) FROM sector WHERE topic_set_id IS NULL) AS without_list,
+      SELECT (SELECT array_agg(code) FROM sector s
+              WHERE NOT EXISTS (SELECT 1 FROM sector_topic_set x WHERE x.sector_id = s.id)) AS without_list,
              (SELECT array_agg(code ORDER BY code) FROM (
-                SELECT code, topic_set_id FROM establishment_type UNION ALL SELECT code, topic_set_id FROM service) x
-              WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT_PLACE')) AS places`);
-    expect(row).toEqual({ without_list: null, places: ["AIRPORT", "BUS_STATION", "PLANE_TICKET", "TICKET_PURCHASE"] });
+                SELECT et.code, x.topic_set_id FROM establishment_type et
+                JOIN establishment_type_topic_set x ON x.type_id = et.id
+                UNION ALL
+                SELECT s.code, x.topic_set_id FROM service s JOIN service_topic_set x ON x.service_id = s.id) x
+              WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'COUNTER')) AS places`);
+    // 0046: the « Guichet » block (COUNTER) instead of TRANSPORT_PLACE.
+    expect(row).toEqual({
+      without_list: null,
+      places: [
+        "AIRPORT", "BUS_STATION", "ELECTRICITY_AGENCY", "HIGHER_EDUCATION_ADMIN", "PLANE_TICKET",
+        "POLICE_PREMISES", "PORT_PROCEDURE", "SCHOOL_ADMIN", "TICKET_PURCHASE", "WATER_AGENCY",
+      ],
+    });
   });
 
   it("puts every topic offered and every question that rates the service in a category (0009)", async () => {
@@ -201,37 +233,45 @@ describe("reference data", () => {
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
+    // Several lists, in order, joined by « + » (0044, 0045).
+    const owner = { sector: "sector_id", service: "service_id", establishment_type: "type_id" };
     const attached = async (table: "sector" | "service" | "establishment_type") =>
       Object.fromEntries((await db.query<{ code: string; list: string | null }>(
-        `SELECT x.code, qs.code AS list FROM ${table} x LEFT JOIN question_set qs ON qs.id = x.question_set_id`,
+        `SELECT x.code, (SELECT string_agg(qs.code, ' + ' ORDER BY l.position)
+                         FROM ${table}_question_set l JOIN question_set qs ON qs.id = l.question_set_id
+                         WHERE l.${owner[table]} = x.id) AS list
+         FROM ${table} x`,
       )).rows.map((r) => [r.code, r.list]));
     expect(await attached("sector")).toEqual({
-      ADMINISTRATION: "FILE_SERVICES", TAX: "FILE_SERVICES", JUSTICE: "FILE_SERVICES", SOCIAL: "FILE_SERVICES",
-      HEALTH: "HEALTH", BANKING_INSURANCE: "BANKING_INSURANCE", MOBILE_PAYMENT: "MOBILE_PAYMENT", EDUCATION: null,
+      ADMINISTRATION: "FILE_SERVICES + PAID_AND_RECEIPT", TAX: "FILE_SERVICES + PAID_AND_RECEIPT",
+      JUSTICE: "FILE_SERVICES + PAID_AND_RECEIPT", SOCIAL: "FILE_SERVICES + PAID_AND_RECEIPT",
+      HEALTH: "HEALTH + PAID_AND_RECEIPT", BANKING_INSURANCE: "BANKING_INSURANCE", MOBILE_PAYMENT: "MOBILE_PAYMENT", EDUCATION: null,
       ELECTRICITY: null, WATER: null, TELECOM: null,
       RETAIL: "COMMERCE", CULTURE: "COMMERCE", HOSPITALITY: "COMMERCE", REAL_ESTATE: "COMMERCE",
       FOOD_SERVICE: "COMMERCE", SPORT: "COMMERCE", TOURISM: "COMMERCE",
       SECURITY: null, TRANSPORT: null,
     });
     expect(await attached("service")).toEqual({
-      CIVIL_REGISTRY: null, LAND_TRIP: "LAND_TRIP", BOAT_CROSSING: "BOAT_CROSSING", TICKET_PURCHASE: "TICKET_PURCHASE",
-      FLIGHT: "FLIGHT", PLANE_TICKET: "TICKET_PURCHASE", SCHOOL_ADMIN: "FILE_SERVICES", SCHOOL_LIFE: "SCHOOL_LIFE",
-      POLICE_PREMISES: "POLICE_PREMISES", POLICE_FIELD: "POLICE_FIELD", POLICE_CALL: "POLICE_CALL",
-      HIGHER_EDUCATION_ADMIN: "FILE_SERVICES", HIGHER_EDUCATION_COURSES: "SCHOOL_LIFE", TRAIN_TRIP: "TRAIN_TRIP",
-      APP_RIDE: "APP_RIDE", STREET_TAXI_RIDE: "STREET_TAXI_RIDE",
+      CIVIL_REGISTRY: null, LAND_TRIP: "LAND_TRIP", BOAT_CROSSING: "BOAT_CROSSING",
+      TICKET_PURCHASE: "TICKET_PURCHASE + PAYMENT", FLIGHT: "FLIGHT", PLANE_TICKET: "TICKET_PURCHASE + PAYMENT",
+      SCHOOL_ADMIN: "FILE_SERVICES + PAID_AND_RECEIPT", SCHOOL_LIFE: "SCHOOL_LIFE",
+      POLICE_PREMISES: "POLICE_PREMISES + PAID_AND_RECEIPT", POLICE_FIELD: "POLICE_FIELD + PAID_AND_RECEIPT",
+      POLICE_CALL: "POLICE_CALL", HIGHER_EDUCATION_ADMIN: "FILE_SERVICES + PAID_AND_RECEIPT",
+      HIGHER_EDUCATION_COURSES: "SCHOOL_LIFE", TRAIN_TRIP: "TRAIN_TRIP",
+      APP_RIDE: "APP_RIDE + PAYMENT", STREET_TAXI_RIDE: "STREET_TAXI_RIDE + PAYMENT",
       ELECTRICITY_AGENCY: "ELECTRICITY_AGENCY", ELECTRICITY_SUPPLY: "ELECTRICITY_SUPPLY",
       WATER_AGENCY: "WATER_AGENCY", WATER_SUPPLY: "WATER_SUPPLY",
       // 0025: the telecom questions move from the sector to « Téléphone ou internet ».
       MOBILE_MONEY: "MOBILE_MONEY", SEWER_ISSUE: "SEWER_ISSUE", INSURANCE_CLAIM: "INSURANCE_CLAIM",
-      PORT_PROCEDURE: "FILE_SERVICES", HIGHWAY_TRIP: "TOLL_HIGHWAY", TV_SUBSCRIPTION: "TV_SUBSCRIPTION",
+      PORT_PROCEDURE: "FILE_SERVICES + PAID_AND_RECEIPT", HIGHWAY_TRIP: "TOLL_HIGHWAY", TV_SUBSCRIPTION: "TV_SUBSCRIPTION",
       PHONE_INTERNET: "TELECOM",
       // 0026: mobile money in three services.
-      MOBILE_MONEY_AGENT: "MOBILE_MONEY_AGENT", MOBILE_MONEY_SUPPORT: "MOBILE_MONEY_SUPPORT",
+      MOBILE_MONEY_AGENT: "MOBILE_MONEY + MOBILE_MONEY_AGENT", MOBILE_MONEY_SUPPORT: "MOBILE_MONEY_SUPPORT",
     });
     // Types with a list of their own (0005), and « Vous êtes » on the education places (0018).
     expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))
       .toEqual({
-        AIRPORT: "AIRPORT", BUS_STATION: "BUS_STATION", DRIVING_LICENCE_CENTER: "FILE_SERVICES",
+        AIRPORT: "STATION + AIRPORT", BUS_STATION: "STATION", DRIVING_LICENCE_CENTER: "FILE_SERVICES + PAID_AND_RECEIPT",
         HIGH_SCHOOL: "EDUCATION", MIDDLE_SCHOOL: "EDUCATION", PRIMARY_SCHOOL: "EDUCATION", SCHOOL_GROUP: "EDUCATION",
         UNIVERSITY: "EDUCATION", HIGHER_EDUCATION_SCHOOL: "EDUCATION", VOCATIONAL_TRAINING_CENTER: "EDUCATION",
         DAARA: "EDUCATION", PRESCHOOL: "PRESCHOOL",
@@ -248,9 +288,8 @@ describe("reference data", () => {
       `SELECT q.code FROM question_set_item i
        JOIN question_set qs ON qs.id = i.question_set_id JOIN question q ON q.id = i.question_id
        WHERE qs.code = 'HEALTH' ORDER BY i.position`)).rows.map((r) => r.code);
-    expect(order).toEqual([
-      "PATIENT", "CARE_RECEIVED", "WAIT_TIME", "PRESCRIPTION_AVAILABLE", "PAID_SOMETHING", "RECEIPT_GIVEN",
-    ]);
+    // Paid and receipt in their own list since 0045.
+    expect(order).toEqual(["PATIENT", "CARE_RECEIVED", "WAIT_TIME", "PRESCRIPTION_AVAILABLE"]);
   });
 
   it("shows a question only after the answers its list requires", async () => {
@@ -276,14 +315,12 @@ describe("reference data", () => {
       "ELECTRICITY_SUPPLY: CUT_NOTICE ← CUTS_COUNT 1_TO_3",
       "ELECTRICITY_SUPPLY: CUT_NOTICE ← CUTS_COUNT 4_TO_10",
       "ELECTRICITY_SUPPLY: CUT_NOTICE ← CUTS_COUNT OVER_10",
-      "FILE_SERVICES: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "FLIGHT: DELAY_CARE ← DEPARTURE_ON_TIME UNDER_1_H_LATE",
       "FLIGHT: DELAY_CARE ← DEPARTURE_ON_TIME OVER_1_H_LATE",
       "FLIGHT: DELAY_CARE ← DEPARTURE_ON_TIME CANCELLED",
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME UNDER_1_H_LATE",
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME OVER_1_H_LATE",
       "FLIGHT: DELAY_INFORMED ← DEPARTURE_ON_TIME CANCELLED",
-      "HEALTH: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "INSURANCE_CLAIM: CLAIM_DELAY ← CLAIM_PAID YES",
       "INSURANCE_CLAIM: CLAIM_DELAY ← CLAIM_PAID PARTLY",
       "LAND_TRIP: BUS_INCIDENT_TYPE ← TRIP_INCIDENT YES",
@@ -291,10 +328,7 @@ describe("reference data", () => {
       "LAND_TRIP: INCIDENT_SOLUTION ← TRIP_INCIDENT YES",
       "MOBILE_MONEY: MONEY_PROBLEM_SOLVED ← MONEY_OPERATION_OK FAILED",
       "MOBILE_MONEY: MONEY_PROBLEM_SOLVED ← MONEY_OPERATION_OK BLOCKED",
-      "MOBILE_MONEY_AGENT: MONEY_PROBLEM_SOLVED ← MONEY_OPERATION_OK FAILED",
-      "MOBILE_MONEY_AGENT: MONEY_PROBLEM_SOLVED ← MONEY_OPERATION_OK BLOCKED",
-      "POLICE_FIELD: RECEIPT_GIVEN ← PAID_SOMETHING YES",
-      "POLICE_PREMISES: RECEIPT_GIVEN ← PAID_SOMETHING YES",
+      "PAID_AND_RECEIPT: RECEIPT_GIVEN ← PAID_SOMETHING YES",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON COMPLAINT",
       "POLICE_PREMISES: STATEMENT_RECEIPT ← POLICE_VISIT_REASON LOSS",
       "STREET_TAXI_RIDE: PRICE_KEPT ← PRICE_AGREED YES",
@@ -326,7 +360,7 @@ describe("reference data", () => {
        JOIN question_set_item p ON p.question_set_id = i.question_set_id AND p.position = i.position - 1
        JOIN question pq ON pq.id = p.question_id
        WHERE dq.code IN ('PAID_SOMETHING', 'INTERVENTION_AWAITED')`)).rows;
-    expect(before).toHaveLength(6); // 0032: SCHOOL_ADMIN merged into FILE_SERVICES.
+    expect(before).toHaveLength(3); // 0045: the receipt in one list, PAID_AND_RECEIPT.
     expect(before.every((r) => ["PAID_SOMETHING", "INTERVENTION_AWAITED"].includes(r.previous))).toBe(true);
     // A real service keeps its French label (then its synonyms) in its search_text.
     expect((await one<{ search_text: string }>(

@@ -761,13 +761,13 @@ export const fr = {
       reset: "Tout afficher",
       sectorsTitle: "Secteurs",
       sectorsHelp:
-        "Une ligne par secteur, à déplier : ses thèmes, puis ses questions. Ils viennent de sector.topic_set_id et sector.question_set_id.",
+        "Une ligne par secteur, à déplier : ses thèmes, puis ses questions. Ils viennent de sector_topic_set et sector_question_set ; un niveau peut avoir plusieurs listes, réunies par « + ».",
       typesTitle: "Types d'établissement",
       typesHelp:
-        "Les services ne sont pas reliés au type en base : ce sont ceux des établissements de ce type (establishment_service). Les thèmes et les questions viennent de establishment_type.topic_set_id et question_set_id.",
+        "Les services ne sont pas reliés au type en base : ce sont ceux des établissements de ce type (establishment_service). Les thèmes et les questions viennent de establishment_type_topic_set et establishment_type_question_set.",
       servicesTitle: "Services",
       servicesHelp:
-        "Les établissements viennent de establishment_service. Quand « Désactive COMMON et secteur » vaut true : pas de thèmes COMMON ni du secteur, pas de questions du secteur (les questions COMMON restent) ; les listes du type sont toujours ajoutées. Thèmes et questions viennent de service.topic_set_id et question_set_id.",
+        "Les établissements viennent de establishment_service. Quand « Désactive COMMON et secteur » vaut true : pas de thèmes COMMON ni du secteur, pas de questions du secteur (les questions COMMON restent) ; les listes du type sont toujours ajoutées. Thèmes et questions viennent de service_topic_set et service_question_set.",
       bankTitle: "Banque de questions",
       bankHelp:
         "Une ligne par question, chacune écrite une seule fois. Dépliée : ses réponses possibles. « Conditions » vient de question_condition, liste par liste. Avec un filtre : les questions des listes ci-dessus, plus celles que tout avis peut recevoir (ESSENTIAL, COMMON) et celles qui ouvrent un de leurs thèmes à l'écran 2b.",

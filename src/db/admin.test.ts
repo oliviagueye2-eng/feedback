@@ -244,12 +244,12 @@ describe("questionnaire", () => {
     const q = await getQuestionnaire({});
     expect(q.sector).toBeNull();
     const health = q.sectors.find((s) => s.code === "HEALTH")!;
-    expect(health).toMatchObject({ label: "Santé", listCode: "HEALTH" });
+    expect(health).toMatchObject({ label: "Santé", listCodes: ["HEALTH", "STAFF_SKILLS", "COUNTER", "PREMISES", "FEES"] });
     expect(health.topics).toContainEqual({ code: "CARE_RECEIVED", label: "Soins reçus", isActive: true, categoryCode: "OUTCOME", shownIf: null });
     const airport = q.types.find((t) => t.code === "AIRPORT")!;
-    expect(airport).toMatchObject({ sectorCode: "TRANSPORT", listCode: "TRANSPORT_PLACE" });
+    expect(airport).toMatchObject({ sectorCode: "TRANSPORT", listCodes: ["STAFF_SKILLS", "COUNTER"] });
     expect(airport.topics.map((t) => t.code)).toEqual(["PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS"]);
-    expect(q.types.find((t) => t.code === "PHARMACY")).toMatchObject({ listCode: null, topics: [] });
+    expect(q.types.find((t) => t.code === "PHARMACY")).toMatchObject({ listCodes: [], topics: [] });
     expect(q.services.find((s) => s.code === "MOBILE_MONEY")).toMatchObject({ replacesSharedLists: true });
     expect(q.sectorOptions.length).toBe(q.sectors.length);
   });
@@ -295,7 +295,7 @@ describe("questionnaire", () => {
       {
         code: "MOBILE_PAYMENT",
         label: "Paiement mobile",
-        listCode: "MOBILE_PAYMENT",
+        listCodes: ["MOBILE_PAYMENT", "STAFF_SKILLS", "FEES"],
         // In the order of the categories, then of topic.position.
         topics: [
           ["REQUEST_HANDLING", "OUTCOME"],
@@ -312,7 +312,7 @@ describe("questionnaire", () => {
           // 0011: « Frais » only after « Oui » to « Avez-vous payé quelque chose ? ».
           shownIf: code === "FEES" ? { dependsOn: "PAID_SOMETHING", options: ["YES"] } : null,
         })),
-        questionListCode: "MOBILE_PAYMENT",
+        questionListCodes: ["MOBILE_PAYMENT"],
         questions: [{ code: "GOAL_ACHIEVED", position: 1, categoryCode: "OUTCOME", conditions: [] }],
       },
     ]);
@@ -329,8 +329,9 @@ describe("questionnaire", () => {
     const civil = await getQuestionnaire({ sector: "ADMINISTRATION" });
     expect(civil.questions.map((q) => q.code)).toContain("FILE_SUBMITTED");
     expect(receipt).toMatchObject({ type: "single_choice", categoryCode: "COST" });
-    expect(receipt.lists).toContain("HEALTH");
-    expect(receipt.conditions).toContainEqual({ listCode: "HEALTH", dependsOn: "PAID_SOMETHING", options: ["YES"] });
+    // One list since 0045, combined with the sector's.
+    expect(receipt.lists).toEqual(["PAID_AND_RECEIPT"]);
+    expect(receipt.conditions).toEqual([{ listCode: "PAID_AND_RECEIPT", dependsOn: "PAID_SOMETHING", options: ["YES"] }]);
     // A question asked elsewhere than screen 6 is in no list, and still in the bank.
     expect(all.questions.find((q) => q.code === "FILE_SUBMITTED")!.lists).toEqual([]);
 

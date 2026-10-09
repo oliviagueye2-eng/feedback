@@ -86,7 +86,7 @@ export async function upsertAnswer(input: {
                            OR i.question_set_id IN (${QUESTION_SET("ESSENTIAL")}, ${QUESTION_SET("COMMON")})))
             OR q.id IN (SELECT tc.depends_on_question_id
                         FROM (${topicsForFeedback("$3")}) t
-                        JOIN topic_condition tc ON tc.topic_id = t.id))`,
+                        JOIN topic_condition tc ON tc.topic_id = t.id AND t.gated))`,
     [input.questionCode, input.setIds, input.feedbackId],
   );
   const question = questions[0];
@@ -116,16 +116,26 @@ export async function upsertAnswer(input: {
   );
 }
 
+/** The lists of a level's row `alias` (0044: several per level), in their order, as an array. */
+const listsOf = (level: "sector" | "establishment_type" | "service", owner: string, alias: string, kind: "topic" | "question") =>
+  `ARRAY(SELECT x.${kind}_set_id FROM ${level}_${kind}_set x WHERE x.${owner} = ${alias}.id ORDER BY x.position)`;
+
+/** The lists of the three levels (sec, et, s): sector_topic_sets, type_question_sets… */
+const LEVEL_LISTS = `
+  ${listsOf("sector", "sector_id", "sec", "topic")} AS sector_topic_sets,
+  ${listsOf("sector", "sector_id", "sec", "question")} AS sector_question_sets,
+  ${listsOf("establishment_type", "type_id", "et", "topic")} AS type_topic_sets,
+  ${listsOf("establishment_type", "type_id", "et", "question")} AS type_question_sets,
+  ${listsOf("service", "service_id", "s", "topic")} AS service_topic_sets,
+  ${listsOf("service", "service_id", "s", "question")} AS service_question_sets`;
+
 /**
  * The levels of feedback $n, as FORM_LEVELS gives them: its service, the
  * sector of the establishment (its type's, else its own; never the
  * service's, decided by Olivia, 2026-10-08), its establishment type.
  */
 const feedbackLevels = (feedbackParam: string) => `
-  SELECT s.replaces_shared_lists AS replaces, sec.id AS sector_id, sec.topic_set_id AS sector_topic_set,
-         sec.question_set_id AS sector_question_set, et.topic_set_id AS type_topic_set,
-         et.question_set_id AS type_question_set, s.topic_set_id AS service_topic_set,
-         s.question_set_id AS service_question_set
+  SELECT s.replaces_shared_lists AS replaces, sec.id AS sector_id, ${LEVEL_LISTS}
   FROM feedback f
   JOIN establishment e ON e.id = f.establishment_id
   LEFT JOIN service s ON s.id = f.service_id
@@ -139,10 +149,7 @@ const feedbackLevels = (feedbackParam: string) => `
  * would get, shown in the back office (asked by Olivia, 2026-10-08).
  */
 const formLevels = (first: number) => `
-  SELECT s.replaces_shared_lists AS replaces, sec.id AS sector_id, sec.topic_set_id AS sector_topic_set,
-         sec.question_set_id AS sector_question_set, et.topic_set_id AS type_topic_set,
-         et.question_set_id AS type_question_set, s.topic_set_id AS service_topic_set,
-         s.question_set_id AS service_question_set
+  SELECT s.replaces_shared_lists AS replaces, sec.id AS sector_id, ${LEVEL_LISTS}
   FROM (SELECT 1) one
   LEFT JOIN sector sec ON sec.code = $${first}
   LEFT JOIN establishment_type et ON et.code = $${first + 1}
@@ -150,31 +157,38 @@ const formLevels = (first: number) => `
 
 /**
  * The topic lists of the levels given (a feedback's, or a form's), one row
- * per level that has one (level, id): COMMON, then the list of its sector
- * (COMMERCE when the sector is unknown), of its establishment type and of
- * its service. A service that replaces the shared lists (mobile money, 0026)
- * leaves out COMMON and the sector's.
+ * per list (level, id): COMMON, then the lists of its sector (COMMERCE when
+ * the sector is unknown), of its establishment type and of its service. A
+ * service that replaces the shared lists (mobile money, 0026) leaves out
+ * COMMON and the sector's.
  */
 const topicListsOfLevels = (levels: string) => `
   SELECT v.level, v.id
   FROM (${levels}) l,
-       LATERAL (VALUES
-         ('common', CASE WHEN l.replaces THEN NULL ELSE (SELECT id FROM topic_set WHERE code = 'COMMON') END),
-         ('sector', CASE WHEN l.replaces THEN NULL
-                         ELSE coalesce(l.sector_topic_set, CASE WHEN l.sector_id IS NULL THEN (SELECT id FROM topic_set WHERE code = 'COMMERCE') END) END),
-         ('type', l.type_topic_set),
-         ('service', l.service_topic_set)) AS v (level, id)
-  WHERE v.id IS NOT NULL`;
+       LATERAL (
+         SELECT 'common', id FROM topic_set WHERE code = 'COMMON' AND NOT coalesce(l.replaces, false)
+         UNION ALL
+         SELECT 'sector', unnest(CASE WHEN l.replaces THEN '{}'::smallint[]
+                                      WHEN l.sector_id IS NULL THEN ARRAY(SELECT id FROM topic_set WHERE code = 'COMMERCE')
+                                      ELSE l.sector_topic_sets END)
+         UNION ALL
+         SELECT 'type', unnest(l.type_topic_sets)
+         UNION ALL
+         SELECT 'service', unnest(l.service_topic_sets)) AS v (level, id)`;
 
-/** Active topics shown for the levels given: those of their lists (topicListsOfLevels), each once. */
+/**
+ * Active topics shown for the levels given: those of their lists
+ * (topicListsOfLevels), each once. `gated`: shown only after its question
+ * (topic_condition), unless one of these lists holds it shown_always (0047).
+ */
 const topicsOfLevels = (levels: string) => `
-  SELECT t.* FROM topic t
+  SELECT t.*,
+         EXISTS (SELECT 1 FROM topic_condition tc WHERE tc.topic_id = t.id) AND NOT bool_or(i.shown_always) AS gated
+  FROM topic t
+  JOIN topic_set_item i ON i.topic_id = t.id
+  JOIN (${topicListsOfLevels(levels)}) ls ON ls.id = i.topic_set_id
   WHERE t.is_active
-    AND EXISTS (
-      SELECT 1
-      FROM (${topicListsOfLevels(levels)}) ls
-      JOIN topic_set_item i ON i.topic_set_id = ls.id
-      WHERE i.topic_id = t.id)`;
+  GROUP BY t.id`;
 
 /** Active topics shown for feedback $n (topicsOfLevels). */
 const topicsForFeedback = (feedbackParam: string) => topicsOfLevels(feedbackLevels(feedbackParam));
@@ -200,7 +214,7 @@ export async function replaceTopics(input: {
          WHERE t.code = ANY($2::text[])
            AND NOT EXISTS (
              SELECT 1 FROM topic_condition tc
-             WHERE tc.topic_id = t.id
+             WHERE tc.topic_id = t.id AND t.gated
                AND NOT EXISTS (
                  SELECT 1 FROM answer a
                  JOIN topic_condition ok ON ok.topic_id = t.id AND ok.option_id = a.option_id
@@ -342,7 +356,7 @@ async function topicChoices(topics: string, params: unknown[]): Promise<TopicCho
               EXISTS (SELECT 1 FROM topic_condition ok WHERE ok.topic_id = t.id AND ok.option_id = ao.id) AS opens,
               EXISTS (SELECT 1 FROM answer a WHERE a.feedback_id = $1 AND a.option_id = ao.id) AS chosen
        FROM (${topics}) t
-       JOIN (SELECT DISTINCT topic_id, depends_on_question_id FROM topic_condition) tc ON tc.topic_id = t.id
+       JOIN (SELECT DISTINCT topic_id, depends_on_question_id FROM topic_condition) tc ON tc.topic_id = t.id AND t.gated
        JOIN question q ON q.id = tc.depends_on_question_id
        JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
        JOIN answer_option ao ON ao.question_id = q.id AND ao.is_active
@@ -396,14 +410,14 @@ export async function findFormQuestionSetSources(levels: FormLevels): Promise<Qu
 async function questionSetSources(levels: string, params: unknown[]): Promise<QuestionSetSources | null> {
   const rows = await query<{
     sector_known: boolean;
-    sector_set: number | null;
-    type_set: number | null;
-    service_set: number | null;
+    sector_sets: number[];
+    type_sets: number[];
+    service_sets: number[];
     commerce_set: number | null;
   }>(
     `SELECT l.sector_id IS NOT NULL AS sector_known,
-            CASE WHEN l.replaces THEN NULL ELSE l.sector_question_set END AS sector_set,
-            l.type_question_set AS type_set, l.service_question_set AS service_set,
+            CASE WHEN l.replaces THEN '{}'::smallint[] ELSE l.sector_question_sets END AS sector_sets,
+            l.type_question_sets AS type_sets, l.service_question_sets AS service_sets,
             ${QUESTION_SET("COMMERCE")} AS commerce_set
      FROM (${levels}) l`,
     params,
@@ -412,9 +426,9 @@ async function questionSetSources(levels: string, params: unknown[]): Promise<Qu
   if (!row) return null;
   return {
     sectorKnown: row.sector_known,
-    sectorSetId: row.sector_set,
-    typeSetId: row.type_set,
-    serviceSetId: row.service_set,
+    sectorSetIds: row.sector_sets,
+    typeSetIds: row.type_sets,
+    serviceSetIds: row.service_sets,
     commerceSetId: row.commerce_set,
   };
 }
@@ -768,9 +782,13 @@ export async function findFormQuestionLists(
   );
 }
 
+/** A list given by two levels (a block of 0046, e.g. FEES by the sector and the service) counts once, at the first. */
 function groupLists(rows: { item: string; code: string; level: FormList["level"] }[]): Record<string, FormList[]> {
   const lists: Record<string, FormList[]> = {};
-  for (const row of rows) (lists[row.item] ??= []).push({ code: row.code, level: row.level });
+  for (const row of rows) {
+    const item = (lists[row.item] ??= []);
+    if (!item.some((l) => l.code === row.code)) item.push({ code: row.code, level: row.level });
+  }
   return lists;
 }
 
@@ -831,7 +849,7 @@ export async function findTopicGateCodes(feedbackId: string): Promise<string[]> 
   const rows = await query<{ code: string }>(
     `SELECT DISTINCT q.code
      FROM (${topicsForFeedback("$1")}) t
-     JOIN topic_condition tc ON tc.topic_id = t.id
+     JOIN topic_condition tc ON tc.topic_id = t.id AND t.gated
      JOIN question q ON q.id = tc.depends_on_question_id
      ORDER BY q.code`,
     [feedbackId],

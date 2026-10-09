@@ -187,7 +187,7 @@ export async function getQuestionnaire(filter: { sector?: string; type?: string;
   // may get (the essential question, the common ones), and those that open a
   // topic shown above at screen 2b (asked by Olivia, 2026-10-08).
   const shown = [...shownSectors, ...shownTypes, ...shownServices];
-  const lists = new Set(shown.map((x) => x.questionListCode).concat(SHARED_QUESTION_LISTS));
+  const lists = new Set(shown.flatMap((x) => x.questionListCodes).concat(SHARED_QUESTION_LISTS));
   const topics = new Set(shown.flatMap((x) => x.topics.map((t) => t.code)));
   const kept = (q: db.BankQuestion) => q.lists.some((l) => lists.has(l)) || q.opensTopics.some((t) => topics.has(t));
   // The form shown once the filters name one: an establishment, or a sector
@@ -256,12 +256,9 @@ async function getForm(levels: feedbacks.FormLevels, bank: db.BankQuestion[]) {
   const setIds = selectQuestionSets(sources);
   // The level each list comes from: the first level holding it (a sector
   // unknown gets COMMERCE).
+  const sectorSets = sources.sectorKnown ? sources.sectorSetIds : [sources.commerceSetId];
   const levelOf = (id: number): feedbacks.FormList["level"] =>
-    id === (sources.sectorKnown ? sources.sectorSetId : sources.commerceSetId)
-      ? "sector"
-      : id === sources.typeSetId
-        ? "type"
-        : "service";
+    sectorSets.includes(id) ? "sector" : sources.typeSetIds.includes(id) ? "type" : "service";
   const [questions, topicLists, questionLists, categories] = await Promise.all([
     feedbacks.findFormQuestions(setIds),
     feedbacks.findFormTopicLists(levels),

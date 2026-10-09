@@ -36,11 +36,10 @@ it("gives each path the form of its establishments and flags what needs a look",
   expect(o.alerts.fewTopics.map((p) => `${p.sector}|${p.service}`)).toEqual(
     expect.arrayContaining(["ELECTRICITY|null", "WATER|null"]),
   );
-  // The port's procedures get some topics from TRANSPORT and FILE_SERVICES.
-  expect(o.alerts.duplicates.filter((d) => d.path.service === "PORT_PROCEDURE").map((d) => d.lists)).toContainEqual([
-    "TRANSPORT",
-    "FILE_SERVICES",
-  ]);
+  // The port's procedures: « Frais » from the FEES block, given by TRANSPORT and FILE_SERVICES alike (0046), once.
+  expect(o.alerts.duplicates.filter((d) => d.path.service === "PORT_PROCEDURE")).toEqual([]);
+  const port = o.paths.find((p) => p.service === "PORT_PROCEDURE")!;
+  expect(port.topics.find((t) => t.code === "FEES")!.lists).toEqual([{ code: "FEES", level: "sector" }]);
   // « Politesse du personnel » is offered nowhere since 0038.
   expect(o.alerts.unusedTopics.map((t) => t.code)).toContain("STAFF");
   expect(o.alerts.emptyLists.map((l) => `${l.kind}:${l.code}`)).toEqual(
@@ -52,5 +51,26 @@ it("gives each path the form of its establishments and flags what needs a look",
   // A list says who uses it.
   const roadTrip = o.lists.find((l) => l.kind === "topics" && l.code === "ROAD_TRIP")!;
   expect(roadTrip.services).toEqual(["APP_RIDE", "LAND_TRIP", "STREET_TAXI_RIDE"]);
-  expect(roadTrip.items).toEqual(["DRIVER_BEHAVIOUR", "PUNCTUALITY", "ROUTE", "ONBOARD_SAFETY"]);
+  expect(roadTrip.items).toEqual(["DRIVER_BEHAVIOUR", "PUNCTUALITY", "ROUTE", "DRIVING_SAFETY"]);
+  // Lists combined, not copied (0044, 0045): the VTC ride gets ROAD_TRIP, then its own « Prise en charge »,
+  // and pays as it wishes through PAYMENT, like the taxi and the ticket counters.
+  const vtc = o.paths.find((p) => p.service === "APP_RIDE")!;
+  expect(vtc.topics.map((t) => t.code)).toEqual(expect.arrayContaining(["DRIVER_BEHAVIOUR", "ROUTE", "DRIVING_SAFETY", "PICKUP"]));
+  expect(vtc.topics.find((t) => t.code === "PICKUP")!.lists.map((l) => l.code)).toEqual(["APP_RIDE"]);
+  expect(vtc.questions.find((q) => q.code === "PAYMENT_AS_WISHED")!.lists.map((l) => l.code)).toEqual(["PAYMENT"]);
+  const payment = o.lists.find((l) => l.kind === "questions" && l.code === "PAYMENT")!;
+  expect(payment.services).toEqual(["APP_RIDE", "PLANE_TICKET", "STREET_TAXI_RIDE", "TICKET_PURCHASE"]);
+  // « Frais payés » straight away where one always pays (0047), after « Avez-vous payé quelque chose ? » elsewhere.
+  expect(vtc.topics.find((t) => t.code === "FEES")).toMatchObject({
+    label: "Frais payés (montant justifié et conforme au tarif annoncé, reçu remis)",
+    gated: false,
+  });
+  expect(port.topics.find((t) => t.code === "FEES")!.gated).toBe(true);
+  expect(o.paths.filter((p) => p.topics.some((t) => t.code === "FEES" && !t.gated)).map((p) => p.service).sort()).toEqual([
+    "APP_RIDE", "BOAT_CROSSING", "FLIGHT", "HIGHWAY_TRIP", "LAND_TRIP", "PLANE_TICKET", "STREET_TAXI_RIDE",
+    "TICKET_PURCHASE", "TRAIN_TRIP",
+  ]);
+  // The airport: the stations' questions, then its own.
+  const airport = o.paths.find((p) => p.type === "AIRPORT")!;
+  expect(airport.questions.map((q) => q.code)).toEqual(["CHECKS_WAIT", "WAYFINDING", "SEAT_TO_WAIT", "TOILETS", "TRANSPORT_ACCESS"]);
 });
