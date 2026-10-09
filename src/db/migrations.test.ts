@@ -108,12 +108,13 @@ describe("reference data", () => {
                                  JOIN service s ON s.id = x.service_id WHERE s.code = $1)
         ORDER BY t.position`, [service]))
         .rows.map((r) => r.code);
-    expect(await serviceTopics("ELECTRICITY_AGENCY")).toEqual([
-      "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "PROCEDURE", "OPENING_HOURS", "FEES", "BILLING", "CLEANLINESS", "ACCESS_FOR_ALL",
-    ]);
-    expect(await serviceTopics("WATER_AGENCY")).toEqual(await serviceTopics("ELECTRICITY_AGENCY"));
+    const agency = ["PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "PROCEDURE", "OPENING_HOURS", "FEES", "BILLING", "CLEANLINESS", "ACCESS_FOR_ALL"];
+    expect(await serviceTopics("WATER_AGENCY")).toEqual(agency);
+    // 0064: the two Woyofal topics for Senelec.
+    expect((await serviceTopics("ELECTRICITY_AGENCY")).filter((t) => !t.startsWith("WOYOFAL_"))).toEqual(agency);
+    expect((await serviceTopics("ELECTRICITY_AGENCY")).filter((t) => t.startsWith("WOYOFAL_"))).toEqual(["WOYOFAL_RECHARGE", "WOYOFAL_AMOUNT"]);
     // 0052: « Personnel » for the technicians on site.
-    expect(await serviceTopics("ELECTRICITY_SUPPLY")).toEqual(["PROFESSIONALISM", "INFORMATION", "INTERVENTION_TIME", "CUSTOMER_SERVICE", "POWER_CUTS", "POWER_QUALITY"]);
+    expect(await serviceTopics("ELECTRICITY_SUPPLY")).toEqual(["PROFESSIONALISM", "INFORMATION", "INTERVENTION_TIME", "CUSTOMER_SERVICE", "POWER_CUTS", "POWER_QUALITY", "WOYOFAL_RECHARGE", "WOYOFAL_AMOUNT"]);
     expect(await serviceTopics("WATER_SUPPLY")).toEqual([
       "PROFESSIONALISM", "INFORMATION", "INTERVENTION_TIME", "CUSTOMER_SERVICE", "WATER_CUTS", "WATER_QUALITY",
     ]);
@@ -335,8 +336,6 @@ describe("reference data", () => {
       "COMMON: REPORTED ← OVERALL_SATISFACTION DISSATISFIED",
       "COMMON: REPORTED ← OVERALL_SATISFACTION VERY_DISSATISFIED",
       "COMMON: REPORT_WHY ← REPORTED NO",
-      "ELECTRICITY_AGENCY: PREPAID_METER ← AGENCY_SUBJECT BILL",
-      "ELECTRICITY_AGENCY: PREPAID_METER ← AGENCY_SUBJECT CONNECTION",
       "ELECTRICITY_SUPPLY: CUT_NOTICE ← CUTS_COUNT 1_TO_3",
       "ELECTRICITY_SUPPLY: CUT_NOTICE ← CUTS_COUNT 4_TO_10",
       "ELECTRICITY_SUPPLY: CUT_NOTICE ← CUTS_COUNT OVER_10",
@@ -395,7 +394,7 @@ describe("reference data", () => {
 });
 
 describe("« Non concerné » and the questions that open a topic (0011)", () => {
-  it("opens three topics after « Oui » (the intervention's question removed by 0012), and no longer offers « Je n'ai rien payé »", async () => {
+  it("opens five topics after « Oui » (the intervention's question removed by 0012, Woyofal's two added by 0064), and no longer offers « Je n'ai rien payé »", async () => {
     const conditions = (await db.query<{ topic: string; question: string; option: string }>(
       `SELECT t.code AS topic, q.code AS question, ao.code AS option
        FROM topic_condition tc
@@ -407,6 +406,8 @@ describe("« Non concerné » and the questions that open a topic (0011)", () =>
       "CASE_TRACKING ← FILE_SUBMITTED YES",
       "FEES ← PAID_SOMETHING YES",
       "PROCESSING_TIME ← FILE_SUBMITTED YES",
+      "WOYOFAL_AMOUNT ← PREPAID_METER YES",
+      "WOYOFAL_RECHARGE ← PREPAID_METER YES",
     ]);
     const inactive = (await db.query<{ code: string }>(
       `SELECT q.code || ' ' || ao.code AS code FROM answer_option ao JOIN question q ON q.id = ao.question_id
