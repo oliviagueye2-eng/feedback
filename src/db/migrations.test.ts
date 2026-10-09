@@ -205,7 +205,7 @@ describe("reference data", () => {
     expect(row).toEqual({
       without_list: null,
       places: [
-        "AIRPORT", "BANK_AGENCY", "BUS_STATION", "ELECTRICITY_AGENCY", "HIGHER_EDUCATION_ADMIN", "INSURANCE_CLAIM",
+        "BANK_AGENCY", "BUS_STATION", "ELECTRICITY_AGENCY", "HIGHER_EDUCATION_ADMIN", "INSURANCE_CLAIM",
         "PLANE_TICKET", "POLICE_PREMISES", "PORT_PROCEDURE", "SANITATION_AGENCY", "SCHOOL_ADMIN", "TICKET_PURCHASE", "WATER_AGENCY",
       ],
     });
