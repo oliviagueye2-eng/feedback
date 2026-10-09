@@ -51,6 +51,6 @@ it("gives each path the form of its establishments and flags what needs a look",
   expect(o.alerts.unusedLists.map((l) => l.code)).not.toContain("ESSENTIAL");
   // A list says who uses it.
   const roadTrip = o.lists.find((l) => l.kind === "topics" && l.code === "ROAD_TRIP")!;
-  expect(roadTrip.services).toEqual(["APP_RIDE", "LAND_TRIP", "STREET_TAXI_RIDE"]);
-  expect(roadTrip.items).toEqual(["DRIVER_BEHAVIOUR", "PUNCTUALITY", "ROUTE", "ONBOARD_SAFETY"]);
+  expect(roadTrip.services).toEqual(["LAND_TRIP", "STREET_TAXI_RIDE"]);
+  expect(roadTrip.items).toEqual(["DRIVER_BEHAVIOUR", "PUNCTUALITY", "ROUTE", "DRIVING_SAFETY"]);
 });

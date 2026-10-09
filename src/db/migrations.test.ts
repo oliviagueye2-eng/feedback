@@ -125,7 +125,8 @@ describe("reference data", () => {
         SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
         WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = 'ROAD_TRIP') ORDER BY t.position`))
         .rows.map((r) => r.code);
-    expect(await roadTrip()).toEqual(["DRIVER_BEHAVIOUR", "PUNCTUALITY", "ROUTE", "ONBOARD_SAFETY"]);
+    // A safe driving rather than « Sécurité à bord » on the road (0043).
+    expect(await roadTrip()).toEqual(["DRIVER_BEHAVIOUR", "PUNCTUALITY", "ROUTE", "DRIVING_SAFETY"]);
     // The boat, the plane, the train and the highway: « Compétence du personnel » (0036).
     const listOf = async (list: string) =>
       (await db.query<{ code: string }>(`
@@ -143,7 +144,13 @@ describe("reference data", () => {
       SELECT 1 FROM topic_set_item WHERE topic_id = (SELECT id FROM topic WHERE code = 'STAFF')`)).rows).toEqual([]);
     expect((await db.query<{ code: string }>(`
       SELECT code FROM service WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'ROAD_TRIP') ORDER BY code`))
-      .rows.map((r) => r.code)).toEqual(["APP_RIDE", "LAND_TRIP", "STREET_TAXI_RIDE"]);
+      .rows.map((r) => r.code)).toEqual(["LAND_TRIP", "STREET_TAXI_RIDE"]);
+    // The VTC: the road trip's topics plus « Prise en charge » (0043).
+    expect(await listOf("APP_RIDE")).toEqual(["DRIVER_BEHAVIOUR", "PUNCTUALITY", "ROUTE", "PICKUP", "DRIVING_SAFETY"]);
+    expect(await listOf("TRIP")).toContain("ONBOARD_SAFETY");
+    expect((await db.query<{ code: string }>(`
+      SELECT code FROM service WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'APP_RIDE')`))
+      .rows.map((r) => r.code)).toEqual(["APP_RIDE"]);
     // Paying as one wished, last on a VTC or a taxi ride, as when buying a ticket (0042).
     const questionsOf = async (list: string) =>
       (await db.query<{ code: string }>(`
