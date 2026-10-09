@@ -203,9 +203,9 @@ describe("establishment", () => {
     await expect(createUserEstablishment({ name: "UBA", sector: "BANKING_INSURANCE" })).resolves.toHaveProperty("id");
   });
 
-  it("lists the twenty sectors in alphabetical order, accents ignored", async () => {
+  it("lists the twenty-one sectors in alphabetical order, accents ignored", async () => {
     const sectors = await listSectors();
-    expect(sectors).toHaveLength(20);
+    expect(sectors).toHaveLength(21);
     expect(sectors.slice(0, 3).map((s) => s.label)).toEqual([
       "Administration et état civil",
       "Banques et assurances",
