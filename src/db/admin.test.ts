@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   correctComment,
   correctEstablishment,
-  feedbackPeriod,
+  dashboardPeriod,
   getCategoriesAndTopics,
   getDashboard,
   getQuestionnaire,
@@ -23,7 +23,7 @@ import {
   validateEstablishment,
 } from "../domain/admin";
 import { createSessionToken, isRightPassword } from "../domain/admin/session";
-import { countCommentsByEstablishmentThisMonth } from "./admin";
+import { countCommentsByEstablishment } from "./admin";
 import { createUserEstablishment } from "../domain/establishment";
 import { recordPageShown, saveAnswer, saveComment, submitFeedback, upsertFeedback } from "../domain/feedback";
 import { refreshPublishedStats } from "../domain/stats";
@@ -124,7 +124,8 @@ describe("comments", () => {
   });
 
   it("counts this month's comments by establishment, and filters on one", async () => {
-    expect(await countCommentsByEstablishmentThisMonth()).toEqual([
+    const today = new Date().toISOString().slice(0, 10);
+    expect(await countCommentsByEstablishment(today, today)).toEqual([
       { establishmentId: active, name: "Centre de santé de Test", municipality: null, total: 1, pending: 0 },
     ]);
     expect(await listComments("reviewed", false, active)).toHaveLength(1);
@@ -222,34 +223,45 @@ describe("dashboard", () => {
     await startFeedback("b2b2b2b2-0028-4000-8000-000000000005", active, "DISSATISFIED");
 
     const d = await getDashboard();
-    expect(d.month).toMatchObject({ complete: 1, notSent: 3, abandonPercent: 75, satisfiedComplete: 100, satisfiedNotSent: 33 });
+    expect(d.figures).toMatchObject({ complete: 1, notSent: 3, abandonPercent: 75, satisfiedComplete: 100, satisfiedNotSent: 33 });
     expect(d.stops.map((s) => [s.page, s.satisfied, s.notSatisfied, s.percent])).toEqual([
       ["details", 1, 0, 25],
       ["sector", 0, 0, 0],
       ["common", 0, 1, 25],
       ["send", 0, 1, 25],
     ]);
-    expect(d.weeks).toHaveLength(8);
+    expect(d.weeks.reduce((n, w) => n + w.count, 0)).toBe(1);
     expect(d.weeks.at(-1)?.count).toBe(1);
     expect(d.byEstablishment).toEqual([
       { establishmentId: active, name: "Centre de santé de Test", municipality: null, complete: 1, notSent: 3 },
     ]);
   });
 
-  it("counts by establishment over the period chosen", async () => {
+  it("counts over the period chosen", async () => {
     const today = new Date().toISOString().slice(0, 10);
-    expect((await getDashboard({ from: today, to: today })).byEstablishment).toEqual([
+    const d = await getDashboard({ kind: "dates", from: today, to: today });
+    expect(d.figures).toMatchObject({ complete: 1, notSent: 0 });
+    expect(d.byEstablishment).toEqual([
       { establishmentId: active, name: "Centre de santé de Test", municipality: null, complete: 1, notSent: 0 },
     ]);
-    expect((await getDashboard({ from: "2020-01-01", to: "2020-12-31" })).byEstablishment).toEqual([]);
+    expect(d.weeks.map((w) => w.count)).toEqual([1]);
+    const old = await getDashboard({ kind: "dates", from: "2020-01-01", to: "2020-12-31" });
+    expect(old.figures).toMatchObject({ complete: 0, notSent: 0, abandonPercent: null });
+    expect(old.byEstablishment).toEqual([]);
+    expect(old.commented).toEqual([]);
+    expect(old.stops.every((s) => s.total === 0)).toBe(true);
+    expect(old.weeks).toHaveLength(53);
+    expect(old.weeks.reduce((n, w) => n + w.count, 0)).toBe(0);
   });
 
-  it("reads the period typed, else this month", () => {
-    const now = new Date("2026-10-09T12:00:00Z");
-    expect(feedbackPeriod(undefined, undefined, now)).toEqual({ from: "2026-10-01", to: "2026-10-09" });
-    expect(feedbackPeriod("2026-09-01", "2026-09-30", now)).toEqual({ from: "2026-09-01", to: "2026-09-30" });
-    expect(feedbackPeriod("2026-09-30", "2026-09-01", now)).toEqual({ from: "2026-09-01", to: "2026-09-30" });
-    expect(feedbackPeriod("2026-02-30", "n'importe quoi", now)).toEqual({ from: "2026-10-01", to: "2026-10-09" });
+  it("reads the period: this month, this week, or two dates", () => {
+    const now = new Date("2026-10-09T12:00:00Z"); // a Friday
+    expect(dashboardPeriod(undefined, undefined, undefined, now)).toEqual({ kind: "month", from: "2026-10-01", to: "2026-10-09" });
+    expect(dashboardPeriod("week", undefined, undefined, now)).toEqual({ kind: "week", from: "2026-10-05", to: "2026-10-09" });
+    expect(dashboardPeriod("week", undefined, undefined, new Date("2026-10-11T08:00:00Z"))).toMatchObject({ from: "2026-10-05", to: "2026-10-11" });
+    expect(dashboardPeriod("dates", "2026-09-01", "2026-09-30", now)).toEqual({ kind: "dates", from: "2026-09-01", to: "2026-09-30" });
+    expect(dashboardPeriod("dates", "2026-09-30", "2026-09-01", now)).toEqual({ kind: "dates", from: "2026-09-01", to: "2026-09-30" });
+    expect(dashboardPeriod("dates", "2026-02-30", "2026-03-01", now)).toEqual({ kind: "month", from: "2026-10-01", to: "2026-10-09" });
   });
 
   it("does not move the page once the feedback is sent", async () => {

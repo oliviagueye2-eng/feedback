@@ -103,14 +103,16 @@ export interface WeekPoint {
   detail: string;
 }
 
-/** Feedbacks sent per week; the last point (this week) carries its number. */
+/** Feedbacks sent per week; the last point carries its number. One week alone sits in the middle. */
 export function WeekLine({ points, label, lastCaption }: { points: WeekPoint[]; label: string; lastCaption: string }) {
   const W = 520;
   const H = 190;
   const max = niceMax(Math.max(1, ...points.map((p) => p.count)));
-  const x = (i: number) => 44 + (i * (W - 64)) / Math.max(1, points.length - 1);
+  const x = (i: number) => (points.length === 1 ? W / 2 : 44 + (i * (W - 64)) / (points.length - 1));
   const y = (v: number) => H - 34 - (v / max) * (H - 64);
   const last = points.length - 1;
+  // A long period: one date in `step` under the line, the last one always shown.
+  const step = Math.ceil(points.length / 9);
   return (
     <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
       {ticks(max).map((v) => (
@@ -133,9 +135,11 @@ export function WeekLine({ points, label, lastCaption }: { points: WeekPoint[]; 
           {/* A larger invisible target for the hover. */}
           <circle cx={x(i)} cy={y(p.count)} r="12" fill="transparent" />
           {i === last && <circle cx={x(i)} cy={y(p.count)} r="4" fill={SATISFIED} stroke="#fff" strokeWidth="2" />}
-          <text x={x(i)} y={H - 12} fontSize="12" fill={MUTED} textAnchor="middle">
-            {p.label}
-          </text>
+          {(last - i) % step === 0 && (
+            <text x={x(i)} y={H - 12} fontSize="12" fill={MUTED} textAnchor="middle">
+              {p.label}
+            </text>
+          )}
         </g>
       ))}
       {last >= 0 && (

@@ -1,4 +1,4 @@
-import { feedbackPeriod, getDashboard } from "@/src/domain/admin";
+import { dashboardPeriod, getDashboard } from "@/src/domain/admin";
 import { getDictionary } from "../../../_i18n";
 import { ShareBar, StopBars, StopLegend, WeekLine } from "../_components/Charts";
 import { requireAdmin } from "../_lib/auth";
@@ -17,12 +17,17 @@ const day = (date: Date, withYear: boolean) => {
   return `${n === 1 ? "1er" : n} ${month}${withYear ? ` ${date.getUTCFullYear()}` : ""}`;
 };
 
-/** What to handle, then this month's feedbacks: sent, not sent, and where they stop. */
+const DAY_MS = 86_400_000;
+
+/**
+ * What to handle, then the period's feedbacks: sent, not sent, and where they
+ * stop. The period (?periode=semaine, or ?periode=dates&du=&au=) is this month
+ * by default; « À traiter » ignores it.
+ */
 export default async function DashboardPage({ searchParams }: PageProps<"/console-bo">) {
   await requireAdmin();
-  // The period of « Avis par établissement » (?du=&au=), this month by default.
-  const { du, au } = await searchParams;
-  const period = feedbackPeriod(du, au);
+  const { periode, du, au } = await searchParams;
+  const period = dashboardPeriod(periode === "semaine" ? "week" : periode === "dates" ? "dates" : "month", du, au);
   const [{ admin }, d] = await Promise.all([getDictionary(), getDashboard(period)]);
   const t = admin.dashboard;
   const dash = "—";
@@ -45,17 +50,44 @@ export default async function DashboardPage({ searchParams }: PageProps<"/consol
   ].filter(Boolean);
 
   const lastWeek = d.weeks.at(-1);
-  // The month the figures count, as the database counts it (UTC, the time in Dakar).
-  const today = new Date();
-  const monthPeriod =
-    today.getUTCDate() === 1
-      ? fill(t.periodOneDay, { date: day(today, true) })
-      : fill(t.period, { from: day(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1)), false), to: day(today, true) });
+  // The days the figures count, as the database counts them (UTC, the time in Dakar).
+  const from = new Date(`${period.from}T00:00:00Z`);
+  const to = new Date(`${period.to}T00:00:00Z`);
+  const periodText =
+    period.from === period.to
+      ? fill(t.periodOneDay, { date: day(to, true) })
+      : fill(t.period, { from: day(from, from.getUTCFullYear() !== to.getUTCFullYear()), to: day(to, true) });
+  const today = new Date().toISOString().slice(0, 10);
+  const lastWeekEnd = lastWeek ? new Date(Date.parse(`${lastWeek.week}T00:00:00Z`) + 7 * DAY_MS).toISOString().slice(0, 10) : "";
+  const lastCaption =
+    lastWeek && lastWeek.week <= today && today < lastWeekEnd
+      ? fill(t.thisWeek, { n: lastWeek.count })
+      : fill(t.lastWeek, { date: shortDate(lastWeek?.week ?? period.to), n: lastWeek?.count ?? 0 });
 
   return (
     <>
       <h1>{t.title}</h1>
-      <p className={styles.meta}>{monthPeriod}</p>
+      <form className={styles.period} method="get" action="/console-bo">
+        <select name="periode" aria-label={t.periodLabel} defaultValue={period.kind === "week" ? "semaine" : period.kind === "dates" ? "dates" : ""} className={styles.input}>
+          <option value="">{t.periodMonth}</option>
+          <option value="semaine">{t.periodWeek}</option>
+          <option value="dates">{t.periodDates}</option>
+        </select>
+        <span className={styles.periodDates}>
+          <label>
+            {t.periodFrom}
+            <input type="date" name="du" defaultValue={period.from} className={styles.input} />
+          </label>
+          <label>
+            {t.periodTo}
+            <input type="date" name="au" defaultValue={period.to} className={styles.input} />
+          </label>
+        </span>
+        <button type="submit" className={styles.link}>
+          {t.periodApply}
+        </button>
+      </form>
+      <p className={styles.meta}>{periodText}</p>
       <p className={styles.lead}>
         {todo.length === 0 ? (
           t.nothingTodo
@@ -111,33 +143,20 @@ export default async function DashboardPage({ searchParams }: PageProps<"/consol
       <section className={styles.month} aria-label={t.monthLabel}>
         <div>
           <p className={styles.meta}>{t.complete}</p>
-          <div className={styles.figure}>{d.month.complete}</div>
+          <div className={styles.figure}>{d.figures.complete}</div>
         </div>
         <div>
           <p className={styles.meta}>{t.notSent}</p>
-          <div className={styles.figure}>{d.month.notSent}</div>
+          <div className={styles.figure}>{d.figures.notSent}</div>
         </div>
         <div>
           <p className={styles.meta}>{t.abandon}</p>
-          <div className={styles.figure}>{d.month.abandonPercent === null ? dash : `${d.month.abandonPercent} %`}</div>
+          <div className={styles.figure}>{d.figures.abandonPercent === null ? dash : `${d.figures.abandonPercent} %`}</div>
         </div>
       </section>
 
-      <section className={styles.commented} id="avis">
+      <section className={styles.commented}>
         <h2>{t.byEstablishmentTitle}</h2>
-        <form className={styles.period} method="get" action="/console-bo#avis">
-          <label>
-            {t.byEstablishmentFrom}
-            <input type="date" name="du" defaultValue={period.from} className={styles.input} required />
-          </label>
-          <label>
-            {t.byEstablishmentTo}
-            <input type="date" name="au" defaultValue={period.to} className={styles.input} required />
-          </label>
-          <button type="submit" className={styles.link}>
-            {t.byEstablishmentApply}
-          </button>
-        </form>
         {d.byEstablishment.length === 0 ? (
           <p className={styles.empty}>{t.byEstablishmentEmpty}</p>
         ) : (
@@ -192,7 +211,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/consol
             <h2>{t.weeksTitle}</h2>
             <WeekLine
               label={t.weeksTitle}
-              lastCaption={fill(t.thisWeek, { n: lastWeek?.count ?? 0 })}
+              lastCaption={lastCaption}
               points={d.weeks.map((w) => ({
                 label: shortDate(w.week),
                 count: w.count,
@@ -202,8 +221,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/consol
           </section>
           <section className={styles.chart}>
             <h2>{t.satisfactionTitle}</h2>
-            <ShareBar label={t.satisfactionComplete} percent={d.month.satisfiedComplete} none={dash} />
-            <ShareBar label={t.satisfactionNotSent} percent={d.month.satisfiedNotSent} none={dash} />
+            <ShareBar label={t.satisfactionComplete} percent={d.figures.satisfiedComplete} none={dash} />
+            <ShareBar label={t.satisfactionNotSent} percent={d.figures.satisfiedNotSent} none={dash} />
             <p className={styles.meta}>{t.satisfactionHelp}</p>
           </section>
         </div>
