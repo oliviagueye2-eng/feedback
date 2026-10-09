@@ -778,9 +778,13 @@ export async function findFormQuestionLists(
   );
 }
 
+/** A list given by two levels (a block of 0046, e.g. FEES by the sector and the service) counts once, at the first. */
 function groupLists(rows: { item: string; code: string; level: FormList["level"] }[]): Record<string, FormList[]> {
   const lists: Record<string, FormList[]> = {};
-  for (const row of rows) (lists[row.item] ??= []).push({ code: row.code, level: row.level });
+  for (const row of rows) {
+    const item = (lists[row.item] ??= []);
+    if (!item.some((l) => l.code === row.code)) item.push({ code: row.code, level: row.level });
+  }
   return lists;
 }
 

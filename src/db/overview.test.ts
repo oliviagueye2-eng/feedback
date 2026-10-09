@@ -36,11 +36,10 @@ it("gives each path the form of its establishments and flags what needs a look",
   expect(o.alerts.fewTopics.map((p) => `${p.sector}|${p.service}`)).toEqual(
     expect.arrayContaining(["ELECTRICITY|null", "WATER|null"]),
   );
-  // The port's procedures get some topics from TRANSPORT and FILE_SERVICES.
-  expect(o.alerts.duplicates.filter((d) => d.path.service === "PORT_PROCEDURE").map((d) => d.lists)).toContainEqual([
-    "TRANSPORT",
-    "FILE_SERVICES",
-  ]);
+  // The port's procedures: « Frais » from the FEES block, given by TRANSPORT and FILE_SERVICES alike (0046), once.
+  expect(o.alerts.duplicates.filter((d) => d.path.service === "PORT_PROCEDURE")).toEqual([]);
+  const port = o.paths.find((p) => p.service === "PORT_PROCEDURE")!;
+  expect(port.topics.find((t) => t.code === "FEES")!.lists).toEqual([{ code: "FEES", level: "sector" }]);
   // « Politesse du personnel » is offered nowhere since 0038.
   expect(o.alerts.unusedTopics.map((t) => t.code)).toContain("STAFF");
   expect(o.alerts.emptyLists.map((l) => `${l.kind}:${l.code}`)).toEqual(

@@ -244,10 +244,10 @@ describe("questionnaire", () => {
     const q = await getQuestionnaire({});
     expect(q.sector).toBeNull();
     const health = q.sectors.find((s) => s.code === "HEALTH")!;
-    expect(health).toMatchObject({ label: "Santé", listCodes: ["HEALTH"] });
+    expect(health).toMatchObject({ label: "Santé", listCodes: ["HEALTH", "STAFF_SKILLS", "COUNTER", "PREMISES", "FEES"] });
     expect(health.topics).toContainEqual({ code: "CARE_RECEIVED", label: "Soins reçus", isActive: true, categoryCode: "OUTCOME", shownIf: null });
     const airport = q.types.find((t) => t.code === "AIRPORT")!;
-    expect(airport).toMatchObject({ sectorCode: "TRANSPORT", listCodes: ["TRANSPORT_PLACE"] });
+    expect(airport).toMatchObject({ sectorCode: "TRANSPORT", listCodes: ["STAFF_SKILLS", "COUNTER"] });
     expect(airport.topics.map((t) => t.code)).toEqual(["PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS"]);
     expect(q.types.find((t) => t.code === "PHARMACY")).toMatchObject({ listCodes: [], topics: [] });
     expect(q.services.find((s) => s.code === "MOBILE_MONEY")).toMatchObject({ replacesSharedLists: true });
@@ -295,7 +295,7 @@ describe("questionnaire", () => {
       {
         code: "MOBILE_PAYMENT",
         label: "Paiement mobile",
-        listCodes: ["MOBILE_PAYMENT"],
+        listCodes: ["MOBILE_PAYMENT", "STAFF_SKILLS", "FEES"],
         // In the order of the categories, then of topic.position.
         topics: [
           ["REQUEST_HANDLING", "OUTCOME"],

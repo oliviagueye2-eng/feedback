@@ -115,8 +115,8 @@ describe("reference data", () => {
     expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("WAIT_TIME");
     expect((await db.query<{ code: string }>(`
       SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
-      WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT_PLACE') ORDER BY t.position`))
-      .rows.map((r) => r.code)).toEqual(["PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS"]);
+      WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = 'COUNTER') ORDER BY t.position`))
+      .rows.map((r) => r.code)).toEqual(["WAIT_TIME", "OPENING_HOURS"]);
     // A place or a ticket counter is not a trip: no « Ponctualité », no « Sécurité à bord » (0009).
     expect((await topicsFor("TRANSPORT")).map((t) => t.code)).not.toContain("PUNCTUALITY");
     expect((await db.query<{ code: string }>(`
@@ -138,11 +138,16 @@ describe("reference data", () => {
         SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
         WHERE i.topic_set_id = (SELECT id FROM topic_set WHERE code = $1) ORDER BY t.position`, [list]))
         .rows.map((r) => r.code);
-    expect(await listOf("TRIP")).toEqual(["PROFESSIONALISM", "INFORMATION", "PUNCTUALITY", "ONBOARD_SAFETY"]);
-    expect(await listOf("TOLL_HIGHWAY")).toContain("PROFESSIONALISM");
-    // « Explications du personnel » in the services' lists, not TRANSPORT (0039).
+    // 0046: through the « Personnel » block (STAFF_SKILLS), with « Explications du personnel » (0039).
+    expect(await listOf("STAFF_SKILLS")).toEqual(["PROFESSIONALISM", "INFORMATION"]);
+    expect(await listOf("TRIP")).toEqual(["PUNCTUALITY", "ONBOARD_SAFETY"]);
+    expect((await db.query<{ code: string }>(`
+      SELECT s.code FROM service s JOIN service_topic_set x ON x.service_id = s.id
+      WHERE x.topic_set_id = (SELECT id FROM topic_set WHERE code = 'STAFF_SKILLS')
+        AND s.code IN ('BOAT_CROSSING', 'FLIGHT', 'TRAIN_TRIP', 'HIGHWAY_TRIP') ORDER BY s.code`))
+      .rows.map((r) => r.code)).toEqual(["BOAT_CROSSING", "FLIGHT", "HIGHWAY_TRIP", "TRAIN_TRIP"]);
+    // Not in TRANSPORT (0039).
     expect(await listOf("TRANSPORT")).not.toContain("INFORMATION");
-    expect(await listOf("TOLL_HIGHWAY")).toContain("INFORMATION");
     expect(await listOf("ROAD_TRIP")).not.toContain("INFORMATION");
     // « Politesse du personnel » is offered nowhere since 0038.
     expect((await db.query(`
@@ -179,8 +184,15 @@ describe("reference data", () => {
                 JOIN establishment_type_topic_set x ON x.type_id = et.id
                 UNION ALL
                 SELECT s.code, x.topic_set_id FROM service s JOIN service_topic_set x ON x.service_id = s.id) x
-              WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'TRANSPORT_PLACE')) AS places`);
-    expect(row).toEqual({ without_list: null, places: ["AIRPORT", "BUS_STATION", "PLANE_TICKET", "TICKET_PURCHASE"] });
+              WHERE topic_set_id = (SELECT id FROM topic_set WHERE code = 'COUNTER')) AS places`);
+    // 0046: the « Guichet » block (COUNTER) instead of TRANSPORT_PLACE.
+    expect(row).toEqual({
+      without_list: null,
+      places: [
+        "AIRPORT", "BUS_STATION", "ELECTRICITY_AGENCY", "HIGHER_EDUCATION_ADMIN", "PLANE_TICKET",
+        "POLICE_PREMISES", "PORT_PROCEDURE", "SCHOOL_ADMIN", "TICKET_PURCHASE", "WATER_AGENCY",
+      ],
+    });
   });
 
   it("puts every topic offered and every question that rates the service in a category (0009)", async () => {
