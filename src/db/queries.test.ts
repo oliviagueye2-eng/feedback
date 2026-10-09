@@ -759,11 +759,12 @@ describe("feedback", () => {
       ],
     });
     expect(await visit("b8c9d0e1-0000-4000-8000-000000000002", service.POLICE_FIELD!)).toEqual({
-      // 0055: nothing was asked during a check.
+      // 0055: nothing was asked during a check. 0056: its duration.
       topics: [
         "Compétence du personnel (Politesse, respect et professionnalisme)",
         "Explications du personnel (claires, complètes)",
         "Respect des droits",
+        "Durée du contrôle",
       ],
       questions: ["REASON_EXPLAINED", "PAID_SOMETHING", "RECEIPT_GIVEN", "REPORTED", "REPORT_WHY"],
     });
