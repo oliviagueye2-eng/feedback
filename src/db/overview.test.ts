@@ -51,6 +51,17 @@ it("gives each path the form of its establishments and flags what needs a look",
   expect(o.alerts.unusedLists.map((l) => l.code)).not.toContain("ESSENTIAL");
   // A list says who uses it.
   const roadTrip = o.lists.find((l) => l.kind === "topics" && l.code === "ROAD_TRIP")!;
-  expect(roadTrip.services).toEqual(["LAND_TRIP", "STREET_TAXI_RIDE"]);
+  expect(roadTrip.services).toEqual(["APP_RIDE", "LAND_TRIP", "STREET_TAXI_RIDE"]);
   expect(roadTrip.items).toEqual(["DRIVER_BEHAVIOUR", "PUNCTUALITY", "ROUTE", "DRIVING_SAFETY"]);
+  // Lists combined, not copied (0044, 0045): the VTC ride gets ROAD_TRIP, then its own « Prise en charge »,
+  // and pays as it wishes through PAYMENT, like the taxi and the ticket counters.
+  const vtc = o.paths.find((p) => p.service === "APP_RIDE")!;
+  expect(vtc.topics.map((t) => t.code)).toEqual(expect.arrayContaining(["DRIVER_BEHAVIOUR", "ROUTE", "DRIVING_SAFETY", "PICKUP"]));
+  expect(vtc.topics.find((t) => t.code === "PICKUP")!.lists.map((l) => l.code)).toEqual(["APP_RIDE"]);
+  expect(vtc.questions.find((q) => q.code === "PAYMENT_AS_WISHED")!.lists.map((l) => l.code)).toEqual(["PAYMENT"]);
+  const payment = o.lists.find((l) => l.kind === "questions" && l.code === "PAYMENT")!;
+  expect(payment.services).toEqual(["APP_RIDE", "PLANE_TICKET", "STREET_TAXI_RIDE", "TICKET_PURCHASE"]);
+  // The airport: the stations' questions, then its own.
+  const airport = o.paths.find((p) => p.type === "AIRPORT")!;
+  expect(airport.questions.map((q) => q.code)).toEqual(["CHECKS_WAIT", "WAYFINDING", "SEAT_TO_WAIT", "TOILETS", "TRANSPORT_ACCESS"]);
 });

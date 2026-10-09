@@ -116,16 +116,26 @@ export async function upsertAnswer(input: {
   );
 }
 
+/** The lists of a level's row `alias` (0044: several per level), in their order, as an array. */
+const listsOf = (level: "sector" | "establishment_type" | "service", owner: string, alias: string, kind: "topic" | "question") =>
+  `ARRAY(SELECT x.${kind}_set_id FROM ${level}_${kind}_set x WHERE x.${owner} = ${alias}.id ORDER BY x.position)`;
+
+/** The lists of the three levels (sec, et, s): sector_topic_sets, type_question_sets… */
+const LEVEL_LISTS = `
+  ${listsOf("sector", "sector_id", "sec", "topic")} AS sector_topic_sets,
+  ${listsOf("sector", "sector_id", "sec", "question")} AS sector_question_sets,
+  ${listsOf("establishment_type", "type_id", "et", "topic")} AS type_topic_sets,
+  ${listsOf("establishment_type", "type_id", "et", "question")} AS type_question_sets,
+  ${listsOf("service", "service_id", "s", "topic")} AS service_topic_sets,
+  ${listsOf("service", "service_id", "s", "question")} AS service_question_sets`;
+
 /**
  * The levels of feedback $n, as FORM_LEVELS gives them: its service, the
  * sector of the establishment (its type's, else its own; never the
  * service's, decided by Olivia, 2026-10-08), its establishment type.
  */
 const feedbackLevels = (feedbackParam: string) => `
-  SELECT s.replaces_shared_lists AS replaces, sec.id AS sector_id, sec.topic_set_id AS sector_topic_set,
-         sec.question_set_id AS sector_question_set, et.topic_set_id AS type_topic_set,
-         et.question_set_id AS type_question_set, s.topic_set_id AS service_topic_set,
-         s.question_set_id AS service_question_set
+  SELECT s.replaces_shared_lists AS replaces, sec.id AS sector_id, ${LEVEL_LISTS}
   FROM feedback f
   JOIN establishment e ON e.id = f.establishment_id
   LEFT JOIN service s ON s.id = f.service_id
@@ -139,10 +149,7 @@ const feedbackLevels = (feedbackParam: string) => `
  * would get, shown in the back office (asked by Olivia, 2026-10-08).
  */
 const formLevels = (first: number) => `
-  SELECT s.replaces_shared_lists AS replaces, sec.id AS sector_id, sec.topic_set_id AS sector_topic_set,
-         sec.question_set_id AS sector_question_set, et.topic_set_id AS type_topic_set,
-         et.question_set_id AS type_question_set, s.topic_set_id AS service_topic_set,
-         s.question_set_id AS service_question_set
+  SELECT s.replaces_shared_lists AS replaces, sec.id AS sector_id, ${LEVEL_LISTS}
   FROM (SELECT 1) one
   LEFT JOIN sector sec ON sec.code = $${first}
   LEFT JOIN establishment_type et ON et.code = $${first + 1}
@@ -150,21 +157,24 @@ const formLevels = (first: number) => `
 
 /**
  * The topic lists of the levels given (a feedback's, or a form's), one row
- * per level that has one (level, id): COMMON, then the list of its sector
- * (COMMERCE when the sector is unknown), of its establishment type and of
- * its service. A service that replaces the shared lists (mobile money, 0026)
- * leaves out COMMON and the sector's.
+ * per list (level, id): COMMON, then the lists of its sector (COMMERCE when
+ * the sector is unknown), of its establishment type and of its service. A
+ * service that replaces the shared lists (mobile money, 0026) leaves out
+ * COMMON and the sector's.
  */
 const topicListsOfLevels = (levels: string) => `
   SELECT v.level, v.id
   FROM (${levels}) l,
-       LATERAL (VALUES
-         ('common', CASE WHEN l.replaces THEN NULL ELSE (SELECT id FROM topic_set WHERE code = 'COMMON') END),
-         ('sector', CASE WHEN l.replaces THEN NULL
-                         ELSE coalesce(l.sector_topic_set, CASE WHEN l.sector_id IS NULL THEN (SELECT id FROM topic_set WHERE code = 'COMMERCE') END) END),
-         ('type', l.type_topic_set),
-         ('service', l.service_topic_set)) AS v (level, id)
-  WHERE v.id IS NOT NULL`;
+       LATERAL (
+         SELECT 'common', id FROM topic_set WHERE code = 'COMMON' AND NOT coalesce(l.replaces, false)
+         UNION ALL
+         SELECT 'sector', unnest(CASE WHEN l.replaces THEN '{}'::smallint[]
+                                      WHEN l.sector_id IS NULL THEN ARRAY(SELECT id FROM topic_set WHERE code = 'COMMERCE')
+                                      ELSE l.sector_topic_sets END)
+         UNION ALL
+         SELECT 'type', unnest(l.type_topic_sets)
+         UNION ALL
+         SELECT 'service', unnest(l.service_topic_sets)) AS v (level, id)`;
 
 /** Active topics shown for the levels given: those of their lists (topicListsOfLevels), each once. */
 const topicsOfLevels = (levels: string) => `
@@ -396,14 +406,14 @@ export async function findFormQuestionSetSources(levels: FormLevels): Promise<Qu
 async function questionSetSources(levels: string, params: unknown[]): Promise<QuestionSetSources | null> {
   const rows = await query<{
     sector_known: boolean;
-    sector_set: number | null;
-    type_set: number | null;
-    service_set: number | null;
+    sector_sets: number[];
+    type_sets: number[];
+    service_sets: number[];
     commerce_set: number | null;
   }>(
     `SELECT l.sector_id IS NOT NULL AS sector_known,
-            CASE WHEN l.replaces THEN NULL ELSE l.sector_question_set END AS sector_set,
-            l.type_question_set AS type_set, l.service_question_set AS service_set,
+            CASE WHEN l.replaces THEN '{}'::smallint[] ELSE l.sector_question_sets END AS sector_sets,
+            l.type_question_sets AS type_sets, l.service_question_sets AS service_sets,
             ${QUESTION_SET("COMMERCE")} AS commerce_set
      FROM (${levels}) l`,
     params,
@@ -412,9 +422,9 @@ async function questionSetSources(levels: string, params: unknown[]): Promise<Qu
   if (!row) return null;
   return {
     sectorKnown: row.sector_known,
-    sectorSetId: row.sector_set,
-    typeSetId: row.type_set,
-    serviceSetId: row.service_set,
+    sectorSetIds: row.sector_sets,
+    typeSetIds: row.type_sets,
+    serviceSetIds: row.service_sets,
     commerceSetId: row.commerce_set,
   };
 }

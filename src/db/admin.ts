@@ -334,18 +334,32 @@ const TOPIC_SHOWN_IF = `
    WHERE tc.topic_id = t.id
    GROUP BY dq.code)`;
 
+/** A level of the questionnaire: its table and its column in the tables of its lists (0044). */
+type Level = "sector" | "establishment_type" | "service";
+const OWNER: Record<Level, string> = { sector: "sector_id", establishment_type: "type_id", service: "service_id" };
+
+/** The lists of a level's row `alias`, in their order: (id, position) (0044, several per level). */
+const LISTS_OF = (level: Level, alias: string, kind: "topic" | "question") =>
+  `SELECT x.${kind}_set_id AS id, x.position FROM ${level}_${kind}_set x WHERE x.${OWNER[level]} = ${alias}.id`;
+
+/** The codes of these lists, in their order (« ROAD_TRIP », « APP_RIDE »); none when the level has none. */
+const CODES_OF = (level: Level, alias: string, kind: "topic" | "question") => `
+  ARRAY(SELECT l.code FROM (${LISTS_OF(level, alias, kind)}) s JOIN ${kind}_set l ON l.id = s.id ORDER BY s.position)`;
+
 /**
- * The topics of topic_set `$col` in the order of their category, then of
- * topic.position, as on screen 2b (asked by Olivia); inactive ones included.
+ * The topics of the lists `sets` (id, position), each once, in the order of
+ * their category, then of topic.position, as on screen 2b (asked by Olivia);
+ * inactive ones included.
  */
-const TOPICS_OF = (col: string) => `
+const TOPICS_OF = (sets: string) => `
   coalesce((SELECT json_agg(json_build_object('code', t.code, 'label', tt.label, 'isActive', t.is_active,
                                               'categoryCode', c.code, 'shownIf', ${TOPIC_SHOWN_IF})
                              ORDER BY c.position NULLS LAST, t.position, t.code)
-            FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
+            FROM topic t
             LEFT JOIN topic_translation tt ON tt.topic_id = t.id AND tt.language = 'fr'
             LEFT JOIN evaluation_category c ON c.id = t.category_id
-            WHERE i.topic_set_id = ${col}), '[]'::json)`;
+            WHERE t.id IN (SELECT i.topic_id FROM topic_set_item i WHERE i.topic_set_id IN (SELECT id FROM (${sets}) s))),
+           '[]'::json)`;
 
 /** A question of a list, in the list's order. */
 export interface ListedQuestion {
@@ -357,10 +371,11 @@ export interface ListedQuestion {
 }
 
 /**
- * The questions of question_set `$col` by question_set_item.position, with
- * what `inScreenOrder` needs.
+ * The questions of the lists `sets` (id, position), list after list, each by
+ * question_set_item.position, with what `inScreenOrder` needs. A question in
+ * two of them keeps its first place and the conditions of that list.
  */
-const QUESTIONS_OF = (col: string) => `
+const QUESTIONS_OF = (sets: string) => `
   coalesce((SELECT json_agg(json_build_object('code', q.code, 'position', i.position, 'categoryCode', c.code,
                                               'categoryPosition', c.position,
                                               'conditions', (SELECT coalesce(json_agg(json_build_object(
@@ -374,10 +389,13 @@ const QUESTIONS_OF = (col: string) => `
                                                                    WHERE qc.question_set_id = i.question_set_id
                                                                      AND qc.question_id = i.question_id
                                                                    GROUP BY dq.code) x))
-                             ORDER BY i.position)
-            FROM question_set_item i JOIN question q ON q.id = i.question_id
-            LEFT JOIN evaluation_category c ON c.id = q.category_id
-            WHERE i.question_set_id = ${col}), '[]'::json)`;
+                             ORDER BY i.list_position, i.position)
+            FROM (SELECT DISTINCT ON (it.question_id) it.question_set_id, it.question_id, it.position,
+                         s.position AS list_position
+                  FROM (${sets}) s JOIN question_set_item it ON it.question_set_id = s.id
+                  ORDER BY it.question_id, s.position) i
+            JOIN question q ON q.id = i.question_id
+            LEFT JOIN evaluation_category c ON c.id = q.category_id), '[]'::json)`;
 
 type RawQuestion = ListedQuestion & { categoryPosition: number | null };
 
@@ -399,21 +417,22 @@ function inScreenOrder<L extends { questions: ListedQuestion[] }>(levels: L[]): 
 export interface SectorTopics {
   code: string;
   label: string | null;
-  listCode: string | null;
+  /** The level's topic lists, in order (0044: several per level). */
+  listCodes: string[];
   topics: ListedTopic[];
-  /** Screen 6 (asked by Olivia, 2026-10-08): the level's question list. */
-  questionListCode: string | null;
+  /** Screen 6 (asked by Olivia, 2026-10-08): the level's question lists, in order. */
+  questionListCodes: string[];
   questions: ListedQuestion[];
 }
 
 export async function listSectorTopics(): Promise<SectorTopics[]> {
   return inScreenOrder(await query<SectorTopics>(
-    `SELECT s.code, st.label, ts.code AS "listCode", ${TOPICS_OF("s.topic_set_id")} AS topics,
-            qs.code AS "questionListCode", ${QUESTIONS_OF("s.question_set_id")} AS questions
+    `SELECT s.code, st.label, ${CODES_OF("sector", "s", "topic")} AS "listCodes",
+            ${TOPICS_OF(LISTS_OF("sector", "s", "topic"))} AS topics,
+            ${CODES_OF("sector", "s", "question")} AS "questionListCodes",
+            ${QUESTIONS_OF(LISTS_OF("sector", "s", "question"))} AS questions
      FROM sector s
      LEFT JOIN sector_translation st ON st.sector_id = s.id AND st.language = 'fr'
-     LEFT JOIN topic_set ts ON ts.id = s.topic_set_id
-     LEFT JOIN question_set qs ON qs.id = s.question_set_id
      ORDER BY st.label, s.code`,
   ));
 }
@@ -426,9 +445,10 @@ export interface TypeTopics extends SectorTopics {
 
 export async function listTypeTopics(): Promise<TypeTopics[]> {
   return inScreenOrder(await query<TypeTopics>(
-    `SELECT et.code, ett.label, s.code AS "sectorCode", ts.code AS "listCode",
-            ${TOPICS_OF("et.topic_set_id")} AS topics,
-            qs.code AS "questionListCode", ${QUESTIONS_OF("et.question_set_id")} AS questions,
+    `SELECT et.code, ett.label, s.code AS "sectorCode", ${CODES_OF("establishment_type", "et", "topic")} AS "listCodes",
+            ${TOPICS_OF(LISTS_OF("establishment_type", "et", "topic"))} AS topics,
+            ${CODES_OF("establishment_type", "et", "question")} AS "questionListCodes",
+            ${QUESTIONS_OF(LISTS_OF("establishment_type", "et", "question"))} AS questions,
             coalesce((SELECT array_agg(DISTINCT sv.code ORDER BY sv.code)
                       FROM establishment e
                       JOIN establishment_service es ON es.establishment_id = e.id
@@ -437,8 +457,6 @@ export async function listTypeTopics(): Promise<TypeTopics[]> {
      FROM establishment_type et
      JOIN sector s ON s.id = et.sector_id
      LEFT JOIN establishment_type_translation ett ON ett.establishment_type_id = et.id AND ett.language = 'fr'
-     LEFT JOIN topic_set ts ON ts.id = et.topic_set_id
-     LEFT JOIN question_set qs ON qs.id = et.question_set_id
      ORDER BY s.code, et.code`,
   ));
 }
@@ -447,9 +465,9 @@ export interface ServiceTopics {
   code: string;
   label: string | null;
   replacesSharedLists: boolean;
-  listCode: string | null;
+  listCodes: string[];
   topics: ListedTopic[];
-  questionListCode: string | null;
+  questionListCodes: string[];
   questions: ListedQuestion[];
   /** Active establishments offering it (establishment_service), by name. */
   establishments: string[];
@@ -467,9 +485,11 @@ export async function listServiceTopics(): Promise<ServiceTopics[]> {
        LEFT JOIN establishment_type et ON et.id = e.type_id
        LEFT JOIN sector s ON s.id = coalesce(et.sector_id, e.sector_id)
      )
-     SELECT sv.code, st.label, sv.replaces_shared_lists AS "replacesSharedLists", ts.code AS "listCode",
-            ${TOPICS_OF("sv.topic_set_id")} AS topics,
-            qs.code AS "questionListCode", ${QUESTIONS_OF("sv.question_set_id")} AS questions,
+     SELECT sv.code, st.label, sv.replaces_shared_lists AS "replacesSharedLists",
+            ${CODES_OF("service", "sv", "topic")} AS "listCodes",
+            ${TOPICS_OF(LISTS_OF("service", "sv", "topic"))} AS topics,
+            ${CODES_OF("service", "sv", "question")} AS "questionListCodes",
+            ${QUESTIONS_OF(LISTS_OF("service", "sv", "question"))} AS questions,
             coalesce((SELECT array_agg(o.name ORDER BY o.name) FROM offered o WHERE o.service_id = sv.id), '{}')
               AS establishments,
             coalesce((SELECT array_agg(DISTINCT o.sector_code) FROM offered o
@@ -478,8 +498,6 @@ export async function listServiceTopics(): Promise<ServiceTopics[]> {
                       WHERE o.service_id = sv.id AND o.type_code IS NOT NULL), '{}') AS "typeCodes"
      FROM service sv
      LEFT JOIN service_translation st ON st.service_id = sv.id AND st.language = 'fr'
-     LEFT JOIN topic_set ts ON ts.id = sv.topic_set_id
-     LEFT JOIN question_set qs ON qs.id = sv.question_set_id
      ORDER BY sv.code`,
   ));
 }
@@ -632,14 +650,19 @@ export interface ListUsage {
 
 /** Every topic list, then every question list, by code. */
 export async function listListUsage(): Promise<ListUsage[]> {
-  const usage = (kind: "topics" | "questions", set: string, item: string, order: string, column: string) => `
+  const usage = (kind: "topics" | "questions", set: string, item: string, order: string, column: string) => {
+    const users = (level: Level) =>
+      `coalesce((SELECT array_agg(o.code ORDER BY o.code) FROM ${level} o
+                 WHERE o.id IN (SELECT ${OWNER[level]} FROM ${level}_${set} WHERE ${column} = l.id)), '{}')`;
+    return `
     SELECT l.code, '${kind}' AS kind,
            coalesce((SELECT array_agg(x.code ORDER BY ${order}) FROM ${set}_item i
                      JOIN ${item} x ON x.id = i.${item}_id WHERE i.${set}_id = l.id), '{}') AS items,
-           coalesce((SELECT array_agg(code ORDER BY code) FROM sector WHERE ${column} = l.id), '{}') AS sectors,
-           coalesce((SELECT array_agg(code ORDER BY code) FROM establishment_type WHERE ${column} = l.id), '{}') AS types,
-           coalesce((SELECT array_agg(code ORDER BY code) FROM service WHERE ${column} = l.id), '{}') AS services
+           ${users("sector")} AS sectors,
+           ${users("establishment_type")} AS types,
+           ${users("service")} AS services
     FROM ${set} l`;
+  };
   return query<ListUsage>(
     `SELECT * FROM (${usage("topics", "topic_set", "topic", "x.position", "topic_set_id")}) t
      UNION ALL

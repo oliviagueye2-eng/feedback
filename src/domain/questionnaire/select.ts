@@ -2,12 +2,12 @@
 export interface QuestionSetSources {
   /** False when the establishment has no sector (typed by a user without one). */
   sectorKnown: boolean;
-  /** sector.question_set_id: the sector of the establishment's type, else of the establishment. */
-  sectorSetId: number | null;
-  /** establishment_type.question_set_id. */
-  typeSetId: number | null;
-  /** service.question_set_id, when a service was chosen. */
-  serviceSetId: number | null;
+  /** sector_question_set (0044: several per level, in order): the sector of the establishment's type, else of the establishment. */
+  sectorSetIds: number[];
+  /** establishment_type_question_set. */
+  typeSetIds: number[];
+  /** service_question_set, when a service was chosen. */
+  serviceSetIds: number[];
   /** The list COMMERCE. */
   commerceSetId: number | null;
 }
@@ -15,14 +15,14 @@ export interface QuestionSetSources {
 /**
  * Lists of questions of screen 6, in order: the sector's, then the type's,
  * then the service's, added up from the most general to the most specific
- * (a level without a list adds nothing). An establishment whose sector is
- * unknown gets COMMERCE.
+ * (a level without a list adds nothing; a level with several adds them in
+ * their order). An establishment whose sector is unknown gets COMMERCE.
  */
 export function selectQuestionSets(sources: QuestionSetSources): number[] {
-  const levels = [
-    sources.sectorKnown ? sources.sectorSetId : sources.commerceSetId,
-    sources.typeSetId,
-    sources.serviceSetId,
+  const lists = [
+    ...(sources.sectorKnown ? sources.sectorSetIds : sources.commerceSetId === null ? [] : [sources.commerceSetId]),
+    ...sources.typeSetIds,
+    ...sources.serviceSetIds,
   ];
-  return levels.filter((id, index): id is number => id !== null && levels.indexOf(id) === index);
+  return lists.filter((id, index) => lists.indexOf(id) === index);
 }

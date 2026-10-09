@@ -43,7 +43,7 @@ it("takes the establishment's sector when its service belongs to another sector"
   const [{ id: health }] = (
     await db.query<{ id: number }>(`SELECT id FROM question_set WHERE code = 'HEALTH'`)
   ).rows as [{ id: number }];
-  expect(await findQuestionSetSources(feedbackId)).toMatchObject({ sectorKnown: true, sectorSetId: health });
+  expect(await findQuestionSetSources(feedbackId)).toMatchObject({ sectorKnown: true, sectorSetIds: [health, expect.any(Number)] });
 
   const topics = (await findTopicChoices(feedbackId)).map((t) => t.code);
   expect(topics).toContain("CARE_RECEIVED"); // HEALTH, the establishment's sector

@@ -68,17 +68,17 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
     },
   ];
   const levelContent = (level: {
-    listCode: string | null;
+    listCodes: string[];
     topics: ListedTopic[];
-    questionListCode: string | null;
+    questionListCodes: string[];
     questions: ListedQuestion[];
   }): ListGridRow["lists"] => ({
     topics: {
-      code: level.listCode,
+      code: level.listCodes.join(" + ") || null,
       items: level.topics.map((topic) => ({ code: topic.code, extras: [topic.label, topic.isActive, topic.categoryCode, shownIf(topic)] })),
     },
     questions: {
-      code: level.questionListCode,
+      code: level.questionListCodes.join(" + ") || null,
       items: level.questions.map((question) => ({ code: question.code, extras: [
           question.position,
           question.categoryCode,
