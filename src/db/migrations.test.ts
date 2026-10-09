@@ -231,7 +231,7 @@ describe("reference data", () => {
     });
   });
 
-  it("has the bank of 81 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057), each written once, every text in French", async () => {
+  it("has the bank of 83 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -245,7 +245,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 81, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 83, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -325,6 +325,8 @@ describe("reference data", () => {
       "ATM_WITHDRAWAL: MONEY_PROBLEM_SOLVED ← ATM_WITHDRAWAL_OK CARD_RETAINED",
       "ATM_WITHDRAWAL: MONEY_PROBLEM_SOLVED ← ATM_WITHDRAWAL_OK DEBITED_NO_CASH",
       "BANKING_INSURANCE: FEES_EXPLAINED ← PAID_SOMETHING YES",
+      "BANK_AGENCY: CARD_ON_TIME ← BANK_SUBJECT CARD",
+      "BANK_AGENCY: CREDIT_ANSWER ← BANK_SUBJECT CREDIT",
       "BOAT_CROSSING: BOAT_INCIDENT_TYPE ← CROSSING_INCIDENT YES",
       "BOAT_CROSSING: INCIDENT_EXPLAINED ← CROSSING_INCIDENT YES",
       "BOAT_CROSSING: INCIDENT_SOLUTION ← CROSSING_INCIDENT YES",
