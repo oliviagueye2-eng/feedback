@@ -266,6 +266,43 @@ export async function getMonthFigures(hours: number): Promise<MonthFigures> {
   return rows[0]!;
 }
 
+export interface EstablishmentFeedbacks {
+  establishmentId: string;
+  name: string;
+  municipality: string | null;
+  /** The same two counts as `MonthFigures`, for one establishment (or one merged into it). */
+  complete: number;
+  notSent: number;
+}
+
+/** This month's complete and not sent feedbacks by establishment, the most feedbacks first. */
+export async function countFeedbacksByEstablishmentThisMonth(hours: number): Promise<EstablishmentFeedbacks[]> {
+  return query<EstablishmentFeedbacks>(
+    `WITH s AS (${SATISFACTION}),
+     month AS (SELECT date_trunc('month', now()) AS start),
+     counted AS (
+       SELECT coalesce(e.merged_into_id, e.id) AS id,
+              (f.step = 'completed' AND f.completed_at >= month.start) AS complete,
+              (${NOT_SENT} AND f.started_at >= month.start) AS not_sent
+       FROM feedback f
+       JOIN s ON s.feedback_id = f.id
+       JOIN establishment e ON e.id = f.establishment_id
+       CROSS JOIN month
+     )
+     SELECT t.id AS "establishmentId", t.name,
+            coalesce(m.name, t.municipality_input) AS municipality,
+            count(*) FILTER (WHERE c.complete)::int AS complete,
+            count(*) FILTER (WHERE c.not_sent)::int AS "notSent"
+     FROM counted c
+     JOIN establishment t ON t.id = c.id
+     LEFT JOIN municipality m ON m.id = t.municipality_id
+     WHERE c.complete OR c.not_sent
+     GROUP BY t.id, t.name, m.name, t.municipality_input
+     ORDER BY count(*) DESC, t.name`,
+    [hours],
+  );
+}
+
 export type StopPage = "details" | "sector" | "common" | "send";
 
 export interface StopPageCount {

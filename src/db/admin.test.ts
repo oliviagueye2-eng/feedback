@@ -230,6 +230,9 @@ describe("dashboard", () => {
     ]);
     expect(d.weeks).toHaveLength(8);
     expect(d.weeks.at(-1)?.count).toBe(1);
+    expect(d.byEstablishment).toEqual([
+      { establishmentId: active, name: "Centre de santé de Test", municipality: null, complete: 1, notSent: 3 },
+    ]);
   });
 
   it("does not move the page once the feedback is sent", async () => {

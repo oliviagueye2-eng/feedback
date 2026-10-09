@@ -120,6 +120,38 @@ export default async function DashboardPage() {
         </div>
       </section>
 
+      <section className={styles.commented}>
+        <h2>{t.byEstablishmentTitle}</h2>
+        {d.byEstablishment.length === 0 ? (
+          <p className={styles.empty}>{t.byEstablishmentEmpty}</p>
+        ) : (
+          <>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th scope="col">{t.commentedEstablishment}</th>
+                  <th scope="col">{t.byEstablishmentComplete}</th>
+                  <th scope="col">{t.byEstablishmentNotSent}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {d.byEstablishment.map((e) => (
+                  <tr key={e.establishmentId}>
+                    <th scope="row">
+                      <strong>{e.name}</strong>
+                      {e.municipality && <span className={styles.muted}>{e.municipality}</span>}
+                    </th>
+                    <td>{e.complete === 0 ? dash : e.complete}</td>
+                    <td>{e.notSent === 0 ? dash : e.notSent}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className={styles.meta}>{t.byEstablishmentHelp}</p>
+          </>
+        )}
+      </section>
+
       <div className={styles.charts}>
         <section className={styles.chart}>
           <h2>{t.stopsTitle}</h2>
