@@ -456,7 +456,8 @@ function inScreenOrder<L extends { questions: ListedQuestion[] }>(levels: L[]): 
   });
 }
 
-export interface SectorTopics {
+/** A level's lists and what they bring (screens 2b and 6). */
+export interface LevelTopics {
   code: string;
   label: string | null;
   /** The level's topic lists, in order (0044: several per level). */
@@ -467,19 +468,32 @@ export interface SectorTopics {
   questions: ListedQuestion[];
 }
 
+export interface SectorTopics extends LevelTopics {
+  /** Those of listCodes and questionListCodes given only without a service, « Autre démarche » (0053). */
+  withoutServiceListCodes: string[];
+  withoutServiceQuestionListCodes: string[];
+}
+
+/** The codes of a sector's lists given only without a service (0053). */
+const WITHOUT_SERVICE_CODES_OF = (kind: "topic" | "question") => `
+  ARRAY(SELECT l.code FROM sector_${kind}_set x JOIN ${kind}_set l ON l.id = x.${kind}_set_id
+        WHERE x.sector_id = s.id AND x.only_without_service ORDER BY x.position)`;
+
 export async function listSectorTopics(): Promise<SectorTopics[]> {
   return inScreenOrder(await query<SectorTopics>(
     `SELECT s.code, st.label, ${CODES_OF("sector", "s", "topic")} AS "listCodes",
             ${TOPICS_OF(LISTS_OF("sector", "s", "topic"))} AS topics,
             ${CODES_OF("sector", "s", "question")} AS "questionListCodes",
-            ${QUESTIONS_OF(LISTS_OF("sector", "s", "question"))} AS questions
+            ${QUESTIONS_OF(LISTS_OF("sector", "s", "question"))} AS questions,
+            ${WITHOUT_SERVICE_CODES_OF("topic")} AS "withoutServiceListCodes",
+            ${WITHOUT_SERVICE_CODES_OF("question")} AS "withoutServiceQuestionListCodes"
      FROM sector s
      LEFT JOIN sector_translation st ON st.sector_id = s.id AND st.language = 'fr'
      ORDER BY st.label, s.code`,
   ));
 }
 
-export interface TypeTopics extends SectorTopics {
+export interface TypeTopics extends LevelTopics {
   sectorCode: string;
   /** No direct link: the services of the active establishments of this type. */
   services: string[];
@@ -506,7 +520,6 @@ export async function listTypeTopics(): Promise<TypeTopics[]> {
 export interface ServiceTopics {
   code: string;
   label: string | null;
-  replacesSharedLists: boolean;
   listCodes: string[];
   topics: ListedTopic[];
   questionListCodes: string[];
@@ -527,7 +540,7 @@ export async function listServiceTopics(): Promise<ServiceTopics[]> {
        LEFT JOIN establishment_type et ON et.id = e.type_id
        LEFT JOIN sector s ON s.id = coalesce(et.sector_id, e.sector_id)
      )
-     SELECT sv.code, st.label, sv.replaces_shared_lists AS "replacesSharedLists",
+     SELECT sv.code, st.label,
             ${CODES_OF("service", "sv", "topic")} AS "listCodes",
             ${TOPICS_OF(LISTS_OF("service", "sv", "topic"))} AS topics,
             ${CODES_OF("service", "sv", "question")} AS "questionListCodes",
