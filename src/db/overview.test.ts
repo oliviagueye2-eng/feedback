@@ -32,10 +32,9 @@ it("gives each path the form of its establishments and flags what needs a look",
   expect(civil.topics.map((t) => t.code)).toEqual(q.form!.topics.map((t) => t.code).filter((c) => c !== "OTHER"));
   expect(civil.questions.map((x) => x.code)).toEqual(q.form!.questions.map((x) => x.code));
 
-  // Electricity and water without a service: no topic of their own (0034).
-  expect(o.alerts.fewTopics.map((p) => `${p.sector}|${p.service}`)).toEqual(
-    expect.arrayContaining(["ELECTRICITY|null", "WATER|null"]),
-  );
+  // Electricity and water without a service: the agency's blocks since 0048.
+  expect(o.alerts.fewTopics.map((p) => `${p.sector}|${p.service}`)).not.toContain("ELECTRICITY|null");
+  expect(o.paths.find((p) => p.sector === "WATER" && p.service === null)!.topics).toHaveLength(7);
   // The port's procedures: « Frais » from the FEES block, given by TRANSPORT and FILE_SERVICES alike (0046), once.
   expect(o.alerts.duplicates.filter((d) => d.path.service === "PORT_PROCEDURE")).toEqual([]);
   const port = o.paths.find((p) => p.service === "PORT_PROCEDURE")!;
@@ -43,7 +42,7 @@ it("gives each path the form of its establishments and flags what needs a look",
   // « Politesse du personnel » is offered nowhere since 0038.
   expect(o.alerts.unusedTopics.map((t) => t.code)).toContain("STAFF");
   expect(o.alerts.emptyLists.map((l) => `${l.kind}:${l.code}`)).toEqual(
-    expect.arrayContaining(["topics:ELECTRICITY", "topics:WATER", "topics:COMMON"]),
+    expect.arrayContaining(["topics:COMMON"]),
   );
   // COMMON and ESSENTIAL are used by every feedback, through their code.
   expect(o.alerts.unusedLists.map((l) => l.code)).not.toContain("COMMON");
@@ -67,7 +66,7 @@ it("gives each path the form of its establishments and flags what needs a look",
   });
   expect(port.topics.find((t) => t.code === "FEES")!.gated).toBe(true);
   expect(o.paths.filter((p) => p.topics.some((t) => t.code === "FEES" && !t.gated)).map((p) => p.service).sort()).toEqual([
-    "APP_RIDE", "BOAT_CROSSING", "FLIGHT", "HIGHWAY_TRIP", "LAND_TRIP", "PLANE_TICKET", "STREET_TAXI_RIDE",
+    "APP_RIDE", "BOAT_CROSSING", "FLIGHT", "HIGHWAY_TRIP", "LAND_TRIP", "PLANE_TICKET", "SEWER_ISSUE", "STREET_TAXI_RIDE",
     "TICKET_PURCHASE", "TRAIN_TRIP",
   ]);
   // The airport: the stations' questions, then its own.

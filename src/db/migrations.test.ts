@@ -82,9 +82,14 @@ describe("reference data", () => {
       "Accessibilité aux personnes handicapées ou âgées",
     ]);
 
-    // Electricity and water: nothing in the sector, all in the agency or at home
-    // (0019); nothing in COMMON either since 0034.
-    expect(await topicsFor("ELECTRICITY")).toHaveLength(0);
+    // Electricity and water: the agency's blocks for « Autre démarche » only (0048);
+    // their services keep their own lists (0019).
+    expect((await topicsFor("ELECTRICITY")).map((t) => t.code)).toEqual([
+      "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS", "FEES", "CLEANLINESS", "ACCESS_FOR_ALL",
+    ]);
+    expect((await db.query<{ code: string }>(`
+      SELECT code FROM service WHERE replaces_shared_lists AND code LIKE ANY ('{WATER%,ELECTRICITY%,SEWER%}') ORDER BY code`))
+      .rows.map((r) => r.code)).toEqual(["ELECTRICITY_AGENCY", "ELECTRICITY_SUPPLY", "SEWER_ISSUE", "WATER_AGENCY", "WATER_SUPPLY"]);
     const serviceTopics = async (service: string) =>
       (await db.query<{ code: string }>(`
         SELECT t.code FROM topic_set_item i JOIN topic t ON t.id = i.topic_id
@@ -96,9 +101,10 @@ describe("reference data", () => {
       "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "PROCEDURE", "OPENING_HOURS", "FEES", "BILLING", "CLEANLINESS", "ACCESS_FOR_ALL",
     ]);
     expect(await serviceTopics("WATER_AGENCY")).toEqual(await serviceTopics("ELECTRICITY_AGENCY"));
-    expect(await serviceTopics("ELECTRICITY_SUPPLY")).toEqual(["INTERVENTION_TIME", "CUSTOMER_SERVICE", "POWER_CUTS"]);
+    // 0052: « Personnel » for the technicians on site.
+    expect(await serviceTopics("ELECTRICITY_SUPPLY")).toEqual(["PROFESSIONALISM", "INFORMATION", "INTERVENTION_TIME", "CUSTOMER_SERVICE", "POWER_CUTS"]);
     expect(await serviceTopics("WATER_SUPPLY")).toEqual([
-      "INTERVENTION_TIME", "CUSTOMER_SERVICE", "WATER_CUTS", "WATER_QUALITY",
+      "PROFESSIONALISM", "INFORMATION", "INTERVENTION_TIME", "CUSTOMER_SERVICE", "WATER_CUTS", "WATER_QUALITY",
     ]);
     expect((await topicsFor("BANKING_INSURANCE")).map((t) => t.code)).toEqual([
       "PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "PROCESSING_TIME", "PROCEDURE", "CASE_TRACKING",
@@ -190,7 +196,7 @@ describe("reference data", () => {
       without_list: null,
       places: [
         "AIRPORT", "BUS_STATION", "ELECTRICITY_AGENCY", "HIGHER_EDUCATION_ADMIN", "PLANE_TICKET",
-        "POLICE_PREMISES", "PORT_PROCEDURE", "SCHOOL_ADMIN", "TICKET_PURCHASE", "WATER_AGENCY",
+        "POLICE_PREMISES", "PORT_PROCEDURE", "SANITATION_AGENCY", "SCHOOL_ADMIN", "TICKET_PURCHASE", "WATER_AGENCY",
       ],
     });
   });
@@ -209,13 +215,13 @@ describe("reference data", () => {
         "AGENCY_SUBJECT", "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "FIELD_SITUATION",
         "FILE_SUBMITTED", "INTERVENTION_AWAITED", "MONEY_CHANNEL", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
         "POLICE_VISIT_REASON", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
-        "SEWER_PROBLEM", "TELECOM_SUBJECT", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "UTILITY_SUBJECT",
+        "SANITATION_SUBJECT", "SEWER_PROBLEM", "TELECOM_SUBJECT", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "UTILITY_SUBJECT",
       ],
       order: true,
     });
   });
 
-  it("has the bank of 78 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025), each written once, every text in French", async () => {
+  it("has the bank of 79 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -229,7 +235,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 78, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 79, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -246,7 +252,7 @@ describe("reference data", () => {
       ADMINISTRATION: "FILE_SERVICES + PAID_AND_RECEIPT", TAX: "FILE_SERVICES + PAID_AND_RECEIPT",
       JUSTICE: "FILE_SERVICES + PAID_AND_RECEIPT", SOCIAL: "FILE_SERVICES + PAID_AND_RECEIPT",
       HEALTH: "HEALTH + PAID_AND_RECEIPT", BANKING_INSURANCE: "BANKING_INSURANCE", MOBILE_PAYMENT: "MOBILE_PAYMENT", EDUCATION: null,
-      ELECTRICITY: null, WATER: null, TELECOM: null,
+      ELECTRICITY: "FILE_SERVICES + PAID_AND_RECEIPT", WATER: "FILE_SERVICES + PAID_AND_RECEIPT", TELECOM: null,
       RETAIL: "COMMERCE", CULTURE: "COMMERCE", HOSPITALITY: "COMMERCE", REAL_ESTATE: "COMMERCE",
       FOOD_SERVICE: "COMMERCE", SPORT: "COMMERCE", TOURISM: "COMMERCE",
       SECURITY: null, TRANSPORT: null,
@@ -259,10 +265,10 @@ describe("reference data", () => {
       POLICE_CALL: "POLICE_CALL", HIGHER_EDUCATION_ADMIN: "FILE_SERVICES + PAID_AND_RECEIPT",
       HIGHER_EDUCATION_COURSES: "SCHOOL_LIFE", TRAIN_TRIP: "TRAIN_TRIP",
       APP_RIDE: "APP_RIDE + PAYMENT", STREET_TAXI_RIDE: "STREET_TAXI_RIDE + PAYMENT",
-      ELECTRICITY_AGENCY: "ELECTRICITY_AGENCY", ELECTRICITY_SUPPLY: "ELECTRICITY_SUPPLY",
-      WATER_AGENCY: "WATER_AGENCY", WATER_SUPPLY: "WATER_SUPPLY",
+      ELECTRICITY_AGENCY: "ELECTRICITY_AGENCY + FILE_SERVICES + PAID_AND_RECEIPT", ELECTRICITY_SUPPLY: "ELECTRICITY_SUPPLY",
+      WATER_AGENCY: "WATER_AGENCY + FILE_SERVICES + PAID_AND_RECEIPT", WATER_SUPPLY: "WATER_SUPPLY",
       // 0025: the telecom questions move from the sector to « Téléphone ou internet ».
-      MOBILE_MONEY: "MOBILE_MONEY", SEWER_ISSUE: "SEWER_ISSUE", INSURANCE_CLAIM: "INSURANCE_CLAIM",
+      MOBILE_MONEY: "MOBILE_MONEY", SEWER_ISSUE: "SEWER_ISSUE", SANITATION_AGENCY: "SANITATION_AGENCY + FILE_SERVICES + PAID_AND_RECEIPT", INSURANCE_CLAIM: "INSURANCE_CLAIM",
       PORT_PROCEDURE: "FILE_SERVICES + PAID_AND_RECEIPT", HIGHWAY_TRIP: "TOLL_HIGHWAY", TV_SUBSCRIPTION: "TV_SUBSCRIPTION",
       PHONE_INTERNET: "TELECOM",
       // 0026: mobile money in three services.
