@@ -817,3 +817,269 @@
   background: var(--level-service-tint);
   color: var(--level-service);
 }
+
+/* Questionnaire: its two pages, by level and the overview (2026-10-09). */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+  margin: 12px 0 16px;
+}
+
+.tab {
+  padding: 10px 14px;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tab[aria-current="page"] {
+  color: var(--ink);
+  font-weight: 700;
+  border-bottom-color: var(--green);
+}
+
+/* Overview: what needs a look, one card per check. */
+.overviewAlerts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.overviewAlert {
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--error);
+  border-radius: 6px;
+  padding: 10px 14px;
+  min-width: 0;
+  font-size: 14px;
+}
+
+.overviewAlertOk {
+  border-left-color: var(--green);
+}
+
+.overviewAlert h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.overviewAlert h3 b {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.overviewAlert ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.overviewAlert p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.overviewAlert code,
+.overviewTable code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.overviewLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+/* A cell: the colour of the list it comes from (the levels of the generated form). */
+.overviewMark {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  vertical-align: middle;
+  position: relative;
+}
+
+.overviewDuplicate {
+  outline: 2px solid var(--error);
+  outline-offset: 1px;
+}
+
+.overviewGated::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+
+.overviewScroll {
+  overflow: auto;
+  max-height: 75vh;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.overviewMatrix {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+
+.overviewMatrix th,
+.overviewMatrix td {
+  border-bottom: 1px solid var(--line-light);
+  padding: 0;
+  text-align: center;
+  font-weight: 400;
+}
+
+.overviewMatrix thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--page);
+  vertical-align: bottom;
+}
+
+.overviewMatrix thead tr + tr th {
+  top: 32px;
+}
+
+.overviewGroup {
+  height: 32px;
+  padding: 6px !important;
+  font-size: 12px;
+  font-weight: 700 !important;
+  color: var(--muted);
+  text-align: left !important;
+  border-left: 2px solid var(--line);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 1px;
+}
+
+.overviewCol {
+  padding: 8px 4px !important;
+  border-left: 1px solid var(--line-light);
+}
+
+.overviewCol span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  display: block;
+  max-height: 240px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.overviewMatrix td {
+  width: 28px;
+  min-width: 28px;
+  height: 34px;
+  border-left: 1px solid var(--line-light);
+}
+
+.overviewMatrix .overviewStart {
+  border-left: 2px solid var(--line);
+}
+
+.overviewMatrix .overviewStick {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--paper);
+  min-width: 240px;
+  max-width: 280px;
+  padding: 6px 10px;
+  text-align: left;
+  border-right: 1px solid var(--line);
+}
+
+.overviewMatrix thead .overviewStick {
+  z-index: 3;
+  background: var(--page);
+  font-weight: 700;
+}
+
+.overviewStick a {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.overviewStick .muted {
+  font-size: 12px;
+}
+
+.overviewSector th {
+  position: sticky;
+  left: 0;
+  text-align: left !important;
+  padding: 8px 10px !important;
+  background: var(--page);
+  font-weight: 700 !important;
+}
+
+.overviewMatrix td:last-child {
+  padding: 0 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border-left: 1px solid var(--line);
+}
+
+.overviewMatrix .overviewLow {
+  color: var(--error);
+}
+
+.overviewTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.overviewTable th,
+.overviewTable td {
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line-light);
+}
+
+.overviewTable thead th {
+  position: sticky;
+  top: 0;
+  background: var(--page);
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.overviewContent {
+  color: var(--muted);
+  min-width: 280px;
+}
+
+.overviewPillAlert {
+  background: var(--satisfaction-5-tint);
+  color: var(--error);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 14px;
+}

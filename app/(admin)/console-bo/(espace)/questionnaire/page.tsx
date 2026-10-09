@@ -2,6 +2,7 @@ import { getQuestionnaire, type ListedQuestion, type ListedTopic } from "@/src/d
 import { getDictionary } from "../../../../_i18n";
 import { FormPreview } from "../../_components/FormPreview";
 import { QuestionnaireFilters } from "../../_components/QuestionnaireFilters";
+import { QuestionnaireTabs } from "../../_components/QuestionnaireTabs";
 import { ListGrid, type ListGroup, type ListGridRow } from "../../_components/ListGrid";
 import { requireAdmin } from "../../_lib/auth";
 import styles from "../../admin.module.css";
@@ -90,6 +91,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
   return (
     <>
       <h1>{t.title}</h1>
+      <QuestionnaireTabs current="levels" text={t.tabs} />
       <p className={styles.lead}>{t.lead}</p>
       <form className={styles.gridFilters} method="get" action={PATH}>
         <QuestionnaireFilters

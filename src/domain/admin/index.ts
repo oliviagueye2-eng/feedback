@@ -6,7 +6,7 @@
 import * as db from "../../db/admin";
 import * as feedbacks from "../../db/feedbacks";
 import { selectQuestionSets } from "../questionnaire/select";
-import { COMMENT_MAX_LENGTH } from "../feedback";
+import { COMMENT_MAX_LENGTH, OTHER_TOPIC_CODE } from "../feedback";
 import { invalidInput } from "../errors";
 import { isUuid, requireUuid } from "../../lib/validation";
 import { createSessionToken, isRightPassword } from "./session";
@@ -14,7 +14,7 @@ import { createSessionToken, isRightPassword } from "./session";
 export { isValidSessionToken, SESSION_DAYS } from "./session";
 export type {
   AdminComment, BankCondition, BankOption, BankQuestion, CategoryContent, CommentStatus, EstablishmentComments, FormEstablishment,
-  ListedQuestion, ListedTopic, PendingEstablishment, ServiceTopics, SectorTopics, StopPage, TopicRow, TypeTopics,
+  ListedQuestion, ListedTopic, ListUsage, PendingEstablishment, ServiceTopics, SectorTopics, StopPage, TopicRow, TypeTopics,
 } from "../../db/admin";
 
 /** 5 failed sign-ins in 15 minutes from one address block it for 15 minutes. */
@@ -290,6 +290,122 @@ async function getForm(levels: feedbacks.FormLevels, bank: db.BankQuestion[]) {
     topicLists,
     questions: questions.filter((q) => !q.common && !askedBefore.has(q.code)).map(toForm),
     commonQuestions: questions.filter((q) => q.common && !askedBefore.has(q.code)).map(toForm),
+  };
+}
+
+/** A path with this many topics or fewer (« Autre » aside) is flagged on the overview. */
+export const FEW_TOPICS = 2;
+
+/** One path of the overview: the levels a feedback can have, and the form it gets. */
+export interface OverviewPath {
+  sector: string | null;
+  sectorLabel: string | null;
+  type: string | null;
+  typeLabel: string | null;
+  /** null: « Autre démarche », or no reason at all when the establishments offer no service. */
+  service: string | null;
+  serviceLabel: string | null;
+  /** The active establishments where a user can take this path, by name. */
+  establishments: { id: string; name: string }[];
+  topics: { code: string; label: string; category: string | null; gated: boolean; lists: feedbacks.FormList[] }[];
+  questions: FormQuestion[];
+  commonQuestions: FormQuestion[];
+}
+
+/**
+ * The overview of the questionnaire (asked by Olivia, 2026-10-09): every path
+ * a user can take (sector, type, service chosen or none) among the active
+ * establishments, with its form, computed as on the site; every list with
+ * who uses it; and what needs a look: paths with few topics, items brought by
+ * two lists, topics no path offers, lists empty or used by nobody.
+ */
+export async function getOverview() {
+  const [sectors, types, services, bank, establishments, lists, topics, categories] = await Promise.all([
+    db.listSectorTopics(),
+    db.listTypeTopics(),
+    db.listServiceTopics(),
+    db.listQuestionBank(),
+    db.listFormEstablishments(),
+    db.listListUsage(),
+    db.listTopics(),
+    db.listCategories(),
+  ]);
+  const label = (levels: { code: string; label: string | null }[], code: string | null) =>
+    (code && levels.find((l) => l.code === code)?.label) ?? null;
+  const byKey = new Map<string, Omit<OverviewPath, "topics" | "questions" | "commonQuestions">>();
+  for (const e of establishments) {
+    for (const service of [...e.services, null]) {
+      const key = [e.sectorCode, e.typeCode, service].join("|");
+      const path = byKey.get(key) ?? {
+        sector: e.sectorCode,
+        sectorLabel: label(sectors, e.sectorCode),
+        type: e.typeCode,
+        typeLabel: label(types, e.typeCode),
+        service,
+        serviceLabel: label(services, service),
+        establishments: [],
+      };
+      path.establishments.push({ id: e.id, name: e.name });
+      byKey.set(key, path);
+    }
+  }
+  const paths: OverviewPath[] = [];
+  for (const path of byKey.values()) {
+    const form = await getForm({ sector: path.sector, type: path.type, service: path.service }, bank);
+    paths.push({
+      ...path,
+      topics: form.topics
+        .filter((t) => t.code !== OTHER_TOPIC_CODE)
+        .map((t) => ({
+          code: t.code,
+          label: t.label,
+          category: t.category,
+          gated: t.gate !== null,
+          lists: form.topicLists[t.code] ?? [],
+        })),
+      questions: form.questions,
+      commonQuestions: form.commonQuestions,
+    });
+  }
+  paths.sort(
+    (a, b) =>
+      (a.sectorLabel ?? "~").localeCompare(b.sectorLabel ?? "~", "fr") ||
+      (a.typeLabel ?? "").localeCompare(b.typeLabel ?? "", "fr") ||
+      Number(a.service === null) - Number(b.service === null) ||
+      (a.serviceLabel ?? "").localeCompare(b.serviceLabel ?? "", "fr"),
+  );
+  // COMMON and ESSENTIAL are found by their code, used by every feedback.
+  const special = new Set(["COMMON", ...SHARED_QUESTION_LISTS]);
+  const offered = new Set(paths.flatMap((p) => p.topics.map((t) => t.code)));
+  return {
+    paths,
+    lists,
+    /** The categories, in order, for the columns' groups. */
+    categories: categories.map(({ code, label }) => ({ code, label })),
+    /** Every question, for the lists' content and the order of the questions' columns. */
+    questions: bank.map(({ code, label, categoryCode }) => ({ code, label, categoryCode })),
+    /** Labels of the sectors, types and services, for « who uses a list ». */
+    labels: {
+      sectors: Object.fromEntries(sectors.map((l) => [l.code, l.label ?? l.code])),
+      types: Object.fromEntries(types.map((l) => [l.code, l.label ?? l.code])),
+      services: Object.fromEntries(services.map((l) => [l.code, l.label ?? l.code])),
+    },
+    topics: topics
+      .filter((t) => t.code !== OTHER_TOPIC_CODE)
+      .map((t) => ({ ...t, paths: paths.filter((p) => p.topics.some((x) => x.code === t.code)).length })),
+    alerts: {
+      fewTopics: paths.filter((p) => p.topics.length <= FEW_TOPICS),
+      duplicates: paths.flatMap((path) =>
+        [...path.topics, ...path.questions, ...path.commonQuestions]
+          .filter((item) => item.lists.length > 1)
+          .map((item) => ({ path, label: item.label, lists: item.lists.map((l) => l.code) })),
+      ),
+      unusedTopics: topics.filter((t) => t.isActive && t.code !== OTHER_TOPIC_CODE && !offered.has(t.code)),
+      emptyLists: lists.filter((l) => l.items.length === 0),
+      unusedLists: lists.filter(
+        (l) => !special.has(l.code) && l.sectors.length + l.types.length + l.services.length === 0,
+      ),
+    },
   };
 }
 
