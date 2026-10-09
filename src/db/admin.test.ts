@@ -279,8 +279,9 @@ describe("questionnaire", () => {
     expect(health).toMatchObject({ label: "Santé", listCodes: ["HEALTH", "STAFF_SKILLS", "COUNTER", "PREMISES", "FEES"] });
     expect(health.topics).toContainEqual({ code: "CARE_RECEIVED", label: "Soins reçus", isActive: true, categoryCode: "OUTCOME", shownIf: null });
     const airport = q.types.find((t) => t.code === "AIRPORT")!;
-    expect(airport).toMatchObject({ sectorCode: "TRANSPORT", listCodes: ["STAFF_SKILLS", "COUNTER"] });
-    expect(airport.topics.map((t) => t.code)).toEqual(["PROFESSIONALISM", "INFORMATION", "WAIT_TIME", "OPENING_HOURS"]);
+    // 0061: no « Guichet » block at the airport.
+    expect(airport).toMatchObject({ sectorCode: "TRANSPORT", listCodes: ["STAFF_SKILLS"] });
+    expect(airport.topics.map((t) => t.code)).toEqual(["PROFESSIONALISM", "INFORMATION"]);
     expect(q.types.find((t) => t.code === "PHARMACY")).toMatchObject({ listCodes: [], topics: [] });
     // 0053: the mobile payment sector's lists are for « Autre démarche » only.
     expect(q.sectors.find((s) => s.code === "MOBILE_PAYMENT")).toMatchObject({
@@ -361,7 +362,7 @@ describe("questionnaire", () => {
 
   it("lists the question bank, narrowed by the filters to the lists shown", async () => {
     const all = await getQuestionnaire({});
-    expect(all.questions).toHaveLength(83);
+    expect(all.questions).toHaveLength(85);
     const receipt = all.questions.find((q) => q.code === "RECEIPT_GIVEN")!;
     expect(all.questions.find((q) => q.code === "PAID_SOMETHING")!.opensTopics).toEqual(["FEES"]);
     // FILE_SUBMITTED is in no list, but opens two topics of the civil registry centres.

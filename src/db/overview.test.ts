@@ -77,5 +77,5 @@ it("gives each path the form of its establishments and flags what needs a look",
   ]);
   // The airport: the stations' questions, then its own.
   const airport = o.paths.find((p) => p.type === "AIRPORT")!;
-  expect(airport.questions.map((q) => q.code)).toEqual(["CHECKS_WAIT", "WAYFINDING", "SEAT_TO_WAIT", "TOILETS", "TRANSPORT_ACCESS"]);
+  expect(airport.questions.map((q) => q.code)).toEqual(["CHECKS_WAIT", "WAYFINDING", "SEAT_TO_WAIT", "TOILETS", "TRANSPORT_ACCESS", "ARRIVAL_MODE", "PARKING_EASE"]);
 });
