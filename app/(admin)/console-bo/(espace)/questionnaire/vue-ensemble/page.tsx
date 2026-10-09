@@ -51,15 +51,32 @@ export default async function OverviewPage({ searchParams }: PageProps<"/console
   };
   const shown = o.paths.filter((p) => sector === null || sectorKey(p) === sector);
   const sectors = [...new Map(o.paths.map((p) => [sectorKey(p), p.sectorLabel ?? v.noSector])).entries()];
-  const used = (l: (typeof o.lists)[number]) => [
-    ...l.sectors.map((c) => `${t.sector} ${o.labels.sectors[c] ?? c}`),
-    ...l.types.map((c) => `${t.type} ${o.labels.types[c] ?? c}`),
-    ...l.services.map((c) => `${t.service} ${o.labels.services[c] ?? c}`),
+  // Who uses a list, coloured by level like the matrix (asked by Olivia, 2026-10-09).
+  const used = (l: (typeof o.lists)[number]): { level: FormList["level"]; text: string }[] => [
+    ...(l.code === "COMMON" || l.code === "ESSENTIAL" ? [{ level: "common" as const, text: v.everyPath }] : []),
+    ...l.sectors.map((c) => ({ level: "sector" as const, text: `${t.sector} ${o.labels.sectors[c] ?? c}` })),
+    ...l.types.map((c) => ({ level: "type" as const, text: `${t.type} ${o.labels.types[c] ?? c}` })),
+    ...l.services.map((c) => ({ level: "service" as const, text: `${t.service} ${o.labels.services[c] ?? c}` })),
   ];
   const itemLabel = new Map<string, string>([
     ...o.topics.map((x) => [x.code, x.label ?? x.code] as [string, string]),
   ]);
   const questionLabel = new Map(o.questions.map((q) => [q.code, q.label ?? q.code]));
+  const categoryOf = new Map<string, string | null>([
+    ...o.topics.map((x) => [`topics:${x.code}`, x.categoryCode] as [string, string | null]),
+    ...o.questions.map((q) => [`questions:${q.code}`, q.categoryCode] as [string, string | null]),
+  ]);
+  // A list's content, one line per category in the matrix's order (asked by Olivia, 2026-10-09).
+  const contentByCategory = (l: (typeof o.lists)[number]) => {
+    const label = (c: string) => (l.kind === "topics" ? itemLabel.get(c) : questionLabel.get(c)) ?? c;
+    const known = new Set(o.categories.map((c) => c.code));
+    return [
+      ...o.categories.map((c) => ({ category: c.label ?? c.code, items: l.items.filter((x) => categoryOf.get(`${l.kind}:${x}`) === c.code) })),
+      { category: v.noCategory, items: l.items.filter((x) => !known.has(categoryOf.get(`${l.kind}:${x}`) ?? "")) },
+    ]
+      .filter((g) => g.items.length > 0)
+      .map((g) => ({ category: g.category, items: g.items.map(label) }));
+  };
 
   const alert = (count: number, title: string, items: ReactNode[], help?: string) => (
     <article className={`${styles.overviewAlert} ${count ? "" : styles.overviewAlertOk}`}>
@@ -119,6 +136,17 @@ export default async function OverviewPage({ searchParams }: PageProps<"/console
     view === "themes"
       ? p.topics.map((x) => ({ code: x.code, lists: x.lists, gated: x.gated }))
       : [...p.questions, ...p.commonQuestions].map((x) => ({ code: x.code, lists: x.lists, gated: x.conditions.length > 0 }));
+
+  const levelsLegend = (
+    <>
+      {v.legendLevels}
+      {(Object.keys(levelClass) as FormList["level"][]).map((l) => (
+        <span key={l}>
+          <i className={`${styles.overviewMark} ${levelClass[l]}`} /> {level[l]}
+        </span>
+      ))}
+    </>
+  );
 
   return (
     <>
@@ -212,12 +240,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/console
             </button>
           </form>
           <p className={styles.overviewLegend}>
-            {v.legendLevels}
-            {(Object.keys(levelClass) as FormList["level"][]).map((l) => (
-              <span key={l}>
-                <i className={`${styles.overviewMark} ${levelClass[l]}`} /> {level[l]}
-              </span>
-            ))}
+            {levelsLegend}
             <span>
               <i className={`${styles.overviewMark} ${styles.levelSector} ${styles.overviewDuplicate}`} /> {v.legendDuplicate}
             </span>
@@ -308,6 +331,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/console
       {view === "listes" && (
         <>
           <p className={styles.gridHelp}>{v.listsHelp}</p>
+          <p className={styles.overviewLegend}>{levelsLegend}</p>
           <div className={styles.overviewScroll}>
             <table className={styles.overviewTable}>
               <thead>
@@ -323,6 +347,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/console
                 {o.lists.map((l) => {
                   const users = used(l);
                   const special = l.code === "COMMON" || l.code === "ESSENTIAL";
+                  const content = contentByCategory(l);
                   return (
                     <tr key={`${l.kind}-${l.code}`}>
                       <td>
@@ -331,22 +356,22 @@ export default async function OverviewPage({ searchParams }: PageProps<"/console
                       </td>
                       <td>
                         {l.items.length === 0 && <span className={styles.overviewPillAlert}>{v.empty}</span>}{" "}
-                        {special ? (
-                          <span className={styles.notice}>{v.special}</span>
-                        ) : (
-                          users.length === 0 && <span className={styles.notice}>{v.unused}</span>
-                        )}
+                        {!special && users.length === 0 && <span className={styles.notice}>{v.unused}</span>}
                       </td>
                       <td>{l.items.length}</td>
                       <td>
                         {users.map((u, i) => (
-                          <span key={i} className={styles.muted}>
-                            {u}
+                          <span key={i} className={`${styles.overviewTag} ${levelClass[u.level]}`}>
+                            {u.text}
                           </span>
                         ))}
                       </td>
                       <td className={styles.overviewContent}>
-                        {l.items.map((c) => (l.kind === "topics" ? itemLabel.get(c) : questionLabel.get(c)) ?? c).join(" · ")}
+                        {content.map((g) => (
+                          <p key={g.category}>
+                            <b>{g.category}</b> : {g.items.join(" · ")}
+                          </p>
+                        ))}
                       </td>
                     </tr>
                   );

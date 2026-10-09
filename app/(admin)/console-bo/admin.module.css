@@ -1082,6 +1082,19 @@
   min-width: 280px;
 }
 
+/* Who uses a list, in the colour of its level. */
+.overviewTag {
+  display: inline-block;
+  margin: 0 4px 4px 0;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 13px;
+}
+
+.overviewContent p {
+  margin: 0 0 4px;
+}
+
 .overviewPillAlert {
   background: var(--satisfaction-5-tint);
   color: var(--error);
