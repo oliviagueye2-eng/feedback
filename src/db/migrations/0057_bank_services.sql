@@ -3,8 +3,8 @@
 --   BANK_AGENCY « Une démarche en agence »: the sector's lists, plus what the
 --     procedure was about;
 --   ATM_WITHDRAWAL « Un retrait au distributeur »: no staff, so its own topics,
---     one of them new (« Argent disponible dans le distributeur »), and whether
---     the withdrawal worked;
+--     one of them new (« Argent disponible dans le distributeur »), the fees
+--     block, and whether the withdrawal worked;
 --   BANK_APP « L'application ou la banque en ligne »: the lists of the mobile
 --     payment app (MOBILE_MONEY_APP, MOBILE_MONEY).
 -- The insurers keep their claim service. The sector's lists now go only to the
@@ -126,9 +126,11 @@ FROM (VALUES ('BANK_AGENCY', 'BANK_AGENCY', 1), ('BANK_AGENCY', 'BANKING_INSURAN
 JOIN service s ON s.code = v.service
 JOIN question_set qs ON qs.code = v.list;
 
+-- The cash machine also gets « Frais payés », after « Avez-vous payé quelque chose ? » (Olivia).
 INSERT INTO service_topic_set (service_id, topic_set_id, position)
-SELECT s.id, ts.id, 1
-FROM (VALUES ('ATM_WITHDRAWAL', 'ATM_WITHDRAWAL'), ('BANK_APP', 'MOBILE_MONEY_APP')) AS v (service, list)
+SELECT s.id, ts.id, v.position
+FROM (VALUES ('ATM_WITHDRAWAL', 'ATM_WITHDRAWAL', 1), ('ATM_WITHDRAWAL', 'FEES', 2),
+             ('BANK_APP', 'MOBILE_MONEY_APP', 1)) AS v (service, list, position)
 JOIN service s ON s.code = v.service
 JOIN topic_set ts ON ts.code = v.list;
 
