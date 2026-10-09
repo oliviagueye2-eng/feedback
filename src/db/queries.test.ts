@@ -846,7 +846,7 @@ describe("feedback", () => {
       INSERT INTO topic_set (code) VALUES ('TEST_TYPE'), ('TEST_SERVICE');
       INSERT INTO topic_set_item (topic_set_id, topic_id)
       SELECT s.id, t.id FROM (VALUES ('TEST_TYPE', 'WATER_QUALITY'), ('TEST_SERVICE', 'PRIVACY'),
-                                     ('TEST_SERVICE', 'STAFF')) AS v (list, topic)
+                                     ('TEST_SERVICE', 'PROFESSIONALISM')) AS v (list, topic)
       JOIN topic_set s ON s.code = v.list JOIN topic t ON t.code = v.topic;
       INSERT INTO establishment_type_topic_set (type_id, topic_set_id, position)
       SELECT et.id, ts.id, 1 FROM establishment_type et, topic_set ts
@@ -869,7 +869,7 @@ describe("feedback", () => {
       });
       const byService = (await getDetailsScreen(withService)).topics.map((t) => t.code);
       expect(byService).toEqual(expect.arrayContaining(["WATER_QUALITY", "PRIVACY", "PROCESSING_TIME"]));
-      expect(byService.filter((c) => c === "STAFF")).toHaveLength(1);
+      expect(byService.filter((c) => c === "PROFESSIONALISM")).toHaveLength(1);
 
       // A topic of no list of this feedback is not saved.
       await saveTopics(feedbackId, { topics: [{ code: "PRIVACY", sentiment: "negative" }] });
@@ -932,7 +932,7 @@ describe("published results", () => {
       SELECT f.id, t.id, v.sentiment, v.other_text
       FROM (SELECT id, row_number() OVER (ORDER BY id) AS n FROM feedback
             WHERE establishment_id = '${ids.results}' AND visit_month = '2026-02-01') AS f
-      JOIN (SELECT n, 'STAFF', 'positive', NULL FROM generate_series(1, 10) AS n
+      JOIN (SELECT n, 'PROFESSIONALISM', 'positive', NULL FROM generate_series(1, 10) AS n
             UNION ALL SELECT n, 'WAIT_TIME', 'negative', NULL FROM generate_series(1, 10) AS n
             UNION ALL SELECT n, 'PRIVACY', 'positive', NULL FROM generate_series(1, 3) AS n
             UNION ALL VALUES (1, 'OTHER', 'negative', 'Parking')) AS v (n, code, sentiment, other_text) ON v.n = f.n
@@ -965,7 +965,7 @@ describe("published results", () => {
       ["CARE_RECEIVED", 10, "YES", 100],
     ]);
     // 10 « Bien » out of 10: 72 % at worst. PRIVACY has too few ratings; « Autre » is never published.
-    expect(results.strengths).toEqual([{ code: "STAFF", label: expect.any(String), total: 10, percent: 100 }]);
+    expect(results.strengths).toEqual([{ code: "PROFESSIONALISM", label: expect.any(String), total: 10, percent: 100 }]);
     expect(results.improvements).toEqual([{ code: "WAIT_TIME", label: "Temps d'attente", total: 10, percent: 0 }]);
     expect(results.quarters).toEqual([
       { from: "2025-10-01", last: "2025-12-01", feedbackCount: 1, satisfiedPercent: null },

@@ -190,7 +190,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/console
           v.emptyLists,
           o.alerts.emptyLists.map((l) => (
             <>
-              <code>{l.code}</code> ({v.kind[l.kind]}){used(l).length > 0 && ` : ${used(l).join(", ")}`}
+              <code>{l.code}</code> ({v.kind[l.kind]}){used(l).length > 0 && ` : ${used(l).map((u) => u.text).join(", ")}`}
             </>
           )),
         )}

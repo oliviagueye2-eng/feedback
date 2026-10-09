@@ -162,9 +162,8 @@ describe("reference data", () => {
     // Not in TRANSPORT (0039).
     expect(await listOf("TRANSPORT")).not.toContain("INFORMATION");
     expect(await listOf("ROAD_TRIP")).not.toContain("INFORMATION");
-    // « Politesse du personnel » is offered nowhere since 0038.
-    expect((await db.query(`
-      SELECT 1 FROM topic_set_item WHERE topic_id = (SELECT id FROM topic WHERE code = 'STAFF')`)).rows).toEqual([]);
+    // « Politesse du personnel » (offered nowhere since 0038) and « État des véhicules » are gone (0054).
+    expect((await db.query(`SELECT 1 FROM topic WHERE code IN ('STAFF', 'VEHICLE_CONDITION')`)).rows).toEqual([]);
     expect((await db.query<{ code: string }>(`
       SELECT s.code FROM service s JOIN service_topic_set x ON x.service_id = s.id
       WHERE x.topic_set_id = (SELECT id FROM topic_set WHERE code = 'ROAD_TRIP') ORDER BY s.code`))

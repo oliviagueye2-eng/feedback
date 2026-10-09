@@ -45,8 +45,8 @@ it("gives each path the form of its establishments and flags what needs a look",
   // A ride: « Frais » from its own list only, shown straight away.
   expect(o.paths.find((p) => p.service === "APP_RIDE")!.topics.find((t) => t.code === "FEES")!.lists)
     .toEqual([{ code: "FEES_SHOWN_ALWAYS", level: "service" }]);
-  // « Politesse du personnel » is offered nowhere since 0038.
-  expect(o.alerts.unusedTopics.map((t) => t.code)).toContain("STAFF");
+  // « Politesse du personnel » and « État des véhicules », offered nowhere, are gone (0054).
+  expect(o.alerts.unusedTopics.map((t) => t.code)).not.toContain("STAFF");
   expect(o.alerts.emptyLists.map((l) => `${l.kind}:${l.code}`)).toEqual(
     expect.arrayContaining(["topics:COMMON"]),
   );
