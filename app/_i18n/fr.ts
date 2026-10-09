@@ -623,6 +623,11 @@ export const fr = {
       commentedPending: "À relire",
       commentedEmpty: "Aucun commentaire ce mois-ci.",
       commentedHelp: "Cliquez sur un établissement pour lire ses commentaires.",
+      byEstablishmentTitle: "Avis du mois par établissement",
+      byEstablishmentComplete: "Complets",
+      byEstablishmentNotSent: "Non complets",
+      byEstablishmentEmpty: "Aucun avis ce mois-ci.",
+      byEstablishmentHelp: "Un avis est complet quand l'usager a cliqué sur « Envoyer mon avis ». Il est non complet s'il n'est pas envoyé 24 heures après son début.",
     },
     comments: {
       title: "Commentaires à relire",

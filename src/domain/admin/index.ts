@@ -101,13 +101,14 @@ export async function mergeEstablishment(id: string, targetId: string) {
 export const STOP_PAGES: db.StopPage[] = ["details", "sector", "common", "send"];
 
 export async function getDashboard() {
-  const [pendingComments, pendingEstablishments, month, stops, weeks, commented] = await Promise.all([
+  const [pendingComments, pendingEstablishments, month, stops, weeks, commented, byEstablishment] = await Promise.all([
     db.countPendingComments(),
     db.countPendingEstablishments(),
     db.getMonthFigures(NOT_SENT_AFTER_HOURS),
     db.countStopPages(NOT_SENT_AFTER_HOURS),
     db.countCompleteByWeek(DASHBOARD_WEEKS),
     db.countCommentsByEstablishmentThisMonth(),
+    db.countFeedbacksByEstablishmentThisMonth(NOT_SENT_AFTER_HOURS),
   ]);
   const started = month.complete + month.notSent;
   return {
@@ -125,6 +126,8 @@ export async function getDashboard() {
     weeks,
     /** Establishments with comments this month (asked by Olivia, 2026-10-07). */
     commented,
+    /** This month's complete and not sent feedbacks by establishment (asked by Olivia, 2026-10-09). */
+    byEstablishment,
   };
 }
 
