@@ -221,8 +221,10 @@ describe("reference data", () => {
     expect(row).toEqual({
       without_list: null,
       places: [
-        "BANK_AGENCY", "BUS_STATION", "ELECTRICITY_AGENCY", "HIGHER_EDUCATION_ADMIN", "INSURANCE_CLAIM",
-        "PLANE_TICKET", "POLICE_PREMISES", "PORT_PROCEDURE", "POSTAL_COUNTER", "SANITATION_AGENCY", "SCHOOL_ADMIN", "TELECOM_SHOP", "TICKET_PURCHASE", "TV_SHOP", "WATER_AGENCY",
+        "BANK_AGENCY", "BUS_STATION", "ELECTRICITY_AGENCY", "HIGHER_EDUCATION_ADMIN", "HIGHER_EDUCATION_SCHOOL",
+        "HIGH_SCHOOL", "INSURANCE_CLAIM", "MIDDLE_SCHOOL", "PLANE_TICKET", "POLICE_PREMISES", "PORT_PROCEDURE",
+        "POSTAL_COUNTER", "PRIMARY_SCHOOL", "SANITATION_AGENCY", "SCHOOL_ADMIN", "SCHOOL_GROUP", "TELECOM_SHOP",
+        "TICKET_PURCHASE", "TV_SHOP", "UNIVERSITY", "VOCATIONAL_TRAINING_CENTER", "WATER_AGENCY",
       ],
     });
   });
@@ -238,7 +240,7 @@ describe("reference data", () => {
     expect(row).toEqual({
       topics: null,
       questions: [
-        "AGENCY_SUBJECT", "ARRIVAL_MODE", "BANK_SUBJECT", "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "DELIVERY_KIND", "FIELD_SITUATION",
+        "AGENCY_SUBJECT", "ARRIVAL_MODE", "BANK_SUBJECT", "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "DAARA_BOARDING", "DELIVERY_KIND", "FIELD_SITUATION",
         "FILE_SUBMITTED", "INTERVENTION_AWAITED", "MATERNITY_VISIT_KIND", "MONEY_CHANNEL", "MONEY_OPERATION_KIND", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
         "PHARMACY_VISIT_REASON", "POLICE_VISIT_REASON", "POSTAL_COUNTER_SUBJECT", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
         "SANITATION_SUBJECT", "SEWER_PROBLEM", "SUPPORT_REASON", "TELECOM_SHOP_SUBJECT", "TELECOM_SUBJECT", "TELECOM_SUPPORT_REASON", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "TV_SHOP_SUBJECT", "UTILITY_SUBJECT",
@@ -247,7 +249,7 @@ describe("reference data", () => {
     });
   });
 
-  it("has the bank of 105 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058, 2 of 0062, 2 of 0065, 6 of 0066, 2 of 0068, 1 of 0069, 6 of 0070, 3 of 0071), each written once, every text in French", async () => {
+  it("has the bank of 108 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058, 2 of 0062, 2 of 0065, 6 of 0066, 2 of 0068, 1 of 0069, 6 of 0070, 3 of 0071, 3 of 0072), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -261,7 +263,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 105, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 108, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -290,7 +292,7 @@ describe("reference data", () => {
       SCHOOL_ADMIN: "FILE_SERVICES + PAID_AND_RECEIPT", SCHOOL_LIFE: "SCHOOL_LIFE",
       POLICE_PREMISES: "POLICE_PREMISES + PAID_AND_RECEIPT", POLICE_FIELD: "POLICE_FIELD + PAID_AND_RECEIPT",
       POLICE_CALL: "POLICE_CALL", HIGHER_EDUCATION_ADMIN: "FILE_SERVICES + PAID_AND_RECEIPT",
-      HIGHER_EDUCATION_COURSES: "SCHOOL_LIFE", TRAIN_TRIP: "TRAIN_TRIP",
+      HIGHER_EDUCATION_COURSES: "HIGHER_EDUCATION_COURSES", TRAIN_TRIP: "TRAIN_TRIP",
       APP_RIDE: "APP_RIDE + PAYMENT", STREET_TAXI_RIDE: "STREET_TAXI_RIDE + PAYMENT",
       ELECTRICITY_AGENCY: "ELECTRICITY_AGENCY + FILE_SERVICES + PAID_AND_RECEIPT", ELECTRICITY_SUPPLY: "ELECTRICITY_SUPPLY",
       WATER_AGENCY: "WATER_AGENCY + FILE_SERVICES + PAID_AND_RECEIPT", WATER_SUPPLY: "WATER_SUPPLY",
@@ -317,9 +319,13 @@ describe("reference data", () => {
     expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))
       .toEqual({
         AIRPORT: "STATION + AIRPORT", BUS_STATION: "STATION", DRIVING_LICENCE_CENTER: "FILE_SERVICES + PAID_AND_RECEIPT",
-        HIGH_SCHOOL: "EDUCATION", MIDDLE_SCHOOL: "EDUCATION", PRIMARY_SCHOOL: "EDUCATION", SCHOOL_GROUP: "EDUCATION",
-        UNIVERSITY: "EDUCATION", HIGHER_EDUCATION_SCHOOL: "EDUCATION", VOCATIONAL_TRAINING_CENTER: "EDUCATION",
-        DAARA: "EDUCATION", PRESCHOOL: "PRESCHOOL",
+        // 0072: the results' questions for « Autre démarche » (only without a service), the daara's own.
+        HIGH_SCHOOL: "EDUCATION + FILE_SERVICES + PAID_AND_RECEIPT", MIDDLE_SCHOOL: "EDUCATION + FILE_SERVICES + PAID_AND_RECEIPT",
+        PRIMARY_SCHOOL: "EDUCATION + FILE_SERVICES + PAID_AND_RECEIPT", SCHOOL_GROUP: "EDUCATION + FILE_SERVICES + PAID_AND_RECEIPT",
+        UNIVERSITY: "EDUCATION + FILE_SERVICES + PAID_AND_RECEIPT",
+        HIGHER_EDUCATION_SCHOOL: "EDUCATION + FILE_SERVICES + PAID_AND_RECEIPT",
+        VOCATIONAL_TRAINING_CENTER: "EDUCATION + FILE_SERVICES + PAID_AND_RECEIPT",
+        DAARA: "EDUCATION + DAARA", PRESCHOOL: "PRESCHOOL",
         // 0070: the three health forms.
         HOSPITAL: "HEALTH + PAID_AND_RECEIPT", CLINIC: "HEALTH + PAID_AND_RECEIPT", HEALTH_CENTER: "HEALTH + PAID_AND_RECEIPT",
         HEALTH_POST: "HEALTH + PAID_AND_RECEIPT", MEDICAL_OFFICE: "HEALTH + PAID_AND_RECEIPT", PHARMACY: "PHARMACY",
@@ -430,7 +436,7 @@ describe("reference data", () => {
 });
 
 describe("« Non concerné » and the questions that open a topic (0011)", () => {
-  it("opens seven topics after their answer (the intervention's question removed by 0012, Woyofal's two added by 0064, the birth's two by 0071), and no longer offers « Je n'ai rien payé »", async () => {
+  it("opens eight topics after their answer (the intervention's question removed by 0012, Woyofal's two added by 0064, the birth's two by 0071, the daara's living conditions by 0072), and no longer offers « Je n'ai rien payé »", async () => {
     const conditions = (await db.query<{ topic: string; question: string; option: string }>(
       `SELECT t.code AS topic, q.code AS question, ao.code AS option
        FROM topic_condition tc
@@ -441,6 +447,7 @@ describe("« Non concerné » and the questions that open a topic (0011)", () =>
     expect(conditions).toEqual([
       "BIRTH_SUPPORT ← MATERNITY_VISIT_KIND BIRTH",
       "CASE_TRACKING ← FILE_SUBMITTED YES",
+      "CHILD_LIVING_CONDITIONS ← DAARA_BOARDING YES",
       "FEES ← PAID_SOMETHING YES",
       "NEWBORN_CARE ← MATERNITY_VISIT_KIND BIRTH",
       "PROCESSING_TIME ← FILE_SUBMITTED YES",

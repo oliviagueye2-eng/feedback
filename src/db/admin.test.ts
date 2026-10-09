@@ -369,7 +369,7 @@ describe("questionnaire", () => {
 
   it("lists the question bank, narrowed by the filters to the lists shown", async () => {
     const all = await getQuestionnaire({});
-    expect(all.questions).toHaveLength(105);
+    expect(all.questions).toHaveLength(108);
     const receipt = all.questions.find((q) => q.code === "RECEIPT_GIVEN")!;
     expect(all.questions.find((q) => q.code === "PAID_SOMETHING")!.opensTopics).toEqual(["FEES"]);
     // FILE_SUBMITTED is in no list, but opens two topics of the civil registry centres.

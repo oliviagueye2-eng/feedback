@@ -486,10 +486,17 @@ export interface SectorTopics extends LevelTopics {
   withoutTypeQuestionListCodes: string[];
 }
 
-/** The codes of a sector's lists given only without a service (0053) or without a type (0070). */
-const ONLY_WITHOUT_CODES_OF = (kind: "topic" | "question", flag: "only_without_service" | "only_without_type") => `
-  ARRAY(SELECT l.code FROM sector_${kind}_set x JOIN ${kind}_set l ON l.id = x.${kind}_set_id
-        WHERE x.sector_id = s.id AND x.${flag} ORDER BY x.position)`;
+/**
+ * The codes of a sector's lists given only without a service (0053) or without a
+ * type (0070), or of a type's given only without a service (0072).
+ */
+const ONLY_WITHOUT_CODES_OF = (
+  kind: "topic" | "question",
+  flag: "only_without_service" | "only_without_type",
+  level: "sector" | "establishment_type" = "sector",
+) => `
+  ARRAY(SELECT l.code FROM ${level}_${kind}_set x JOIN ${kind}_set l ON l.id = x.${kind}_set_id
+        WHERE x.${level === "sector" ? "sector_id = s.id" : "type_id = et.id"} AND x.${flag} ORDER BY x.position)`;
 
 export async function listSectorTopics(): Promise<SectorTopics[]> {
   return inScreenOrder(await query<SectorTopics>(
@@ -509,6 +516,9 @@ export async function listSectorTopics(): Promise<SectorTopics[]> {
 
 export interface TypeTopics extends LevelTopics {
   sectorCode: string;
+  /** Those of listCodes and questionListCodes given only without a service, « Autre démarche » (0072). */
+  withoutServiceListCodes: string[];
+  withoutServiceQuestionListCodes: string[];
   /** No direct link: the services of the active establishments of this type. */
   services: string[];
 }
@@ -519,6 +529,8 @@ export async function listTypeTopics(): Promise<TypeTopics[]> {
             ${TOPICS_OF(LISTS_OF("establishment_type", "et", "topic"))} AS topics,
             ${CODES_OF("establishment_type", "et", "question")} AS "questionListCodes",
             ${QUESTIONS_OF(LISTS_OF("establishment_type", "et", "question"))} AS questions,
+            ${ONLY_WITHOUT_CODES_OF("topic", "only_without_service", "establishment_type")} AS "withoutServiceListCodes",
+            ${ONLY_WITHOUT_CODES_OF("question", "only_without_service", "establishment_type")} AS "withoutServiceQuestionListCodes",
             coalesce((SELECT array_agg(DISTINCT sv.code ORDER BY sv.code)
                       FROM establishment e
                       JOIN establishment_service es ON es.establishment_id = e.id
