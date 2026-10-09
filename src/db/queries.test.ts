@@ -642,8 +642,10 @@ describe("feedback", () => {
     };
     expect(await servicesOf("Orange Money")).toEqual(Object.keys(services));
     expect(await servicesOf("Mixx by Yas")).toEqual(Object.keys(services));
-    expect(await servicesOf("Orange")).toEqual(["Téléphone ou internet"]);
-    expect(await servicesOf("Yas")).toEqual(["Téléphone ou internet"]);
+    // 0065: the network, the internet at home and the shop.
+    const telephone = ["Internet à la maison (fibre, box)", "Le réseau mobile (appels, SMS, internet)", "Une démarche en boutique"];
+    expect(await servicesOf("Orange")).toEqual(telephone);
+    expect(await servicesOf("Yas")).toEqual(telephone);
     const visit = async (feedback: string, serviceId: number) => {
       await upsertFeedback(feedback, { channel: "search", establishmentId: wave!.id, serviceId, language: "fr", visitPeriod: "today" });
       return {
