@@ -22,8 +22,6 @@ export const LOGIN_MAX_FAILURES = 5;
 export const LOGIN_WINDOW_MINUTES = 15;
 /** A feedback not sent this many hours after its start counts as not sent. */
 export const NOT_SENT_AFTER_HOURS = 24;
-/** Weeks shown on the dashboard's line. */
-export const DASHBOARD_WEEKS = 8;
 
 export type SignInResult = { ok: true; token: string } | { ok: false; reason: "wrong" | "blocked" };
 
@@ -100,21 +98,56 @@ export async function mergeEstablishment(id: string, targetId: string) {
 /** The order of the pages a feedback goes through after the essential question. */
 export const STOP_PAGES: db.StopPage[] = ["details", "sector", "common", "send"];
 
-export async function getDashboard() {
-  const [pendingComments, pendingEstablishments, month, stops, weeks, commented, byEstablishment] = await Promise.all([
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+/** A real day: « 2026-02-30 » would otherwise roll over to March. */
+const isDay = (value: unknown): value is string => {
+  if (typeof value !== "string" || !ISO_DAY.test(value)) return false;
+  const time = Date.parse(value);
+  return !Number.isNaN(time) && new Date(time).toISOString().startsWith(value);
+};
+
+export type PeriodKind = "month" | "week" | "dates";
+
+export interface DashboardPeriod {
+  kind: PeriodKind;
+  /** First and last day, both counted (YYYY-MM-DD, UTC: the time in Dakar). */
+  from: string;
+  to: string;
+}
+
+/**
+ * The dashboard's period (asked by Olivia, 2026-10-09): this month from the
+ * 1st to today (the default), this week from Monday to today, or two dates
+ * typed (swapped when typed backwards; this month when one is not a date).
+ */
+export function dashboardPeriod(kind: unknown, from: unknown, to: unknown, now = new Date()): DashboardPeriod {
+  const today = now.toISOString().slice(0, 10);
+  const month = { kind: "month" as const, from: `${today.slice(0, 8)}01`, to: today };
+  if (kind === "week") {
+    const monday = new Date(Date.parse(today) - ((now.getUTCDay() + 6) % 7) * 86_400_000);
+    return { kind, from: monday.toISOString().slice(0, 10), to: today };
+  }
+  if (kind !== "dates" || !isDay(from) || !isDay(to)) return month;
+  return from <= to ? { kind, from, to } : { kind, from: to, to: from };
+}
+
+/** Everything on the dashboard but « À traiter » counts over `period`. */
+export async function getDashboard(period: DashboardPeriod = dashboardPeriod(undefined, undefined, undefined)) {
+  const { from, to } = period;
+  const [pendingComments, pendingEstablishments, figures, stops, weeks, commented, byEstablishment] = await Promise.all([
     db.countPendingComments(),
     db.countPendingEstablishments(),
-    db.getMonthFigures(NOT_SENT_AFTER_HOURS),
-    db.countStopPages(NOT_SENT_AFTER_HOURS),
-    db.countCompleteByWeek(DASHBOARD_WEEKS),
-    db.countCommentsByEstablishmentThisMonth(),
-    db.countFeedbacksByEstablishmentThisMonth(NOT_SENT_AFTER_HOURS),
+    db.getPeriodFigures(NOT_SENT_AFTER_HOURS, from, to),
+    db.countStopPages(NOT_SENT_AFTER_HOURS, from, to),
+    db.countCompleteByWeek(from, to),
+    db.countCommentsByEstablishment(from, to),
+    db.countFeedbacksByEstablishment(NOT_SENT_AFTER_HOURS, from, to),
   ]);
-  const started = month.complete + month.notSent;
+  const started = figures.complete + figures.notSent;
   return {
     pendingComments,
     pendingEstablishments,
-    month: { ...month, abandonPercent: started === 0 ? null : Math.round((100 * month.notSent) / started) },
+    figures: { ...figures, abandonPercent: started === 0 ? null : Math.round((100 * figures.notSent) / started) },
     /** Every page, in order, even with no abandon; percent = share of the feedbacks started. */
     stops: STOP_PAGES.map((page) => {
       const found = stops.find((s) => s.page === page);
@@ -124,9 +157,9 @@ export async function getDashboard() {
       return { page, satisfied, notSatisfied, total, percent: started === 0 ? null : Math.round((100 * total) / started) };
     }),
     weeks,
-    /** Establishments with comments this month (asked by Olivia, 2026-10-07). */
+    /** Establishments with comments (asked by Olivia, 2026-10-07). */
     commented,
-    /** This month's complete and not sent feedbacks by establishment (asked by Olivia, 2026-10-09). */
+    /** Complete and not sent feedbacks by establishment (asked by Olivia, 2026-10-09). */
     byEstablishment,
   };
 }

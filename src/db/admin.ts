@@ -87,8 +87,8 @@ export interface EstablishmentComments {
   pending: number;
 }
 
-/** Establishments with comments written this month, the most commented first. */
-export async function countCommentsByEstablishmentThisMonth(): Promise<EstablishmentComments[]> {
+/** Establishments with comments written from `from` to `to` included, the most commented first. */
+export async function countCommentsByEstablishment(from: string, to: string): Promise<EstablishmentComments[]> {
   return query<EstablishmentComments>(
     `SELECT t.id AS "establishmentId", t.name,
             coalesce(m.name, t.municipality_input) AS municipality,
@@ -99,9 +99,10 @@ export async function countCommentsByEstablishmentThisMonth(): Promise<Establish
      JOIN establishment e ON e.id = f.establishment_id
      JOIN establishment t ON t.id = coalesce(e.merged_into_id, e.id)
      LEFT JOIN municipality m ON m.id = t.municipality_id
-     WHERE c.created_at >= date_trunc('month', now())
+     WHERE c.created_at >= $1::date::timestamptz AND c.created_at < ($2::date + 1)::timestamptz
      GROUP BY t.id, t.name, m.name, t.municipality_input
      ORDER BY total DESC, t.name`,
+    [from, to],
   );
 }
 
@@ -228,10 +229,10 @@ export async function mergePendingEstablishment(id: string, targetId: string): P
 // Dashboard
 // ---------------------------------------------------------------------------
 
-export interface MonthFigures {
-  /** Sent this month (« Envoyer mon avis »). */
+export interface PeriodFigures {
+  /** Sent during the period (« Envoyer mon avis »). */
   complete: number;
-  /** Started this month, at least the essential question answered, not sent `hours` hours later. */
+  /** Started during the period, at least the essential question answered, not sent `hours` hours later. */
   notSent: number;
   /** Satisfied (very or rather) among each group; null when the group is empty. */
   satisfiedComplete: number | null;
@@ -247,21 +248,27 @@ const SATISFACTION = `
 /** Not sent: started before now() - hours, never completed, essential question answered. */
 const NOT_SENT = `f.step <> 'completed' AND f.started_at < now() - make_interval(hours => $1)`;
 
-export async function getMonthFigures(hours: number): Promise<MonthFigures> {
-  const rows = await query<MonthFigures>(
-    `WITH s AS (${SATISFACTION}),
-     month AS (SELECT date_trunc('month', now()) AS start)
+/**
+ * The dashboard's period, from $2 to $3 included (dates YYYY-MM-DD, days
+ * counted in UTC: the time in Dakar). A feedback sent counts on the day it
+ * was sent; one not sent, on the day it was started.
+ */
+const PERIOD = `period AS (SELECT $2::date::timestamptz AS start, ($3::date + 1)::timestamptz AS stop)`;
+const SENT_IN_PERIOD = `f.step = 'completed' AND f.completed_at >= period.start AND f.completed_at < period.stop`;
+const NOT_SENT_IN_PERIOD = `${NOT_SENT} AND f.started_at >= period.start AND f.started_at < period.stop`;
+
+export async function getPeriodFigures(hours: number, from: string, to: string): Promise<PeriodFigures> {
+  const rows = await query<PeriodFigures>(
+    `WITH s AS (${SATISFACTION}), ${PERIOD}
      SELECT
-       count(*) FILTER (WHERE f.step = 'completed' AND f.completed_at >= month.start)::int AS complete,
-       count(*) FILTER (WHERE ${NOT_SENT} AND f.started_at >= month.start)::int AS "notSent",
-       round(100.0 * avg(s.satisfied::int) FILTER (WHERE f.step = 'completed' AND f.completed_at >= month.start))::int
-         AS "satisfiedComplete",
-       round(100.0 * avg(s.satisfied::int) FILTER (WHERE ${NOT_SENT} AND f.started_at >= month.start))::int
-         AS "satisfiedNotSent"
+       count(*) FILTER (WHERE ${SENT_IN_PERIOD})::int AS complete,
+       count(*) FILTER (WHERE ${NOT_SENT_IN_PERIOD})::int AS "notSent",
+       round(100.0 * avg(s.satisfied::int) FILTER (WHERE ${SENT_IN_PERIOD}))::int AS "satisfiedComplete",
+       round(100.0 * avg(s.satisfied::int) FILTER (WHERE ${NOT_SENT_IN_PERIOD}))::int AS "satisfiedNotSent"
      FROM feedback f
      JOIN s ON s.feedback_id = f.id
-     CROSS JOIN month`,
-    [hours],
+     CROSS JOIN period`,
+    [hours, from, to],
   );
   return rows[0]!;
 }
@@ -270,24 +277,23 @@ export interface EstablishmentFeedbacks {
   establishmentId: string;
   name: string;
   municipality: string | null;
-  /** The same two counts as `MonthFigures`, for one establishment (or one merged into it). */
+  /** The same two counts as `PeriodFigures`, for one establishment (or one merged into it). */
   complete: number;
   notSent: number;
 }
 
-/** This month's complete and not sent feedbacks by establishment, the most feedbacks first. */
-export async function countFeedbacksByEstablishmentThisMonth(hours: number): Promise<EstablishmentFeedbacks[]> {
+/** Complete and not sent feedbacks by establishment over the period, the most feedbacks first. */
+export async function countFeedbacksByEstablishment(hours: number, from: string, to: string): Promise<EstablishmentFeedbacks[]> {
   return query<EstablishmentFeedbacks>(
-    `WITH s AS (${SATISFACTION}),
-     month AS (SELECT date_trunc('month', now()) AS start),
+    `WITH s AS (${SATISFACTION}), ${PERIOD},
      counted AS (
        SELECT coalesce(e.merged_into_id, e.id) AS id,
-              (f.step = 'completed' AND f.completed_at >= month.start) AS complete,
-              (${NOT_SENT} AND f.started_at >= month.start) AS not_sent
+              (${SENT_IN_PERIOD}) AS complete,
+              (${NOT_SENT_IN_PERIOD}) AS not_sent
        FROM feedback f
        JOIN s ON s.feedback_id = f.id
        JOIN establishment e ON e.id = f.establishment_id
-       CROSS JOIN month
+       CROSS JOIN period
      )
      SELECT t.id AS "establishmentId", t.name,
             coalesce(m.name, t.municipality_input) AS municipality,
@@ -299,7 +305,7 @@ export async function countFeedbacksByEstablishmentThisMonth(hours: number): Pro
      WHERE c.complete OR c.not_sent
      GROUP BY t.id, t.name, m.name, t.municipality_input
      ORDER BY count(*) DESC, t.name`,
-    [hours],
+    [hours, from, to],
   );
 }
 
@@ -311,34 +317,37 @@ export interface StopPageCount {
   notSatisfied: number;
 }
 
-/** This month's feedbacks not sent, by the page left without submitting. */
-export async function countStopPages(hours: number): Promise<StopPageCount[]> {
+/** The period's feedbacks not sent, by the page left without submitting. */
+export async function countStopPages(hours: number, from: string, to: string): Promise<StopPageCount[]> {
   return query<StopPageCount>(
-    `WITH s AS (${SATISFACTION})
+    `WITH s AS (${SATISFACTION}), ${PERIOD}
      SELECT f.last_page AS page,
             count(*) FILTER (WHERE s.satisfied)::int AS satisfied,
             count(*) FILTER (WHERE NOT s.satisfied)::int AS "notSatisfied"
      FROM feedback f
      JOIN s ON s.feedback_id = f.id
-     WHERE ${NOT_SENT} AND f.started_at >= date_trunc('month', now()) AND f.last_page IS NOT NULL
+     CROSS JOIN period
+     WHERE ${NOT_SENT_IN_PERIOD} AND f.last_page IS NOT NULL
      GROUP BY f.last_page`,
-    [hours],
+    [hours, from, to],
   );
 }
 
-/** Feedbacks sent per week, the last `weeks` weeks (Monday first), this one included. */
-export async function countCompleteByWeek(weeks: number): Promise<{ week: string; count: number }[]> {
+/**
+ * Feedbacks sent per week (Monday first), every week the period touches. Only
+ * the period's days count, so the weeks add up to the complete feedbacks.
+ */
+export async function countCompleteByWeek(from: string, to: string): Promise<{ week: string; count: number }[]> {
   return query<{ week: string; count: number }>(
-    `WITH w AS (
-       SELECT generate_series(date_trunc('week', now()) - make_interval(weeks => $1 - 1),
-                              date_trunc('week', now()), interval '1 week') AS week
-     )
+    `WITH period AS (SELECT $1::date::timestamptz AS start, ($2::date + 1)::timestamptz AS stop),
+     w AS (SELECT generate_series(date_trunc('week', period.start), date_trunc('week', period.stop - interval '1 day'),
+                                  interval '1 week') AS week FROM period)
      SELECT to_char(w.week, 'YYYY-MM-DD') AS week,
             (SELECT count(*)::int FROM feedback f
-             WHERE f.step = 'completed' AND f.completed_at >= w.week
-               AND f.completed_at < w.week + interval '1 week') AS count
-     FROM w ORDER BY w.week`,
-    [weeks],
+             WHERE f.step = 'completed' AND f.completed_at >= greatest(w.week, period.start)
+               AND f.completed_at < least(w.week + interval '1 week', period.stop)) AS count
+     FROM w CROSS JOIN period ORDER BY w.week`,
+    [from, to],
   );
 }
 
