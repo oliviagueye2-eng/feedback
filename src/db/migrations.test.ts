@@ -94,6 +94,7 @@ describe("reference data", () => {
       WHERE x.only_without_service ORDER BY s.code, x.position`)).rows.map((r) => r.list)).toEqual([
       "ELECTRICITY:STAFF_SKILLS", "ELECTRICITY:COUNTER", "ELECTRICITY:PREMISES", "ELECTRICITY:FEES",
       "MOBILE_PAYMENT:MOBILE_PAYMENT", "MOBILE_PAYMENT:STAFF_SKILLS", "MOBILE_PAYMENT:FEES",
+      "SECURITY:SECURITY_REQUEST",
       "TRANSPORT:FEES",
       "WATER:STAFF_SKILLS", "WATER:COUNTER", "WATER:PREMISES", "WATER:FEES",
     ]);

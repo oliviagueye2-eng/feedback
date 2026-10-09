@@ -759,8 +759,8 @@ describe("feedback", () => {
       ],
     });
     expect(await visit("b8c9d0e1-0000-4000-8000-000000000002", service.POLICE_FIELD!)).toEqual({
+      // 0055: nothing was asked during a check.
       topics: [
-        "Prise en compte de la demande",
         "Compétence du personnel (Politesse, respect et professionnalisme)",
         "Explications du personnel (claires, complètes)",
         "Respect des droits",
