@@ -324,7 +324,8 @@ describe("questionnaire", () => {
 
   it("puts mobile money in its own sector, apart from banks and insurers", async () => {
     const banking = await getQuestionnaire({ sector: "BANKING_INSURANCE" });
-    expect(banking.services.map((s) => s.code)).toEqual(["INSURANCE_CLAIM"]);
+    // 0057: three services for the banks.
+    expect(banking.services.map((s) => s.code).sort()).toEqual(["ATM_WITHDRAWAL", "BANK_AGENCY", "BANK_APP", "INSURANCE_CLAIM"]);
     const mobile = await getQuestionnaire({ sector: "MOBILE_PAYMENT" });
     // 0031: lists of its own, for a feedback with no service (« Autre démarche »).
     expect(mobile.sectors).toEqual([
@@ -360,7 +361,7 @@ describe("questionnaire", () => {
 
   it("lists the question bank, narrowed by the filters to the lists shown", async () => {
     const all = await getQuestionnaire({});
-    expect(all.questions).toHaveLength(79);
+    expect(all.questions).toHaveLength(83);
     const receipt = all.questions.find((q) => q.code === "RECEIPT_GIVEN")!;
     expect(all.questions.find((q) => q.code === "PAID_SOMETHING")!.opensTopics).toEqual(["FEES"]);
     // FILE_SUBMITTED is in no list, but opens two topics of the civil registry centres.

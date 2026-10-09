@@ -92,6 +92,9 @@ describe("reference data", () => {
       SELECT s.code || ':' || l.code AS list FROM sector_topic_set x
       JOIN sector s ON s.id = x.sector_id JOIN topic_set l ON l.id = x.topic_set_id
       WHERE x.only_without_service ORDER BY s.code, x.position`)).rows.map((r) => r.list)).toEqual([
+      // 0057: the banks' services.
+      "BANKING_INSURANCE:BANKING_INSURANCE", "BANKING_INSURANCE:STAFF_SKILLS", "BANKING_INSURANCE:COUNTER",
+      "BANKING_INSURANCE:CASE_FILE", "BANKING_INSURANCE:PREMISES", "BANKING_INSURANCE:FEES",
       "ELECTRICITY:STAFF_SKILLS", "ELECTRICITY:COUNTER", "ELECTRICITY:PREMISES", "ELECTRICITY:FEES",
       "MOBILE_PAYMENT:MOBILE_PAYMENT", "MOBILE_PAYMENT:STAFF_SKILLS", "MOBILE_PAYMENT:FEES",
       "SECURITY:SECURITY_REQUEST",
@@ -202,8 +205,8 @@ describe("reference data", () => {
     expect(row).toEqual({
       without_list: null,
       places: [
-        "AIRPORT", "BUS_STATION", "ELECTRICITY_AGENCY", "HIGHER_EDUCATION_ADMIN", "PLANE_TICKET",
-        "POLICE_PREMISES", "PORT_PROCEDURE", "SANITATION_AGENCY", "SCHOOL_ADMIN", "TICKET_PURCHASE", "WATER_AGENCY",
+        "AIRPORT", "BANK_AGENCY", "BUS_STATION", "ELECTRICITY_AGENCY", "HIGHER_EDUCATION_ADMIN", "INSURANCE_CLAIM",
+        "PLANE_TICKET", "POLICE_PREMISES", "PORT_PROCEDURE", "SANITATION_AGENCY", "SCHOOL_ADMIN", "TICKET_PURCHASE", "WATER_AGENCY",
       ],
     });
   });
@@ -219,7 +222,7 @@ describe("reference data", () => {
     expect(row).toEqual({
       topics: null,
       questions: [
-        "AGENCY_SUBJECT", "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "FIELD_SITUATION",
+        "AGENCY_SUBJECT", "BANK_SUBJECT", "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "FIELD_SITUATION",
         "FILE_SUBMITTED", "INTERVENTION_AWAITED", "MONEY_CHANNEL", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
         "POLICE_VISIT_REASON", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
         "SANITATION_SUBJECT", "SEWER_PROBLEM", "TELECOM_SUBJECT", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "UTILITY_SUBJECT",
@@ -228,7 +231,7 @@ describe("reference data", () => {
     });
   });
 
-  it("has the bank of 79 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049), each written once, every text in French", async () => {
+  it("has the bank of 83 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -242,7 +245,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 79, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 83, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -275,11 +278,14 @@ describe("reference data", () => {
       ELECTRICITY_AGENCY: "ELECTRICITY_AGENCY + FILE_SERVICES + PAID_AND_RECEIPT", ELECTRICITY_SUPPLY: "ELECTRICITY_SUPPLY",
       WATER_AGENCY: "WATER_AGENCY + FILE_SERVICES + PAID_AND_RECEIPT", WATER_SUPPLY: "WATER_SUPPLY",
       // 0025: the telecom questions move from the sector to « Téléphone ou internet ».
-      MOBILE_MONEY: "MOBILE_MONEY", SEWER_ISSUE: "SEWER_ISSUE", SANITATION_AGENCY: "SANITATION_AGENCY + FILE_SERVICES + PAID_AND_RECEIPT", INSURANCE_CLAIM: "INSURANCE_CLAIM",
+      MOBILE_MONEY: "MOBILE_MONEY", SEWER_ISSUE: "SEWER_ISSUE", SANITATION_AGENCY: "SANITATION_AGENCY + FILE_SERVICES + PAID_AND_RECEIPT",
       PORT_PROCEDURE: "FILE_SERVICES + PAID_AND_RECEIPT", HIGHWAY_TRIP: "TOLL_HIGHWAY", TV_SUBSCRIPTION: "TV_SUBSCRIPTION",
       PHONE_INTERNET: "TELECOM",
       // 0026: mobile money in three services.
       MOBILE_MONEY_AGENT: "MOBILE_MONEY + MOBILE_MONEY_AGENT", MOBILE_MONEY_SUPPORT: "MOBILE_MONEY_SUPPORT",
+      // 0057: the sector's list by name for the claim, and the banks' three services.
+      INSURANCE_CLAIM: "BANKING_INSURANCE + INSURANCE_CLAIM", BANK_AGENCY: "BANK_AGENCY + BANKING_INSURANCE",
+      ATM_WITHDRAWAL: "ATM_WITHDRAWAL", BANK_APP: "MOBILE_MONEY",
     });
     // Types with a list of their own (0005), and « Vous êtes » on the education places (0018).
     expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))
@@ -315,7 +321,12 @@ describe("reference data", () => {
        JOIN answer_option ao ON ao.id = qc.option_id
        ORDER BY qs.code, q.code, ao.position`)).rows.map((r) => `${r.list}: ${r.question} ← ${r.depends_on} ${r.option}`);
     expect(conditions).toEqual([
+      "ATM_WITHDRAWAL: MONEY_PROBLEM_SOLVED ← ATM_WITHDRAWAL_OK OUT_OF_SERVICE",
+      "ATM_WITHDRAWAL: MONEY_PROBLEM_SOLVED ← ATM_WITHDRAWAL_OK CARD_RETAINED",
+      "ATM_WITHDRAWAL: MONEY_PROBLEM_SOLVED ← ATM_WITHDRAWAL_OK DEBITED_NO_CASH",
       "BANKING_INSURANCE: FEES_EXPLAINED ← PAID_SOMETHING YES",
+      "BANK_AGENCY: CARD_ON_TIME ← BANK_SUBJECT CARD",
+      "BANK_AGENCY: CREDIT_ANSWER ← BANK_SUBJECT CREDIT",
       "BOAT_CROSSING: BOAT_INCIDENT_TYPE ← CROSSING_INCIDENT YES",
       "BOAT_CROSSING: INCIDENT_EXPLAINED ← CROSSING_INCIDENT YES",
       "BOAT_CROSSING: INCIDENT_SOLUTION ← CROSSING_INCIDENT YES",
