@@ -454,7 +454,7 @@ describe("feedback", () => {
     const aibd = "c3d4e5f6-0000-4000-8000-000000000006";
     await firstQuestion(aibd, "Aéroport international Blaise Diagne", null);
     expect((await getQuestionnaireScreen(aibd, "sector")).questions.map((q) => q.code))
-      .toEqual(["CHECKS_WAIT", "WAYFINDING", "SEAT_TO_WAIT", "TOILETS", "TRANSPORT_ACCESS"]);
+      .toEqual(["CHECKS_WAIT", "WAYFINDING", "SEAT_TO_WAIT", "TOILETS", "TRANSPORT_ACCESS", "ARRIVAL_MODE", "PARKING_EASE"]);
     // Air Sénégal (0006): a flight; « Informé(e) ? » and « Pris(e) en charge ? » shown only after a delay.
     const flight = "c3d4e5f6-0000-4000-8000-000000000007";
     await firstQuestion(flight, "Air Sénégal", "FLIGHT");
