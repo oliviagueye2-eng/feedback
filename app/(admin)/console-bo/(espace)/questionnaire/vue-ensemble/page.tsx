@@ -82,12 +82,24 @@ export default async function OverviewPage({ searchParams }: PageProps<"/console
   // The columns: the items of the paths shown, grouped by category in its order.
   const categoryLabel = new Map(o.categories.map((c) => [c.code, c.label ?? c.code]));
   const categoryRank = new Map(o.categories.map((c, i) => [c.label ?? c.code, i]));
-  type Column = { code: string; label: string; group: string };
+  type Column = { code: string; label: string; group: string; missing?: boolean };
+  // Every category keeps its group, even when the paths shown offer none of its
+  // topics: an empty group shows what is missing (asked by Olivia, 2026-10-09).
+  const topicColumns = () => {
+    const offered = o.topics
+      .filter((x) => shown.some((p) => p.topics.some((y) => y.code === x.code)))
+      .map((x) => ({ code: x.code, label: x.label ?? x.code, group: categoryLabel.get(x.categoryCode ?? "") ?? v.noCategory }));
+    return [
+      ...o.categories.flatMap((c) => {
+        const own = offered.filter((x) => x.group === categoryLabel.get(c.code));
+        return own.length > 0 ? own : [{ code: `missing:${c.code}`, label: v.noTopic, group: categoryLabel.get(c.code)!, missing: true }];
+      }),
+      ...offered.filter((x) => x.group === v.noCategory),
+    ];
+  };
   const columns: Column[] =
     view === "themes"
-      ? o.topics
-          .filter((x) => shown.some((p) => p.topics.some((y) => y.code === x.code)))
-          .map((x) => ({ code: x.code, label: x.label ?? x.code, group: categoryLabel.get(x.categoryCode ?? "") ?? v.noCategory }))
+      ? topicColumns()
       : (() => {
           const seen = new Map<string, Column>();
           for (const p of shown) {
@@ -224,7 +236,12 @@ export default async function OverviewPage({ searchParams }: PageProps<"/console
                     {v.path}
                   </th>
                   {groups.map((g) => (
-                    <th key={g.group} colSpan={g.span} className={styles.overviewGroup} title={g.group}>
+                    <th
+                      key={g.group}
+                      colSpan={g.span}
+                      className={`${styles.overviewGroup} ${columns.some((c) => c.missing && c.group === g.group) ? styles.overviewMissing : ""}`}
+                      title={g.group}
+                    >
                       {g.group}
                     </th>
                   ))}
@@ -232,7 +249,11 @@ export default async function OverviewPage({ searchParams }: PageProps<"/console
                 </tr>
                 <tr>
                   {columns.map((c) => (
-                    <th key={c.code} className={`${styles.overviewCol} ${groupStart.has(c.code) ? styles.overviewStart : ""}`} title={`${c.label} (${c.code})`}>
+                    <th
+                      key={c.code}
+                      className={`${styles.overviewCol} ${groupStart.has(c.code) ? styles.overviewStart : ""} ${c.missing ? styles.overviewMissing : ""}`}
+                      title={c.missing ? `${c.group} : ${c.label}` : `${c.label} (${c.code})`}
+                    >
                       <span>{c.label}</span>
                     </th>
                   ))}
@@ -259,7 +280,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/console
                       </th>
                       {columns.map((c) => {
                         const x = items.get(c.code);
-                        const start = groupStart.has(c.code) ? styles.overviewStart : "";
+                        const start = `${groupStart.has(c.code) ? styles.overviewStart : ""} ${c.missing ? styles.overviewMissing : ""}`;
                         if (!x) return <td key={c.code} className={start} />;
                         const tip = `${c.label} : ${x.lists.map((l) => `${l.code} (${level[l.level]})`).join(" + ")}`;
                         return (

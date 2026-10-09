@@ -1045,6 +1045,12 @@
   border-left: 1px solid var(--line);
 }
 
+/* A category none of the paths shown offers a topic of: the gap to check. */
+.overviewMatrix .overviewMissing {
+  color: var(--error);
+  background: var(--satisfaction-5-tint);
+}
+
 .overviewMatrix .overviewLow {
   color: var(--error);
 }
