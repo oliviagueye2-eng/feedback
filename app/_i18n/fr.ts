@@ -713,6 +713,7 @@ export const fr = {
         commonGroup: "Commun (écran 6b)",
         noCategory: "Sans catégorie",
         noTopic: "Aucun thème",
+        noQuestion: "Aucune question",
         listsHelp: "Les listes s'ajoutent : COMMON pour tous (sauf un service qui remplace les listes partagées), celle du secteur (COMMERCE s'il est inconnu), du type, puis du service. COMMON et ESSENTIAL sont trouvées par leur code.",
         list: "Liste",
         kind: { topics: "thèmes", questions: "questions" },

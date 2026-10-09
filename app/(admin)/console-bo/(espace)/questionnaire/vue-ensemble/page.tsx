@@ -81,35 +81,33 @@ export default async function OverviewPage({ searchParams }: PageProps<"/console
 
   // The columns: the items of the paths shown, grouped by category in its order.
   const categoryLabel = new Map(o.categories.map((c) => [c.code, c.label ?? c.code]));
-  const categoryRank = new Map(o.categories.map((c, i) => [c.label ?? c.code, i]));
   type Column = { code: string; label: string; group: string; missing?: boolean };
   // Every category keeps its group, even when the paths shown offer none of its
-  // topics: an empty group shows what is missing (asked by Olivia, 2026-10-09).
-  const topicColumns = () => {
-    const offered = o.topics
-      .filter((x) => shown.some((p) => p.topics.some((y) => y.code === x.code)))
-      .map((x) => ({ code: x.code, label: x.label ?? x.code, group: categoryLabel.get(x.categoryCode ?? "") ?? v.noCategory }));
-    return [
-      ...o.categories.flatMap((c) => {
-        const own = offered.filter((x) => x.group === categoryLabel.get(c.code));
-        return own.length > 0 ? own : [{ code: `missing:${c.code}`, label: v.noTopic, group: categoryLabel.get(c.code)!, missing: true }];
-      }),
-      ...offered.filter((x) => x.group === v.noCategory),
-    ];
-  };
+  // items: an empty group shows what is missing (asked by Olivia, 2026-10-09).
+  const byCategory = (offered: Column[], none: string): Column[] => [
+    ...o.categories.flatMap((c) => {
+      const group = categoryLabel.get(c.code)!;
+      const own = offered.filter((x) => x.group === group);
+      return own.length > 0 ? own : [{ code: `missing:${c.code}`, label: none, group, missing: true }];
+    }),
+    ...offered.filter((x) => !o.categories.some((c) => categoryLabel.get(c.code) === x.group)),
+  ];
   const columns: Column[] =
     view === "themes"
-      ? topicColumns()
+      ? byCategory(
+          o.topics
+            .filter((x) => shown.some((p) => p.topics.some((y) => y.code === x.code)))
+            .map((x) => ({ code: x.code, label: x.label ?? x.code, group: categoryLabel.get(x.categoryCode ?? "") ?? v.noCategory })),
+          v.noTopic,
+        )
       : (() => {
           const seen = new Map<string, Column>();
           for (const p of shown) {
             for (const q of p.questions) seen.set(q.code, seen.get(q.code) ?? { code: q.code, label: q.label, group: q.category ?? v.noCategory });
           }
-          const rank = (c: Column) => categoryRank.get(c.group) ?? o.categories.length;
-          const own = [...seen.values()].map((c, i) => ({ c, i })).sort((a, b) => rank(a.c) - rank(b.c) || a.i - b.i).map((x) => x.c);
           const common = new Map<string, Column>();
           for (const p of shown) for (const q of p.commonQuestions) common.set(q.code, { code: q.code, label: q.label, group: v.commonGroup });
-          return [...own, ...[...common.values()].filter((c) => !seen.has(c.code))];
+          return [...byCategory([...seen.values()], v.noQuestion), ...[...common.values()].filter((c) => !seen.has(c.code))];
         })();
   const groups: { group: string; span: number }[] = [];
   for (const c of columns) {
