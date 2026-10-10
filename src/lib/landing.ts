@@ -3,7 +3,13 @@
  * address keeps the whole site for tests (Olivia's choice, 2026-10-05).
  * On launch day, empty LANDING_HOSTS: the main domain then shows the whole site.
  */
-export const LANDING_HOSTS = ["neexnaxari.com", "www.neexnaxari.com"];
+export const LANDING_HOSTS = [
+  "neexnaxari.com",
+  "www.neexnaxari.com",
+  // The new name's domain (Olivia, 2026-10-10): the landing too until the launch.
+  "neexnaqari.com",
+  "www.neexnaqari.com",
+];
 
 /** The landing page's own route, shown at "/" on the main domain. */
 export const LANDING_PATH = "/lancement";

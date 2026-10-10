@@ -6,12 +6,15 @@ describe("routeRequest", () => {
     expect(routeRequest("neexnaxari.com", "/")).toBe("landing");
     expect(routeRequest("www.neexnaxari.com", "/")).toBe("landing");
     expect(routeRequest("NeexNaxari.com:443", "/")).toBe("landing");
+    expect(routeRequest("neexnaqari.com", "/")).toBe("landing");
+    expect(routeRequest("www.neexnaqari.com", "/")).toBe("landing");
   });
 
   it("sends every other page of the main domain to the landing page", () => {
     expect(routeRequest("neexnaxari.com", "/avis")).toBe("to-landing");
     expect(routeRequest("neexnaxari.com", "/donner/123")).toBe("to-landing");
     expect(routeRequest("neexnaxari.com", "/lancement")).toBe("to-landing");
+    expect(routeRequest("neexnaqari.com", "/avis")).toBe("to-landing");
   });
 
   it("keeps the legal pages on the main domain", () => {
