@@ -3,6 +3,7 @@ import { DomainError } from "@/src/domain/errors";
 import { getSiteScreen } from "@/src/domain/feedback";
 import { saveSite } from "../../../_feedback/actions";
 import { FeedbackHeader } from "../../../_feedback/FeedbackHeader";
+import { Progress } from "../../../_feedback/Progress";
 import { BackLink } from "../../../../_components/BackLink";
 import { getDictionary } from "../../../../_i18n";
 import screen from "../../../_feedback/screen.module.css";
@@ -31,6 +32,7 @@ export default async function SitePage({ params, searchParams }: PageProps<"/don
       <FeedbackHeader establishmentName={step.organizationName} serviceLabel={step.serviceLabel} />
       <main style={{ background: "var(--page)" }}>
         <div className={screen.screen}>
+          <Progress screen="site" />
           <SiteChooser
             action={saveSite}
             feedbackId={feedbackId}

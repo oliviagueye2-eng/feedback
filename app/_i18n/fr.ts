@@ -30,6 +30,8 @@ export const fr = {
     searchPlaceholder: "Ex. : hôpital Fann",
     /** Loader while moving from one step to the next (the feedback is not finished yet). */
     wait: "Un instant…",
+    /** Read by screen readers on the bar at the top of each screen of a feedback. */
+    progress: "Progression de votre avis",
   },
 
   header: {
@@ -212,8 +214,9 @@ export const fr = {
   },
 
   establishment: {
-    title: "Partagez votre expérience",
-    change: "Changer",
+    /** Small line above the establishment's name, which is the title itself. */
+    title: "Partagez votre expérience avec",
+    change: "Changer d'établissement",
     changeLabel: "Changer d'établissement ou d'organisme",
     whenError: "Indiquez à quand remonte votre expérience.",
     reason: "Sur quoi porte votre avis ?",

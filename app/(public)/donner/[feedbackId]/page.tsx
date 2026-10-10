@@ -4,6 +4,7 @@ import { getEssentialScreen } from "@/src/domain/feedback";
 import { answerEssential } from "../../_feedback/actions";
 import { EssentialOptions } from "../../_feedback/EssentialOptions";
 import { FeedbackHeader } from "../../_feedback/FeedbackHeader";
+import { Progress } from "../../_feedback/Progress";
 import { beforeScreenTwoHref } from "../../_feedback/links";
 import { BackLink } from "../../../_components/BackLink";
 import { getDictionary } from "../../../_i18n";
@@ -28,6 +29,7 @@ export default async function EssentialQuestionPage({ params }: PageProps<"/donn
       <FeedbackHeader establishmentName={context.establishmentName} serviceLabel={context.serviceLabel} />
       <main style={{ background: "var(--page)" }}>
         <form action={answerEssential} className={styles.screen}>
+          <Progress screen="essential" />
           <input type="hidden" name="feedbackId" value={feedbackId} />
           <fieldset className={styles.options}>
             <legend className={styles.question}>{frenchSpaces(question.label)}</legend>

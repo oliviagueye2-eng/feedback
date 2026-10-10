@@ -6,6 +6,7 @@ import { DomainError } from "@/src/domain/errors";
 import { COMMENT_MAX_LENGTH, getDetailsScreen, OTHER_TOPIC_CODE, recordPageShown, OTHER_TOPIC_MAX_LENGTH } from "@/src/domain/feedback";
 import { saveDetails } from "../../../_feedback/actions";
 import { FeedbackHeader } from "../../../_feedback/FeedbackHeader";
+import { Progress } from "../../../_feedback/Progress";
 import { SATISFACTION_LEVEL, SatisfactionFace } from "../../../_feedback/SatisfactionFace";
 import { TopicRatings } from "../../../_feedback/TopicRatings";
 import { getDictionary } from "../../../../_i18n";
@@ -42,6 +43,7 @@ export default async function DetailsPage({ params, searchParams }: PageProps<"/
       <FeedbackHeader establishmentName={context.establishmentName} serviceLabel={context.serviceLabel} />
       <main style={{ background: "var(--page)" }}>
         <form action={saveDetails} className={styles.screen}>
+          <Progress screen="details" />
           <input type="hidden" name="feedbackId" value={feedbackId} />
           <input type="hidden" name="promptOption" value={answer.code} />
 
