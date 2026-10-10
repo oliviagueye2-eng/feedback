@@ -1,127 +1,218 @@
-import Form from "next/form";
-import { SiteFooter } from "../_components/SiteFooter";
-import { SiteHeader } from "../_components/SiteHeader";
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { SOCIAL_ACCOUNTS, SocialIcon } from "../_components/SocialLinks";
 import { getDictionary } from "../_i18n";
-import { rich } from "../_i18n/format";
+import { LEGAL_PAGES } from "./_legal/links";
 import { IntroSplash } from "./_intro/IntroSplash";
-import styles from "./home.module.css";
+import { LandingHeader } from "./_landing/LandingHeader";
+import { LandingTicket } from "./_landing/LandingTicket";
+import { Reveal } from "./_landing/Reveal";
+import busPhoto from "../../public/images/lancement-bus-tata.jpg";
+import healthPhoto from "../../public/images/lancement-centre-de-sante.jpg";
+import phoneScreen from "../../public/images/lancement-ecran-satisfaction.png";
+import stopPhoto from "../../public/images/lancement-telephone-arret.jpg";
+import styles from "./_landing/landing.module.css";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { landing, header } = await getDictionary();
+  const { title, description, imageAlt } = landing.meta;
+  const image = { url: "/brand/partage-neexnaxari-v2.png", width: 1200, height: 630, alt: imageAlt };
+  return {
+    metadataBase: new URL("https://neexnaxari.com"),
+    title,
+    description,
+    alternates: { canonical: "/" },
+    openGraph: { title, description, url: "/", siteName: header.siteName, locale: "fr_SN", type: "website", images: [image] },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
+  };
+}
+
+/** Icons of « Votre expérience → Votre voix → Des résultats partagés chaque mois ». */
+const CHAIN_ICONS = [
+  // A person.
+  <svg key="person" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
+  </svg>,
+  // A speech bubble.
+  <svg key="voice" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 5h16v11H9l-5 4z" />
+    <path d="M9 10.5h.01M12 10.5h.01M15 10.5h.01" />
+  </svg>,
+  // Results: three bars.
+  <svg key="results" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <path d="M6 20v-6M12 20V8M18 20V4M3 20h18" />
+  </svg>,
+];
 
 /**
- * Home page: the queue ticket "C'est votre tour." over a photo of an everyday
- * public service (BRT bus, Dakar): a band on phones, the right half on computers.
- * On the very first visit, an opening screen plays first (IntroSplash).
+ * Home page: the pre-launch landing, kept at launch with the queue ticket under
+ * the title to start a feedback (Olivia's choice, 2026-10-10). On the very
+ * first visit, an opening screen plays first (IntroSplash).
  */
 export default async function HomePage() {
-  const { common, header, home: t, intro } = await getDictionary();
+  const { common, header, home, intro, landing: t, legal } = await getDictionary();
+
   return (
     <>
       <IntroSplash t={{ ...intro, siteName: header.siteName, tagline: header.tagline }} />
-      <SiteHeader />
+      <LandingHeader t={{ ...t.nav, giveFeedback: common.giveFeedback, siteName: header.siteName, tagline: header.tagline, navLabel: header.navLabel }} />
       <main>
-        <section className={styles.hero}>
-          <p className={`container ${styles.platform}`}>{t.platform}</p>
-          <figure className={styles.photo}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- already compressed (43 KB), shown at once */}
-            <img src="/images/accueil-brt.jpg" alt={t.photoAlt} width={736} height={491} />
-            <figcaption>{t.photoCaption}</figcaption>
-          </figure>
+        {/* Hero: the idea and the ticket on the left; on the right a real photo of an everyday service
+            (a bus stop in Dakar) and, in front of it, the real questionnaire screen. */}
+        <section id="accueil" className={`${styles.hero} ${styles.anchor}`}>
           <div className={`container ${styles.heroInner}`}>
-            <div className={styles.queue}>
-              <div className={styles.ticketWrap}>
-                <div className={styles.ticket}>
-                  <div className={styles.ticketMain}>
-                    <span className={styles.watermark} aria-hidden="true" />
-                    <div className={`muted ${styles.ticketHead}`}>
-                      <span>{t.ticketLabel}</span>
-                      <strong>{t.ticketNumber}</strong>
-                    </div>
-                    <h1 className={styles.title}>{t.title}</h1>
-                    <p className={styles.lead}>{t.lead}</p>
-                  </div>
-                  <div className={styles.perforation} aria-hidden="true" />
-                  {/* On a computer the search sits in the stub; on a phone only the button shows.
-                      next/form: goes to /avis without reloading the whole page (no blank flash),
-                      and still works as a plain form before JavaScript has loaded. */}
-                  <Form action="/avis" className={styles.stub}>
-                    <label htmlFor="home-search" className={styles.searchLabel}>
-                      {common.searchLabel}
-                    </label>
-                    <div className={styles.searchField}>
-                      <input
-                        id="home-search"
-                        name="q"
-                        type="search"
-                        className="field"
-                        placeholder={common.searchPlaceholder}
-                      />
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.4"
-                        strokeLinecap="round"
-                        aria-hidden="true"
-                      >
-                        <circle cx="11" cy="11" r="7" />
-                        <path d="M20 20l-3.5-3.5" />
-                      </svg>
-                    </div>
-                    <button type="submit" className="btn">
-                      {common.giveFeedback}
-                    </button>
-                    <p className="muted">{t.duration}</p>
-                  </Form>
-                </div>
-              </div>
+            <div className={styles.heroText}>
+              {/* The brand mark, large: the logo is how people will recognise NeexNaxari. */}
+              {/* eslint-disable-next-line @next/next/no-img-element -- SVG, nothing to optimize */}
+              <img className={styles.heroLogo} src="/brand/logo-degrade.svg" alt="" width={120} height={127} />
+              <h1 className={styles.heroTitle}>{t.hero.title}</h1>
+              <p className={styles.heroLead}>{t.hero.lead}</p>
+              <LandingTicket t={{ ...home, ...common }} />
             </div>
-
-            <div className={styles.qr}>
-              <svg
-                className={styles.qrIcon}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <rect x="3" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="3" width="7" height="7" rx="1" />
-                <rect x="3" y="14" width="7" height="7" rx="1" />
-                <path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4M20 17v3" />
-              </svg>
-              <p className={styles.qrPhone}>{rich(t.qr)}</p>
+            <div className={styles.phoneStage}>
+              <div className={styles.photo}>
+                <Image src={busPhoto} alt={t.hero.photoAlt} sizes="(min-width: 900px) 460px, 90vw" priority />
+              </div>
+              <div className={styles.phone}>
+                <Image
+                  src={phoneScreen}
+                  alt={t.hero.phoneAlt}
+                  sizes="(min-width: 900px) 300px, 250px"
+                  priority
+                  className={styles.phoneScreen}
+                />
+              </div>
             </div>
           </div>
         </section>
 
-        <section className={styles.civic} aria-labelledby="participer">
+        <section className={`${styles.idea} ${styles.reveal}`} data-reveal="">
           <div className="container">
-            <h2 id="participer">{t.civicTitle}</h2>
-            <p className={styles.civicLead}>{t.civicLead}</p>
-            <ul>
-              {t.civicPoints.map((point) => (
-                <li key={point.title}>
-                  <h3>{point.title}</h3>
-                  <p>{point.text}</p>
+            <p className={styles.label}>{t.idea.label}</p>
+            <h2 className={styles.title}>{t.idea.title}</h2>
+            <div className={styles.ideaText}>
+              {t.idea.paragraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+            <ol className={styles.chain}>
+              {t.idea.chain.map((step, index) => (
+                <li key={step}>
+                  <span className={styles.chainIcon} aria-hidden="true">
+                    {CHAIN_ICONS[index]}
+                  </span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        <section className={`${styles.services} ${styles.reveal}`} data-reveal="">
+          <div className="container">
+            <div className={styles.servicesHead}>
+              <div>
+                <h2 className={styles.title}>{t.services.title}</h2>
+                <p className={styles.lead}>{t.services.lead}</p>
+              </div>
+              <div className={styles.servicesPhoto}>
+                <Image src={healthPhoto} alt={t.services.photoAlt} sizes="(min-width: 900px) 520px, 90vw" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="comment-ca-marche" className={`${styles.steps} ${styles.anchor} ${styles.reveal}`} data-reveal="">
+          <div className="container">
+            <h2 className={styles.title}>{t.steps.title}</h2>
+            <ol className={styles.stepList}>
+              {t.steps.items.map((step, index) => (
+                <li key={step.title}>
+                  <span className={styles.stepNumber} aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <h3>{step.title}</h3>
+                  <p>{step.text}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* The strong moment of the page: dark ink, very large lines, then the values. */}
+        <section id="vision" className={`${styles.vision} ${styles.anchor} ${styles.reveal}`} data-reveal="">
+          <div className="container">
+            <h2 className={styles.visionLines}>
+              {t.vision.lines.map((line) => (
+                <span key={line}>{line}</span>
+              ))}
+            </h2>
+            <p className={styles.visionText}>{t.vision.text}</p>
+            <h3 className={styles.valuesTitle}>{t.vision.valuesTitle}</h3>
+            <ul className={styles.values}>
+              {t.vision.values.map((value) => (
+                <li key={value.title}>
+                  <strong>{value.title}</strong>
+                  <span>{value.text}</span>
                 </li>
               ))}
             </ul>
           </div>
         </section>
 
-        <section id="comment-ca-marche" className={`container ${styles.steps}`}>
-          <h2>{t.stepsTitle}</h2>
-          <ol>
-            {t.steps.map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ol>
+        <section id="reseaux" className={`${styles.soon} ${styles.anchor} ${styles.reveal}`} data-reveal="">
+          {/* Decorative: a passenger on her phone at a bus stop, under a green veil. */}
+          <div className={styles.soonPhoto} aria-hidden="true">
+            <Image src={stopPhoto} alt="" fill sizes="100vw" />
+          </div>
+          <div className={`container ${styles.soonInner}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- SVG, nothing to optimize */}
+            <img className={styles.soonLogo} src="/brand/logo-blanc.svg" alt="" width={110} height={117} />
+            <h2 className={styles.soonTitle}>{t.soon.title}</h2>
+            <p className={styles.lead}>{t.soon.text}</p>
+            <p className={styles.soonFollow}>{t.soon.follow}</p>
+            <ul className={styles.networks}>
+              {SOCIAL_ACCOUNTS.map(({ network, url }) => (
+                <li key={network}>
+                  <a href={url} target="_blank" rel="noopener noreferrer">
+                    <SocialIcon network={network} />
+                    {t.soon.networks[network]}
+                    <span className="visually-hidden"> {t.soon.newTab}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <p className={styles.handle}>{t.soon.handle}</p>
+          </div>
         </section>
       </main>
-      <SiteFooter />
+
+      <footer className={`site-footer ${styles.footer}`}>
+        <div className={`container ${styles.footerInner}`}>
+          <div className={styles.footerBrand}>
+            <div className="site-footer-name">
+              {/* eslint-disable-next-line @next/next/no-img-element -- small SVG, nothing to optimize */}
+              <img className="site-footer-logo" src="/brand/logo-blanc.svg" alt="" width={46} height={48} />
+              <strong>{header.siteName}</strong>
+            </div>
+            <em>{header.tagline}.</em>
+          </div>
+          <nav className={styles.footerNav} aria-label={t.footer.navLabel}>
+            <a href="#accueil">{t.footer.home}</a>
+            <a href="#comment-ca-marche">{t.nav.howItWorks}</a>
+            <a href="#vision">{t.nav.vision}</a>
+          </nav>
+          <p className={styles.copyright}>{t.footer.copyright}</p>
+          <nav className={`site-footer-legal ${styles.footerLegal}`} aria-label={legal.navLabel}>
+            <Link href={LEGAL_PAGES.notice}>{legal.notice.title}</Link>
+            <Link href={LEGAL_PAGES.privacy}>{legal.privacy.title}</Link>
+            <Link href={LEGAL_PAGES.terms}>{legal.terms.title}</Link>
+          </nav>
+        </div>
+      </footer>
+      <Reveal />
     </>
   );
 }

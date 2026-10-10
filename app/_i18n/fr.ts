@@ -57,39 +57,15 @@ export const fr = {
     skip: "Passer",
   },
 
+  /** The queue ticket under the home page's title. */
   home: {
-    /** What the site is, above the ticket. */
-    platform: "Plateforme citoyenne de satisfaction des usagers",
-    photoAlt: "Bus du BRT à Dakar",
-    photoCaption: "Bus du BRT, Dakar",
     ticketLabel: "Ticket usager",
     ticketNumber: "N° 047",
     title: "C'est votre tour.",
-    lead: "Vous avez utilisé un service, public ou privé ? Dites-nous comment ça s'est passé. Ensemble, pour un Sénégal qui progresse.",
     duration: "Gratuit, environ 1 minute.",
-    qr: "Encore au guichet ? <b>Scannez le QR code affiché</b>, l'établissement sera déjà rempli.",
-    civicTitle: "Un geste citoyen : donner son avis, c'est faire entendre la voix des usagers.",
-    civicLead: "Chaque expérience compte : mairie, hôpital, banque, transport, hôtel, restaurant…",
-    civicPoints: [
-      { title: "Écouter", text: "Décrivez ce que vous avez vécu, avec respect et honnêteté." },
-      {
-        title: "Comprendre",
-        text: "Une expérience ne se résume pas à une note : chaque réponse est analysée pour montrer ce qui marche et ce qui doit changer.",
-      },
-      {
-        title: "Améliorer",
-        text: "Les résultats sont publiés chaque mois, en toute transparence, pour aider les responsables à décider.",
-      },
-    ],
-    stepsTitle: "Comment ça marche",
-    steps: [
-      "Trouvez l'établissement ou l'organisme à évaluer.",
-      "En quelques clics, dites si vous êtes satisfait(e) et ajoutez vos commentaires et suggestions.",
-      "C'est enregistré : votre réponse compte dans les résultats du mois.",
-    ],
   },
 
-  /** Pre-launch landing page (neexnaxari.com until the official launch). */
+  /** Home page: the pre-launch landing, kept at launch with the ticket. */
   landing: {
     meta: {
       title: "NeexNaxari — La plateforme de vos expériences",
@@ -100,15 +76,12 @@ export const fr = {
     nav: {
       howItWorks: "Comment ça marche",
       vision: "Notre vision",
-      soon: "Bientôt disponible",
       openMenu: "Ouvrir le menu",
       closeMenu: "Fermer le menu",
     },
     hero: {
       title: "Votre expérience peut faire avancer les services.",
       lead: "Partagez votre expérience des services que vous utilisez et contribuez à leur amélioration.",
-      discover: "Découvrir NeexNaxari",
-      follow: "Suivre le lancement",
       photoAlt: "Des usagers montent dans un bus Tata à un arrêt de Dakar.",
       phoneAlt:
         "Écran de NeexNaxari sur un téléphone : « Êtes-vous satisfait(e) du service reçu ? » pour un trajet en bus de l'AFTU, avec cinq réponses de « Très satisfait(e) » à « Pas du tout satisfait(e) ».",
@@ -159,9 +132,9 @@ export const fr = {
       ],
     },
     soon: {
-      title: "NeexNaxari arrive.",
+      title: "Suivez NeexNaxari.",
       text: "Une nouvelle façon de partager vos expériences et de participer à l'amélioration des services.",
-      follow: "Suivez-nous sur les réseaux pour être informé du lancement officiel.",
+      follow: "Retrouvez nos actualités sur les réseaux.",
       handle: "@neexnaxari",
       /** Button texts; the button opens the page in a new tab. */
       networks: { facebook: "Facebook", instagram: "Instagram", tiktok: "TikTok", x: "X" },
