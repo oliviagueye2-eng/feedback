@@ -759,6 +759,37 @@ describe("feedback", () => {
     });
   });
 
+  it("gives Jumia, an online shop, the online order and no shop topic; the shops keep theirs (0082)", async () => {
+    const [jumia] = await rows<{ id: string }>("SELECT id FROM establishment WHERE name = 'Jumia'");
+    const [auchan] = await rows<{ id: string }>("SELECT id FROM establishment WHERE name = 'Auchan'");
+    const services = Object.fromEntries((await getEstablishment(jumia!.id)).services.map((s) => [s.label, s.id]));
+    expect(Object.keys(services)).toEqual(["Une commande en ligne"]);
+    const visit = async (feedback: string, establishmentId: string, serviceId: number | null) => {
+      await upsertFeedback(feedback, { channel: "search", establishmentId, serviceId, language: "fr", visitPeriod: "today" });
+      return {
+        topics: (await getDetailsScreen(feedback)).topics.map((t) => t.code),
+        questions: (await getDetailedQuestionnaire(feedback)).questions.map((q) => q.code),
+      };
+    };
+    expect(await visit("d0e1f2a3-0082-4000-8000-000000000001", jumia!.id, services["Une commande en ligne"]!)).toEqual({
+      topics: [
+        "PROFESSIONALISM", "INFORMATION", "DELIVERY_TIME", "COURIER_PUNCTUALITY", "CUSTOMER_SERVICE", "PARCEL_TRACKING",
+        "FEES", "PARCEL_CONDITION",
+      ],
+      // How the order came first, then the courier after a delivery, the parcel and the product.
+      questions: [
+        "ORDER_RECEPTION", "COURIER_ON_TIME", "PARCEL_RECEIVED", "PRODUCT_AS_DESCRIBED", "RETURN_REQUEST",
+        "FAIR_PRICE", "PAID_SOMETHING", "RECEIPT_OR_INVOICE", "RECOMMEND", "REPORTED", "REPORT_WHY",
+      ],
+    });
+    const shop = ["WAIT_TIME", "OPENING_HOURS", "CLEANLINESS", "ACCESS_FOR_ALL"];
+    expect((await visit("d0e1f2a3-0082-4000-8000-000000000002", jumia!.id, null)).topics).toEqual([
+      "PROFESSIONALISM", "INFORMATION", "CUSTOMER_SERVICE", "FEES",
+    ]);
+    // A supermarket keeps the commerce topics, now given by its type.
+    expect((await visit("d0e1f2a3-0082-4000-8000-000000000003", auchan!.id, null)).topics).toEqual(expect.arrayContaining(shop));
+  });
+
   it("gives the police the topics and questions of the visit chosen: at the station, a check or a call (0010, 0013)", async () => {
     const [police] = await rows<{ id: string }>(
       "SELECT e.id FROM establishment e JOIN organization o ON o.id = e.organization_id WHERE o.code = 'POLICE_NATIONALE'",

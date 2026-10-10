@@ -48,7 +48,7 @@ describe("first establishments of the registry", () => {
       { sector: "HEALTH", n: 8 },
       { sector: "JUSTICE", n: 5 },
       { sector: "MOBILE_PAYMENT", n: 1 },
-      { sector: "RETAIL", n: 5 },
+      { sector: "RETAIL", n: 6 }, // 0082: online shop
       { sector: "SECURITY", n: 4 },
       { sector: "SOCIAL", n: 5 },
       { sector: "SPORT", n: 3 },
@@ -76,14 +76,14 @@ describe("first establishments of the registry", () => {
     expect(rows).toEqual([]);
   });
 
-  it("has the ninety-one organisations, each rated in general", async () => {
+  it("has the ninety-two organisations, each rated in general", async () => {
     const { rows } = await db.query<{ organizations: number; general: number }>(`
       SELECT (SELECT count(*)::int FROM organization) AS organizations,
              (SELECT count(*)::int FROM establishment WHERE scope = 'general') AS general`);
     // 11 organisations, the 5 transport operators (0003), Air Sénégal (0006), the police and the gendarmerie (0010),
     // 26 more banks (0022) and 41 more organisations (0025).
-    // Orange Money and Mixx by Yas (0027).
-    expect(rows[0]).toEqual({ organizations: 91, general: 91 });
+    // Orange Money and Mixx by Yas (0027). Jumia (0082).
+    expect(rows[0]).toEqual({ organizations: 92, general: 92 });
   });
 
   it("finds an organisation by its usual name, full name or former name", async () => {
