@@ -4,7 +4,7 @@ import { getEssentialScreen } from "@/src/domain/feedback";
 import { answerEssential } from "../../_feedback/actions";
 import { EssentialOptions } from "../../_feedback/EssentialOptions";
 import { FeedbackHeader } from "../../_feedback/FeedbackHeader";
-import { screenOneHref } from "../../_feedback/links";
+import { beforeScreenTwoHref } from "../../_feedback/links";
 import { BackLink } from "../../../_components/BackLink";
 import { getDictionary } from "../../../_i18n";
 import { frenchSpaces } from "../../../_i18n/typography";
@@ -33,7 +33,7 @@ export default async function EssentialQuestionPage({ params }: PageProps<"/donn
             <legend className={styles.question}>{frenchSpaces(question.label)}</legend>
             <EssentialOptions options={question.options} chosen={context.essentialOption} t={{ hint: t.hint, saving: common.wait }} />
           </fieldset>
-          <BackLink href={screenOneHref(context, feedbackId)} label={common.previous} />
+          <BackLink href={beforeScreenTwoHref(context, feedbackId)} label={common.previous} />
         </form>
       </main>
     </>

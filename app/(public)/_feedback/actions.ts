@@ -4,6 +4,9 @@ import { redirect } from "next/navigation";
 import { DomainError } from "@/src/domain/errors";
 import { defaultLocale } from "../../_i18n";
 import {
+  addSite,
+  chooseSite,
+  needsSiteStep,
   nextQuestionPage,
   OTHER_TOPIC_CODE,
   removeComment,
@@ -16,11 +19,12 @@ import {
   upsertFeedback,
   type QuestionPage,
 } from "@/src/domain/feedback";
-import { questionPageHref, sendPageHref } from "./links";
+import { questionPageHref, sendPageHref, siteStepHref } from "./links";
 
 /**
  * Screen 1 → screen 2: records the visit (establishment, reason, when), then
- * opens the essential question. The feedback id comes from the page (a hidden
+ * opens the essential question, or first « Dans quelle agence ? » for a
+ * service done in an agency of the organisation. The feedback id comes from the page (a hidden
  * field): sending the form twice after a network cut updates the same feedback.
  * Works without JavaScript (plain form POST).
  */
@@ -45,6 +49,30 @@ export async function startFeedback(formData: FormData) {
   } catch (error) {
     if (error instanceof DomainError && error.code === "INVALID_INPUT") {
       redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}erreur=quand`);
+    }
+    throw error;
+  }
+  redirect((await needsSiteStep(id)) ? siteStepHref(id) : `/donner/${id}`);
+}
+
+/**
+ * « Dans quelle agence ? » → screen 2. Three ways out: an agency of the list
+ * (field "site"), « Je ne sais plus » ("site" = the organisation « in
+ * general »), or the place typed (field "place"): an agency already known
+ * there, else a new one, pending review.
+ */
+export async function saveSite(formData: FormData) {
+  const id = String(formData.get("feedbackId") ?? "");
+  const site = formData.get("site");
+  try {
+    if (typeof site === "string" && site !== "") {
+      await chooseSite(id, site);
+    } else {
+      await addSite(id, String(formData.get("place") ?? ""));
+    }
+  } catch (error) {
+    if (error instanceof DomainError && error.code === "INVALID_INPUT") {
+      redirect(`${siteStepHref(id)}?erreur=1`);
     }
     throw error;
   }

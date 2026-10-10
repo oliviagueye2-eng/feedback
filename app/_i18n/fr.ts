@@ -229,6 +229,16 @@ export const fr = {
     duration: "Gratuit, environ 1 minute.",
   },
 
+  site: {
+    title: "Dans quelle agence ?",
+    placeholder: "Commune ou quartier (ex. : Touba)",
+    error: "Indiquez la commune ou le quartier (2 lettres au moins), ou appuyez sur « Je ne sais plus ».",
+    continueWith: "Continuer avec « {place} »",
+    submitNoPlace: "Continuer",
+    unknown: "Je ne sais plus",
+    note: "Une agence qui n'est pas dans la liste y sera ajoutée après validation.",
+  },
+
   qr: {
     inactiveTitle: "Ce QR code n'est plus actif",
     inactiveText: "Vous pouvez chercher l'établissement par son nom.",
