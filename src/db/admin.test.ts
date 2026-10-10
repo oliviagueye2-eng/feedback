@@ -330,8 +330,8 @@ describe("questionnaire", () => {
 
   it("puts mobile money in its own sector, apart from banks and insurers", async () => {
     const banking = await getQuestionnaire({ sector: "BANKING_INSURANCE" });
-    // 0057: three services for the banks.
-    expect(banking.services.map((s) => s.code).sort()).toEqual(["ATM_WITHDRAWAL", "BANK_AGENCY", "BANK_APP", "INSURANCE_CLAIM"]);
+    // 0057: three services for the banks; 0081: the claim on the account.
+    expect(banking.services.map((s) => s.code).sort()).toEqual(["ACCOUNT_CLAIM", "ATM_WITHDRAWAL", "BANK_AGENCY", "BANK_APP", "INSURANCE_CLAIM"]);
     const mobile = await getQuestionnaire({ sector: "MOBILE_PAYMENT" });
     // 0031: lists of its own, for a feedback with no service (« Autre démarche »).
     expect(mobile.sectors).toEqual([
@@ -363,13 +363,14 @@ describe("questionnaire", () => {
         withoutTypeQuestionListCodes: [],
       },
     ]);
-    expect(mobile.services.map((s) => s.code)).toEqual(["MOBILE_MONEY", "MOBILE_MONEY_AGENT", "MOBILE_MONEY_SUPPORT"]);
-    expect(mobile.services[0]!.establishments).toEqual(["Mixx by Yas", "Orange Money", "Wave"]);
+    // 0081: and the claim on the account.
+    expect(mobile.services.map((s) => s.code)).toEqual(["ACCOUNT_CLAIM", "MOBILE_MONEY", "MOBILE_MONEY_AGENT", "MOBILE_MONEY_SUPPORT"]);
+    expect(mobile.services.find((s) => s.code === "MOBILE_MONEY")!.establishments).toEqual(["Mixx by Yas", "Orange Money", "Wave"]);
   });
 
   it("lists the question bank, narrowed by the filters to the lists shown", async () => {
     const all = await getQuestionnaire({});
-    expect(all.questions).toHaveLength(112);
+    expect(all.questions).toHaveLength(115);
     const receipt = all.questions.find((q) => q.code === "RECEIPT_GIVEN")!;
     expect(all.questions.find((q) => q.code === "PAID_SOMETHING")!.opensTopics).toEqual(["FEES"]);
     // FILE_SUBMITTED is in no list, but opens two topics of the civil registry centres.
@@ -384,8 +385,9 @@ describe("questionnaire", () => {
 
     const mobile = await getQuestionnaire({ sector: "MOBILE_PAYMENT" });
     expect(mobile.questions.map((q) => q.code)).toEqual([
-      // By category, then by code.
-      "GOAL_ACHIEVED", "MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "AGENT_CASH", "MONEY_OPERATION_KIND", "OVERALL_SATISFACTION",
+      // By category, then by code. 0081: the claim's three; not FILE_SUBMITTED, its topic shown always there.
+      "ACCOUNT_REFUNDED", "GOAL_ACHIEVED", "MONEY_OPERATION_OK", "MONEY_PROBLEM_SOLVED", "ACCOUNT_CLAIM_DELAY", "AGENT_CASH",
+      "ACCOUNT_CLAIM_SUBJECT", "MONEY_OPERATION_KIND", "OVERALL_SATISFACTION",
       // Opens FEES, a topic of the Paiement mobile list, at screen 2b.
       "PAID_SOMETHING",
       "REPORTED", "REPORT_WHY", "SUPPORT_REASON",

@@ -221,10 +221,11 @@ export async function getQuestionnaire(filter: { sector?: string; type?: string;
         : services;
   // Filtered: the questions of the lists shown above, those every feedback
   // may get (the essential question, the common ones), and those that open a
-  // topic shown above at screen 2b (asked by Olivia, 2026-10-08).
+  // topic shown above at screen 2b (asked by Olivia, 2026-10-08), unless it
+  // is shown always there (0047, 0081).
   const shown = [...shownSectors, ...shownTypes, ...shownServices];
   const lists = new Set(shown.flatMap((x) => x.questionListCodes).concat(SHARED_QUESTION_LISTS));
-  const topics = new Set(shown.flatMap((x) => x.topics.map((t) => t.code)));
+  const topics = new Set(shown.flatMap((x) => x.topics.filter((t) => t.shownIf).map((t) => t.code)));
   const kept = (q: db.BankQuestion) => q.lists.some((l) => lists.has(l)) || q.opensTopics.some((t) => topics.has(t));
   // The form shown once the filters name one: an establishment, or a sector
   // (with or without a type), with the service chosen or none.

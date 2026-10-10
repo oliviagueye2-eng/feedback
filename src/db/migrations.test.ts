@@ -240,7 +240,7 @@ describe("reference data", () => {
     expect(row).toEqual({
       topics: null,
       questions: [
-        "AGENCY_SUBJECT", "ARRIVAL_MODE", "BANK_SUBJECT", "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "DAARA_BOARDING", "DELIVERY_KIND", "FIELD_SITUATION",
+        "ACCOUNT_CLAIM_SUBJECT", "AGENCY_SUBJECT", "ARRIVAL_MODE", "BANK_SUBJECT", "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "DAARA_BOARDING", "DELIVERY_KIND", "FIELD_SITUATION",
         "FILE_SUBMITTED", "INTERVENTION_AWAITED", "MATERNITY_VISIT_KIND", "MONEY_CHANNEL", "MONEY_OPERATION_KIND", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
         "PHARMACY_VISIT_REASON", "POLICE_VISIT_REASON", "POSTAL_COUNTER_SUBJECT", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
         "SANITATION_SUBJECT", "SEWER_PROBLEM", "SUPPORT_REASON", "TELECOM_SHOP_SUBJECT", "TELECOM_SUBJECT", "TELECOM_SUPPORT_REASON", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "TV_SHOP_SUBJECT", "UTILITY_SUBJECT",
@@ -249,7 +249,7 @@ describe("reference data", () => {
     });
   });
 
-  it("has the bank of 112 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058, 2 of 0062, 2 of 0065, 6 of 0066, 2 of 0068, 1 of 0069, 6 of 0070, 3 of 0071, 3 of 0072, 2 of 0074, 1 of 0075, 1 of 0076), each written once, every text in French", async () => {
+  it("has the bank of 115 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058, 2 of 0062, 2 of 0065, 6 of 0066, 2 of 0068, 1 of 0069, 6 of 0070, 3 of 0071, 3 of 0072, 2 of 0074, 1 of 0075, 1 of 0076, 3 of 0081), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -263,7 +263,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 112, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 115, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -312,6 +312,8 @@ describe("reference data", () => {
       POSTAL_COUNTER: "POSTAL_COUNTER + PAID_AND_RECEIPT", DELIVERY: "DELIVERY",
       // 0069: the telecom's customer service.
       TELECOM_SUPPORT: "TELECOM_SUPPORT",
+      // 0081: the claim on the account.
+      ACCOUNT_CLAIM: "ACCOUNT_CLAIM",
       // 0071: the hospital's paths (the consultation adds a topic only).
       EMERGENCY: "EMERGENCY", CONSULTATION: null, HOSPITAL_STAY: "HOSPITAL_STAY", MATERNITY: "MATERNITY",
     });
@@ -363,6 +365,12 @@ describe("reference data", () => {
        JOIN answer_option ao ON ao.id = qc.option_id
        ORDER BY qs.code, q.code, ao.position`)).rows.map((r) => `${r.list}: ${r.question} ← ${r.depends_on} ${r.option}`);
     expect(conditions).toEqual([
+      "ACCOUNT_CLAIM: ACCOUNT_CLAIM_DELAY ← ACCOUNT_REFUNDED YES",
+      "ACCOUNT_CLAIM: ACCOUNT_CLAIM_DELAY ← ACCOUNT_REFUNDED PARTLY",
+      "ACCOUNT_CLAIM: ACCOUNT_REFUNDED ← ACCOUNT_CLAIM_SUBJECT UNKNOWN_OPERATION",
+      "ACCOUNT_CLAIM: ACCOUNT_REFUNDED ← ACCOUNT_CLAIM_SUBJECT UNKNOWN_WITHDRAWAL",
+      "ACCOUNT_CLAIM: ACCOUNT_REFUNDED ← ACCOUNT_CLAIM_SUBJECT UNJUSTIFIED_FEES",
+      "ACCOUNT_CLAIM: ACCOUNT_REFUNDED ← ACCOUNT_CLAIM_SUBJECT FRAUD_REFUND",
       "AIRPORT: PARKING_EASE ← ARRIVAL_MODE OWN_VEHICLE",
       "ATM_WITHDRAWAL: MONEY_PROBLEM_SOLVED ← ATM_WITHDRAWAL_OK OUT_OF_SERVICE",
       "ATM_WITHDRAWAL: MONEY_PROBLEM_SOLVED ← ATM_WITHDRAWAL_OK CARD_RETAINED",

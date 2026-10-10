@@ -212,7 +212,7 @@ describe("establishment", () => {
   it("gives a bank added later the paths of its type (0073)", async () => {
     const bank = await createUserEstablishment({ name: "Banque Nouvelle", sector: "BANKING_INSURANCE", type: "BANK" });
     const codes = (await getEstablishment(bank.id)).services.map((s) => s.code).sort();
-    expect(codes).toEqual(["ATM_WITHDRAWAL", "BANK_AGENCY", "BANK_APP"]);
+    expect(codes).toEqual(["ACCOUNT_CLAIM", "ATM_WITHDRAWAL", "BANK_AGENCY", "BANK_APP"]);
   });
 
   it("lists the twenty-one sectors in alphabetical order, accents ignored", async () => {
@@ -646,15 +646,16 @@ describe("feedback", () => {
     ]);
   });
 
-  it("gives mobile money three services with their own topics, not the bank agencies' (0026)", async () => {
+  it("gives mobile money four services with their own topics, not the bank agencies' (0026, 0081)", async () => {
     const [wave] = await rows<{ id: string }>("SELECT id FROM establishment WHERE name = 'Wave'");
     const services = Object.fromEntries((await getEstablishment(wave!.id)).services.map((s) => [s.label, s.id]));
     expect(Object.keys(services)).toEqual([
       "Opération dans un point de service",
       "Service client (appel, réclamation)",
+      "Une réclamation sur le compte (opération, frais, fraude)",
       "Utilisation de l'application mobile",
     ]);
-    // Orange Money and Mixx by Yas have the same three; Orange and Yas keep the telephone (0027).
+    // Orange Money and Mixx by Yas have the same four; Orange and Yas keep the telephone (0027).
     const servicesOf = async (name: string) => {
       const [e] = await rows<{ id: string }>("SELECT id FROM establishment WHERE name = $1", [name]);
       return (await getEstablishment(e!.id)).services.map((s) => s.label);
@@ -690,6 +691,13 @@ describe("feedback", () => {
       // 0068: why one contacted it first.
       questions: ["SUPPORT_REASON", "MONEY_PROBLEM_SOLVED", "REPORTED", "REPORT_WHY"],
     });
+    // 0081: the claim on the account; « Suivi et transparence du dossier » without « Avez-vous déposé un dossier ? ».
+    expect(await visit("d0e1f2a3-0000-4000-8000-000000000004", services["Une réclamation sur le compte (opération, frais, fraude)"]!)).toEqual({
+      topics: ["REQUEST_HANDLING", "PROFESSIONALISM", "INFORMATION", "RESPONSE_TIME", "CASE_TRACKING", "SUPPORT_REACHABILITY", "ACCOUNT_SECURITY"],
+      questions: ["ACCOUNT_CLAIM_SUBJECT", "ACCOUNT_REFUNDED", "ACCOUNT_CLAIM_DELAY", "REPORTED", "REPORT_WHY"],
+    });
+    const claimTopics = (await getDetailsScreen("d0e1f2a3-0000-4000-8000-000000000004")).topics;
+    expect(claimTopics.find((t) => t.code === "CASE_TRACKING")).toMatchObject({ gate: null });
   });
 
   it("gives a university the topics of the visit chosen and the schools' questions (0015)", async () => {
