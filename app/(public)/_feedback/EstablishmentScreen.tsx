@@ -5,6 +5,7 @@ import { FormValidation } from "../../_components/FormValidation";
 import { establishmentDetails } from "../../_components/establishmentDetails";
 import { organizationLogoSrc } from "../../_components/organizationLogo";
 import { PendingLoader } from "../../_components/PendingLoader";
+import { Progress } from "./Progress";
 import { getDictionary } from "../../_i18n";
 import type { EstablishmentDetail } from "@/src/db/establishments";
 import { startFeedback } from "./actions";
@@ -55,28 +56,35 @@ export async function EstablishmentScreen({
       {qr?.serviceId && <input type="hidden" name="service" value={qr.serviceId} />}
       <ResumeFeedback feedbackId={feedbackId} establishmentId={establishment.id} />
 
-      {/* The title and what is being rated read as one block: a light line
-          under the title, no check, « Changer » on the right. */}
+      <Progress screen="establishment" />
+
+      {/* The establishment's name is the title, in large green type, under a
+          small line « Partagez votre expérience avec »; its details below,
+          then the link to change it (mockup validated on 2026-10-10). */}
       <header className={styles.heading}>
-        <h1 className={styles.title}>{t.title}</h1>
         <div className={styles.rated}>
           {logo && (
             // eslint-disable-next-line @next/next/no-img-element -- small SVG, nothing to optimize
             <img className={styles.ratedLogo} src={logo} alt="" width={40} height={40} />
           )}
-          <div className={styles.ratedText}>
-            <strong>{establishment.name}</strong>
+          <h1 className={styles.title}>
+            <span className={styles.titleLead}>{t.title}</span>{" "}
+            <span className={styles.titleName}>{establishment.name}</span>
+          </h1>
+        </div>
+        {(details || qrService?.label) && (
+          <p className={styles.ratedText}>
             {details && <span>{details}</span>}
             {qrService?.label && <span>{qrService.label}</span>}
-          </div>
-          <Link href="/avis" className={styles.ratedChange} aria-label={t.changeLabel}>
-            {t.change}
-          </Link>
-        </div>
+          </p>
+        )}
+        <Link href="/avis" className={styles.ratedChange} aria-label={t.changeLabel}>
+          {t.change}
+        </Link>
       </header>
 
       {askReason && (
-        <fieldset className={styles.group}>
+        <fieldset className={`${styles.group} ${styles.card}`}>
           <legend>{t.reason}</legend>
           {/* « Autre démarche » and no choice are both saved as no service,
               so a saved « no service » checks nothing. */}
@@ -92,7 +100,7 @@ export async function EstablishmentScreen({
       )}
 
       {askWhen && (
-        <fieldset className={styles.group}>
+        <fieldset className={`${styles.group} ${styles.card} ${styles.cardColumns}`}>
           <legend>{t.when}</legend>
           <FormValidation message={t.whenError} shown={error} />
           <ChoiceSheet

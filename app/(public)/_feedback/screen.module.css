@@ -15,23 +15,63 @@ form.screen:has(> .heading) {
   gap: 32px;
 }
 
+/* Thin bar at the top of each screen of a feedback (Progress): no figure,
+   only how far the person is. */
+.progress {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green);
+}
+
+form.screen:has(> .heading) > .progress {
+  margin-bottom: -10px;
+}
+
+/* The establishment's name is the title: a small grey line above it, then
+   the name in large green type. */
 .title {
   margin: 0;
-  font-size: 28px;
   line-height: 1.15;
 }
 
-/* Title and what is being rated: one block. The rated line sits on the page
-   with no box, like a subtitle, so it is not mistaken for a choice. */
+.titleLead {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 17px;
+  color: var(--muted);
+}
+
+.titleName {
+  display: block;
+  font-size: 30px;
+  color: var(--green);
+}
+
+@media (min-width: 600px) {
+  .titleName {
+    font-size: 36px;
+  }
+}
+
+/* The name, its details and the link to change it: one block on the page,
+   with no box, so it is not mistaken for a choice. */
 .heading {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .rated {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 12px;
 }
 
@@ -43,29 +83,21 @@ form.screen:has(> .heading) {
 }
 
 .ratedText {
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 0;
   font-size: 16px;
   color: var(--muted);
 }
 
-.ratedText strong {
-  font-size: 22px;
-  line-height: 1.2;
-  color: var(--ink);
-}
-
-/* 44 px touch area, centred on the line. */
+/* Under the details, on its own line: 44 px touch area. */
 .ratedChange {
-  margin-left: auto;
-  flex-shrink: 0;
+  align-self: flex-start;
   min-height: 44px;
-  padding: 0 0 0 12px;
   display: flex;
   align-items: center;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -91,10 +123,49 @@ form.screen:has(> .heading) {
   margin-bottom: 12px;
 }
 
+/* Screen 1: each question in its own white card, its title inside. The
+   floated legend sits inside the card instead of on its border. */
+.card {
+  padding: 18px 8px 8px;
+  background: #fff;
+  border: 1px solid var(--line-light);
+  border-radius: 14px;
+}
+
+.card > legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 0 16px;
+}
+
+.card > :not(legend, .choiceSheet) {
+  padding: 0 16px;
+}
+
+/* Short answers (the periods): two per row where there is room. */
+@media (min-width: 600px) {
+  .cardColumns .choiceSheet {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .cardColumns .choice {
+    box-shadow: inset 0 0 0 1px var(--line-light);
+    border-radius: 10px;
+  }
+
+  .cardColumns .choice::before {
+    display: none;
+  }
+}
+
 /* Screen 1's choices (ChoiceSheet): one white sheet with no outline, one
    line each, separated by faint rules that stop short of its edges
    (« feuille légère », as on the topics screen). The whole line is the radio
-   button; the chosen one gets the green tint, a thin green edge and a green check. */
+   button, its circle on the left; the chosen one gets the green tint, a thin
+   green edge and a green check. */
 .choiceSheet {
   background: #fff;
   border-radius: 10px;
@@ -108,8 +179,9 @@ form.screen:has(> .heading) {
   min-height: 56px;
   padding: 12px 16px;
   display: flex;
+  flex-direction: row-reverse;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   font-size: 17px;
   line-height: 1.25;

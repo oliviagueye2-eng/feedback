@@ -8,6 +8,7 @@ import { fill } from "../../_i18n/format";
 import { frenchSpaces } from "../../_i18n/typography";
 import { saveDetailedAnswers } from "./actions";
 import { FeedbackHeader } from "./FeedbackHeader";
+import { Progress } from "./Progress";
 import { questionPageHref } from "./links";
 import styles from "./screen.module.css";
 
@@ -74,6 +75,7 @@ export async function QuestionsScreen({
       <FeedbackHeader establishmentName={context.establishmentName} serviceLabel={context.serviceLabel} />
       <main style={{ background: "var(--page)" }}>
         <form action={saveDetailedAnswers} className={styles.screen}>
+          <Progress screen={page} />
           <input type="hidden" name="feedbackId" value={feedbackId} />
           <input type="hidden" name="page" value={page} />
           <p className="muted" style={{ margin: 0, fontSize: 15 }}>

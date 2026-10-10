@@ -7,6 +7,7 @@ import { CONTACT_MAX_LENGTH, getSendScreen, recordPageShown } from "@/src/domain
 import { getDictionary } from "../../../../_i18n";
 import { sendFeedback } from "../../../_feedback/actions";
 import { FeedbackHeader } from "../../../_feedback/FeedbackHeader";
+import { Progress } from "../../../_feedback/Progress";
 import { questionPageHref } from "../../../_feedback/links";
 import styles from "../../../_feedback/screen.module.css";
 
@@ -43,6 +44,7 @@ export default async function SendPage({ params, searchParams }: PageProps<"/don
       <FeedbackHeader establishmentName={context.establishmentName} serviceLabel={context.serviceLabel} />
       <main style={{ background: "var(--page)" }}>
         <form action={sendFeedback} className={`${styles.screen} ${styles.send}`}>
+          <Progress screen="send" />
           <input type="hidden" name="feedbackId" value={feedbackId} />
           {erreur !== undefined && (
             <p role="alert" className={styles.error}>
