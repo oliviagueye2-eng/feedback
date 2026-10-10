@@ -124,8 +124,7 @@ form.screen:has(> .heading) > .progress {
 }
 
 /* Screen 1: each question in its own white card, its title inside. The
-   floated legend sits inside the card instead of on its border. The choice's
-   circle comes first, on the left. */
+   floated legend sits inside the card instead of on its border. */
 .card {
   padding: 18px 8px 8px;
   background: #fff;
@@ -142,11 +141,6 @@ form.screen:has(> .heading) > .progress {
 
 .card > :not(legend, .choiceSheet) {
   padding: 0 16px;
-}
-
-.card .choice {
-  flex-direction: row-reverse;
-  justify-content: flex-end;
 }
 
 /* Short answers (the periods): two per row where there is room. */
@@ -170,7 +164,8 @@ form.screen:has(> .heading) > .progress {
 /* Screen 1's choices (ChoiceSheet): one white sheet with no outline, one
    line each, separated by faint rules that stop short of its edges
    (« feuille légère », as on the topics screen). The whole line is the radio
-   button; the chosen one gets the green tint, a thin green edge and a green check. */
+   button, its circle on the left; the chosen one gets the green tint, a thin
+   green edge and a green check. */
 .choiceSheet {
   background: #fff;
   border-radius: 10px;
@@ -184,8 +179,9 @@ form.screen:has(> .heading) > .progress {
   min-height: 56px;
   padding: 12px 16px;
   display: flex;
+  flex-direction: row-reverse;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   font-size: 17px;
   line-height: 1.25;
