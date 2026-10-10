@@ -5,4 +5,4 @@ export const LEGAL_PAGES = {
   terms: "/conditions-utilisation",
 } as const;
 
-export const CONTACT_EMAIL = "contact@neexnaxari.com";
+export const CONTACT_EMAIL = "contact@neexnaqari.com";

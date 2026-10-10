@@ -17,9 +17,9 @@ import styles from "./_landing/landing.module.css";
 export async function generateMetadata(): Promise<Metadata> {
   const { landing, header } = await getDictionary();
   const { title, description, imageAlt } = landing.meta;
-  const image = { url: "/brand/partage-neexnaxari-v2.png", width: 1200, height: 630, alt: imageAlt };
+  const image = { url: "/brand/partage-neexnaqari.png", width: 1200, height: 630, alt: imageAlt };
   return {
-    metadataBase: new URL("https://neexnaxari.com"),
+    metadataBase: new URL("https://neexnaqari.com"),
     title,
     description,
     alternates: { canonical: "/" },
@@ -64,7 +64,7 @@ export default async function HomePage() {
         <section id="accueil" className={`${styles.hero} ${styles.anchor}`}>
           <div className={`container ${styles.heroInner}`}>
             <div className={styles.heroText}>
-              {/* The brand mark, large: the logo is how people will recognise NeexNaxari. */}
+              {/* The brand mark, large: the logo is how people will recognise NeexNaqari. */}
               {/* eslint-disable-next-line @next/next/no-img-element -- SVG, nothing to optimize */}
               <img className={styles.heroLogo} src="/brand/logo-degrade.svg" alt="" width={120} height={127} />
               <h1 className={styles.heroTitle}>{t.hero.title}</h1>

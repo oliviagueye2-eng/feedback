@@ -11,7 +11,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/console-bo/qr-c
   return new Response(qrSvg(poster.code), {
     headers: {
       "Content-Type": "image/svg+xml",
-      "Content-Disposition": `attachment; filename="neexnaxari-qr-${poster.code}.svg"`,
+      "Content-Disposition": `attachment; filename="neexnaqari-qr-${poster.code}.svg"`,
       "Cache-Control": "private, no-store",
     },
   });
