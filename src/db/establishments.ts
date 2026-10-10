@@ -303,7 +303,7 @@ export interface SiteStep {
   serviceLabel: string | null;
   /** « Dans quelle boutique ? »…, by service; null when not written. */
   question: string | null;
-  /** The organisation « in general »: the feedback goes back to it with « Je ne sais plus ». */
+  /** The organisation « in general »: the feedback goes back to it with « Passer ». */
   generalId: string;
   /** The establishment the feedback is given to now. */
   currentId: string;

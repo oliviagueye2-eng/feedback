@@ -24,7 +24,7 @@ export async function getSiteScreen(feedbackId: string) {
   return step;
 }
 
-/** An agency of the list, or the organisation « in general » (« Je ne sais plus »). */
+/** An agency of the list, or the organisation « in general » (« Passer »). */
 export async function chooseSite(feedbackId: string, establishmentId: string): Promise<void> {
   requireUuid(feedbackId, "id");
   requireUuid(establishmentId, "establishmentId");

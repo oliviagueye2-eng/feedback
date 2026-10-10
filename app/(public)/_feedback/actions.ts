@@ -57,7 +57,7 @@ export async function startFeedback(formData: FormData) {
 
 /**
  * « Dans quelle agence ? » → screen 2. Three ways out: an agency of the list
- * (field "site"), « Je ne sais plus » ("site" = the organisation « in
+ * (field "site"), « Passer » ("site" = the organisation « in
  * general »), or the place typed (field "place"): an agency already known
  * there, else a new one, pending review.
  */

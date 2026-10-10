@@ -1139,7 +1139,7 @@ describe("« Dans quelle agence ? » (0078)", () => {
     expect(await current()).toBe(agencyId);
   });
 
-  it("goes back to Senelec in general with « Je ne sais plus », and refuses another organisation", async () => {
+  it("goes back to Senelec in general with « Passer », and refuses another organisation", async () => {
     await chooseSite(feedbackId, await senelec());
     expect(await current()).toBe(await senelec());
     await expect(chooseSite(feedbackId, ids.gy)).rejects.toMatchObject({ code: "INVALID_INPUT" });

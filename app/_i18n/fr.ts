@@ -232,10 +232,10 @@ export const fr = {
   site: {
     title: "Dans quelle agence ?",
     placeholder: "Commune ou quartier (ex. : Touba)",
-    error: "Indiquez la commune ou le quartier (2 lettres au moins), ou appuyez sur « Je ne sais plus ».",
+    error: "Indiquez la commune ou le quartier (2 lettres au moins), ou appuyez sur « Passer ».",
     continueWith: "Continuer avec « {place} »",
     submitNoPlace: "Continuer",
-    unknown: "Je ne sais plus",
+    unknown: "Passer",
     note: "Un lieu qui n'est pas dans la liste y sera ajouté après validation.",
   },
 

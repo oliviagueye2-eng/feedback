@@ -20,7 +20,7 @@ const matches = (site: EstablishmentSummary, typed: string) => {
 /**
  * « Dans quelle agence ? »: one field. The organisation's agencies show under
  * it, narrowed as the user types; one tap picks one. « Continuer » keeps what
- * is typed (an agency already known there, or a new one). « Je ne sais plus »
+ * is typed (an agency already known there, or a new one). « Passer »
  * goes on without an agency. Two forms, so that Enter in the field sends the
  * place, never the first agency. Without JavaScript, every agency shows.
  */
