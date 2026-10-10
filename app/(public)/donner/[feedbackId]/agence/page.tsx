@@ -11,7 +11,8 @@ import { SiteChooser } from "./SiteChooser";
 /**
  * « Dans quelle agence ? », between screen 1 and screen 2, when the feedback
  * is given to an organisation « in general » for a service done in one of
- * its agencies (service.asks_site). « Précédent » goes back to screen 1.
+ * its agencies (service.asks_site). The question is the service's
+ * (« Dans quelle boutique ? »…). « Précédent » goes back to screen 1.
  */
 export default async function SitePage({ params, searchParams }: PageProps<"/donner/[feedbackId]/agence">) {
   const { feedbackId } = await params;
@@ -38,7 +39,7 @@ export default async function SitePage({ params, searchParams }: PageProps<"/don
             sites={step.sites}
             error={erreur !== undefined}
             t={{
-              title: t.title,
+              title: step.question ?? t.title,
               placeholder: t.placeholder,
               error: t.error,
               continueWith: t.continueWith,

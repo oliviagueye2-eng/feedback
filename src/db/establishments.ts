@@ -301,6 +301,8 @@ export async function insertUserEstablishment(
 export interface SiteStep {
   organizationName: string;
   serviceLabel: string | null;
+  /** « Dans quelle boutique ? »…, by service; null when not written. */
+  question: string | null;
   /** The organisation « in general »: the feedback goes back to it with « Je ne sais plus ». */
   generalId: string;
   /** The establishment the feedback is given to now. */
@@ -318,10 +320,12 @@ export async function findSiteStep(feedbackId: string): Promise<SiteStep | null>
   const rows = await query<{
     organization_name: string;
     service_label: string | null;
+    question: string | null;
     general_id: string;
     current_id: string;
   }>(
-    `SELECT o.name AS organization_name, st.label AS service_label, g.id AS general_id,
+    `SELECT o.name AS organization_name, st.label AS service_label, st.site_question AS question,
+            g.id AS general_id,
             f.establishment_id AS current_id
      FROM feedback f
      JOIN service s ON s.id = f.service_id AND s.asks_site
@@ -348,6 +352,7 @@ export async function findSiteStep(feedbackId: string): Promise<SiteStep | null>
   return {
     organizationName: row.organization_name,
     serviceLabel: row.service_label,
+    question: row.question,
     generalId: row.general_id,
     currentId: row.current_id,
     sites: sites.map(toSummary),

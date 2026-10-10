@@ -1116,6 +1116,7 @@ describe("« Dans quelle agence ? » (0078)", () => {
     const screen = await getSiteScreen(feedbackId);
     expect(screen.organizationName).toBe("Senelec");
     expect(screen.serviceLabel).toBe("Une démarche en agence");
+    expect(screen.question).toBe("Dans quelle agence ?");
   });
 
   it("adds the agency typed, pending review and out of the list, and finds it again by its place", async () => {

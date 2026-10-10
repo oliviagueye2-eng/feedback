@@ -236,7 +236,7 @@ export const fr = {
     continueWith: "Continuer avec « {place} »",
     submitNoPlace: "Continuer",
     unknown: "Je ne sais plus",
-    note: "Une agence qui n'est pas dans la liste y sera ajoutée après validation.",
+    note: "Un lieu qui n'est pas dans la liste y sera ajouté après validation.",
   },
 
   qr: {
