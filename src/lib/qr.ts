@@ -6,7 +6,7 @@
 import { randomInt } from "node:crypto";
 import QRCode from "qrcode";
 
-export const QR_SITE = "neexnaxari.com";
+export const QR_SITE = "neexnaqari.com";
 
 /** No 0, O, 1, I or L: the code printed under the QR code can be typed without doubt. */
 const ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";

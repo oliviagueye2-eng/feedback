@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isIndexableHost } from "./src/lib/indexing";
 
 /**
- * Every address shows the whole site; only neexnaxari.com may appear in search
+ * Every address shows the whole site; only neexnaqari.com may appear in search
  * results (src/lib/indexing.ts). The back-office is also marked noindex by its
  * own layout.
  */

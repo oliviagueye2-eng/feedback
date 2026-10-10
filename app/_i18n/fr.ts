@@ -15,7 +15,7 @@
  */
 export const fr = {
   meta: {
-    title: "NeexNaxari, plateforme citoyenne de satisfaction des usagers",
+    title: "NeexNaqari, plateforme citoyenne de satisfaction des usagers",
     description: "Donnez votre avis sur un établissement : gratuit, environ une minute.",
   },
 
@@ -35,7 +35,7 @@ export const fr = {
   },
 
   header: {
-    siteName: "NeexNaxari",
+    siteName: "NeexNaqari",
     tagline: "La plateforme de vos expériences",
     navLabel: "Navigation principale",
     howItWorks: "Comment ça marche",
@@ -46,10 +46,10 @@ export const fr = {
     followUs: "Suivez-nous",
     /** Read by screen readers on each icon (the page opens in a new tab). */
     networks: {
-      facebook: "NeexNaxari sur Facebook (nouvel onglet)",
-      instagram: "NeexNaxari sur Instagram (nouvel onglet)",
-      tiktok: "NeexNaxari sur TikTok (nouvel onglet)",
-      x: "NeexNaxari sur X, anciennement Twitter (nouvel onglet)",
+      facebook: "NeexNaqari sur Facebook (nouvel onglet)",
+      instagram: "NeexNaqari sur Instagram (nouvel onglet)",
+      tiktok: "NeexNaqari sur TikTok (nouvel onglet)",
+      x: "NeexNaqari sur X, anciennement Twitter (nouvel onglet)",
     },
   },
 
@@ -68,10 +68,10 @@ export const fr = {
   /** Home page: the pre-launch landing, kept at launch with the ticket. */
   landing: {
     meta: {
-      title: "NeexNaxari — La plateforme de vos expériences",
+      title: "NeexNaqari — La plateforme de vos expériences",
       description:
-        "NeexNaxari permet de partager son expérience des services publics et privés et de contribuer à leur amélioration.",
-      imageAlt: "NeexNaxari, la plateforme de vos expériences",
+        "NeexNaqari permet de partager son expérience des services publics et privés et de contribuer à leur amélioration.",
+      imageAlt: "NeexNaqari, la plateforme de vos expériences",
     },
     nav: {
       howItWorks: "Comment ça marche",
@@ -84,20 +84,20 @@ export const fr = {
       lead: "Partagez votre expérience des services que vous utilisez et contribuez à leur amélioration.",
       photoAlt: "Des usagers montent dans un bus Tata à un arrêt de Dakar.",
       phoneAlt:
-        "Écran de NeexNaxari sur un téléphone : « Êtes-vous satisfait(e) du service reçu ? » pour un trajet en bus de l'AFTU, avec cinq réponses de « Très satisfait(e) » à « Pas du tout satisfait(e) ».",
+        "Écran de NeexNaqari sur un téléphone : « Êtes-vous satisfait(e) du service reçu ? » pour un trajet en bus de l'AFTU, avec cinq réponses de « Très satisfait(e) » à « Pas du tout satisfait(e) ».",
     },
     idea: {
-      label: "Pourquoi NeexNaxari ?",
+      label: "Pourquoi NeexNaqari ?",
       title: "Parce que chaque expérience doit pouvoir être entendue.",
       paragraphs: [
         "Nous utilisons chaque jour des services publics et privés. Chaque expérience nous apprend quelque chose : ce qui fonctionne, ce qui peut être amélioré et ce qui mérite d'être repensé.",
-        "NeexNaxari donne à chacun la possibilité de partager simplement son expérience et de contribuer à une amélioration continue des services.",
+        "NeexNaqari donne à chacun la possibilité de partager simplement son expérience et de contribuer à une amélioration continue des services.",
       ],
       chain: ["Votre expérience", "Votre voix", "Des résultats partagés chaque mois"],
     },
     services: {
       title: "Tous les services, toutes les expériences.",
-      lead: "NeexNaxari ne se limite pas à un secteur. La plateforme est pensée pour recueillir les expériences des citoyens et des clients, dans les services publics comme dans les services privés.",
+      lead: "NeexNaqari ne se limite pas à un secteur. La plateforme est pensée pour recueillir les expériences des citoyens et des clients, dans les services publics comme dans les services privés.",
       photoAlt: "Une usagère à l'accueil d'un centre de santé, face à une employée souriante.",
     },
     steps: {
@@ -116,7 +116,7 @@ export const fr = {
     },
     vision: {
       lines: ["La satisfaction des usagers au cœur du développement.", "Des expériences qui comptent.", "Un Sénégal qui progresse."],
-      text: "NeexNaxari veut contribuer à créer une culture de l'écoute, du respect, de la transparence et de l'amélioration continue des services.",
+      text: "NeexNaqari veut contribuer à créer une culture de l'écoute, du respect, de la transparence et de l'amélioration continue des services.",
       valuesTitle: "Ce qui nous guide",
       values: [
         { title: "Engagement citoyen", text: "Donner à chacun la possibilité de faire entendre son expérience." },
@@ -132,17 +132,17 @@ export const fr = {
       ],
     },
     soon: {
-      title: "Suivez NeexNaxari.",
+      title: "Suivez NeexNaqari.",
       text: "Une nouvelle façon de partager vos expériences et de participer à l'amélioration des services.",
       follow: "Retrouvez nos actualités sur les réseaux.",
-      handle: "@neexnaxari",
+      handle: "@neexnaqari",
       /** Button texts; the button opens the page in a new tab. */
       networks: { facebook: "Facebook", instagram: "Instagram", tiktok: "TikTok", x: "X" },
       newTab: "(nouvel onglet)",
     },
     footer: {
       home: "Accueil",
-      copyright: "© 2026 NeexNaxari. Tous droits réservés.",
+      copyright: "© 2026 NeexNaqari. Tous droits réservés.",
       navLabel: "Plan du site",
     },
   },
@@ -363,7 +363,7 @@ export const fr = {
 
   /**
    * Legal pages (mentions légales, confidentialité, conditions d'utilisation),
-   * validated by Olivia on 2026-10-06 (Claude Doc « NeexNaxari : pages légales »).
+   * validated by Olivia on 2026-10-06 (Claude Doc « NeexNaqari : pages légales »).
    * Tags: <contact> the contact address, <method> the page of the calculation,
    * <cdp> the CDP's site, <privacy> the privacy policy.
    */
@@ -373,9 +373,9 @@ export const fr = {
     notice: {
       title: "Mentions légales",
       sections: [
-        { title: "Éditeur du site", paragraphs: ["Le site neexnaxari.com est édité par Olivia Bonfils Guèye, personne physique."] },
+        { title: "Éditeur du site", paragraphs: ["Le site neexnaqari.com est édité par Olivia Bonfils Guèye, personne physique."] },
         { title: "Responsable de la publication", paragraphs: ["Olivia Bonfils Guèye, fondatrice."] },
-        { title: "Contact", paragraphs: ["<contact>contact@neexnaxari.com</contact>"] },
+        { title: "Contact", paragraphs: ["<contact>contact@neexnaqari.com</contact>"] },
         {
           title: "Hébergement",
           paragraphs: [
@@ -386,12 +386,12 @@ export const fr = {
         {
           title: "Propriété intellectuelle",
           paragraphs: [
-            "Le nom NeexNaxari, le logo, les textes et les illustrations du site appartiennent à Olivia Bonfils Guèye. Les résultats publiés peuvent être cités en indiquant la source « NeexNaxari » et la date de consultation.",
+            "Le nom NeexNaqari, le logo, les textes et les illustrations du site appartiennent à Olivia Bonfils Guèye. Les résultats publiés peuvent être cités en indiquant la source « NeexNaqari » et la date de consultation.",
           ],
         },
         {
           title: "Indépendance",
-          paragraphs: ["NeexNaxari n'est pas un service de l'État et n'est lié à aucun des organismes évalués."],
+          paragraphs: ["NeexNaqari n'est pas un service de l'État et n'est lié à aucun des organismes évalués."],
         },
       ],
     },
@@ -403,7 +403,7 @@ export const fr = {
         {
           title: "Responsable du traitement",
           paragraphs: [
-            "Olivia Bonfils Guèye. Contact : <contact>contact@neexnaxari.com</contact>.",
+            "Olivia Bonfils Guèye. Contact : <contact>contact@neexnaqari.com</contact>.",
             "Déclaration à la Commission de Protection des Données Personnelles (CDP) en cours, conformément à la loi n° 2008-12 du 25 janvier 2008. Le numéro de récépissé sera indiqué ici dès réception.",
           ],
         },
@@ -446,7 +446,7 @@ export const fr = {
         {
           title: "Qui y a accès",
           paragraphs: [
-            "Seule l'équipe de NeexNaxari. Les organismes évalués n'ont jamais accès à vos coordonnées. Nous ne vendons et ne louons aucune donnée, et n'en faisons aucun usage commercial, publicitaire ou politique.",
+            "Seule l'équipe de NeexNaqari. Les organismes évalués n'ont jamais accès à vos coordonnées. Nous ne vendons et ne louons aucune donnée, et n'en faisons aucun usage commercial, publicitaire ou politique.",
           ],
         },
         {
@@ -458,13 +458,13 @@ export const fr = {
         {
           title: "Sécurité",
           paragraphs: [
-            "Les échanges avec le site sont chiffrés. Vos coordonnées sont rangées à part de vos réponses. Seule l'équipe de NeexNaxari y accède, avec un mot de passe.",
+            "Les échanges avec le site sont chiffrés. Vos coordonnées sont rangées à part de vos réponses. Seule l'équipe de NeexNaqari y accède, avec un mot de passe.",
           ],
         },
         {
           title: "Vos droits",
           paragraphs: [
-            "Vous pouvez demander à consulter, corriger ou supprimer vos données personnelles, et vous opposer à leur utilisation, en écrivant à <contact>contact@neexnaxari.com</contact>. Nous répondons sous 30 jours. Si la réponse ne vous satisfait pas, vous pouvez saisir la CDP (<cdp>cdp.sn</cdp>).",
+            "Vous pouvez demander à consulter, corriger ou supprimer vos données personnelles, et vous opposer à leur utilisation, en écrivant à <contact>contact@neexnaqari.com</contact>. Nous répondons sous 30 jours. Si la réponse ne vous satisfait pas, vous pouvez saisir la CDP (<cdp>cdp.sn</cdp>).",
           ],
         },
         {
@@ -477,12 +477,12 @@ export const fr = {
     },
     terms: {
       title: "Conditions d'utilisation",
-      intro: "En donnant un avis sur NeexNaxari, vous acceptez ces conditions.",
+      intro: "En donnant un avis sur NeexNaqari, vous acceptez ces conditions.",
       sections: [
         {
           title: "1. Objet",
           paragraphs: [
-            "NeexNaxari permet aux usagers de donner leur avis sur les services publics et privés au Sénégal, et publie des résultats d'ensemble par organisme. NeexNaxari ne transmet pas les avis et ne traite pas les plaintes : pour une réclamation, adressez-vous directement à l'organisme concerné.",
+            "NeexNaqari permet aux usagers de donner leur avis sur les services publics et privés au Sénégal, et publie des résultats d'ensemble par organisme. NeexNaqari ne transmet pas les avis et ne traite pas les plaintes : pour une réclamation, adressez-vous directement à l'organisme concerné.",
           ],
         },
         {
@@ -510,7 +510,7 @@ export const fr = {
         {
           title: "6. Droits sur vos réponses",
           paragraphs: [
-            "En envoyant un avis, vous autorisez NeexNaxari à l'utiliser pour calculer et publier des résultats d'ensemble. Vos réponses ne sont ni vendues ni utilisées à des fins publicitaires.",
+            "En envoyant un avis, vous autorisez NeexNaqari à l'utiliser pour calculer et publier des résultats d'ensemble. Vos réponses ne sont ni vendues ni utilisées à des fins publicitaires.",
           ],
         },
         {
@@ -528,19 +528,19 @@ export const fr = {
         {
           title: "9. Organismes évalués",
           paragraphs: [
-            "Un organisme peut signaler une erreur (nom, adresse, fermeture) à <contact>contact@neexnaxari.com</contact>. Il ne peut ni acheter, ni modifier, ni faire retirer ses résultats.",
+            "Un organisme peut signaler une erreur (nom, adresse, fermeture) à <contact>contact@neexnaqari.com</contact>. Il ne peut ni acheter, ni modifier, ni faire retirer ses résultats.",
           ],
         },
         {
           title: "10. Responsabilité",
           paragraphs: [
-            "Nous faisons notre possible pour que le site fonctionne et que les résultats soient exacts, sans pouvoir le garantir à tout moment. L'auteur d'un avis reste responsable de ce qu'il écrit. Les signalements de contenu illicite se font à <contact>contact@neexnaxari.com</contact> (loi n° 2008-08 sur les transactions électroniques).",
+            "Nous faisons notre possible pour que le site fonctionne et que les résultats soient exacts, sans pouvoir le garantir à tout moment. L'auteur d'un avis reste responsable de ce qu'il écrit. Les signalements de contenu illicite se font à <contact>contact@neexnaqari.com</contact> (loi n° 2008-08 sur les transactions électroniques).",
           ],
         },
         {
           title: "11. Droit applicable",
           paragraphs: [
-            "Ces conditions relèvent du droit sénégalais. En cas de désaccord, une solution amiable est recherchée d'abord, à <contact>contact@neexnaxari.com</contact> ; à défaut, les tribunaux de Dakar sont compétents. Elles sont susceptibles d'être modifiées.",
+            "Ces conditions relèvent du droit sénégalais. En cas de désaccord, une solution amiable est recherchée d'abord, à <contact>contact@neexnaqari.com</contact> ; à défaut, les tribunaux de Dakar sont compétents. Elles sont susceptibles d'être modifiées.",
           ],
         },
       ],
@@ -549,7 +549,7 @@ export const fr = {
 
   admin: {
     title: "Back-office",
-    brand: "NeexNaxari",
+    brand: "NeexNaqari",
     nav: {
       label: "Back-office",
       dashboard: "Tableau de bord",
