@@ -318,8 +318,9 @@ describe("feedback", () => {
       channel: "search", establishmentId: ids.pa, language: "fr", visitPeriod: "today",
     });
     const { questions } = await getDetailedQuestionnaire(fileFeedback);
+    // The civil registry centre adds whether the certificate was correct (0074).
     expect(questions.map((q) => q.code)).toEqual([
-      "GOAL_ACHIEVED", "WAIT_TIME", "VISITS_COUNT", "DOCUMENTS_KNOWN", "PAID_SOMETHING", "RECEIPT_GIVEN", "REPORTED",
+      "GOAL_ACHIEVED", "CERTIFICATE_CORRECT", "WAIT_TIME", "VISITS_COUNT", "DOCUMENTS_KNOWN", "PAID_SOMETHING", "RECEIPT_GIVEN", "REPORTED",
       "REPORT_WHY",
     ]);
     await saveAnswer(fileFeedback, "GOAL_ACHIEVED", { option: "YES" });
@@ -831,7 +832,8 @@ describe("feedback", () => {
       (await getQuestionnaireScreen(office, "sector")).questions.map((q) => [q.code, q.revealedBy?.dependsOn ?? null]);
     // The payment, already asked, is not shown again.
     expect(await screen6()).toEqual([
-      ["GOAL_ACHIEVED", null], ["WAIT_TIME", null], ["VISITS_COUNT", null], ["DOCUMENTS_KNOWN", null],
+      ["GOAL_ACHIEVED", null], ["CERTIFICATE_CORRECT", null], ["WAIT_TIME", null], ["VISITS_COUNT", null],
+      ["DOCUMENTS_KNOWN", null],
     ]);
     expect((await getDetailedQuestionnaire(office)).askedBefore).toEqual(["FILE_SUBMITTED", "PAID_SOMETHING"]);
 
@@ -839,7 +841,9 @@ describe("feedback", () => {
     await saveTopicGates(office, { FILE_SUBMITTED: "YES", PAID_SOMETHING: "YES" });
     await saveTopics(office, { topics: [{ code: "PROCESSING_TIME", sentiment: "negative" }, { code: "FEES", sentiment: "negative" }] });
     expect((await getDetailsScreen(office)).topics.filter((t) => t.sentiment).map((t) => t.code)).toEqual(["PROCESSING_TIME", "FEES"]);
-    expect((await screen6()).map(([code]) => code)).toEqual(["GOAL_ACHIEVED", "WAIT_TIME", "VISITS_COUNT", "DOCUMENTS_KNOWN", "RECEIPT_GIVEN"]);
+    expect((await screen6()).map(([code]) => code)).toEqual([
+      "GOAL_ACHIEVED", "CERTIFICATE_CORRECT", "WAIT_TIME", "VISITS_COUNT", "DOCUMENTS_KNOWN", "RECEIPT_GIVEN",
+    ]);
 
     // Touched again (cleared): the answer goes, and so do the topic and, at the end, the receipt.
     await saveQuestionnaire(office, "sector", { RECEIPT_GIVEN: "NO" });
