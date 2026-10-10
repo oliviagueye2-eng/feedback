@@ -4,7 +4,9 @@ import { useState } from "react";
 import type { Dictionary } from "../../_i18n";
 import styles from "./landing.module.css";
 
-type Texts = Dictionary["landing"]["nav"] & Pick<Dictionary["header"], "siteName" | "tagline" | "navLabel">;
+type Texts = Dictionary["landing"]["nav"] &
+  Pick<Dictionary["header"], "siteName" | "tagline" | "navLabel"> &
+  Pick<Dictionary["common"], "giveFeedback">;
 
 /**
  * Header of the landing page, kept at the top while scrolling. Computers: the
@@ -47,8 +49,8 @@ export function LandingHeader({ t }: { t: Texts }) {
           <a href="#vision" onClick={close}>
             {t.vision}
           </a>
-          <a href="#bientot" className={styles.soonLink} onClick={close}>
-            {t.soon}
+          <a href="#donner" className={styles.giveLink} onClick={close}>
+            {t.giveFeedback}
           </a>
         </nav>
       </div>

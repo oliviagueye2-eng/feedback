@@ -5,10 +5,10 @@ import { getDictionary } from "../_i18n";
  * is not shown: no link to a page that does not exist.
  */
 export const SOCIAL_ACCOUNTS: { network: Network; url: string }[] = [
-  { network: "facebook", url: "https://www.facebook.com/neexnaxari" },
-  { network: "instagram", url: "https://www.instagram.com/neexnaxari" },
-  { network: "tiktok", url: "https://www.tiktok.com/@neexnaxari" },
-  { network: "x", url: "https://x.com/neexnaxari" },
+  { network: "facebook", url: "https://www.facebook.com/neexnaqari" },
+  { network: "instagram", url: "https://www.instagram.com/neexnaqari" },
+  { network: "tiktok", url: "https://www.tiktok.com/@neexnaqari" },
+  { network: "x", url: "https://x.com/neexnaqari" },
 ];
 
 export type Network = "facebook" | "instagram" | "tiktok" | "x";

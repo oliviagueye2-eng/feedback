@@ -1,23 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { LANDING_PATH, routeRequest } from "./src/lib/landing";
+import { isIndexableHost } from "./src/lib/indexing";
 
 /**
- * Pre-launch routing (src/lib/landing.ts): the main domain shows the landing
- * page only; the test address keeps the whole site, hidden from search engines.
+ * Every address shows the whole site; only neexnaqari.com may appear in search
+ * results (src/lib/indexing.ts). The back-office is also marked noindex by its
+ * own layout.
  */
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  switch (routeRequest(request.headers.get("host"), pathname)) {
-    case "landing":
-      return NextResponse.rewrite(new URL(LANDING_PATH, request.url));
-    case "to-landing":
-      return NextResponse.redirect(new URL("/", request.url));
-    case "site": {
-      const response = NextResponse.next();
-      response.headers.set("X-Robots-Tag", "noindex");
-      return response;
-    }
-  }
+  const response = NextResponse.next();
+  if (!isIndexableHost(request.headers.get("host"))) response.headers.set("X-Robots-Tag", "noindex");
+  return response;
 }
 
 export const config = {

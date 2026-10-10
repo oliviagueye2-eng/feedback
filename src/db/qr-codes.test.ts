@@ -43,7 +43,7 @@ describe("codes", () => {
   });
 
   it("hold the address on the main domain", () => {
-    expect(qrUrl("ABCD2345")).toBe("https://neexnaxari.com/e/ABCD2345");
+    expect(qrUrl("ABCD2345")).toBe("https://neexnaqari.com/e/ABCD2345");
     const matrix = qrMatrix(qrUrl("ABCD2345"));
     expect(matrix.length).toBeGreaterThanOrEqual(21);
     expect(matrix.every((row) => row.length === matrix.length)).toBe(true);

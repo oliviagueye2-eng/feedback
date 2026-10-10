@@ -1,0 +1,120 @@
+/* The queue ticket under the home page's title (LandingTicket.tsx): the same
+   ticket as before the landing (tricolour watermark, tear line with two side
+   notches), upright on every screen. */
+
+.ticket {
+  margin-top: 30px;
+  max-width: 460px;
+  background: #fff;
+  border: 1px solid var(--ticket-line);
+  border-radius: 8px;
+  scroll-margin-top: 90px;
+}
+
+.main {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px 8px 0 0;
+  padding: 14px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.main > :not(.watermark) {
+  position: relative;
+}
+
+.watermark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100px;
+  height: 100px;
+  opacity: 0.22;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    var(--flag-green) 0 16%,
+    transparent 16% 22%,
+    var(--flag-yellow) 22% 38%,
+    transparent 38% 44%,
+    var(--flag-red) 44% 60%,
+    transparent 60%
+  );
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 14px;
+}
+
+.head strong {
+  color: var(--ink);
+}
+
+.title {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--ink);
+}
+
+/* Each notch is a circle painted in the hero colour with the ticket's border
+   colour, clipped to its inner half so the outline stays continuous. */
+.perforation {
+  position: relative;
+  height: 24px;
+  background: repeating-linear-gradient(90deg, var(--ticket-line) 0 6px, transparent 6px 12px)
+    center / calc(100% - 36px) 2px no-repeat;
+}
+
+.perforation::before,
+.perforation::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--hero);
+  border: 1px solid var(--ticket-line);
+}
+
+.perforation::before {
+  left: -12.5px;
+  clip-path: inset(0 0 0 calc(50% - 0.5px));
+}
+
+.perforation::after {
+  right: -12.5px;
+  clip-path: inset(0 calc(50% - 0.5px) 0 0);
+}
+
+.stub {
+  margin: 0;
+  padding: 8px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.label {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.stub input {
+  font-size: 16px;
+}
+
+.stub p {
+  margin: 0;
+  font-size: 14px;
+  text-align: center;
+}

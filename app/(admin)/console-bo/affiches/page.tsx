@@ -30,7 +30,7 @@ export default async function PostersPage({ searchParams }: PageProps<"/console-
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/logo.svg" alt="" width={47} height={50} />
         <span>
-          <strong>NeexNaxari</strong>
+          <strong>NeexNaqari</strong>
           <small>{header.tagline}</small>
         </span>
       </header>
