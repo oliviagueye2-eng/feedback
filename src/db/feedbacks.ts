@@ -462,6 +462,10 @@ export interface FeedbackContext {
   essentialOption: string | null;
   /** Feedback complete (screen 7 reached). */
   completed: boolean;
+  /** The organisation « in general », when the establishment belongs to one. */
+  generalEstablishmentId: string | null;
+  /** « Dans quelle agence ? » comes between screen 1 and screen 2 (see findSiteStep). */
+  asksSite: boolean;
 }
 
 /** What the screens after screen 1 show about the feedback being given. */
@@ -477,10 +481,17 @@ export async function findFeedbackContext(feedbackId: string): Promise<FeedbackC
     service_label: string | null;
     essential_option: string | null;
     completed: boolean;
+    general_id: string | null;
+    asks_site: boolean;
   }>(
     `SELECT e.id AS establishment_id, e.name AS establishment_name, e.scope, f.channel,
             qc.code AS qr_code, f.service_id, f.visit_period, st.label AS service_label,
             f.step = 'completed' AS completed,
+            (SELECT g.id FROM establishment g
+             WHERE g.organization_id = e.organization_id AND g.scope = 'general' AND g.status = 'active'
+             LIMIT 1) AS general_id,
+            coalesce((SELECT s.asks_site FROM service s WHERE s.id = f.service_id), false)
+              AND e.organization_id IS NOT NULL AND f.channel <> 'qr' AS asks_site,
             (SELECT ao.code
              FROM answer a
              JOIN question q ON q.id = a.question_id
@@ -506,6 +517,8 @@ export async function findFeedbackContext(feedbackId: string): Promise<FeedbackC
     serviceLabel: row.service_label,
     essentialOption: row.essential_option,
     completed: row.completed,
+    generalEstablishmentId: row.general_id,
+    asksSite: row.asks_site,
   };
 }
 
@@ -896,4 +909,23 @@ export async function clearEssentialAnswer(feedbackId: string): Promise<void> {
 export async function deleteAnswers(feedbackId: string, questionIds: number[]): Promise<void> {
   if (questionIds.length === 0) return;
   await query("DELETE FROM answer WHERE feedback_id = $1 AND question_id = ANY($2::int[])", [feedbackId, questionIds]);
+}
+
+/**
+ * « Dans quelle agence ? »: gives the feedback to another establishment of the
+ * same organisation (an agency, or the organisation « in general »). False
+ * when the feedback is complete or the establishment is not of its organisation.
+ */
+export async function moveFeedbackWithinOrganization(feedbackId: string, establishmentId: string): Promise<boolean> {
+  const rows = await query(
+    `UPDATE feedback f SET establishment_id = target.id
+     FROM establishment cur, establishment target
+     WHERE f.id = $1 AND f.step <> 'completed'
+       AND cur.id = f.establishment_id
+       AND target.id = $2 AND target.status IN ('active', 'pending_review')
+       AND target.organization_id = cur.organization_id
+     RETURNING f.id`,
+    [feedbackId, establishmentId],
+  );
+  return rows.length > 0;
 }

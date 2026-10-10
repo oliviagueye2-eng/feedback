@@ -17,3 +17,10 @@ export const questionPageHref = (feedbackId: string, page: QuestionPage) =>
 
 /** Last screen: the e-mail or phone number and the statement on honour, then « Envoyer mon avis ». */
 export const sendPageHref = (feedbackId: string) => `/donner/${feedbackId}/envoyer`;
+
+/** « Dans quelle agence ? », between screen 1 and screen 2 when the service is done in an agency. */
+export const siteStepHref = (feedbackId: string) => `/donner/${feedbackId}/agence`;
+
+/** « Précédent » from screen 2: the agency step when there is one, else screen 1. */
+export const beforeScreenTwoHref = (context: FeedbackContext, feedbackId: string) =>
+  context.asksSite ? siteStepHref(feedbackId) : screenOneHref(context, feedbackId);

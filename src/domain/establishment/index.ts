@@ -4,6 +4,8 @@ import { asObject, optionalString, requireString } from "../../lib/validation";
 import { notFound } from "../errors";
 import type { EstablishmentSearchResult } from "../types";
 
+export { guessFromName } from "./guessFromName";
+
 /** Below 3 letters, nothing is proposed. */
 export const SEARCH_MIN_LENGTH = 3;
 /** From 5 letters, typos are tolerated ("dantek" finds Dantec); before, only starts of words. */

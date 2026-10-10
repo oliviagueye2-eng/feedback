@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listEstablishmentTypes, listSectors } from "@/src/domain/establishment";
+import { guessFromName, listEstablishmentTypes, listSectors } from "@/src/domain/establishment";
 import { FormValidation } from "../../../_components/FormValidation";
 import { PendingLoader } from "../../../_components/PendingLoader";
 import { getDictionary } from "../../../_i18n";
@@ -8,12 +8,18 @@ import { createEstablishment } from "./actions";
 import { ContinueButton } from "./ContinueButton";
 import { SectorAndType } from "./SectorAndType";
 
-/** Screen 0c: establishment not in the list. Name, sector and type are required. */
+/**
+ * Screen 0c: establishment not in the list. Name, sector and type are required.
+ * On arrival from the search, the type (and its sector) and the locality are
+ * guessed from the name typed (« mairie Touba »: Mairie, Touba).
+ */
 export default async function NewEstablishmentPage({ searchParams }: PageProps<"/avis/nouveau">) {
   const { nom, secteur, erreur } = await searchParams;
   const name = typeof nom === "string" ? nom : "";
   const [sectors, types] = await Promise.all([listSectors(), listEstablishmentTypes()]);
-  const initialSector = sectors.find((s) => s.code === secteur)?.code ?? "";
+  // Back with an error, the sector sent is kept; otherwise the name says what it can.
+  const guess = secteur === undefined ? guessFromName(name, types) : { type: null, locality: "" };
+  const initialSector = sectors.find((s) => s.code === (guess.type?.sectorCode ?? secteur))?.code ?? "";
   const error = erreur === "secteur" || erreur === "type" ? erreur : null;
   const { common, newEstablishment: t } = await getDictionary();
 
@@ -43,6 +49,7 @@ export default async function NewEstablishmentPage({ searchParams }: PageProps<"
           sectors={sectors}
           types={types}
           initialSector={initialSector}
+          initialType={guess.type?.code ?? ""}
           error={error}
           t={{ sector: t.sector, sectorError: t.sectorError, type: t.type, typeError: t.typeError, other: t.other, change: t.change }}
         />
@@ -50,7 +57,7 @@ export default async function NewEstablishmentPage({ searchParams }: PageProps<"
           <label htmlFor="municipality">
             {t.municipality} <span className="muted">{common.optional}</span>
           </label>
-          <input id="municipality" name="municipality" className={styles.input} placeholder={t.municipalityPlaceholder} maxLength={120} autoComplete="off" />
+          <input id="municipality" name="municipality" className={styles.input} placeholder={t.municipalityPlaceholder} defaultValue={guess.locality.slice(0, 120)} maxLength={120} autoComplete="off" />
         </div>
         <div className={styles.note}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

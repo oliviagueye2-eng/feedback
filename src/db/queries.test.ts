@@ -28,6 +28,10 @@ import {
   saveTopicGates,
   saveTopics,
   upsertFeedback,
+  addSite,
+  chooseSite,
+  getSiteScreen,
+  needsSiteStep,
 } from "../domain/feedback";
 import { getPublishedResults, refreshPublishedStats } from "../domain/stats";
 import { useTestDatabase } from "./client";
@@ -293,6 +297,8 @@ describe("feedback", () => {
       serviceLabel: null,
       essentialOption: "DISSATISFIED",
       completed: false,
+      generalEstablishmentId: null,
+      asksSite: false,
     });
     expect(question.label).toBe("Êtes-vous satisfait(e) du service reçu ?");
     expect(question.options.map((o) => o.code)).toEqual([
@@ -1079,5 +1085,64 @@ describe("nightly job", () => {
     expect(contacts.map((r) => r.id)).toEqual([kept, backOld, backRecent]);
     const feedbacks = await rows<{ id: string }>("SELECT id::text FROM feedback WHERE id = $1", [gone]);
     expect(feedbacks).toHaveLength(1);
+  });
+});
+
+describe("« Dans quelle agence ? » (0078)", () => {
+  const feedbackId = "6c1d0e3f-2a4b-4c6d-9e7f-8091a2b3c4d5";
+  const senelec = async () =>
+    (await rows<{ id: string }>(
+      "SELECT e.id FROM establishment e JOIN organization o ON o.id = e.organization_id WHERE o.code = 'SENELEC' AND e.scope = 'general'",
+    ))[0].id;
+  const service = async (code: string) =>
+    (await rows<{ id: number }>("SELECT id FROM service WHERE code = $1", [code]))[0].id;
+  const start = async (establishmentId: string, serviceCode: string) =>
+    upsertFeedback(feedbackId, {
+      channel: "search",
+      establishmentId,
+      serviceId: await service(serviceCode),
+      language: "fr",
+      visitPeriod: "today",
+    });
+  const current = async () =>
+    (await rows<{ establishment_id: string }>("SELECT establishment_id FROM feedback WHERE id = $1", [feedbackId]))[0]
+      .establishment_id;
+
+  it("is asked after « Une démarche en agence », not for the electricity at home", async () => {
+    await start(await senelec(), "ELECTRICITY_SUPPLY");
+    expect(await needsSiteStep(feedbackId)).toBe(false);
+    await start(await senelec(), "ELECTRICITY_AGENCY");
+    expect(await needsSiteStep(feedbackId)).toBe(true);
+    const screen = await getSiteScreen(feedbackId);
+    expect(screen.organizationName).toBe("Senelec");
+    expect(screen.serviceLabel).toBe("Une démarche en agence");
+    expect(screen.question).toBe("Dans quelle agence ?");
+  });
+
+  it("adds the agency typed, pending review and out of the list, and finds it again by its place", async () => {
+    await addSite(feedbackId, "  Touba ");
+    const agencyId = await current();
+    const [agency] = await rows<{ name: string; status: string; scope: string; municipality_input: string }>(
+      "SELECT name, status, scope, municipality_input FROM establishment WHERE id = $1",
+      [agencyId],
+    );
+    expect(agency).toEqual({ name: "Senelec – Touba", status: "pending_review", scope: "site", municipality_input: "Touba" });
+    // The agency has the services of Senelec (same type): the feedback keeps its service.
+    expect((await getEstablishment(agencyId)).services.map((s) => s.code)).toContain("ELECTRICITY_AGENCY");
+    // Shown to this feedback only (chosen), and not asked again once chosen.
+    expect((await getSiteScreen(feedbackId)).sites.map((s) => s.id)).toEqual([agencyId]);
+    expect(await needsSiteStep(feedbackId)).toBe(false);
+    // Back on screen 1 of Senelec with « Précédent »: the same feedback.
+    expect(await findFeedbackToResume(feedbackId, await senelec())).not.toBeNull();
+    await chooseSite(feedbackId, await senelec());
+    await addSite(feedbackId, "touba");
+    expect(await current()).toBe(agencyId);
+  });
+
+  it("goes back to Senelec in general with « Passer », and refuses another organisation", async () => {
+    await chooseSite(feedbackId, await senelec());
+    expect(await current()).toBe(await senelec());
+    await expect(chooseSite(feedbackId, ids.gy)).rejects.toMatchObject({ code: "INVALID_INPUT" });
+    await expect(addSite(feedbackId, "T")).rejects.toMatchObject({ code: "INVALID_INPUT" });
   });
 });

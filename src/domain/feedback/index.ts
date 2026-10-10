@@ -16,6 +16,7 @@ import { parseContact } from "./contact";
 import { computeVisitMonth, defaultVisitPeriod } from "./visit";
 
 export { CONTACT_MAX_LENGTH } from "./contact";
+export { addSite, chooseSite, getSiteScreen, needsSiteStep, SITE_PLACE_MAX_LENGTH } from "./site";
 export const COMMENT_MAX_LENGTH = 500;
 export const OTHER_TOPIC_MAX_LENGTH = 50;
 export const OTHER_TOPIC_CODE = "OTHER";
@@ -323,13 +324,15 @@ export async function getDetailedQuestionnaire(feedbackId: string) {
 /**
  * Screen 1 reached again (« Précédent », or a reload: see ResumeFeedback): the
  * feedback to update instead of creating a new one, with the reason and period
- * already chosen. Null when the id is not a feedback of this establishment, or
- * when that feedback is complete (screen 1 then starts a new one).
+ * already chosen. Null when the id is not a feedback of this establishment (or
+ * of one of its agencies, coming back from « Dans quelle agence ? »), or when
+ * that feedback is complete (screen 1 then starts a new one).
  */
 export async function findFeedbackToResume(feedbackId: string, establishmentId: string) {
   if (!isUuid(feedbackId)) return null;
   const context = await db.findFeedbackContext(feedbackId);
-  if (!context || context.establishmentId !== establishmentId || context.completed) return null;
+  if (!context || context.completed) return null;
+  if (context.establishmentId !== establishmentId && context.generalEstablishmentId !== establishmentId) return null;
   return { id: feedbackId, serviceId: context.serviceId, visitPeriod: context.visitPeriod };
 }
 

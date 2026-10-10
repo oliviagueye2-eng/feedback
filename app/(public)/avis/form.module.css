@@ -129,6 +129,20 @@ fieldset.group {
   cursor: pointer;
 }
 
+/* A folded list shows only its chosen line. Without JavaScript, « Changer »
+   cannot open it again: nothing folds. */
+@media (scripting: enabled) {
+  .folded label:not(:has(input:checked)) {
+    display: none;
+  }
+}
+
+@media (scripting: none) {
+  .change {
+    display: none;
+  }
+}
+
 /* The types of a sector show once it is chosen (rule written by the page). */
 .types {
   display: none;

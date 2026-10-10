@@ -296,3 +296,105 @@ export async function insertUserEstablishment(
   if (!rows[0]) throw invalidInput("Unknown sector, or type missing or not of the sector");
   return rows[0].id;
 }
+
+/** « Dans quelle agence ? »: the organisation's agencies for a feedback. */
+export interface SiteStep {
+  organizationName: string;
+  serviceLabel: string | null;
+  /** « Dans quelle boutique ? »…, by service; null when not written. */
+  question: string | null;
+  /** The organisation « in general »: the feedback goes back to it with « Passer ». */
+  generalId: string;
+  /** The establishment the feedback is given to now. */
+  currentId: string;
+  /** Active agencies, and the one chosen even while pending review. */
+  sites: EstablishmentSummary[];
+}
+
+/**
+ * The agency step of a feedback, or null when there is none: its service
+ * asks no agency (service.asks_site), its establishment has no organisation,
+ * it came from a QR code (the place is known) or it is complete.
+ */
+export async function findSiteStep(feedbackId: string): Promise<SiteStep | null> {
+  const rows = await query<{
+    organization_name: string;
+    service_label: string | null;
+    question: string | null;
+    general_id: string;
+    current_id: string;
+  }>(
+    `SELECT o.name AS organization_name, st.label AS service_label, st.site_question AS question,
+            g.id AS general_id,
+            f.establishment_id AS current_id
+     FROM feedback f
+     JOIN service s ON s.id = f.service_id AND s.asks_site
+     LEFT JOIN service_translation st ON st.service_id = s.id AND st.language = 'fr'
+     JOIN establishment e ON e.id = f.establishment_id
+     JOIN organization o ON o.id = e.organization_id
+     JOIN establishment g ON g.organization_id = o.id AND g.scope = 'general' AND g.status = 'active'
+     WHERE f.id = $1 AND f.channel <> 'qr' AND f.step <> 'completed'
+     LIMIT 1`,
+    [feedbackId],
+  );
+  const row = rows[0];
+  if (!row) return null;
+  const sites = await query<SummaryRow>(
+    `SELECT ${SUMMARY_COLUMNS}
+     FROM establishment e
+     ${SUMMARY_JOINS}
+     WHERE e.organization_id = (SELECT organization_id FROM establishment WHERE id = $1)
+       AND e.scope = 'site'
+       AND (e.status = 'active' OR e.id = $2)
+     ORDER BY normalize_search(coalesce(m.name, e.municipality_input, e.name)), e.name`,
+    [row.general_id, row.current_id],
+  );
+  return {
+    organizationName: row.organization_name,
+    serviceLabel: row.service_label,
+    question: row.question,
+    generalId: row.general_id,
+    currentId: row.current_id,
+    sites: sites.map(toSummary),
+  };
+}
+
+/**
+ * The agency typed by the user: an agency of the organisation already known
+ * by that place (active or pending review: going back and forth adds nothing),
+ * else a new one, pending review, named « Organisation – place », with the
+ * type and sector of the organisation « in general ». Returns its id.
+ */
+export async function findOrInsertUserSite(feedbackId: string, place: string): Promise<string> {
+  const known = await query<{ id: string }>(
+    `SELECT e.id
+     FROM feedback f
+     JOIN establishment cur ON cur.id = f.establishment_id
+     JOIN organization o ON o.id = cur.organization_id
+     JOIN establishment e ON e.organization_id = o.id AND e.scope = 'site'
+                          AND e.status IN ('active', 'pending_review')
+     LEFT JOIN municipality m ON m.id = e.municipality_id
+     WHERE f.id = $1
+       AND (normalize_search(coalesce(m.name, e.municipality_input, '')) = normalize_search($2)
+            OR normalize_search(e.name) = normalize_search(o.name || ' ' || $2))
+     ORDER BY e.status = 'active' DESC, e.created_at
+     LIMIT 1`,
+    [feedbackId, place],
+  );
+  if (known[0]) return known[0].id;
+  const rows = await query<{ id: string }>(
+    `INSERT INTO establishment (name, raw_input, organization_id, scope, sector_id, type_id,
+                                municipality_input, status, source)
+     SELECT o.name || ' – ' || $2, $2, o.id, 'site', g.sector_id, g.type_id, $2, 'pending_review', 'user'
+     FROM feedback f
+     JOIN establishment cur ON cur.id = f.establishment_id
+     JOIN organization o ON o.id = cur.organization_id
+     JOIN establishment g ON g.organization_id = o.id AND g.scope = 'general' AND g.status = 'active'
+     WHERE f.id = $1
+     LIMIT 1
+     RETURNING id`,
+    [feedbackId, place],
+  );
+  if (!rows[0]) throw invalidInput("Feedback not given to an organisation");
+  return rows[0].id;
+}
