@@ -15,30 +15,6 @@
   gap: 10px 16px;
 }
 
-.choice {
-  display: inline-flex;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  overflow: hidden;
-  background: #fff;
-}
-
-.choice a {
-  padding: 9px 12px;
-  color: var(--ink);
-  text-decoration: none;
-}
-
-.choice a + a {
-  border-left: 1px solid var(--line);
-}
-
-.choice a[aria-current] {
-  background: var(--green-tint);
-  color: var(--green-dark);
-  font-weight: 700;
-}
-
 .help {
   color: var(--muted);
   font-size: 14px;

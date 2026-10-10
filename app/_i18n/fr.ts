@@ -753,8 +753,6 @@ export const fr = {
       addSite: "Ajouter",
       addSiteError: "Le lieu n'a pas été ajouté : tapez entre 2 et 100 caractères.",
       // Posters
-      withLogo: "Logo au centre du QR code",
-      withoutLogo: "Sans logo au centre",
       print: "Imprimer",
       printHelp: "Une affiche par page A4. Pour un PDF : « Enregistrer au format PDF » dans la fenêtre d'impression.",
       noPoster: "Aucun QR code actif à imprimer.",

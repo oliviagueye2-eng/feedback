@@ -8,18 +8,15 @@ import styles from "./affiches.module.css";
 import { PrintButton } from "./PrintButton";
 
 /**
- * Posters to print, one per A4 page: ?codes=CODE1,CODE2 (active codes only),
- * ?logo=1 for the logo in the middle of the QR code. Outside the menu: the
- * page is what gets printed.
+ * Posters to print, one per A4 page: ?codes=CODE1,CODE2 (active codes only).
+ * Outside the menu: the page is what gets printed.
  */
 export default async function PostersPage({ searchParams }: PageProps<"/console-bo/affiches">) {
   await requireAdmin();
   const params = await searchParams;
   const codes = typeof params.codes === "string" ? params.codes.split(",") : [];
-  const logo = params.logo === "1";
   const [{ admin: a, header }, posters] = await Promise.all([getDictionary(), listQrPosters(codes)]);
   const t = a.qrCodes;
-  const link = (withLogo: boolean) => `?codes=${posters.map((p) => p.code).join(",")}${withLogo ? "&logo=1" : ""}`;
   const back = "/console-bo/qr-codes";
 
   const poster = (p: QrPoster) => (
@@ -44,7 +41,7 @@ export default async function PostersPage({ searchParams }: PageProps<"/console-
         {(p.serviceLabel || (p.organizationName && !p.establishmentName.startsWith(p.organizationName))) && (
           <p className={styles.service}>{p.serviceLabel ?? p.organizationName}</p>
         )}
-        <div className={styles.code} dangerouslySetInnerHTML={{ __html: qrSvg(p.code, { logo }) }} />
+        <div className={styles.code} dangerouslySetInnerHTML={{ __html: qrSvg(p.code) }} />
         <p className={styles.scan}>{t.posterScan}</p>
       </div>
 
@@ -65,14 +62,6 @@ export default async function PostersPage({ searchParams }: PageProps<"/console-
         </a>
         {posters.length > 0 && (
           <>
-            <span className={styles.choice}>
-              <a href={link(false)} aria-current={!logo ? "true" : undefined}>
-                {t.withoutLogo}
-              </a>
-              <a href={link(true)} aria-current={logo ? "true" : undefined}>
-                {t.withLogo}
-              </a>
-            </span>
             <PrintButton label={t.print} className={admin.button} />
             <span className={styles.help}>{t.printHelp}</span>
           </>
