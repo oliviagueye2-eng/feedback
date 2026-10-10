@@ -3,12 +3,16 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
+  addOrganizationSite,
   correctComment,
+  createMissingOrganizationCodes,
+  createQrCode,
   correctEstablishment,
   markCommentReviewed,
   mergeEstablishment,
   refuseEstablishment,
   SESSION_DAYS,
+  setQrCodeActive,
   signIn,
   validateEstablishment,
 } from "@/src/domain/admin";
@@ -104,4 +108,41 @@ export async function establishmentAction(formData: FormData) {
     if (!(error instanceof DomainError && error.code === "NOT_FOUND")) throw error;
   }
   redirect(ESTABLISHMENTS);
+}
+
+// QR codes ---------------------------------------------------------------------
+
+const QR_CODES = "/console-bo/qr-codes";
+
+export async function qrCodeAction(formData: FormData) {
+  await requireAdmin();
+  const establishment = (id: string) => `${QR_CODES}?etablissement=${encodeURIComponent(id)}`;
+  const organization = (code: string) => `${QR_CODES}?organisme=${encodeURIComponent(code)}`;
+  const id = field(formData, "establishmentId");
+  const organizationCode = field(formData, "organization");
+  let target = QR_CODES;
+  try {
+    switch (field(formData, "do")) {
+      case "create":
+        target = establishment(id);
+        await createQrCode(id, { serviceId: field(formData, "service"), locationLabel: field(formData, "location") });
+        break;
+      case "deactivate":
+      case "reactivate":
+        target = establishment(await setQrCodeActive(field(formData, "code"), field(formData, "do") === "reactivate"));
+        break;
+      case "create-missing":
+        target = organization(organizationCode);
+        await createMissingOrganizationCodes(organizationCode);
+        break;
+      case "add-site":
+        target = organization(organizationCode);
+        await addOrganizationSite(organizationCode, field(formData, "place"));
+        break;
+    }
+  } catch (error) {
+    if (error instanceof DomainError && error.code === "INVALID_INPUT") redirect(`${target}&erreur=1`);
+    if (!(error instanceof DomainError && error.code === "NOT_FOUND")) throw error;
+  }
+  redirect(target);
 }

@@ -1,4 +1,5 @@
 import * as db from "../../db/establishments";
+import { normalizeQrCode } from "../../lib/qr";
 import { toSearchTerms } from "../../lib/text";
 import { asObject, optionalString, requireString } from "../../lib/validation";
 import { notFound } from "../errors";
@@ -46,7 +47,7 @@ export async function getEstablishment(id: string) {
 
 /** QR code scanned: the establishment (and possibly the service) is already known. */
 export async function getEstablishmentByQrCode(code: string) {
-  const found = await db.findEstablishmentByQrCode(code);
+  const found = await db.findEstablishmentByQrCode(normalizeQrCode(code));
   if (!found) throw notFound("QR code not found or inactive");
   return found;
 }

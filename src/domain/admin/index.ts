@@ -12,6 +12,7 @@ import { isUuid, requireUuid } from "../../lib/validation";
 import { createSessionToken, isRightPassword } from "./session";
 
 export { isValidSessionToken, SESSION_DAYS } from "./session";
+export * from "./qrCodes";
 export type {
   AdminComment, BankCondition, BankOption, BankQuestion, CategoryContent, CommentStatus, EstablishmentComments, FormEstablishment,
   ListedQuestion, ListedTopic, ListUsage, PendingEstablishment, ServiceTopics, SectorTopics, StopPage, TopicRow, TypeTopics,
