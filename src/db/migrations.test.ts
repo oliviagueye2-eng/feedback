@@ -249,7 +249,7 @@ describe("reference data", () => {
     });
   });
 
-  it("has the bank of 111 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058, 2 of 0062, 2 of 0065, 6 of 0066, 2 of 0068, 1 of 0069, 6 of 0070, 3 of 0071, 3 of 0072, 2 of 0074, 1 of 0075), each written once, every text in French", async () => {
+  it("has the bank of 112 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058, 2 of 0062, 2 of 0065, 6 of 0066, 2 of 0068, 1 of 0069, 6 of 0070, 3 of 0071, 3 of 0072, 2 of 0074, 1 of 0075, 1 of 0076), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -263,7 +263,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 111, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 112, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -323,6 +323,8 @@ describe("reference data", () => {
         ID_DOCUMENT_CENTER: "ID_DOCUMENTS", CIVIL_REGISTRY_CENTER: "CIVIL_REGISTRY",
         // The amount explained (0075).
         TAX_OFFICE: "TAX_PAYMENT", TREASURY_OFFICE: "TAX_PAYMENT",
+        // The pension or benefit paid on time (0076).
+        SOCIAL_SECURITY_OFFICE: "SOCIAL_BENEFITS",
         // 0072: the results' questions for « Autre démarche » (only without a service), the daara's own.
         HIGH_SCHOOL: "EDUCATION + FILE_SERVICES + PAID_AND_RECEIPT", MIDDLE_SCHOOL: "EDUCATION + FILE_SERVICES + PAID_AND_RECEIPT",
         PRIMARY_SCHOOL: "EDUCATION + FILE_SERVICES + PAID_AND_RECEIPT", SCHOOL_GROUP: "EDUCATION + FILE_SERVICES + PAID_AND_RECEIPT",
