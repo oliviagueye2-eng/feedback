@@ -354,6 +354,39 @@ export async function setPendingEstablishmentStatus(id: string, status: "active"
 }
 
 /**
+ * Deletes for good an establishment still to check that has no feedback at
+ * all, sent or not, with its QR codes and services; the searches that led to
+ * it keep their count but forget it. False when it is not to check, has a
+ * feedback, or one of its QR codes is on a feedback.
+ */
+export async function deletePendingEstablishment(id: string): Promise<boolean> {
+  const rows = await query(
+    `WITH target AS (
+       SELECT e.id FROM establishment e
+       WHERE e.id = $1 AND e.status = 'pending_review'
+         AND NOT EXISTS (SELECT 1 FROM feedback f WHERE f.establishment_id = e.id)
+         AND NOT EXISTS (SELECT 1 FROM feedback f JOIN qr_code q ON q.id = f.qr_code_id WHERE q.establishment_id = e.id)
+         AND NOT EXISTS (SELECT 1 FROM establishment m WHERE m.merged_into_id = e.id)
+       FOR UPDATE
+     ),
+     qr AS (DELETE FROM qr_code WHERE establishment_id IN (SELECT id FROM target)),
+     services AS (DELETE FROM establishment_service WHERE establishment_id IN (SELECT id FROM target)),
+     selected AS (
+       UPDATE search_log SET selected_establishment_id = NULL
+       WHERE selected_establishment_id IN (SELECT id FROM target)
+     ),
+     created AS (
+       UPDATE search_log SET created_establishment_id = NULL
+       WHERE created_establishment_id IN (SELECT id FROM target)
+     )
+     DELETE FROM establishment WHERE id IN (SELECT id FROM target)
+     RETURNING id`,
+    [id],
+  );
+  return rows.length > 0;
+}
+
+/**
  * The same place as an establishment already listed: its feedbacks move to
  * that one, and it stays as « merged » (its id may still be in a shared link).
  */

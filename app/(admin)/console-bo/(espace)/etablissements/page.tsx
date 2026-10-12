@@ -13,7 +13,8 @@ const PATH = "/console-bo/etablissements";
 /**
  * Establishments typed by users who did not find theirs: correct, then
  * validate (shown in the search), merge with one already listed, or refuse.
- * Each action opens a panel under the row (?modifier=, ?fusionner=, ?refuser=):
+ * One without any feedback can also be deleted for good. Each action opens a
+ * panel under the row (?modifier=, ?fusionner=, ?refuser=, ?supprimer=):
  * works without JavaScript.
  */
 export default async function EstablishmentsPage({ searchParams }: PageProps<"/console-bo/etablissements">) {
@@ -23,6 +24,7 @@ export default async function EstablishmentsPage({ searchParams }: PageProps<"/c
   const editing = one(params.modifier);
   const merging = one(params.fusionner);
   const refusing = one(params.refuser);
+  const deleting = one(params.supprimer);
   const search = one(params.q)?.trim() ?? "";
   const [{ admin }, establishments, sectors, types, found] = await Promise.all([
     getDictionary(),
@@ -185,6 +187,24 @@ export default async function EstablishmentsPage({ searchParams }: PageProps<"/c
     </form>
   );
 
+  const deletePanel = (e: PendingEstablishment) => (
+    <form action={establishmentAction} className={`${styles.panel} ${styles.panelDanger}`}>
+      <input type="hidden" name="id" value={e.id} />
+      <p className={styles.label} style={{ margin: 0 }}>
+        {t.confirmDelete.replace("{name}", e.name)}
+      </p>
+      <p className={styles.meta}>{t.confirmDeleteHelp}</p>
+      <div className={styles.row}>
+        <button type="submit" name="do" value="delete" className={`${styles.button} ${styles.danger}`}>
+          {t.delete}
+        </button>
+        <a href={PATH} className={styles.link}>
+          {t.cancel}
+        </a>
+      </div>
+    </form>
+  );
+
   return (
     <>
       <h1>{t.title}</h1>
@@ -215,10 +235,16 @@ export default async function EstablishmentsPage({ searchParams }: PageProps<"/c
                 <a href={open("refuser", e.id)} className={`${styles.icon} ${styles.ko}`} title={t.refuse} aria-label={t.refuse}>
                   <Icon name="cross" />
                 </a>
+                {e.feedbackCount === 0 && (
+                  <a href={open("supprimer", e.id)} className={`${styles.icon} ${styles.ko}`} title={t.delete} aria-label={t.delete}>
+                    <Icon name="trash" />
+                  </a>
+                )}
               </div>
               {editing === e.id && editPanel(e)}
               {merging === e.id && mergePanel(e)}
               {refusing === e.id && refusePanel(e)}
+              {deleting === e.id && e.feedbackCount === 0 && deletePanel(e)}
             </li>
           ))}
         </ul>
