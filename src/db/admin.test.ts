@@ -9,6 +9,7 @@ import {
   correctComment,
   correctEstablishment,
   dashboardPeriod,
+  deleteEstablishment,
   deleteFeedback,
   getCategoriesAndTopics,
   getDashboard,
@@ -189,6 +190,26 @@ describe("establishments added by users", () => {
     expect(await published()).toHaveLength(1);
     await refuseEstablishment(id);
     expect(await published()).toEqual([]);
+  });
+
+  it("deletes one without feedback for good, with its QR codes, but never one with a feedback", async () => {
+    const id = await added("etablissement vide");
+    await db.query(`INSERT INTO qr_code (code, establishment_id) VALUES ('TEST-VIDE', $1)`, [id]);
+    await db.query(`INSERT INTO search_log (query, result_count, created_establishment_id) VALUES ('vide', 0, $1)`, [id]);
+    await deleteEstablishment(id);
+    expect(await rows(`SELECT 1 FROM establishment WHERE id = $1`, [id])).toEqual([]);
+    expect(await rows(`SELECT 1 FROM qr_code WHERE establishment_id = $1`, [id])).toEqual([]);
+    expect(await rows(`SELECT created_establishment_id FROM search_log WHERE query = 'vide'`)).toEqual([
+      { created_establishment_id: null },
+    ]);
+    await expect(deleteEstablishment(id)).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+    const withFeedback = await added("etablissement avec avis");
+    await startFeedback("a1a1a1a1-0028-4000-8000-000000000004", withFeedback, "SATISFIED");
+    await expect(deleteEstablishment(withFeedback)).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(await rows(`SELECT status FROM establishment WHERE id = $1`, [withFeedback])).toEqual([
+      { status: "pending_review" },
+    ]);
   });
 });
 

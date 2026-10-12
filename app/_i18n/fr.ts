@@ -730,6 +730,9 @@ export const fr = {
       mergeSubmit: "Fusionner",
       confirmRefuse: "Refuser « {name} » ?",
       confirmRefuseHelp: "Il n'apparaîtra pas dans la recherche, et ses {n} avis ne compteront dans aucun résultat.",
+      delete: "Supprimer",
+      confirmDelete: "Supprimer « {name} » ?",
+      confirmDeleteHelp: "Il n'a aucun avis. Il sera effacé de la base, avec ses QR codes. C'est définitif.",
       error: "La correction n'a pas été enregistrée : vérifiez le nom, et que le type appartient bien au secteur.",
     },
     qrCodes: {

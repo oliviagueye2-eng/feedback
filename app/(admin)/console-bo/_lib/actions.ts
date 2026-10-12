@@ -9,6 +9,7 @@ import {
   createMissingOrganizationCodes,
   createQrCode,
   correctEstablishment,
+  deleteEstablishment,
   deleteFeedback,
   markCommentReviewed,
   mergeEstablishment,
@@ -104,6 +105,9 @@ export async function establishmentAction(formData: FormData) {
         break;
       case "refuse":
         await refuseEstablishment(id);
+        break;
+      case "delete":
+        await deleteEstablishment(id);
         break;
       case "merge":
         await mergeEstablishment(id, field(formData, "targetId"));

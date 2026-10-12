@@ -130,6 +130,16 @@ export async function refuseEstablishment(id: string) {
   await db.setPendingEstablishmentStatus(requireUuid(id, "id"), "rejected");
 }
 
+/**
+ * Deleted for good when it has no feedback (asked by Olivia, 2026-10-12):
+ * NOT_FOUND when it is not to check any more or has a feedback.
+ */
+export async function deleteEstablishment(id: string) {
+  if (!(await db.deletePendingEstablishment(requireUuid(id, "id")))) {
+    throw notFound("Establishment not found, already handled, or with feedbacks");
+  }
+}
+
 export async function mergeEstablishment(id: string, targetId: string) {
   await db.mergePendingEstablishment(requireUuid(id, "id"), requireUuid(targetId, "targetId"));
 }
