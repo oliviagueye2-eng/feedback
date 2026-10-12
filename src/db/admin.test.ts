@@ -9,11 +9,14 @@ import {
   correctComment,
   correctEstablishment,
   dashboardPeriod,
+  deleteFeedback,
   getCategoriesAndTopics,
   getDashboard,
+  getFeedback,
   getQuestionnaire,
   isValidSessionToken,
   listComments,
+  listFeedbacks,
   listPendingEstablishments,
   LOGIN_MAX_FAILURES,
   markCommentReviewed,
@@ -25,7 +28,7 @@ import {
 import { createSessionToken, isRightPassword } from "../domain/admin/session";
 import { countCommentsByEstablishment } from "./admin";
 import { createUserEstablishment } from "../domain/establishment";
-import { recordPageShown, saveAnswer, saveComment, submitFeedback, upsertFeedback } from "../domain/feedback";
+import { recordPageShown, saveAnswer, saveComment, saveTopics, submitFeedback, upsertFeedback } from "../domain/feedback";
 import { refreshPublishedStats } from "../domain/stats";
 import { useTestDatabase } from "./client";
 import { createTestDatabase } from "./test-database";
@@ -432,5 +435,54 @@ describe("questionnaire", () => {
     } finally {
       await db.query(`UPDATE topic SET is_active = true WHERE code = 'CARE_RECEIVED'`);
     }
+  });
+});
+
+describe("feedbacks", () => {
+  const id = "a1a1a1a1-0028-4000-8000-0000000000a1";
+  const other = "a1a1a1a1-0028-4000-8000-0000000000a2";
+
+  it("opens a feedback in full: answers, topics, comment and contact", async () => {
+    await startFeedback(id, active, "DISSATISFIED");
+    await saveTopics(id, { topics: [{ code: "WAIT_TIME", sentiment: "negative" }] });
+    await saveComment(id, { text: "Avis de test.", promptOption: "DISSATISFIED" });
+    await submitFeedback(id, { contact: "77 000 00 09", attested: true });
+    const feedback = await getFeedback(id);
+    expect(feedback).toMatchObject({
+      establishmentName: "Centre de santé de Test",
+      step: "completed",
+      contact: { kind: "phone", value: "+221770000009" },
+      comment: { text: "Avis de test.", status: "pending" },
+      topics: [{ code: "WAIT_TIME", sentiment: "negative" }],
+    });
+    expect(feedback.answers[0]).toMatchObject({ questionCode: "OVERALL_SATISFACTION" });
+    expect(feedback.answers[0]?.optionLabel).toBeTruthy();
+  });
+
+  it("lists the latest, and finds one by the number as typed", async () => {
+    await startFeedback(other, active, "SATISFIED");
+    expect((await listFeedbacks({})).map((f) => f.id)).toEqual(expect.arrayContaining([id, other]));
+    expect((await listFeedbacks({ contact: "+221 77 000 00 09" })).map((f) => f.id)).toEqual([id]);
+    await expect(listFeedbacks({ contact: "pas un numéro" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
+  });
+
+  it("deletes a feedback for good, and it leaves the results", async () => {
+    await refreshPublishedStats();
+    const published = () => rows(`SELECT id FROM published_feedback WHERE id = $1`, [id]);
+    const counted = async () =>
+      (await rows<{ n: number }>(`SELECT coalesce(sum(feedback_count), 0)::int AS n FROM monthly_stats WHERE establishment_id = $1`, [active]))[0]!.n;
+    expect(await published()).toHaveLength(1);
+    const before = await counted();
+    await deleteFeedback(id);
+    // Recomputed at once, without waiting for the nightly job.
+    expect(await counted()).toBe(before - 1);
+    for (const table of ["feedback_topic", "answer", "comment", "feedback_contact"]) {
+      expect(await rows(`SELECT 1 FROM ${table} WHERE feedback_id = $1`, [id])).toEqual([]);
+    }
+    expect(await published()).toEqual([]);
+    await expect(getFeedback(id)).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(deleteFeedback(id)).rejects.toMatchObject({ code: "NOT_FOUND" });
+    // The other feedback is untouched.
+    expect((await getFeedback(other)).id).toBe(other);
   });
 });

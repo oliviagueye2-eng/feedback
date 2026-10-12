@@ -5,16 +5,18 @@
  */
 import * as db from "../../db/admin";
 import * as feedbacks from "../../db/feedbacks";
+import { refreshMonthlyStats } from "../../db/stats";
+import { parseContact } from "../feedback/contact";
 import { selectQuestionSets } from "../questionnaire/select";
 import { COMMENT_MAX_LENGTH, OTHER_TOPIC_CODE } from "../feedback";
-import { invalidInput } from "../errors";
+import { invalidInput, notFound } from "../errors";
 import { isUuid, requireUuid } from "../../lib/validation";
 import { createSessionToken, isRightPassword } from "./session";
 
 export { isValidSessionToken, SESSION_DAYS } from "./session";
 export * from "./qrCodes";
 export type {
-  AdminComment, BankCondition, BankOption, BankQuestion, CategoryContent, CommentStatus, EstablishmentComments, FormEstablishment,
+  AdminAnswer, AdminComment, AdminFeedback, AdminFeedbackRow, AdminTopic, BankCondition, BankOption, BankQuestion, CategoryContent, CommentStatus, EstablishmentComments, FormEstablishment,
   ListedQuestion, ListedTopic, ListUsage, PendingEstablishment, ServiceTopics, SectorTopics, StopPage, TopicRow, TypeTopics,
 } from "../../db/admin";
 
@@ -58,6 +60,44 @@ export async function correctComment(feedbackId: string, text: string) {
   const trimmed = text.trim();
   if (trimmed === "" || trimmed.length > COMMENT_MAX_LENGTH) throw invalidInput("text must be 1 to 500 characters");
   await db.replaceCommentText(requireUuid(feedbackId, "feedbackId"), trimmed);
+}
+
+// Feedbacks --------------------------------------------------------------------
+
+/** The feedbacks page shows this many, the most recent first. */
+export const FEEDBACKS_SHOWN = 100;
+
+/**
+ * The latest feedbacks (asked by Olivia, 2026-10-12). `contact`: an e-mail or
+ * a number as typed on the last screen (« 77 123 45 67 »); one that is
+ * neither is refused (INVALID_INPUT). An `establishmentId` that is not a UUID
+ * shows every establishment.
+ */
+export async function listFeedbacks(filter: { establishmentId?: string; contact?: string }) {
+  const contact = filter.contact?.trim() ? parseContact(filter.contact).value : null;
+  const establishmentId = filter.establishmentId && isUuid(filter.establishmentId) ? filter.establishmentId : null;
+  return db.listFeedbacks({ establishmentId, contact }, FEEDBACKS_SHOWN);
+}
+
+/** One feedback in full: NOT_FOUND when there is none. */
+export async function getFeedback(id: string) {
+  const feedback = await db.findFeedback(requireUuid(id, "id"));
+  if (!feedback) throw notFound("Feedback not found");
+  return feedback;
+}
+
+/**
+ * Deletes a feedback for good (a test one, asked by Olivia, 2026-10-12), then
+ * recomputes the published results without it. Once deleted, a failed
+ * recomputation is left to the nightly job.
+ */
+export async function deleteFeedback(id: string) {
+  if (!(await db.deleteFeedback(requireUuid(id, "id")))) throw notFound("Feedback not found");
+  try {
+    await refreshMonthlyStats();
+  } catch (error) {
+    console.error("Results not recomputed after a deletion (the nightly job will):", error);
+  }
 }
 
 // Establishments ---------------------------------------------------------------

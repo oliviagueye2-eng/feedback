@@ -173,7 +173,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/consol
                 {d.byEstablishment.map((e) => (
                   <tr key={e.establishmentId}>
                     <th scope="row">
-                      <strong>{e.name}</strong>
+                      <a href={`/console-bo/avis?etablissement=${e.establishmentId}`}>{e.name}</a>
                       {e.municipality && <span className={styles.muted}>{e.municipality}</span>}
                     </th>
                     <td>{e.complete === 0 ? dash : e.complete}</td>
