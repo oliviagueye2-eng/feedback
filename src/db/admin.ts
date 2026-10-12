@@ -130,6 +130,157 @@ export async function replaceCommentText(feedbackId: string, text: string): Prom
 }
 
 // ---------------------------------------------------------------------------
+// Feedbacks (asked by Olivia, 2026-10-12): open one in full, delete a test one.
+// ---------------------------------------------------------------------------
+
+export interface AdminFeedbackRow {
+  id: string;
+  establishmentName: string;
+  municipality: string | null;
+  serviceLabel: string | null;
+  satisfactionLabel: string | null;
+  /** The feedback was sent (« Envoyer mon avis »). */
+  sent: boolean;
+  startedAt: string;
+  completedAt: string | null;
+  contact: string | null;
+  hasComment: boolean;
+}
+
+/** The answer given to the essential question, in French. */
+const SATISFACTION_LABEL = (feedback: string) => `
+  (SELECT aot.label FROM answer a
+   JOIN question q ON q.id = a.question_id AND q.code = 'OVERALL_SATISFACTION'
+   JOIN answer_option_translation aot ON aot.answer_option_id = a.option_id AND aot.language = 'fr'
+   WHERE a.feedback_id = ${feedback})`;
+
+/**
+ * The latest feedbacks, sent or not, the most recent first (sent: the day it
+ * was sent; not sent: the day it was started). `establishmentId`: on that
+ * establishment or one merged into it; `contact`: left with that e-mail or number.
+ */
+export async function listFeedbacks(
+  filter: { establishmentId: string | null; contact: string | null },
+  limit: number,
+): Promise<AdminFeedbackRow[]> {
+  return query<AdminFeedbackRow>(
+    `SELECT f.id, e.name AS "establishmentName",
+            coalesce(m.name, e.municipality_input) AS municipality,
+            st.label AS "serviceLabel", ${SATISFACTION_LABEL("f.id")} AS "satisfactionLabel",
+            f.step = 'completed' AS sent, f.started_at AS "startedAt", f.completed_at AS "completedAt",
+            fc.value AS contact, EXISTS (SELECT 1 FROM comment c WHERE c.feedback_id = f.id) AS "hasComment"
+     FROM feedback f
+     JOIN establishment e ON e.id = f.establishment_id
+     LEFT JOIN municipality m ON m.id = e.municipality_id
+     LEFT JOIN service_translation st ON st.service_id = f.service_id AND st.language = 'fr'
+     LEFT JOIN feedback_contact fc ON fc.feedback_id = f.id
+     WHERE ($1::uuid IS NULL OR coalesce(e.merged_into_id, e.id) = $1)
+       AND ($2::text IS NULL OR fc.value = $2)
+     ORDER BY coalesce(f.completed_at, f.started_at) DESC, f.id
+     LIMIT $3`,
+    [filter.establishmentId, filter.contact, limit],
+  );
+}
+
+export interface AdminAnswer {
+  questionCode: string;
+  questionLabel: string | null;
+  optionLabel: string | null;
+  textValue: string | null;
+}
+
+export interface AdminTopic {
+  code: string;
+  label: string | null;
+  sentiment: "positive" | "negative" | "not_concerned";
+  otherText: string | null;
+}
+
+export interface AdminFeedback {
+  id: string;
+  establishmentId: string;
+  establishmentName: string;
+  municipality: string | null;
+  organizationName: string | null;
+  serviceLabel: string | null;
+  channel: "qr" | "search" | "link";
+  qrCode: string | null;
+  qrLocation: string | null;
+  step: "essential" | "detailed" | "completed";
+  lastPage: string | null;
+  visitPeriod: string | null;
+  visitMonth: string | null;
+  startedAt: string;
+  completedAt: string | null;
+  attestedAt: string | null;
+  contact: { kind: "email" | "phone"; value: string } | null;
+  /** In the order they were given. */
+  answers: AdminAnswer[];
+  topics: AdminTopic[];
+  comment: { text: string; status: string; promptLabel: string | null } | null;
+}
+
+/** One feedback with everything given: answers, topics, comment, contact. */
+export async function findFeedback(id: string): Promise<AdminFeedback | null> {
+  const rows = await query<AdminFeedback>(
+    `SELECT f.id, e.id AS "establishmentId", e.name AS "establishmentName",
+            coalesce(m.name, e.municipality_input) AS municipality,
+            o.name AS "organizationName",
+            st.label AS "serviceLabel", f.channel, qr.code AS "qrCode", qr.location_label AS "qrLocation",
+            f.step, f.last_page AS "lastPage", f.visit_period AS "visitPeriod",
+            to_char(f.visit_month, 'YYYY-MM') AS "visitMonth",
+            f.started_at AS "startedAt", f.completed_at AS "completedAt", f.attested_at AS "attestedAt",
+            (SELECT json_build_object('kind', fc.kind, 'value', fc.value)
+             FROM feedback_contact fc WHERE fc.feedback_id = f.id) AS contact,
+            coalesce((SELECT json_agg(json_build_object('questionCode', q.code, 'questionLabel', qt.label,
+                                                        'optionLabel', aot.label, 'textValue', a.text_value)
+                                      ORDER BY a.answered_at, q.id)
+                      FROM answer a
+                      JOIN question q ON q.id = a.question_id
+                      LEFT JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
+                      LEFT JOIN answer_option_translation aot ON aot.answer_option_id = a.option_id AND aot.language = 'fr'
+                      WHERE a.feedback_id = f.id), '[]'::json) AS answers,
+            coalesce((SELECT json_agg(json_build_object('code', t.code, 'label', tt.label,
+                                                        'sentiment', ft.sentiment, 'otherText', ft.other_text)
+                                      ORDER BY t.position, t.code)
+                      FROM feedback_topic ft
+                      JOIN topic t ON t.id = ft.topic_id
+                      LEFT JOIN topic_translation tt ON tt.topic_id = t.id AND tt.language = 'fr'
+                      WHERE ft.feedback_id = f.id), '[]'::json) AS topics,
+            (SELECT json_build_object('text', c.text, 'status', c.status, 'promptLabel', aot.label)
+             FROM comment c
+             LEFT JOIN answer_option_translation aot ON aot.answer_option_id = c.prompt_option_id AND aot.language = 'fr'
+             WHERE c.feedback_id = f.id) AS comment
+     FROM feedback f
+     JOIN establishment e ON e.id = f.establishment_id
+     LEFT JOIN municipality m ON m.id = e.municipality_id
+     LEFT JOIN organization o ON o.id = e.organization_id
+     LEFT JOIN service_translation st ON st.service_id = f.service_id AND st.language = 'fr'
+     LEFT JOIN qr_code qr ON qr.id = f.qr_code_id
+     WHERE f.id = $1`,
+    [id],
+  );
+  return rows[0] ?? null;
+}
+
+/**
+ * Deletes a feedback and everything tied to it (topics, answers, comment,
+ * contact), for good. Returns false when there was none.
+ */
+export async function deleteFeedback(id: string): Promise<boolean> {
+  const rows = await query(
+    `WITH topics AS (DELETE FROM feedback_topic WHERE feedback_id = $1),
+     contacts AS (DELETE FROM feedback_contact WHERE feedback_id = $1),
+     comments AS (DELETE FROM comment WHERE feedback_id = $1),
+     answers AS (DELETE FROM answer WHERE feedback_id = $1)
+     DELETE FROM feedback WHERE id = $1
+     RETURNING id`,
+    [id],
+  );
+  return rows.length > 0;
+}
+
+// ---------------------------------------------------------------------------
 // Establishments added by users
 // ---------------------------------------------------------------------------
 

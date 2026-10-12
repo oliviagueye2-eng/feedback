@@ -14,8 +14,9 @@ const PATH = "/console-bo/commentaires";
 /**
  * The comments to read: never published (decided 2026-10-07). Read them,
  * remove personal details. The correction opens a panel under the comment
- * (?corriger=): works without JavaScript. No deletion for now (Olivia,
- * 2026-10-07: nothing is shown anywhere).
+ * (?corriger=): works without JavaScript. A comment is not deleted on its own
+ * (Olivia, 2026-10-07: nothing is shown anywhere); its whole feedback can be,
+ * from the feedback's page (2026-10-12).
  */
 export default async function CommentsPage({ searchParams }: PageProps<"/console-bo/commentaires">) {
   await requireAdmin();
@@ -69,6 +70,9 @@ export default async function CommentsPage({ searchParams }: PageProps<"/console
         )}
         <a href={openWith("corriger", c.feedbackId)} className={styles.icon} title={t.correct} aria-label={t.correct}>
           <Icon name="pencil" />
+        </a>
+        <a href={`/console-bo/avis/${c.feedbackId}`} className={styles.icon} title={t.openFeedback} aria-label={t.openFeedback}>
+          <Icon name="eye" />
         </a>
       </div>
       {params.corriger === c.feedbackId && (

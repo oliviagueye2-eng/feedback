@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
@@ -8,6 +9,7 @@ import {
   createMissingOrganizationCodes,
   createQrCode,
   correctEstablishment,
+  deleteFeedback,
   markCommentReviewed,
   mergeEstablishment,
   refuseEstablishment,
@@ -48,6 +50,22 @@ export async function signInAction(formData: FormData) {
 export async function signOutAction() {
   (await cookies()).delete({ name: SESSION_COOKIE, path: "/console-bo" });
   redirect(SIGN_IN_PATH);
+}
+
+// Feedbacks --------------------------------------------------------------------
+
+/** Deleted for good, after the confirmation under the feedback (?supprimer=1). */
+export async function deleteFeedbackAction(formData: FormData) {
+  await requireAdmin();
+  try {
+    await deleteFeedback(field(formData, "feedbackId"));
+  } catch (error) {
+    // Already deleted (sent twice): the list says it is gone all the same.
+    if (!(error instanceof DomainError)) throw error;
+  }
+  // The menu's count of comments to read, when the feedback had one.
+  revalidatePath("/console-bo", "layout");
+  redirect("/console-bo/avis?supprime=1");
 }
 
 // Comments ---------------------------------------------------------------------

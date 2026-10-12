@@ -22,6 +22,7 @@ export default async function SpaceLayout({ children }: LayoutProps<"/console-bo
         </div>
         <hr />
         <NavLink href="/console-bo" label={t.nav.dashboard} />
+        <NavLink href="/console-bo/avis" label={t.nav.feedbacks} />
         <NavLink href="/console-bo/commentaires" label={t.nav.comments} count={comments} />
         <NavLink href="/console-bo/etablissements" label={t.nav.establishments} count={establishments} />
         <NavLink href="/console-bo/questionnaire" label={t.nav.questionnaire} />

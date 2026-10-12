@@ -20,3 +20,8 @@ export function formatDate(value: string | Date): string {
 export function mayHoldPersonalDetails(text: string): boolean {
   return /\d(?:[\s.-]?\d){6,}/.test(text) || /\S+@\S+\.\S+/.test(text);
 }
+
+/** « 12 octobre 2026 à 11 h », in Dakar time (UTC): feedback times are rounded to the hour. */
+export function formatDateHour(value: string | Date): string {
+  return `${formatDate(value)} à ${new Date(value).getUTCHours()} h`;
+}
