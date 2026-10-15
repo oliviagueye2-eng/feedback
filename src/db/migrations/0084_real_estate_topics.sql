@@ -2,13 +2,14 @@
 -- 2026-10-15). None of the sector's topics fitted a sale or a rental (the
 -- counter's wait, opening hours, premises): they go only to « Autre démarche »
 -- now, like the transport's for the taxi (0060), and each service gets its
--- own. Both still get the sector's questions (COMMERCE: fair price, receipt),
--- after their own.
+-- own. So do the sector's questions (COMMERCE: fair price, receipt,
+-- recommend): each service asks only its own, then the common ones.
 --   PROPERTY_SALE: price, fees, the papers (the transfer of ownership), the
---     commitments kept; first who one was (buyer or seller) and the kind of
---     property, two facts;
+--     commitments kept; asks who one was (buyer or seller), the kind of
+--     property and the kind of papers, three facts;
 --   PROPERTY_RENTAL: the rent, the deposit and advance, the commission, the
---     state of the home, the lease kept, the deposit given back.
+--     state of the home, the lease kept, the deposit given back; asks the
+--     kind of property.
 
 UPDATE sector_topic_set SET only_without_service = true
 WHERE sector_id = (SELECT id FROM sector WHERE code = 'REAL_ESTATE');
@@ -67,15 +68,17 @@ FROM service s JOIN topic_set ts ON ts.code = s.code
 WHERE s.code IN ('PROPERTY_SALE', 'PROPERTY_RENTAL');
 
 -- ---------------------------------------------------------------------------
--- Questions of the sale: two facts (no category, no value)
+-- Questions: facts only (no category, no value)
 -- ---------------------------------------------------------------------------
-INSERT INTO question (code, type) VALUES ('PROPERTY_ROLE', 'single_choice'), ('PROPERTY_KIND', 'single_choice');
+INSERT INTO question (code, type) VALUES
+  ('PROPERTY_ROLE', 'single_choice'), ('PROPERTY_KIND', 'single_choice'), ('PROPERTY_PAPER_TYPE', 'single_choice');
 
 INSERT INTO question_translation (question_id, language, label)
 SELECT q.id, 'fr', v.label
 FROM (VALUES
   ('PROPERTY_ROLE', 'Vous étiez :'),
-  ('PROPERTY_KIND', 'Quel type de bien ?')
+  ('PROPERTY_KIND', 'Quel type de bien ?'),
+  ('PROPERTY_PAPER_TYPE', 'Quel type de papier pour le bien ?')
 ) AS v (code, label)
 JOIN question q ON q.code = v.code;
 
@@ -84,7 +87,9 @@ SELECT q.id, v.option, NULL, v.position
 FROM (VALUES
   ('PROPERTY_ROLE', 'BUYER', 1), ('PROPERTY_ROLE', 'SELLER', 2),
   ('PROPERTY_KIND', 'LAND', 1), ('PROPERTY_KIND', 'HOUSE', 2), ('PROPERTY_KIND', 'APARTMENT', 3),
-  ('PROPERTY_KIND', 'COMMERCIAL', 4), ('PROPERTY_KIND', 'OTHER', 5)
+  ('PROPERTY_KIND', 'COMMERCIAL', 4), ('PROPERTY_KIND', 'OTHER', 5),
+  ('PROPERTY_PAPER_TYPE', 'LAND_TITLE', 1), ('PROPERTY_PAPER_TYPE', 'LEASE', 2),
+  ('PROPERTY_PAPER_TYPE', 'DELIBERATION', 3), ('PROPERTY_PAPER_TYPE', 'ADMINISTRATIVE_ACT', 4)
 ) AS v (question, option, position)
 JOIN question q ON q.code = v.question;
 
@@ -94,29 +99,32 @@ FROM (VALUES
   ('PROPERTY_ROLE', 'BUYER', 'L''acheteur'), ('PROPERTY_ROLE', 'SELLER', 'Le vendeur'),
   ('PROPERTY_KIND', 'LAND', 'Terrain ou parcelle'), ('PROPERTY_KIND', 'HOUSE', 'Maison ou villa'),
   ('PROPERTY_KIND', 'APARTMENT', 'Appartement'), ('PROPERTY_KIND', 'COMMERCIAL', 'Local commercial'),
-  ('PROPERTY_KIND', 'OTHER', 'Autre')
+  ('PROPERTY_KIND', 'OTHER', 'Autre'),
+  ('PROPERTY_PAPER_TYPE', 'LAND_TITLE', 'Titre foncier'), ('PROPERTY_PAPER_TYPE', 'LEASE', 'Bail'),
+  ('PROPERTY_PAPER_TYPE', 'DELIBERATION', 'Délibération'),
+  ('PROPERTY_PAPER_TYPE', 'ADMINISTRATIVE_ACT', 'Acte administratif')
 ) AS v (question, option, label)
 JOIN question q ON q.code = v.question
 JOIN answer_option ao ON ao.question_id = q.id AND ao.code = v.option;
 
-INSERT INTO question_set (code) VALUES ('PROPERTY_SALE');
+INSERT INTO question_set (code) VALUES ('PROPERTY_SALE'), ('PROPERTY_RENTAL');
 
 INSERT INTO question_set_item (question_set_id, question_id, position)
 SELECT qs.id, q.id, v.position
-FROM (VALUES ('PROPERTY_ROLE', 1), ('PROPERTY_KIND', 2)) AS v (question, position)
-JOIN question_set qs ON qs.code = 'PROPERTY_SALE'
+FROM (VALUES
+  ('PROPERTY_SALE', 'PROPERTY_ROLE', 1), ('PROPERTY_SALE', 'PROPERTY_KIND', 2),
+  ('PROPERTY_SALE', 'PROPERTY_PAPER_TYPE', 3),
+  ('PROPERTY_RENTAL', 'PROPERTY_KIND', 1)
+) AS v (list, question, position)
+JOIN question_set qs ON qs.code = v.list
 JOIN question q ON q.code = v.question;
 
--- The sector's questions (COMMERCE) for « Autre démarche » only, and by name
--- after each service's own, as for the banks (0057): who one was comes first.
+-- The sector's questions (COMMERCE) for « Autre démarche » only: the services
+-- ask theirs alone, then the common ones.
 UPDATE sector_question_set SET only_without_service = true
 WHERE sector_id = (SELECT id FROM sector WHERE code = 'REAL_ESTATE');
 
 INSERT INTO service_question_set (service_id, question_set_id, position)
-SELECT s.id, qs.id, v.position
-FROM (VALUES
-  ('PROPERTY_SALE', 'PROPERTY_SALE', 1), ('PROPERTY_SALE', 'COMMERCE', 2),
-  ('PROPERTY_RENTAL', 'COMMERCE', 1)
-) AS v (service, list, position)
-JOIN service s ON s.code = v.service
-JOIN question_set qs ON qs.code = v.list;
+SELECT s.id, qs.id, 1
+FROM service s JOIN question_set qs ON qs.code = s.code
+WHERE s.code IN ('PROPERTY_SALE', 'PROPERTY_RENTAL');

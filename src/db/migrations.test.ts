@@ -247,14 +247,14 @@ describe("reference data", () => {
       questions: [
         "ACCOUNT_CLAIM_SUBJECT", "AGENCY_SUBJECT", "ARRIVAL_MODE", "BANK_SUBJECT", "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "DAARA_BOARDING", "DELIVERY_KIND", "FIELD_SITUATION",
         "FILE_SUBMITTED", "INTERVENTION_AWAITED", "MATERNITY_VISIT_KIND", "MONEY_CHANNEL", "MONEY_OPERATION_KIND", "ORDER_RECEPTION", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
-        "PHARMACY_VISIT_REASON", "POLICE_VISIT_REASON", "POSTAL_COUNTER_SUBJECT", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "PROPERTY_KIND", "PROPERTY_ROLE", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
+        "PHARMACY_VISIT_REASON", "POLICE_VISIT_REASON", "POSTAL_COUNTER_SUBJECT", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "PROPERTY_KIND", "PROPERTY_PAPER_TYPE", "PROPERTY_ROLE", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
         "SANITATION_SUBJECT", "SEWER_PROBLEM", "SUPPORT_REASON", "TELECOM_SHOP_SUBJECT", "TELECOM_SUBJECT", "TELECOM_SUPPORT_REASON", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "TV_SHOP_SUBJECT", "UTILITY_SUBJECT",
       ],
       order: true,
     });
   });
 
-  it("has the bank of 120 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058, 2 of 0062, 2 of 0065, 6 of 0066, 2 of 0068, 1 of 0069, 6 of 0070, 3 of 0071, 3 of 0072, 2 of 0074, 1 of 0075, 1 of 0076, 3 of 0081, 3 of 0082, 2 of 0084), each written once, every text in French", async () => {
+  it("has the bank of 121 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058, 2 of 0062, 2 of 0065, 6 of 0066, 2 of 0068, 1 of 0069, 6 of 0070, 3 of 0071, 3 of 0072, 2 of 0074, 1 of 0075, 1 of 0076, 3 of 0081, 3 of 0082, 3 of 0084), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -268,7 +268,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 120, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 121, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -321,8 +321,8 @@ describe("reference data", () => {
       ACCOUNT_CLAIM: "ACCOUNT_CLAIM",
       // 0071: the hospital's paths (the consultation adds a topic only).
       EMERGENCY: "EMERGENCY", CONSULTATION: null, HOSPITAL_STAY: "HOSPITAL_STAY", MATERNITY: "MATERNITY",
-      // 0083, 0084: real estate; the sale asks who one was and the kind of property.
-      PROPERTY_SALE: "PROPERTY_SALE + COMMERCE", PROPERTY_RENTAL: "COMMERCE",
+      // 0083, 0084: real estate, its own questions only.
+      PROPERTY_SALE: "PROPERTY_SALE", PROPERTY_RENTAL: "PROPERTY_RENTAL",
     });
     // Types with a list of their own (0005), and « Vous êtes » on the education places (0018).
     expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))

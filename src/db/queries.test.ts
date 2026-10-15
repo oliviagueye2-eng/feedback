@@ -806,14 +806,13 @@ describe("feedback", () => {
     };
     const sale = await visit("e1f2a3b4-0083-4000-8000-000000000001", services["Achat ou vente d'un bien immobilier"]!);
     expect([...sale.topics].sort()).toEqual(["COMMITMENTS_KEPT", "PROPERTY_FEES", "PROPERTY_PAPERS", "PROPERTY_PRICE"]);
-    // Who one was and the kind of property first, then the sector's questions.
-    expect(sale.questions.slice(0, 2)).toEqual(["PROPERTY_ROLE", "PROPERTY_KIND"]);
-    expect(sale.questions).toEqual(expect.arrayContaining(["FAIR_PRICE", "RECEIPT_OR_INVOICE"]));
+    // Their own questions, then the common ones: none of the sector's.
+    expect(sale.questions).toEqual(["PROPERTY_ROLE", "PROPERTY_KIND", "PROPERTY_PAPER_TYPE", "REPORTED", "REPORT_WHY"]);
     const rental = await visit("e1f2a3b4-0083-4000-8000-000000000002", services["Location d'un bien immobilier"]!);
     expect([...rental.topics].sort()).toEqual([
       "AGENT_COMMISSION", "DEPOSIT_AND_ADVANCE", "DEPOSIT_RETURNED", "HOUSING_CONDITION", "LEASE_KEPT", "RENT_AMOUNT",
     ]);
-    expect(rental.questions).not.toContain("PROPERTY_ROLE");
+    expect(rental.questions).toEqual(["PROPERTY_KIND", "REPORTED", "REPORT_WHY"]);
     expect((await visit("e1f2a3b4-0083-4000-8000-000000000003", null)).topics).toEqual(expect.arrayContaining([
       "WAIT_TIME", "OPENING_HOURS", "FEES",
     ]));
