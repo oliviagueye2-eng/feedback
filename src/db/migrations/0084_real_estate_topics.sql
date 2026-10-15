@@ -9,7 +9,7 @@
 --     property and the kind of papers, three facts;
 --   PROPERTY_RENTAL: the rent, the deposit and advance, the commission, the
 --     state of the home, the lease kept, the deposit given back; asks the
---     kind of property.
+--     kind of property, a question of its own without the land.
 
 UPDATE sector_topic_set SET only_without_service = true
 WHERE sector_id = (SELECT id FROM sector WHERE code = 'REAL_ESTATE');
@@ -71,14 +71,16 @@ WHERE s.code IN ('PROPERTY_SALE', 'PROPERTY_RENTAL');
 -- Questions: facts only (no category, no value)
 -- ---------------------------------------------------------------------------
 INSERT INTO question (code, type) VALUES
-  ('PROPERTY_ROLE', 'single_choice'), ('PROPERTY_KIND', 'single_choice'), ('PROPERTY_PAPER_TYPE', 'single_choice');
+  ('PROPERTY_ROLE', 'single_choice'), ('PROPERTY_KIND', 'single_choice'), ('PROPERTY_PAPER_TYPE', 'single_choice'),
+  ('RENTAL_PROPERTY_KIND', 'single_choice');
 
 INSERT INTO question_translation (question_id, language, label)
 SELECT q.id, 'fr', v.label
 FROM (VALUES
   ('PROPERTY_ROLE', 'Vous étiez :'),
   ('PROPERTY_KIND', 'Quel type de bien ?'),
-  ('PROPERTY_PAPER_TYPE', 'Quel type de papier pour le bien ?')
+  ('PROPERTY_PAPER_TYPE', 'Quel type de papier pour le bien ?'),
+  ('RENTAL_PROPERTY_KIND', 'Quel type de bien ?')
 ) AS v (code, label)
 JOIN question q ON q.code = v.code;
 
@@ -89,7 +91,9 @@ FROM (VALUES
   ('PROPERTY_KIND', 'LAND', 1), ('PROPERTY_KIND', 'HOUSE', 2), ('PROPERTY_KIND', 'APARTMENT', 3),
   ('PROPERTY_KIND', 'COMMERCIAL', 4), ('PROPERTY_KIND', 'OTHER', 5),
   ('PROPERTY_PAPER_TYPE', 'LAND_TITLE', 1), ('PROPERTY_PAPER_TYPE', 'LEASE', 2),
-  ('PROPERTY_PAPER_TYPE', 'DELIBERATION', 3), ('PROPERTY_PAPER_TYPE', 'ADMINISTRATIVE_ACT', 4)
+  ('PROPERTY_PAPER_TYPE', 'DELIBERATION', 3), ('PROPERTY_PAPER_TYPE', 'ADMINISTRATIVE_ACT', 4),
+  ('RENTAL_PROPERTY_KIND', 'HOUSE', 1), ('RENTAL_PROPERTY_KIND', 'APARTMENT', 2),
+  ('RENTAL_PROPERTY_KIND', 'COMMERCIAL', 3), ('RENTAL_PROPERTY_KIND', 'OTHER', 4)
 ) AS v (question, option, position)
 JOIN question q ON q.code = v.question;
 
@@ -102,7 +106,9 @@ FROM (VALUES
   ('PROPERTY_KIND', 'OTHER', 'Autre'),
   ('PROPERTY_PAPER_TYPE', 'LAND_TITLE', 'Titre foncier'), ('PROPERTY_PAPER_TYPE', 'LEASE', 'Bail'),
   ('PROPERTY_PAPER_TYPE', 'DELIBERATION', 'Délibération'),
-  ('PROPERTY_PAPER_TYPE', 'ADMINISTRATIVE_ACT', 'Acte administratif')
+  ('PROPERTY_PAPER_TYPE', 'ADMINISTRATIVE_ACT', 'Acte administratif'),
+  ('RENTAL_PROPERTY_KIND', 'HOUSE', 'Maison ou villa'), ('RENTAL_PROPERTY_KIND', 'APARTMENT', 'Appartement'),
+  ('RENTAL_PROPERTY_KIND', 'COMMERCIAL', 'Local commercial'), ('RENTAL_PROPERTY_KIND', 'OTHER', 'Autre')
 ) AS v (question, option, label)
 JOIN question q ON q.code = v.question
 JOIN answer_option ao ON ao.question_id = q.id AND ao.code = v.option;
@@ -114,7 +120,7 @@ SELECT qs.id, q.id, v.position
 FROM (VALUES
   ('PROPERTY_SALE', 'PROPERTY_ROLE', 1), ('PROPERTY_SALE', 'PROPERTY_KIND', 2),
   ('PROPERTY_SALE', 'PROPERTY_PAPER_TYPE', 3),
-  ('PROPERTY_RENTAL', 'PROPERTY_KIND', 1)
+  ('PROPERTY_RENTAL', 'RENTAL_PROPERTY_KIND', 1)
 ) AS v (list, question, position)
 JOIN question_set qs ON qs.code = v.list
 JOIN question q ON q.code = v.question;

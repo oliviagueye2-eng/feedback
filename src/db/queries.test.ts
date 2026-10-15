@@ -812,7 +812,7 @@ describe("feedback", () => {
     expect([...rental.topics].sort()).toEqual([
       "AGENT_COMMISSION", "DEPOSIT_AND_ADVANCE", "DEPOSIT_RETURNED", "HOUSING_CONDITION", "LEASE_KEPT", "RENT_AMOUNT",
     ]);
-    expect(rental.questions).toEqual(["PROPERTY_KIND", "REPORTED", "REPORT_WHY"]);
+    expect(rental.questions).toEqual(["RENTAL_PROPERTY_KIND", "REPORTED", "REPORT_WHY"]);
     expect((await visit("e1f2a3b4-0083-4000-8000-000000000003", null)).topics).toEqual(expect.arrayContaining([
       "WAIT_TIME", "OPENING_HOURS", "FEES",
     ]));
