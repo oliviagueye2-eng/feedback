@@ -28,7 +28,7 @@ FROM (VALUES
   ('AGENT_COMMISSION', 7, 'COST'),
   ('HOUSING_CONDITION', 8, 'SERVICE_QUALITY'),
   ('LEASE_KEPT', 9, 'SERVICE_QUALITY'),
-  ('DEPOSIT_RETURNED', 10, 'OUTCOME')
+  ('DEPOSIT_RETURNED', 10, 'SERVICE_QUALITY')
 ) AS v (code, rank, category)
 JOIN evaluation_category c ON c.code = v.category;
 
