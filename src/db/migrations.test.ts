@@ -318,6 +318,8 @@ describe("reference data", () => {
       ACCOUNT_CLAIM: "ACCOUNT_CLAIM",
       // 0071: the hospital's paths (the consultation adds a topic only).
       EMERGENCY: "EMERGENCY", CONSULTATION: null, HOSPITAL_STAY: "HOSPITAL_STAY", MATERNITY: "MATERNITY",
+      // 0083: real estate, the sector's lists only.
+      PROPERTY_SALE: null, PROPERTY_RENTAL: null,
     });
     // Types with a list of their own (0005), and « Vous êtes » on the education places (0018).
     expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))

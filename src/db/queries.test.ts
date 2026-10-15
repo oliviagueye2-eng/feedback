@@ -790,6 +790,22 @@ describe("feedback", () => {
     expect((await visit("d0e1f2a3-0082-4000-8000-000000000003", auchan!.id, null)).topics).toEqual(expect.arrayContaining(shop));
   });
 
+  it("finds real estate by « loyer », with a sale and a rental asking whether the price was fair (0083)", async () => {
+    const search = await searchEstablishments("loyer");
+    expect(search.matchType).toBe("service");
+    expect(search.results[0]).toMatchObject({ name: "Immobilier (achat, vente, location)", scope: "general" });
+    const estate = search.results[0]!.id;
+    const services = Object.fromEntries((await getEstablishment(estate)).services.map((s) => [s.label, s.id]));
+    expect(Object.keys(services)).toEqual(["Achat ou vente d'un bien immobilier", "Location d'un bien immobilier"]);
+    await upsertFeedback("e1f2a3b4-0083-4000-8000-000000000001", {
+      channel: "search", establishmentId: estate, serviceId: services["Location d'un bien immobilier"]!, language: "fr",
+      visitPeriod: "today",
+    });
+    expect((await getDetailsScreen("e1f2a3b4-0083-4000-8000-000000000001")).topics.map((t) => t.code)).toContain("FEES");
+    expect((await getDetailedQuestionnaire("e1f2a3b4-0083-4000-8000-000000000001")).questions.map((q) => q.code))
+      .toEqual(expect.arrayContaining(["FAIR_PRICE", "RECEIPT_OR_INVOICE"]));
+  });
+
   it("gives the police the topics and questions of the visit chosen: at the station, a check or a call (0010, 0013)", async () => {
     const [police] = await rows<{ id: string }>(
       "SELECT e.id FROM establishment e JOIN organization o ON o.id = e.organization_id WHERE o.code = 'POLICE_NATIONALE'",
