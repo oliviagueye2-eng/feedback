@@ -15,6 +15,8 @@
 --     kept by the tenant, the agency's management.
 -- Both rentals ask the kind of property (a question of its own, without the
 -- land) and the intermediary. The commission is one topic for both, to compare.
+-- The commission and the agency's management only after an agency or a broker:
+-- the rentals ask the intermediary with the topics (screen 2b), the sale later.
 
 UPDATE sector_topic_set SET only_without_service = true
 WHERE sector_id = (SELECT id FROM sector WHERE code = 'REAL_ESTATE');
@@ -159,3 +161,30 @@ INSERT INTO service_question_set (service_id, question_set_id, position)
 SELECT s.id, qs.id, 1
 FROM service s JOIN question_set qs ON qs.code = s.code
 WHERE s.code IN ('PROPERTY_SALE', 'PROPERTY_RENTAL', 'PROPERTY_LETTING');
+
+-- A topic opened by several answers of its question (an agency or a broker).
+-- The index of 0011 allowed one answer only, though meant to keep one question
+-- per topic, and screen 2b already shows a topic for any of its answers: a
+-- trigger now keeps the rule.
+DROP INDEX topic_condition_one_question;
+
+CREATE FUNCTION topic_condition_one_question() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM topic_condition
+             WHERE topic_id = NEW.topic_id AND depends_on_question_id <> NEW.depends_on_question_id) THEN
+    RAISE EXCEPTION 'topic % already depends on another question', NEW.topic_id;
+  END IF;
+  RETURN NEW;
+END
+$$;
+
+CREATE TRIGGER topic_condition_one_question BEFORE INSERT OR UPDATE ON topic_condition
+FOR EACH ROW EXECUTE FUNCTION topic_condition_one_question();
+
+-- The commission and the agency's management open with an intermediary.
+INSERT INTO topic_condition (topic_id, depends_on_question_id, option_id)
+SELECT t.id, q.id, o.id
+FROM topic t, question q
+JOIN answer_option o ON o.question_id = q.id AND o.code IN ('AGENCY', 'BROKER')
+WHERE t.code IN ('AGENT_COMMISSION', 'AGENCY_MANAGEMENT') AND q.code = 'PROPERTY_INTERMEDIARY';

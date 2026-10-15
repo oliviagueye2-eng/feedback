@@ -462,15 +462,18 @@ describe("reference data", () => {
 });
 
 describe("« Non concerné » and the questions that open a topic (0011)", () => {
-  it("opens eight topics after their answer (the intervention's question removed by 0012, Woyofal's two added by 0064, the birth's two by 0071, the daara's living conditions by 0072), and no longer offers « Je n'ai rien payé »", async () => {
+  it("opens ten topics after their answer (the intervention's question removed by 0012, Woyofal's two added by 0064, the birth's two by 0071, the daara's living conditions by 0072, the intermediary's two by 0084), and no longer offers « Je n'ai rien payé »", async () => {
     const conditions = (await db.query<{ topic: string; question: string; option: string }>(
       `SELECT t.code AS topic, q.code AS question, ao.code AS option
        FROM topic_condition tc
        JOIN topic t ON t.id = tc.topic_id
        JOIN question q ON q.id = tc.depends_on_question_id
        JOIN answer_option ao ON ao.id = tc.option_id
-       ORDER BY t.code`)).rows.map((r) => `${r.topic} ← ${r.question} ${r.option}`);
+       ORDER BY t.code, ao.position`)).rows.map((r) => `${r.topic} ← ${r.question} ${r.option}`);
     expect(conditions).toEqual([
+      // 0084: two answers open each.
+      "AGENCY_MANAGEMENT ← PROPERTY_INTERMEDIARY AGENCY", "AGENCY_MANAGEMENT ← PROPERTY_INTERMEDIARY BROKER",
+      "AGENT_COMMISSION ← PROPERTY_INTERMEDIARY AGENCY", "AGENT_COMMISSION ← PROPERTY_INTERMEDIARY BROKER",
       "BIRTH_SUPPORT ← MATERNITY_VISIT_KIND BIRTH",
       "CASE_TRACKING ← FILE_SUBMITTED YES",
       "CHILD_LIVING_CONDITIONS ← DAARA_BOARDING YES",
@@ -489,6 +492,13 @@ describe("« Non concerné » and the questions that open a topic (0011)", () =>
       "RECEIPT_GIVEN NOTHING_PAID", "RECEIPT_OR_INVOICE NOTHING_PAID", "TELECOM_SUBJECT BILLING", "TELECOM_SUBJECT HOME_INTERNET",
       "TELECOM_SUBJECT MOBILE_MONEY",
     ]);
+  });
+
+  it("lets a topic open with several answers of one question, never of two questions (0084)", async () => {
+    await expect(db.exec(`
+      INSERT INTO topic_condition (topic_id, depends_on_question_id, option_id)
+      SELECT t.id, q.id, o.id FROM topic t, question q JOIN answer_option o ON o.question_id = q.id AND o.code = 'YES'
+      WHERE t.code = 'AGENT_COMMISSION' AND q.code = 'PAID_SOMETHING'`)).rejects.toThrow(/another question/);
   });
 
   it("accepts « Non concerné » as a sentiment, and nothing else", async () => {

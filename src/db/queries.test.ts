@@ -825,6 +825,12 @@ describe("feedback", () => {
       ],
       questions: ["RENTAL_PROPERTY_KIND", "PROPERTY_INTERMEDIARY", "REPORTED", "REPORT_WHY"],
     });
+    // The commission and the agency's management only after an agency or a broker.
+    const gates = Object.fromEntries((await getDetailsScreen("e1f2a3b4-0083-4000-8000-000000000003")).topics
+      .filter((t) => t.gate).map((t) => [t.code, `${t.gate!.code} ${t.gate!.opensWith.join(" ")}`]));
+    expect(gates).toEqual({
+      AGENT_COMMISSION: "PROPERTY_INTERMEDIARY AGENCY BROKER", AGENCY_MANAGEMENT: "PROPERTY_INTERMEDIARY AGENCY BROKER",
+    });
     expect((await visit("e1f2a3b4-0083-4000-8000-000000000004", null)).topics).toEqual(expect.arrayContaining([
       "WAIT_TIME", "OPENING_HOURS", "FEES",
     ]));
