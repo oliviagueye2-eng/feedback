@@ -790,20 +790,33 @@ describe("feedback", () => {
     expect((await visit("d0e1f2a3-0082-4000-8000-000000000003", auchan!.id, null)).topics).toEqual(expect.arrayContaining(shop));
   });
 
-  it("finds real estate by « loyer », with a sale and a rental asking whether the price was fair (0083)", async () => {
+  it("finds real estate by « loyer »; a sale and a rental get their own topics, the counter's go to « Autre démarche » (0083, 0084)", async () => {
     const search = await searchEstablishments("loyer");
     expect(search.matchType).toBe("service");
     expect(search.results[0]).toMatchObject({ name: "Immobilier (achat, vente, location)", scope: "general" });
     const estate = search.results[0]!.id;
     const services = Object.fromEntries((await getEstablishment(estate)).services.map((s) => [s.label, s.id]));
     expect(Object.keys(services)).toEqual(["Achat ou vente d'un bien immobilier", "Location d'un bien immobilier"]);
-    await upsertFeedback("e1f2a3b4-0083-4000-8000-000000000001", {
-      channel: "search", establishmentId: estate, serviceId: services["Location d'un bien immobilier"]!, language: "fr",
-      visitPeriod: "today",
-    });
-    expect((await getDetailsScreen("e1f2a3b4-0083-4000-8000-000000000001")).topics.map((t) => t.code)).toContain("FEES");
-    expect((await getDetailedQuestionnaire("e1f2a3b4-0083-4000-8000-000000000001")).questions.map((q) => q.code))
-      .toEqual(expect.arrayContaining(["FAIR_PRICE", "RECEIPT_OR_INVOICE"]));
+    const visit = async (feedback: string, serviceId: number | null) => {
+      await upsertFeedback(feedback, { channel: "search", establishmentId: estate, serviceId, language: "fr", visitPeriod: "today" });
+      return {
+        topics: (await getDetailsScreen(feedback)).topics.map((t) => t.code),
+        questions: (await getDetailedQuestionnaire(feedback)).questions.map((q) => q.code),
+      };
+    };
+    const sale = await visit("e1f2a3b4-0083-4000-8000-000000000001", services["Achat ou vente d'un bien immobilier"]!);
+    expect([...sale.topics].sort()).toEqual(["COMMITMENTS_KEPT", "PROPERTY_FEES", "PROPERTY_PAPERS", "PROPERTY_PRICE"]);
+    // Who one was and the kind of property first, then the sector's questions.
+    expect(sale.questions.slice(0, 2)).toEqual(["PROPERTY_ROLE", "PROPERTY_KIND"]);
+    expect(sale.questions).toEqual(expect.arrayContaining(["FAIR_PRICE", "RECEIPT_OR_INVOICE"]));
+    const rental = await visit("e1f2a3b4-0083-4000-8000-000000000002", services["Location d'un bien immobilier"]!);
+    expect([...rental.topics].sort()).toEqual([
+      "AGENT_COMMISSION", "DEPOSIT_AND_ADVANCE", "DEPOSIT_RETURNED", "HOUSING_CONDITION", "LEASE_KEPT", "RENT_AMOUNT",
+    ]);
+    expect(rental.questions).not.toContain("PROPERTY_ROLE");
+    expect((await visit("e1f2a3b4-0083-4000-8000-000000000003", null)).topics).toEqual(expect.arrayContaining([
+      "WAIT_TIME", "OPENING_HOURS", "FEES",
+    ]));
   });
 
   it("gives the police the topics and questions of the visit chosen: at the station, a check or a call (0010, 0013)", async () => {
