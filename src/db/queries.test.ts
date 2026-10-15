@@ -790,13 +790,15 @@ describe("feedback", () => {
     expect((await visit("d0e1f2a3-0082-4000-8000-000000000003", auchan!.id, null)).topics).toEqual(expect.arrayContaining(shop));
   });
 
-  it("finds real estate by « loyer »; a sale and a rental get their own topics, the counter's go to « Autre démarche » (0083, 0084)", async () => {
+  it("finds real estate by « loyer »; a sale, a tenant and a landlord get their own topics, the counter's go to « Autre démarche » (0083, 0084)", async () => {
     const search = await searchEstablishments("loyer");
     expect(search.matchType).toBe("service");
     expect(search.results[0]).toMatchObject({ name: "Immobilier (achat, vente, location)", scope: "general" });
     const estate = search.results[0]!.id;
     const services = Object.fromEntries((await getEstablishment(estate)).services.map((s) => [s.label, s.id]));
-    expect(Object.keys(services)).toEqual(["Achat ou vente d'un bien immobilier", "Location d'un bien immobilier"]);
+    expect(Object.keys(services).sort()).toEqual([
+      "Achat ou vente d'un bien immobilier", "Louer un logement (locataire)", "Mettre un bien en location (propriétaire)",
+    ]);
     const visit = async (feedback: string, serviceId: number | null) => {
       await upsertFeedback(feedback, { channel: "search", establishmentId: estate, serviceId, language: "fr", visitPeriod: "today" });
       return {
@@ -804,16 +806,26 @@ describe("feedback", () => {
         questions: (await getDetailedQuestionnaire(feedback)).questions.map((q) => q.code),
       };
     };
-    const sale = await visit("e1f2a3b4-0083-4000-8000-000000000001", services["Achat ou vente d'un bien immobilier"]!);
-    expect([...sale.topics].sort()).toEqual(["COMMITMENTS_KEPT", "PROPERTY_FEES", "PROPERTY_PAPERS", "PROPERTY_PRICE"]);
     // Their own questions, then the common ones: none of the sector's.
-    expect(sale.questions).toEqual(["PROPERTY_ROLE", "PROPERTY_KIND", "PROPERTY_PAPER_TYPE", "REPORTED", "REPORT_WHY"]);
-    const rental = await visit("e1f2a3b4-0083-4000-8000-000000000002", services["Location d'un bien immobilier"]!);
-    expect([...rental.topics].sort()).toEqual([
-      "AGENT_COMMISSION", "DEPOSIT_AND_ADVANCE", "DEPOSIT_RETURNED", "HOUSING_CONDITION", "LEASE_KEPT", "RENT_AMOUNT",
-    ]);
-    expect(rental.questions).toEqual(["RENTAL_PROPERTY_KIND", "REPORTED", "REPORT_WHY"]);
-    expect((await visit("e1f2a3b4-0083-4000-8000-000000000003", null)).topics).toEqual(expect.arrayContaining([
+    expect(await visit("e1f2a3b4-0083-4000-8000-000000000001", services["Achat ou vente d'un bien immobilier"]!)).toEqual({
+      topics: ["COMMITMENTS_KEPT", "PROPERTY_PAPERS", "PROPERTY_PRICE", "PROPERTY_FEES"],
+      questions: ["PROPERTY_ROLE", "PROPERTY_KIND", "PROPERTY_PAPER_TYPE", "PROPERTY_INTERMEDIARY", "REPORTED", "REPORT_WHY"],
+    });
+    expect(await visit("e1f2a3b4-0083-4000-8000-000000000002", services["Louer un logement (locataire)"]!)).toEqual({
+      topics: [
+        "RENT_AMOUNT", "DEPOSIT_AND_ADVANCE", "AGENT_COMMISSION", "HOUSING_CONDITION", "LEASE_KEPT_BY_LANDLORD",
+        "DEPOSIT_RETURNED",
+      ],
+      questions: ["RENTAL_PROPERTY_KIND", "PROPERTY_INTERMEDIARY", "REPORTED", "REPORT_WHY"],
+    });
+    expect(await visit("e1f2a3b4-0083-4000-8000-000000000003", services["Mettre un bien en location (propriétaire)"]!)).toEqual({
+      topics: [
+        "RENT_PAID", "UNPAID_RENT_RECOVERY", "AGENT_COMMISSION", "HOUSING_CONDITION_AT_EXIT", "LEASE_KEPT_BY_TENANT",
+        "AGENCY_MANAGEMENT",
+      ],
+      questions: ["RENTAL_PROPERTY_KIND", "PROPERTY_INTERMEDIARY", "REPORTED", "REPORT_WHY"],
+    });
+    expect((await visit("e1f2a3b4-0083-4000-8000-000000000004", null)).topics).toEqual(expect.arrayContaining([
       "WAIT_TIME", "OPENING_HOURS", "FEES",
     ]));
   });
