@@ -19,6 +19,8 @@ export interface FeedbackRow {
   visitPeriod: VisitPeriod | null;
   visitMonth: string | null;
   startedAt: Date;
+  /** Sent from a browser in test mode (0085): set when the feedback is created, never changed. */
+  isTest: boolean;
 }
 
 /** A special list of questions, found by its code (ESSENTIAL, COMMON, COMMERCE). */
@@ -33,8 +35,8 @@ const QUESTION_SET = (code: "ESSENTIAL" | "COMMON" | "COMMERCE") =>
 export async function upsertFeedback(row: FeedbackRow): Promise<void> {
   const rows = await query(
     `INSERT INTO feedback AS f (id, establishment_id, service_id, qr_code_id, channel,
-                                language, visit_period, visit_month, started_at)
-     SELECT $1, e.id, $3, $4, $5, $6, $7, $8, $9
+                                language, visit_period, visit_month, started_at, is_test)
+     SELECT $1, e.id, $3, $4, $5, $6, $7, $8, $9, $10
      FROM establishment e
      WHERE e.id = $2 AND e.status IN ('active', 'pending_review')
      ON CONFLICT (id) DO UPDATE SET
@@ -57,6 +59,7 @@ export async function upsertFeedback(row: FeedbackRow): Promise<void> {
       row.visitPeriod,
       row.visitMonth,
       row.startedAt,
+      row.isTest,
     ],
   );
   if (rows.length === 0) throw notFound("Establishment not found or not accepting feedback");

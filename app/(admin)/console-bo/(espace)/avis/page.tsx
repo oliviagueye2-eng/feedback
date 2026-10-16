@@ -1,10 +1,11 @@
-import { listFeedbacks, type AdminFeedbackRow } from "@/src/domain/admin";
+import { countTestFeedbacks, listFeedbacks, type AdminFeedbackRow } from "@/src/domain/admin";
 import { DomainError } from "@/src/domain/errors";
 import { getEstablishment } from "@/src/domain/establishment";
 import { isUuid } from "@/src/lib/validation";
 import { getDictionary } from "../../../../_i18n";
 import { Icon } from "../../_components/Icons";
-import { requireAdmin } from "../../_lib/auth";
+import { deleteTestFeedbacksAction, testModeAction } from "../../_lib/actions";
+import { isTestDevice, requireAdmin } from "../../_lib/auth";
 import { formatDateHour } from "../../_lib/format";
 import styles from "../../admin.module.css";
 
@@ -13,7 +14,9 @@ const PATH = "/console-bo/avis";
 /**
  * The latest feedbacks (asked by Olivia, 2026-10-12), to open one in full and
  * delete a test one. Narrowed to an establishment (?etablissement=, from the
- * dashboard) or to an e-mail or number (?contact=).
+ * dashboard) or to an e-mail or number (?contact=). On top, the test mode of
+ * this browser and the deletion of every test feedback (asked by Olivia,
+ * 2026-10-16), which asks first (?effacer-tests=1).
  */
 export default async function FeedbacksPage({ searchParams }: PageProps<"/console-bo/avis">) {
   await requireAdmin();
@@ -33,6 +36,8 @@ export default async function FeedbacksPage({ searchParams }: PageProps<"/consol
   }
   const establishment =
     establishmentId && isUuid(establishmentId) ? await getEstablishment(establishmentId).catch(() => null) : null;
+  const [testMode, testCount] = await Promise.all([isTestDevice(), countTestFeedbacks()]);
+  const testsDeleted = one(params["tests-supprimes"]);
 
   const row = (f: AdminFeedbackRow) => (
     <li key={f.id}>
@@ -45,6 +50,7 @@ export default async function FeedbacksPage({ searchParams }: PageProps<"/consol
           {f.serviceLabel && <span>{f.serviceLabel}</span>}
           {f.satisfactionLabel && <span>{f.satisfactionLabel}</span>}
           {f.hasComment && <span>{t.withComment}</span>}
+          {f.isTest && <span className={styles.notice}>{t.test}</span>}
         </p>
         <p className={styles.meta}>
           <span>
@@ -72,6 +78,46 @@ export default async function FeedbacksPage({ searchParams }: PageProps<"/consol
           {t.deleted}
         </p>
       )}
+      {testsDeleted !== undefined && (
+        <p role="status" className={styles.notice} style={{ marginTop: 16 }}>
+          {testsDeleted === "1" ? t.testDeleted : t.testsDeleted.replace("{n}", testsDeleted)}
+        </p>
+      )}
+      <section className={styles.panel} style={{ marginTop: 16 }} id="tests">
+        <form action={testModeAction} className={styles.row}>
+          <input type="hidden" name="do" value={testMode ? "off" : "on"} />
+          <p className={styles.label} style={{ margin: 0 }}>
+            {testMode ? t.testModeOn : t.testModeOff}
+          </p>
+          <button type="submit" className={testMode ? styles.link : styles.button}>
+            {testMode ? t.testModeTurnOff : t.testModeTurnOn}
+          </button>
+        </form>
+        <p className={styles.meta}>{testMode ? t.testModeOnHelp : t.testModeOffHelp}</p>
+        {testCount > 0 &&
+          (params["effacer-tests"] === undefined ? (
+            <p style={{ margin: 0 }}>
+              <a href={`${PATH}?effacer-tests=1#tests`} className={`${styles.button} ${styles.danger}`}>
+                {t.deleteTests.replace("{n}", String(testCount))}
+              </a>
+            </p>
+          ) : (
+            <form action={deleteTestFeedbacksAction} className={`${styles.panel} ${styles.panelDanger}`}>
+              <p className={styles.label} style={{ margin: 0 }}>
+                {testCount === 1 ? t.confirmDeleteTest : t.confirmDeleteTests.replace("{n}", String(testCount))}
+              </p>
+              <p className={styles.meta}>{t.confirmDeleteTestsHelp}</p>
+              <div className={styles.row}>
+                <button type="submit" className={`${styles.button} ${styles.danger}`}>
+                  {t.confirmTests}
+                </button>
+                <a href={PATH} className={styles.link}>
+                  {t.cancel}
+                </a>
+              </div>
+            </form>
+          ))}
+      </section>
       {establishment !== null && (
         <p className={styles.row} style={{ marginTop: 16 }}>
           <strong>{t.filteredOn.replace("{name}", establishment.name)}</strong>

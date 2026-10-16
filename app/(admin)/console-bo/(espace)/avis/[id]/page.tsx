@@ -56,6 +56,7 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
       <p className={styles.meta}>
         {f.organizationName && f.organizationName !== f.establishmentName && <span>{f.organizationName}</span>}
         {f.municipality && <span>{f.municipality}</span>}
+        {f.isTest && <span className={styles.notice}>{t.test}</span>}
       </p>
 
       <section className={styles.feedbackPart}>

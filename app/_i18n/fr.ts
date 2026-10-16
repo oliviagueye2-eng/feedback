@@ -642,6 +642,23 @@ export const fr = {
       noContact: "Sans coordonnées",
       open: "Voir l'avis",
       deleted: "L'avis a été supprimé. Les résultats publics sont recalculés sans lui.",
+      test: "Test",
+      testModeOn: "Mode test activé sur cet appareil.",
+      testModeOnHelp:
+        "Les avis donnés depuis ce navigateur sont marqués « Test » pendant 7 jours : ils ne comptent ni dans les résultats publics ni dans le tableau de bord. Une fenêtre de navigation privée ou un autre navigateur envoie de vrais avis.",
+      testModeOff: "Mode test désactivé sur cet appareil.",
+      testModeOffHelp:
+        "Activez-le pour essayer le site en ligne : pendant 7 jours, les avis donnés depuis ce navigateur sont marqués « Test » et ne comptent ni dans les résultats publics ni dans le tableau de bord.",
+      testModeTurnOn: "Activer le mode test",
+      testModeTurnOff: "Désactiver le mode test",
+      deleteTests: "Effacer les avis de test ({n})",
+      confirmDeleteTests: "Effacer les {n} avis de test pour de bon ?",
+      confirmDeleteTest: "Effacer l'avis de test pour de bon ?",
+      confirmDeleteTestsHelp:
+        "Leurs réponses, leurs thèmes, leurs commentaires et leurs coordonnées sont effacés, sans retour possible. Les vrais avis ne sont pas touchés.",
+      confirmTests: "Effacer",
+      testsDeleted: "{n} avis de test effacés.",
+      testDeleted: "1 avis de test effacé.",
       // One feedback
       back: "Retour aux avis",
       heading: "Avis sur {name}",

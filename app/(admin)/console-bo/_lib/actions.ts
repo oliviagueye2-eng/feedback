@@ -9,18 +9,21 @@ import {
   createMissingOrganizationCodes,
   createQrCode,
   correctEstablishment,
+  createTestModeToken,
   deleteEstablishment,
   deleteFeedback,
+  deleteTestFeedbacks,
   markCommentReviewed,
   mergeEstablishment,
   refuseEstablishment,
   SESSION_DAYS,
   setQrCodeActive,
   signIn,
+  TEST_MODE_DAYS,
   validateEstablishment,
 } from "@/src/domain/admin";
 import { DomainError } from "@/src/domain/errors";
-import { adminPassword, clientIp, requireAdmin, SESSION_COOKIE, SIGN_IN_PATH } from "./auth";
+import { adminPassword, clientIp, requireAdmin, SESSION_COOKIE, SIGN_IN_PATH, TEST_MODE_COOKIE } from "./auth";
 
 const field = (formData: FormData, name: string) => {
   const value = formData.get(name);
@@ -67,6 +70,35 @@ export async function deleteFeedbackAction(formData: FormData) {
   // The menu's count of comments to read, when the feedback had one.
   revalidatePath("/console-bo", "layout");
   redirect("/console-bo/avis?supprime=1");
+}
+
+/** Deletes every test feedback at once, from the feedbacks page. */
+export async function deleteTestFeedbacksAction() {
+  await requireAdmin();
+  const deleted = await deleteTestFeedbacks();
+  revalidatePath("/console-bo", "layout");
+  redirect(`/console-bo/avis?tests-supprimes=${deleted}`);
+}
+
+/**
+ * Test mode on this browser (asked by Olivia, 2026-10-16): the feedbacks it
+ * sends for 7 days are marked as tests. Path "/": the feedback pages read it.
+ */
+export async function testModeAction(formData: FormData) {
+  await requireAdmin();
+  const store = await cookies();
+  if (field(formData, "do") === "on") {
+    store.set(TEST_MODE_COOKIE, createTestModeToken(adminPassword()), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: TEST_MODE_DAYS * 24 * 60 * 60,
+    });
+  } else {
+    store.delete({ name: TEST_MODE_COOKIE, path: "/" });
+  }
+  redirect("/console-bo/avis");
 }
 
 // Comments ---------------------------------------------------------------------

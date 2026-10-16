@@ -54,6 +54,8 @@ export interface AdminComment {
   satisfactionLabel: string | null;
   /** The feedback was sent (« Envoyer mon avis »). */
   sent: boolean;
+  /** Sent in test mode (0085). */
+  isTest: boolean;
   createdAt: string;
 }
 
@@ -67,7 +69,7 @@ export async function listComments(
     `SELECT c.feedback_id AS "feedbackId", c.text, e.name AS "establishmentName",
             st.label AS "serviceLabel", to_char(f.visit_month, 'YYYY-MM') AS "visitMonth",
             aot.label AS "satisfactionLabel", f.step = 'completed' AS sent,
-            c.created_at AS "createdAt"
+            f.is_test AS "isTest", c.created_at AS "createdAt"
      FROM comment c
      JOIN feedback f ON f.id = c.feedback_id
      JOIN establishment e ON e.id = f.establishment_id
@@ -87,7 +89,7 @@ export interface EstablishmentComments {
   pending: number;
 }
 
-/** Establishments with comments written from `from` to `to` included, the most commented first. */
+/** Establishments with comments written from `from` to `to` included, the most commented first; tests left out. */
 export async function countCommentsByEstablishment(from: string, to: string): Promise<EstablishmentComments[]> {
   return query<EstablishmentComments>(
     `SELECT t.id AS "establishmentId", t.name,
@@ -100,6 +102,7 @@ export async function countCommentsByEstablishment(from: string, to: string): Pr
      JOIN establishment t ON t.id = coalesce(e.merged_into_id, e.id)
      LEFT JOIN municipality m ON m.id = t.municipality_id
      WHERE c.created_at >= $1::date::timestamptz AND c.created_at < ($2::date + 1)::timestamptz
+       AND NOT f.is_test
      GROUP BY t.id, t.name, m.name, t.municipality_input
      ORDER BY total DESC, t.name`,
     [from, to],
@@ -145,6 +148,8 @@ export interface AdminFeedbackRow {
   completedAt: string | null;
   contact: string | null;
   hasComment: boolean;
+  /** Sent in test mode (0085). */
+  isTest: boolean;
 }
 
 /** The answer given to the essential question, in French. */
@@ -168,7 +173,8 @@ export async function listFeedbacks(
             coalesce(m.name, e.municipality_input) AS municipality,
             st.label AS "serviceLabel", ${SATISFACTION_LABEL("f.id")} AS "satisfactionLabel",
             f.step = 'completed' AS sent, f.started_at AS "startedAt", f.completed_at AS "completedAt",
-            fc.value AS contact, EXISTS (SELECT 1 FROM comment c WHERE c.feedback_id = f.id) AS "hasComment"
+            fc.value AS contact, EXISTS (SELECT 1 FROM comment c WHERE c.feedback_id = f.id) AS "hasComment",
+            f.is_test AS "isTest"
      FROM feedback f
      JOIN establishment e ON e.id = f.establishment_id
      LEFT JOIN municipality m ON m.id = e.municipality_id
@@ -213,6 +219,8 @@ export interface AdminFeedback {
   startedAt: string;
   completedAt: string | null;
   attestedAt: string | null;
+  /** Sent in test mode (0085). */
+  isTest: boolean;
   contact: { kind: "email" | "phone"; value: string } | null;
   /** In the order they were given. */
   answers: AdminAnswer[];
@@ -230,6 +238,7 @@ export async function findFeedback(id: string): Promise<AdminFeedback | null> {
             f.step, f.last_page AS "lastPage", f.visit_period AS "visitPeriod",
             to_char(f.visit_month, 'YYYY-MM') AS "visitMonth",
             f.started_at AS "startedAt", f.completed_at AS "completedAt", f.attested_at AS "attestedAt",
+            f.is_test AS "isTest",
             (SELECT json_build_object('kind', fc.kind, 'value', fc.value)
              FROM feedback_contact fc WHERE fc.feedback_id = f.id) AS contact,
             coalesce((SELECT json_agg(json_build_object('questionCode', q.code, 'questionLabel', qt.label,
@@ -278,6 +287,25 @@ export async function deleteFeedback(id: string): Promise<boolean> {
     [id],
   );
   return rows.length > 0;
+}
+
+export async function countTestFeedbacks(): Promise<number> {
+  const rows = await query<{ n: number }>(`SELECT count(*)::int AS n FROM feedback WHERE is_test`);
+  return rows[0]?.n ?? 0;
+}
+
+/** Deletes every feedback sent in test mode (0085) and what is tied to them. Returns how many. */
+export async function deleteTestFeedbacks(): Promise<number> {
+  const rows = await query(
+    `WITH test AS (SELECT id FROM feedback WHERE is_test),
+     topics AS (DELETE FROM feedback_topic WHERE feedback_id IN (SELECT id FROM test)),
+     contacts AS (DELETE FROM feedback_contact WHERE feedback_id IN (SELECT id FROM test)),
+     comments AS (DELETE FROM comment WHERE feedback_id IN (SELECT id FROM test)),
+     answers AS (DELETE FROM answer WHERE feedback_id IN (SELECT id FROM test))
+     DELETE FROM feedback WHERE id IN (SELECT id FROM test)
+     RETURNING id`,
+  );
+  return rows.length;
 }
 
 // ---------------------------------------------------------------------------
@@ -430,7 +458,7 @@ const SATISFACTION = `
   JOIN answer_option ao ON ao.id = a.option_id`;
 
 /** Not sent: started before now() - hours, never completed, essential question answered. */
-const NOT_SENT = `f.step <> 'completed' AND f.started_at < now() - make_interval(hours => $1)`;
+const NOT_SENT = `NOT f.is_test AND f.step <> 'completed' AND f.started_at < now() - make_interval(hours => $1)`;
 
 /**
  * The dashboard's period, from $2 to $3 included (dates YYYY-MM-DD, days
@@ -438,7 +466,8 @@ const NOT_SENT = `f.step <> 'completed' AND f.started_at < now() - make_interval
  * was sent; one not sent, on the day it was started.
  */
 const PERIOD = `period AS (SELECT $2::date::timestamptz AS start, ($3::date + 1)::timestamptz AS stop)`;
-const SENT_IN_PERIOD = `f.step = 'completed' AND f.completed_at >= period.start AND f.completed_at < period.stop`;
+/** Feedbacks sent in test mode (0085) never count in the dashboard's figures. */
+const SENT_IN_PERIOD = `NOT f.is_test AND f.step = 'completed' AND f.completed_at >= period.start AND f.completed_at < period.stop`;
 const NOT_SENT_IN_PERIOD = `${NOT_SENT} AND f.started_at >= period.start AND f.started_at < period.stop`;
 
 export async function getPeriodFigures(hours: number, from: string, to: string): Promise<PeriodFigures> {
@@ -528,7 +557,7 @@ export async function countCompleteByWeek(from: string, to: string): Promise<{ w
                                   interval '1 week') AS week FROM period)
      SELECT to_char(w.week, 'YYYY-MM-DD') AS week,
             (SELECT count(*)::int FROM feedback f
-             WHERE f.step = 'completed' AND f.completed_at >= greatest(w.week, period.start)
+             WHERE NOT f.is_test AND f.step = 'completed' AND f.completed_at >= greatest(w.week, period.start)
                AND f.completed_at < least(w.week + interval '1 week', period.stop)) AS count
      FROM w CROSS JOIN period ORDER BY w.week`,
     [from, to],

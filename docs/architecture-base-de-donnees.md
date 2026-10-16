@@ -539,6 +539,7 @@ Un avis : le passage d'un usager, de la première réponse à la fin.
 | completed_at | timestamptz | |
 | last_page | enum | `details`, `sector`, `common`, `send` : dernière page affichée après la question essentielle (migration 0028). Pour un avis jamais envoyé, c'est la page quittée sans valider (back-office, « Abandons par étape ») ; ne bouge plus une fois l'avis envoyé |
 | attested_at | timestamptz | déclaration sur l'honneur cochée (migration 0028). Copiée depuis `feedback_contact`, elle reste quand le contact est effacé après 12 mois : l'avis continue de compter |
+| is_test | boolean | avis envoyé depuis un navigateur en mode test (migration 0085, cookie signé `nx_test` posé par le back-office pour 7 jours). Fixé à la création, jamais modifié. Exclu des résultats publics (`published_feedback`, `monthly_stats`) et des chiffres du tableau de bord ; la page « Avis » du back-office les efface tous d'un coup |
 
 **Date de visite.** On ne demande pas de date précise (plus simple pour l'usager, et moins de risque de le reconnaître). Exemple : un avis donné le 10 mars avec « il y a moins d'une semaine » donne `visit_month = 2026-03-01`. Cette valeur est fixée une fois pour toutes : dans six mois, l'avis comptera toujours pour mars. Les avis `over_month` sont conservés mais n'entrent pas dans les notes publiées.
 
@@ -600,7 +601,7 @@ Seuls les avis dont `visit_period` n'est pas `over_month` sont comptés.
 Règle de publication (validée le 2026-10-03) : les avis des **3 derniers mois complets**, mis à jour chaque mois, publiés à partir de **10 avis** ; sous ce seuil, seul le nombre d'avis est donné. Établissement `pending_review` : rien de publié. Commentaires écrits : jamais publiés au lancement. Ces règles sont appliquées à la lecture (`src/domain/stats/results.ts`), pas dans la base.
 
 ### monthly_answer_counts et monthly_topic_counts (vues matérialisées, migration 0007)
-Recalculées chaque nuit avec `monthly_stats`, à partir de la vue simple `published_feedback` (avis qui comptent : mois de visite connu, question essentielle répondue, avis envoyé avec la déclaration sur l'honneur, établissement fusionné suivi jusqu'à son remplaçant, établissement refusé exclu depuis 0028).
+Recalculées chaque nuit avec `monthly_stats`, à partir de la vue simple `published_feedback` (avis qui comptent : mois de visite connu, question essentielle répondue, avis envoyé avec la déclaration sur l'honneur, établissement fusionné suivi jusqu'à son remplaçant, établissement refusé exclu depuis 0028, avis de test exclus depuis 0085, `monthly_stats` aussi).
 
 | Vue | Une ligne par | Colonnes |
 |---|---|---|

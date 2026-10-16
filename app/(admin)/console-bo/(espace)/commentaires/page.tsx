@@ -54,6 +54,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/console
           {c.visitMonth && <span>{t.visit.replace("{month}", formatMonth(c.visitMonth))}</span>}
           {c.satisfactionLabel && <span>{c.satisfactionLabel}</span>}
           {!c.sent && <span>{t.notSent}</span>}
+          {c.isTest && <span className={styles.notice}>{admin.feedbacks.test}</span>}
         </p>
         <p>« {c.text} »</p>
         {mayHoldPersonalDetails(c.text) && <span className={styles.notice}>{t.maybePersonal}</span>}

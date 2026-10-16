@@ -11,11 +11,13 @@ import {
   dashboardPeriod,
   deleteEstablishment,
   deleteFeedback,
+  deleteTestFeedbacks,
   getCategoriesAndTopics,
   getDashboard,
   getFeedback,
   getQuestionnaire,
   isValidSessionToken,
+  isValidTestModeToken,
   listComments,
   listFeedbacks,
   listPendingEstablishments,
@@ -26,7 +28,7 @@ import {
   signIn,
   validateEstablishment,
 } from "../domain/admin";
-import { createSessionToken, isRightPassword } from "../domain/admin/session";
+import { createSessionToken, createTestModeToken, isRightPassword } from "../domain/admin/session";
 import { countCommentsByEstablishment } from "./admin";
 import { createUserEstablishment } from "../domain/establishment";
 import { recordPageShown, saveAnswer, saveComment, saveTopics, submitFeedback, upsertFeedback } from "../domain/feedback";
@@ -80,6 +82,17 @@ describe("session", () => {
     expect(isValidSessionToken(token, "secret", now + 8 * 24 * 3600 * 1000)).toBe(false);
     expect(isValidSessionToken(`${now + 1e9}.forged`, "secret", now)).toBe(false);
     expect(isValidSessionToken(undefined, "secret", now)).toBe(false);
+  });
+
+  it("signs the test mode apart, for 7 days: one token never stands for the other", () => {
+    const now = Date.UTC(2026, 9, 16);
+    const token = createTestModeToken("secret", now);
+    expect(isValidTestModeToken(token, "secret", now + 1000)).toBe(true);
+    expect(isValidTestModeToken(token, "other", now + 1000)).toBe(false);
+    expect(isValidTestModeToken(token, "secret", now + 8 * 24 * 3600 * 1000)).toBe(false);
+    expect(isValidTestModeToken(undefined, "secret", now)).toBe(false);
+    expect(isValidSessionToken(token, "secret", now + 1000)).toBe(false);
+    expect(isValidTestModeToken(createSessionToken("secret", now), "secret", now + 1000)).toBe(false);
   });
 });
 
@@ -505,5 +518,50 @@ describe("feedbacks", () => {
     await expect(deleteFeedback(id)).rejects.toMatchObject({ code: "NOT_FOUND" });
     // The other feedback is untouched.
     expect((await getFeedback(other)).id).toBe(other);
+  });
+});
+
+describe("test feedbacks", () => {
+  const real = "c3c3c3c3-0085-4000-8000-000000000001";
+  const test = "c3c3c3c3-0085-4000-8000-000000000002";
+  const send = async (id: string, isTest: boolean) => {
+    await upsertFeedback(id, { channel: "search", establishmentId: active, language: "fr", visitPeriod: "today" }, new Date(), isTest);
+    await saveAnswer(id, "OVERALL_SATISFACTION", { option: "SATISFIED" });
+    await saveComment(id, { text: "Essai.", promptOption: "SATISFIED" });
+    await submitFeedback(id, { contact: "77 000 00 85", attested: true });
+  };
+
+  it("are saved and listed as tests, but never counted in the results nor the dashboard", async () => {
+    await db.exec(`DELETE FROM feedback_topic; DELETE FROM comment; DELETE FROM feedback_contact; DELETE FROM answer; DELETE FROM feedback`);
+    await send(real, false);
+    await send(test, true);
+    // Sent again from screen 1 without the cookie: still a test.
+    await upsertFeedback(test, { channel: "search", establishmentId: active, language: "fr", visitPeriod: "today" });
+    await refreshPublishedStats();
+
+    expect((await rows(`SELECT id FROM published_feedback`)).map((r) => (r as { id: string }).id)).toEqual([real]);
+    expect(await rows(`SELECT sum(feedback_count)::int AS n FROM monthly_stats`)).toEqual([{ n: 1 }]);
+    expect(await rows(`SELECT sum(answer_count)::int AS n FROM monthly_answer_counts c JOIN question q ON q.id = c.question_id
+                       WHERE q.code = 'OVERALL_SATISFACTION'`)).toEqual([{ n: 1 }]);
+    const d = await getDashboard();
+    expect(d.figures).toMatchObject({ complete: 1, notSent: 0 });
+    expect(d.weeks.reduce((n, w) => n + w.count, 0)).toBe(1);
+    expect(d.byEstablishment.map((e) => e.complete)).toEqual([1]);
+    expect(d.commented.map((e) => e.total)).toEqual([1]);
+
+    const listed = await listFeedbacks({});
+    expect(listed.map((f) => [f.id, f.isTest]).sort()).toEqual([[real, false], [test, true]]);
+    expect((await getFeedback(test)).isTest).toBe(true);
+    expect((await listComments("pending", true)).find((c) => c.feedbackId === test)?.isTest).toBe(true);
+  });
+
+  it("are deleted all at once, the real feedbacks untouched", async () => {
+    expect(await deleteTestFeedbacks()).toBe(1);
+    for (const table of ["feedback_topic", "answer", "comment", "feedback_contact"]) {
+      expect(await rows(`SELECT 1 FROM ${table} WHERE feedback_id = $1`, [test])).toEqual([]);
+    }
+    await expect(getFeedback(test)).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect((await getFeedback(real)).isTest).toBe(false);
+    expect(await deleteTestFeedbacks()).toBe(0);
   });
 });

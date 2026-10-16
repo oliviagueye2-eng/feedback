@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { isTestDevice } from "@/app/(admin)/console-bo/_lib/auth";
 import { DomainError } from "@/src/domain/errors";
 import { defaultLocale } from "../../_i18n";
 import {
@@ -37,15 +38,21 @@ export async function startFeedback(formData: FormData) {
   const returnTo = field("returnTo") ?? "/avis";
   const service = field("service");
   try {
-    await upsertFeedback(id, {
-      establishmentId: field("establishmentId"),
-      channel: field("channel"),
-      qrCodeId: field("qrCodeId"),
-      // "other" = "Autre démarche": no service.
-      serviceId: service && service !== "other" ? Number(service) : null,
-      visitPeriod: field("visitPeriod"),
-      language: defaultLocale,
-    });
+    await upsertFeedback(
+      id,
+      {
+        establishmentId: field("establishmentId"),
+        channel: field("channel"),
+        qrCodeId: field("qrCodeId"),
+        // "other" = "Autre démarche": no service.
+        serviceId: service && service !== "other" ? Number(service) : null,
+        visitPeriod: field("visitPeriod"),
+        language: defaultLocale,
+      },
+      new Date(),
+      // Test mode turned on in the back-office, on this browser.
+      await isTestDevice(),
+    );
   } catch (error) {
     if (error instanceof DomainError && error.code === "INVALID_INPUT") {
       redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}erreur=quand`);
