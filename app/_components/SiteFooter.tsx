@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LEGAL_PAGES } from "../(public)/_legal/links";
 import { getDictionary } from "../_i18n";
+import { FooterFaces } from "./FooterFaces";
 import { SocialLinks } from "./SocialLinks";
 
 export async function SiteFooter() {
@@ -33,6 +34,7 @@ export async function SiteFooter() {
           <Link href={LEGAL_PAGES.terms}>{legal.terms.title}</Link>
         </nav>
       </div>
+      <FooterFaces />
     </footer>
   );
 }

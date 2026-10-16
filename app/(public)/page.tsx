@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { FooterFaces } from "../_components/FooterFaces";
 import { SOCIAL_ACCOUNTS, SocialIcon } from "../_components/SocialLinks";
 import { getDictionary } from "../_i18n";
 import { LEGAL_PAGES } from "./_legal/links";
@@ -211,6 +212,7 @@ export default async function HomePage() {
             <Link href={LEGAL_PAGES.terms}>{legal.terms.title}</Link>
           </nav>
         </div>
+        <FooterFaces />
       </footer>
       <Reveal />
     </>

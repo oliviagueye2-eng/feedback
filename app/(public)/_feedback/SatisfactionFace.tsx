@@ -8,7 +8,8 @@ export const SATISFACTION_LEVEL: Record<string, 1 | 2 | 3 | 4 | 5> = {
 };
 
 // The mouth of each face; only level 1 is an open smile (filled).
-const MOUTHS = {
+// Also drawn on a canvas by the footer's falling faces (FooterFaces).
+export const MOUTHS = {
   1: "M7.5 13.5 Q12 19.5 16.5 13.5",
   2: "M8 14.5 Q12 17.5 16 14.5",
   3: "M8.5 15.5 L15.5 15.5",
