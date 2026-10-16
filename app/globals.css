@@ -47,6 +47,12 @@
   --satisfaction-4-tint: #fcebdd;
   --satisfaction-5: #cd1e22;
   --satisfaction-5-tint: #fbe4e4;
+  /* The light spot of the satisfaction tokens in relief (home page hero, footer). */
+  --satisfaction-1-light: #2a9a52;
+  --satisfaction-2-light: #86bf52;
+  --satisfaction-3-light: #f0c02a;
+  --satisfaction-4-light: #f08c45;
+  --satisfaction-5-light: #e24245;
 
   /* Back office, generated form: the level a list belongs to (2026-10-08). */
   --level-common: var(--muted);
