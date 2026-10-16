@@ -35,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/** Condensed capitals for the hero title and the ticket numbers only; everything else stays in Atkinson Hyperlegible. */
+/** Condensed capitals for the hero title, the ticket numbers and the footer's name; everything else stays in Atkinson Hyperlegible. */
 const display = Barlow_Condensed({ weight: "800", subsets: ["latin"], variable: "--font-display" });
 
 /** The five satisfaction faces around the phone, as solid tokens, from « Très satisfait(e) » (1) to « Pas du tout » (5). */
@@ -387,29 +387,29 @@ export default async function HomePage() {
         </section>
       </main>
 
-      <footer className={`site-footer ${styles.footer}`}>
-        <div className={`container ${styles.footerInner}`}>
-          <div className={styles.footerBrand}>
-            <div className="site-footer-name">
-              {/* eslint-disable-next-line @next/next/no-img-element -- small SVG, nothing to optimize */}
-              <img className="site-footer-logo" src="/brand/logo-blanc.svg" alt="" width={46} height={48} />
-              <strong>{header.siteName}</strong>
-            </div>
-            <em>{header.tagline}.</em>
-          </div>
+      <footer className={`site-footer ${display.variable}`}>
+        <div className={`container ${styles.footerTop}`}>
+          <p className={styles.footerTag}>{t.footer.tagline}</p>
           <nav className={styles.footerNav} aria-label={t.footer.navLabel}>
             <a href="#accueil">{t.footer.home}</a>
             <a href="#comment-ca-marche">{t.nav.howItWorks}</a>
             <a href="#vision">{t.nav.vision}</a>
           </nav>
-          <p className={styles.copyright}>{t.footer.copyright}</p>
-          <nav className={`site-footer-legal ${styles.footerLegal}`} aria-label={legal.navLabel}>
+          <nav className={styles.footerLegal} aria-label={legal.navLabel}>
             <Link href={LEGAL_PAGES.notice}>{legal.notice.title}</Link>
             <Link href={LEGAL_PAGES.privacy}>{legal.privacy.title}</Link>
             <Link href={LEGAL_PAGES.terms}>{legal.terms.title}</Link>
           </nav>
+          <p className={styles.copyright}>{t.footer.copyright}</p>
         </div>
-        <FooterFaces />
+        {/* The name across the whole width; the faces fall in front of it and pile up over its foot.
+            Fewer faces than on the other pages' footers (fill), so the top of the name stays readable. */}
+        <div className={styles.signature}>
+          <p className={styles.wordmark} aria-hidden="true">
+            {header.siteName}
+          </p>
+          <FooterFaces fill={0.5} className={styles.signaturePit} />
+        </div>
       </footer>
       <Reveal />
     </>
