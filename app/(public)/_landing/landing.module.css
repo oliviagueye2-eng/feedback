@@ -358,7 +358,6 @@
   width: 54px;
   font-size: 54px;
   background: radial-gradient(circle at 35% 30%, var(--satisfaction-4-light), var(--satisfaction-4) 62%);
-  filter: blur(0.5px);
 }
 
 .token[data-level="5"] {
@@ -368,7 +367,6 @@
   width: 40px;
   font-size: 40px;
   background: radial-gradient(circle at 35% 30%, var(--satisfaction-5-light), var(--satisfaction-5) 62%);
-  filter: blur(1px);
   opacity: 0.85;
 }
 
@@ -1450,6 +1448,8 @@
 }
 
 .signature > .signaturePit {
+  /* Share of the pit filled with faces (FooterFaces): up over the foot of the name. */
+  --faces-fill: 0.62;
   position: absolute;
   inset: 0;
   height: auto;
@@ -1830,5 +1830,9 @@
   .signature {
     height: calc(21.5vw * 0.8 + 140px);
     margin-bottom: -48px;
+  }
+
+  .signature > .signaturePit {
+    --faces-fill: 0.5;
   }
 }

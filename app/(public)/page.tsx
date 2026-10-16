@@ -403,12 +403,12 @@ export default async function HomePage() {
           <p className={styles.copyright}>{t.footer.copyright}</p>
         </div>
         {/* The name across the whole width; the faces fall in front of it and pile up over its foot.
-            Fewer faces than on the other pages' footers (fill), so the top of the name stays readable. */}
+            Their number is set per screen size (--faces-fill), so the top of the name stays readable. */}
         <div className={styles.signature}>
           <p className={styles.wordmark} aria-hidden="true">
             {header.siteName}
           </p>
-          <FooterFaces fill={0.5} className={styles.signaturePit} />
+          <FooterFaces className={styles.signaturePit} />
         </div>
       </footer>
       <Reveal />
