@@ -80,12 +80,18 @@ export interface ListGridItem {
   label?: string | null;
   /** One per column of the group's `extras`, in order. */
   extras?: (boolean | number | string | null)[];
+  /** The lists of the row holding it, by their place in its `parts`: drawn in their colours. */
+  lists?: number[];
 }
 
 export interface ListGridRow {
   id: string;
   values: Record<string, string | boolean | string[] | number | null>;
-  lists: Record<string, { code?: string | null; items: ListGridItem[] }>;
+  /**
+   * `parts`: the row's lists one by one (« ROAD_TRIP », « APP_RIDE »):
+   * each gets a colour, and so do its items (asked by Olivia, 2026-10-16).
+   */
+  lists: Record<string, { code?: string | null; parts?: string[]; items: ListGridItem[] }>;
 }
 
 export interface ListGridText {
@@ -105,6 +111,12 @@ const LIST = (id: string) => `${id}·list`;
 const ITEM = (id: string) => `${id}·item`;
 const EXTRA = (id: string, n: number) => `${id}·extra${n}`;
 const COUNT = (id: string) => `${id}·count`;
+const PARTS = (id: string) => `${id}·parts`;
+const COLORS = (id: string) => `${id}·colors`;
+
+/** The colours of a row's lists, in their order; past the last, they start again. */
+const LIST_COLORS = [styles.listColor0, styles.listColor1, styles.listColor2, styles.listColor3, styles.listColor4, styles.listColor5];
+const listColor = (n: number) => LIST_COLORS[n % LIST_COLORS.length];
 
 /**
  * One table of the Questionnaire page: column groups of the row's own
@@ -138,6 +150,7 @@ export function ListGrid({
         for (const l of lists) {
           const content = r.lists[l.id];
           parent[LIST(l.id)] = content?.code ?? null;
+          parent[PARTS(l.id)] = content?.parts ?? [];
           parent[ITEM(l.id)] = (content?.items ?? []).map((i) => i.code).join(" ");
           (l.extras ?? []).forEach((_, n) => (parent[EXTRA(l.id, n)] = null));
           parent[COUNT(l.id)] = content?.items.length ?? 0;
@@ -150,6 +163,8 @@ export function ListGrid({
             for (const other of lists) {
               const mine = other.id === l.id;
               line[LIST(other.id)] = mine ? (r.lists[l.id]?.code ?? null) : null;
+              line[PARTS(other.id)] = mine ? (r.lists[l.id]?.parts ?? []) : [];
+              line[COLORS(other.id)] = mine ? (item.lists ?? []).filter((n) => n >= 0).map(String) : [];
               line[ITEM(other.id)] = mine ? item.code : null;
               (other.extras ?? []).forEach((_, n) => (line[EXTRA(other.id, n)] = mine ? (item.extras?.[n] ?? null) : null));
               line[COUNT(other.id)] = 0;
@@ -262,6 +277,24 @@ export function ListGrid({
           autoHeight: true,
           valueFormatter: (p) => (p.data?._child ? "" : (p.value ?? "NULL").replaceAll("_", "_​")),
           cellClassRules: { [styles.gridMuted]: (p) => !p.data?._child && p.value == null },
+          // Lists in colours: on the row, each of its lists; on an item's line, those holding it.
+          cellRenderer: (p: ICellRendererParams<GridLine>) => {
+            const line = p.data;
+            const parts = (line?.[PARTS(l.id)] as string[] | undefined) ?? [];
+            if (!line || parts.length === 0) return p.valueFormatted;
+            const shown = line._child
+              ? ((line[COLORS(l.id)] as string[] | undefined) ?? []).map(Number)
+              : parts.map((_, n) => n);
+            return (
+              <span className={styles.listTags}>
+                {shown.map((n) => (
+                  <span key={n} className={`${styles.listTag} ${listColor(n)}`}>
+                    {breakable(parts[n] ?? "")}
+                  </span>
+                ))}
+              </span>
+            );
+          },
           minWidth: 130,
         });
       }
@@ -280,9 +313,15 @@ export function ListGrid({
           if (line._child) {
             if (line[ITEM(l.id)] == null) return null;
             const label = line[`${ITEM(l.id)}·label`];
+            const colors = ((line[COLORS(l.id)] as string[] | undefined) ?? []).map(Number);
             return (
               <span className={styles.gridLines}>
-                <span>{breakable(String(line[ITEM(l.id)]))}</span>
+                <span className={colors.length > 0 ? styles.listItem : undefined}>
+                  {colors.map((n) => (
+                    <span key={n} aria-hidden="true" className={`${styles.listDot} ${listColor(n)}`} />
+                  ))}
+                  <span>{breakable(String(line[ITEM(l.id)]))}</span>
+                </span>
                 {typeof label === "string" && <span className={styles.gridItemLabel}>{label}</span>}
               </span>
             );

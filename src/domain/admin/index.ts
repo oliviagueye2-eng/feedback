@@ -17,7 +17,7 @@ export { createTestModeToken, isValidSessionToken, isValidTestModeToken, SESSION
 export * from "./qrCodes";
 export type {
   AdminAnswer, AdminComment, AdminFeedback, AdminFeedbackRow, AdminTopic, BankCondition, BankOption, BankQuestion, CategoryContent, CommentStatus, EstablishmentComments, FormEstablishment,
-  ListedQuestion, ListedTopic, ListUsage, PendingEstablishment, ServiceTopics, SectorTopics, StopPage, TopicRow, TypeTopics,
+  LevelTopic, ListedQuestion, ListedTopic, ListUsage, PendingEstablishment, ServiceTopics, SectorTopics, StopPage, TopicRow, TypeTopics,
 } from "../../db/admin";
 
 /** 5 failed sign-ins in 15 minutes from one address block it for 15 minutes. */

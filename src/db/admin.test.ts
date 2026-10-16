@@ -319,7 +319,7 @@ describe("questionnaire", () => {
       withoutTypeListCodes: ["HEALTH", "STAFF_SKILLS", "FEES"],
       withoutTypeQuestionListCodes: ["HEALTH", "PAID_AND_RECEIPT"],
     });
-    expect(health.topics).toContainEqual({ code: "CARE_RECEIVED", label: "Soins reçus", isActive: true, categoryCode: "OUTCOME", shownIf: [] });
+    expect(health.topics).toContainEqual({ code: "CARE_RECEIVED", label: "Soins reçus", isActive: true, categoryCode: "OUTCOME", shownIf: [], lists: ["HEALTH"] });
     const airport = q.types.find((t) => t.code === "AIRPORT")!;
     // 0061: no « Guichet » block at the airport.
     expect(airport).toMatchObject({ sectorCode: "TRANSPORT", listCodes: ["STAFF_SKILLS"] });
@@ -378,17 +378,19 @@ describe("questionnaire", () => {
         listCodes: ["MOBILE_PAYMENT", "STAFF_SKILLS", "FEES"],
         // In the order of the categories, then of topic.position.
         topics: [
-          ["REQUEST_HANDLING", "OUTCOME"],
-          ["PROFESSIONALISM", "STAFF"],
-          ["INFORMATION", "STAFF"],
-          ["WAIT_TIME", "DELAYS"],
-          ["FEES", "COST"],
-          ["ACCOUNT_SECURITY", "SERVICE_QUALITY"],
-        ].map(([code, categoryCode]) => ({
+          ["REQUEST_HANDLING", "OUTCOME", "MOBILE_PAYMENT"],
+          ["PROFESSIONALISM", "STAFF", "STAFF_SKILLS"],
+          ["INFORMATION", "STAFF", "STAFF_SKILLS"],
+          ["WAIT_TIME", "DELAYS", "MOBILE_PAYMENT"],
+          ["FEES", "COST", "FEES"],
+          ["ACCOUNT_SECURITY", "SERVICE_QUALITY", "MOBILE_PAYMENT"],
+        ].map(([code, categoryCode, list]) => ({
           code,
           label: expect.any(String),
           isActive: true,
           categoryCode,
+          // The level's lists that hold it (a colour per list, asked by Olivia, 2026-10-16).
+          lists: [list],
           // 0011: « Frais » only after « Oui » to « Avez-vous payé quelque chose ? ».
           shownIf: code === "FEES" ? [{ dependsOn: "PAID_SOMETHING", options: ["YES"] }] : [],
         })),
@@ -465,7 +467,7 @@ describe("questionnaire", () => {
     await db.query(`UPDATE topic SET is_active = false WHERE code = 'CARE_RECEIVED'`);
     try {
       const q = await getQuestionnaire({ sector: "HEALTH" });
-      expect(q.sectors[0]!.topics).toContainEqual({ code: "CARE_RECEIVED", label: "Soins reçus", isActive: false, categoryCode: "OUTCOME", shownIf: [] });
+      expect(q.sectors[0]!.topics).toContainEqual({ code: "CARE_RECEIVED", label: "Soins reçus", isActive: false, categoryCode: "OUTCOME", shownIf: [], lists: ["HEALTH"] });
     } finally {
       await db.query(`UPDATE topic SET is_active = true WHERE code = 'CARE_RECEIVED'`);
     }
