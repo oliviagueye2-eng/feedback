@@ -27,7 +27,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-s);
   min-height: 62px;
 }
 
@@ -100,7 +100,7 @@
 
 .nav .giveLink {
   justify-content: center;
-  margin-top: 8px;
+  margin-top: var(--space-xs);
   border: 1px solid var(--green);
   border-radius: 10px;
   color: var(--green);
@@ -117,7 +117,7 @@
 /* The short line above the hero title and above « Pourquoi » : plain text in
    the logo's green, no box. */
 .label {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-s);
   color: var(--green);
   font-size: 18px;
   font-weight: 700;
@@ -132,7 +132,7 @@
 }
 
 .lead {
-  margin: 18px 0 0;
+  margin: var(--space-ml) 0 0;
   max-width: 40em;
   font-size: 18px;
   color: var(--muted);
@@ -160,7 +160,7 @@
 .hero {
   position: relative;
   background: var(--hero-home);
-  padding: 36px 0 76px;
+  padding: var(--space-xl) 0 76px;
   overflow: hidden;
 }
 
@@ -172,7 +172,7 @@
 
 .heroInner {
   display: grid;
-  gap: 8px;
+  gap: var(--space-xs);
 }
 
 .heroTitle {
@@ -216,13 +216,13 @@
 }
 
 .heroSectors {
-  margin: 22px 0 0;
+  margin: var(--space-l) 0 0;
   font-size: 17px;
   color: var(--muted);
 }
 
 .heroLead {
-  margin: 4px 0 0;
+  margin: var(--space-2xs) 0 0;
   max-width: 30em;
   font-size: 18px;
   line-height: 1.5;
@@ -230,9 +230,9 @@
 }
 
 .heroButton {
-  gap: 10px;
-  margin-top: 24px;
-  padding: 12px 28px;
+  gap: var(--space-s);
+  margin-top: var(--space-l);
+  padding: var(--space-s) var(--space-xl);
   border-color: var(--ink);
   background: var(--ink);
   line-height: 1.2;
@@ -252,7 +252,7 @@
 .stage {
   position: relative;
   height: 440px;
-  margin-top: 12px;
+  margin-top: var(--space-s);
 }
 
 .phone {
@@ -491,7 +491,7 @@
   position: relative;
   z-index: 1;
   margin-top: -36px;
-  padding: 64px 0 72px;
+  padding: var(--space-3xl) 0 72px;
   border-radius: 36px 36px 0 0;
   background: var(--night);
   color: #fff;
@@ -503,8 +503,8 @@
 
 .ideaText {
   display: grid;
-  gap: 16px;
-  margin-top: 24px;
+  gap: var(--space-m);
+  margin-top: var(--space-l);
   max-width: 1000px;
   font-size: 18px;
   line-height: 1.55;
@@ -520,7 +520,7 @@
 .chain {
   position: relative;
   display: grid;
-  gap: 28px;
+  gap: var(--space-xl);
   margin: 44px 0 0;
   padding: 0;
   list-style: none;
@@ -552,7 +552,7 @@
   display: grid;
   grid-template-columns: 84px 1fr;
   align-items: center;
-  gap: 18px;
+  gap: var(--space-ml);
 }
 
 .chainToken {
@@ -676,13 +676,13 @@
 /* ---- Public and private ---- */
 
 .services {
-  padding: 72px 0;
+  padding: var(--section-y) 0;
   background: #fff;
 }
 
 .servicesHead {
   display: grid;
-  gap: 28px;
+  gap: var(--space-xl);
 }
 
 .servicesPhoto {
@@ -702,20 +702,20 @@
 /* ---- How it works ---- */
 
 .steps {
-  padding: 72px 0;
+  padding: var(--section-y) 0;
   background: var(--page);
 }
 
 .stepList {
   display: grid;
-  gap: 32px;
-  margin: 40px 0 0;
+  gap: var(--space-xl);
+  margin: var(--space-2xl) 0 0;
   padding: 0;
   list-style: none;
 }
 
 .stepList li {
-  padding: 26px;
+  padding: var(--space-l);
   border-radius: 14px;
   background: #fff;
 }
@@ -734,7 +734,7 @@
 }
 
 .stepList h3 {
-  margin: 14px 0 6px;
+  margin: var(--space-m) 0 var(--space-xs);
   font-size: 22px;
 }
 
@@ -803,21 +803,21 @@
 }
 
 .visionText {
-  margin: 32px 0 0;
+  margin: var(--space-xl) 0 0;
   max-width: 36em;
   font-size: 19px;
   color: var(--footer-text);
 }
 
 .valuesTitle {
-  margin: 64px 0 0;
+  margin: var(--space-3xl) 0 0;
   font-size: 22px;
 }
 
 .values {
   display: grid;
-  gap: 24px;
-  margin: 24px 0 0;
+  gap: var(--space-l);
+  margin: var(--space-l) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -825,8 +825,8 @@
 .values li {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 20px;
+  gap: var(--space-xs);
+  padding: var(--space-ml);
   border-radius: 14px;
   background: rgb(255 255 255 / 0.06);
   border-top: 4px solid var(--flag-green);
@@ -902,7 +902,7 @@
   display: block;
   width: 96px;
   height: auto;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-ml);
 }
 
 .soonTitle {
@@ -917,7 +917,7 @@
 }
 
 .soonFollow {
-  margin: 32px 0 0;
+  margin: var(--space-xl) 0 0;
   font-size: 19px;
   font-weight: 700;
 }
@@ -925,10 +925,10 @@
 .networks {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: var(--space-s);
   width: 100%;
   max-width: 640px;
-  margin: 18px 0 0;
+  margin: var(--space-ml) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -937,9 +937,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: var(--space-s);
   min-height: 54px;
-  padding: 0 18px;
+  padding: 0 var(--space-ml);
   border-radius: 10px;
   background: #fff;
   color: var(--green-dark);
@@ -964,7 +964,7 @@
 }
 
 .handle {
-  margin: 14px 0 0;
+  margin: var(--space-m) 0 0;
   color: var(--green-tint);
 }
 
@@ -973,7 +973,7 @@
 .footerInner {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--space-l);
 }
 
 .footerBrand em {
@@ -1003,7 +1003,7 @@
 }
 
 .copyright {
-  padding-top: 18px;
+  padding-top: var(--space-ml);
   border-top: 1px solid rgb(255 255 255 / 0.18);
 }
 
@@ -1034,7 +1034,7 @@
   }
 
   .headerInner {
-    gap: 14px;
+    gap: var(--space-m);
     min-height: 84px;
   }
 
@@ -1048,7 +1048,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 32px;
+    gap: var(--space-xl);
     padding: 0;
     border: 0;
     background: none;
@@ -1057,7 +1057,7 @@
   .nav .giveLink {
     margin-top: 0;
     min-height: 44px;
-    padding: 0 20px;
+    padding: 0 var(--space-ml);
     font-size: 16px;
   }
 
@@ -1096,7 +1096,7 @@
   .heroInner {
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
     align-items: center;
-    gap: 32px;
+    gap: var(--space-xl);
   }
 
   .heroTitle {
@@ -1104,7 +1104,7 @@
   }
 
   .heroSectors {
-    margin-top: 28px;
+    margin-top: var(--space-xl);
   }
 
   .heroLead {
@@ -1114,7 +1114,7 @@
   .heroButton {
     display: inline-flex;
     width: auto;
-    margin-top: 32px;
+    margin-top: var(--space-xl);
   }
 
   .stage {
@@ -1142,20 +1142,15 @@
     padding: 96px 0 112px;
   }
 
-  .services,
-  .steps {
-    padding: 112px 0;
-  }
-
   .ideaText {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 48px;
+    gap: var(--space-2xl);
   }
 
   /* Left to right: the line runs between the first and the last token. */
   .chain {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 24px;
+    gap: var(--space-l);
     margin-top: 56px;
   }
 
@@ -1255,12 +1250,12 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
-    gap: 32px 56px;
+    gap: var(--space-xl) 56px;
   }
 
   .footerNav {
     flex-direction: row;
-    gap: 28px;
+    gap: var(--space-xl);
   }
 
   .copyright,

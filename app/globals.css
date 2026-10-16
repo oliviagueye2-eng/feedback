@@ -59,6 +59,20 @@
   --level-service-tint: #e4eef8;
   /* Back office, overview: the page's white, under a sticky column (2026-10-09). */
   --paper: #fff;
+
+  /* Spacing scale (Olivia, 2026-10-16): margins, padding and gaps. Values of
+     1 to 3px (borders, small offsets) stay written as they are. */
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-s: 12px;
+  --space-m: 16px;
+  --space-ml: 20px;
+  --space-l: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  /* Top and bottom of a home page section; 112px on computers. */
+  --section-y: 72px;
 }
 
 * {
@@ -401,6 +415,10 @@ select:focus-visible {
 }
 
 @media (min-width: 900px) {
+  :root {
+    --section-y: 112px;
+  }
+
   .flag {
     height: 6px;
   }
