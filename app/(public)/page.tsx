@@ -51,6 +51,88 @@ const SERVICE_PHOTOS = {
   electricity: electricityPhoto,
 } as const;
 
+/**
+ * The flag of « Notre vision », painted rather than cut: each band's edges are
+ * waved by noise and softened, with a white haze around and between them.
+ * Two drawings: bands stacked on phones (tall), side by side from 900px (wide).
+ */
+function flagPaint(shape: "tall" | "wide") {
+  const wide = shape === "wide";
+  // Noise is stretched along the bands, so the waves follow them.
+  const frequency = wide ? "0.035 0.09" : "0.09 0.035";
+  const hazeFrequency = wide ? "0.05 0.12" : "0.12 0.05";
+  const bands = wide
+    ? [
+        { x: 5, y: 6, width: 100, height: 88 },
+        { x: 100, y: 6, width: 100, height: 88 },
+        { x: 195, y: 6, width: 100, height: 88 },
+      ]
+    : [
+        { x: 5, y: 5, width: 90, height: 100 },
+        { x: 5, y: 100, width: 90, height: 100 },
+        { x: 5, y: 195, width: 90, height: 100 },
+      ];
+  const seams = wide
+    ? [
+        { x: 98, y: 8, width: 4, height: 84 },
+        { x: 198, y: 8, width: 4, height: 84 },
+      ]
+    : [
+        { x: 7, y: 98, width: 86, height: 4 },
+        { x: 7, y: 198, width: 86, height: 4 },
+      ];
+  const fills = [styles.paintGreen, styles.paintYellow, styles.paintRed];
+  return (
+    <svg
+      key={shape}
+      className={styles.flagPaint}
+      data-shape={shape}
+      viewBox={wide ? "0 0 300 100" : "0 0 100 300"}
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <defs>
+        <filter id={`flag-wave-${shape}`} x="-10%" y="-10%" width="120%" height="120%">
+          <feTurbulence type="fractalNoise" baseFrequency={frequency} numOctaves={2} seed={7} />
+          <feDisplacementMap in="SourceGraphic" scale={wide ? 7 : 6} />
+          <feGaussianBlur stdDeviation={wide ? 0.9 : 0.8} />
+        </filter>
+        <filter id={`flag-haze-${shape}`} x="-20%" y="-20%" width="140%" height="140%">
+          <feTurbulence type="fractalNoise" baseFrequency={hazeFrequency} numOctaves={2} seed={3} />
+          <feDisplacementMap in="SourceGraphic" scale={wide ? 10 : 8} />
+          <feGaussianBlur stdDeviation={wide ? 2.6 : 2.2} />
+        </filter>
+        <filter id={`flag-glow-${shape}`} x="-20%" y="-20%" width="140%" height="140%">
+          <feTurbulence type="fractalNoise" baseFrequency={hazeFrequency} numOctaves={2} seed={11} />
+          <feDisplacementMap in="SourceGraphic" scale={12} />
+          <feGaussianBlur stdDeviation={4} />
+        </filter>
+      </defs>
+      <rect
+        className={styles.paintHaze}
+        x="4"
+        y={wide ? 5 : 4}
+        width={wide ? 292 : 92}
+        height={wide ? 90 : 292}
+        opacity="0.5"
+        filter={`url(#flag-glow-${shape})`}
+      />
+      <g filter={`url(#flag-wave-${shape})`}>
+        {bands.map((band, index) => (
+          <rect key={index} className={fills[index]} {...band} />
+        ))}
+      </g>
+      <g className={styles.paintHaze} opacity="0.55" filter={`url(#flag-haze-${shape})`}>
+        {seams.map((seam, index) => (
+          <rect key={index} {...seam} />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+const FLAG_PAINT = [flagPaint("tall"), flagPaint("wide")];
+
 /** What each ticket shows of the questionnaire: the search, the five faces, the results stamped « Merci ». */
 function ticketScenes(search: string, stamp: string) {
   return [
@@ -248,14 +330,22 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* The strong moment of the page: dark ink, very large lines, then the values. */}
+        {/* The strong moment of the page: the vision written on the flag, then the values on ink. */}
         <section id="vision" className={`${styles.vision} ${styles.anchor} ${styles.reveal}`} data-reveal="">
+          <h2 className={styles.flag}>
+            {FLAG_PAINT}
+            {t.vision.lines.map((line, index) => (
+              <span key={line} className={styles.band}>
+                {index === 1 && (
+                  <svg className={styles.flagStar} viewBox="0 0 100 100" aria-hidden="true">
+                    <path fill="currentColor" d="M50 4l11.2 34.5H97.5L68.2 59.9 79.4 94.4 50 73 20.6 94.4 31.8 59.9 2.5 38.5h36.3z" />
+                  </svg>
+                )}
+                <span className={styles.bandText}>{line}</span>{" "}
+              </span>
+            ))}
+          </h2>
           <div className="container">
-            <h2 className={styles.visionLines}>
-              {t.vision.lines.map((line) => (
-                <span key={line}>{line}</span>
-              ))}
-            </h2>
             <p className={styles.visionText}>{t.vision.text}</p>
             <h3 className={styles.valuesTitle}>{t.vision.valuesTitle}</h3>
             <ul className={styles.values}>
