@@ -7,7 +7,7 @@ import styles from "./footerFaces.module.css";
 type Level = 1 | 2 | 3 | 4 | 5;
 const LEVELS: Level[] = [1, 2, 3, 4, 5];
 
-/** Share of the pit the faces fill once they have all fallen, unless the page asks for another. */
+/** Share of the pit the faces fill once they have all fallen, unless the page sets --faces-fill on the pit. */
 const FILL = 0.7;
 /** Distance, in px, within which a touch pushes the faces away. */
 const PUSH_RADIUS = 130;
@@ -19,7 +19,7 @@ const PUSH_RADIUS = 130;
  * motion. The physics library (matter-js) is loaded only once the footer comes
  * into view, and the simulation pauses whenever the pit is off screen.
  */
-export function FooterFaces({ fill = FILL, className }: { fill?: number; className?: string }) {
+export function FooterFaces({ className }: { className?: string }) {
   const pitRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export function FooterFaces({ fill = FILL, className }: { fill?: number; classNa
         if (!entry.isIntersecting) return;
         starter.disconnect();
         const Matter = await import("matter-js");
-        if (!cancelled) cleanup = start(pit, Matter, fill);
+        if (!cancelled) cleanup = start(pit, Matter);
       },
       { rootMargin: "0px 0px 200px 0px" },
     );
@@ -49,14 +49,14 @@ export function FooterFaces({ fill = FILL, className }: { fill?: number; classNa
       starter.disconnect();
       cleanup();
     };
-  }, [fill]);
+  }, []);
 
   return <div ref={pitRef} className={`${styles.pit} ${className ?? ""}`} aria-hidden="true" />;
 }
 
 type FaceBody = Matter.Body & { level: Level };
 
-function start(pit: HTMLDivElement, Matter: typeof import("matter-js"), fill: number): () => void {
+function start(pit: HTMLDivElement, Matter: typeof import("matter-js")): () => void {
   const { Engine, Bodies, Body, Composite } = Matter;
 
   const canvas = document.createElement("canvas");
@@ -100,6 +100,8 @@ function start(pit: HTMLDivElement, Matter: typeof import("matter-js"), fill: nu
 
   // Rain of faces, a few at a time, from above the pit.
   const radius = Math.max(20, Math.min(width / 16, 34));
+  // The page can ask for fewer or more faces, per screen size, with --faces-fill (CSS).
+  const fill = parseFloat(getComputedStyle(pit).getPropertyValue("--faces-fill")) || FILL;
   const count = Math.floor((width * height * fill) / (Math.PI * radius * radius));
   const timers: number[] = [];
   for (let i = 0; i < count; i++) {

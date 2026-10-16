@@ -1450,6 +1450,8 @@
 }
 
 .signature > .signaturePit {
+  /* Share of the pit filled with faces (FooterFaces): up over the foot of the name. */
+  --faces-fill: 0.62;
   position: absolute;
   inset: 0;
   height: auto;
@@ -1830,5 +1832,9 @@
   .signature {
     height: calc(21.5vw * 0.8 + 140px);
     margin-bottom: -48px;
+  }
+
+  .signature > .signaturePit {
+    --faces-fill: 0.5;
   }
 }
