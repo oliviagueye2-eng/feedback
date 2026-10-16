@@ -1285,122 +1285,99 @@
 
 /* ---- Coming soon ---- */
 
+/* Phones: the photo on top, fading into white, the text below it. */
 .soon {
   position: relative;
   overflow: hidden;
-  padding: 80px 0;
-  background: var(--green);
-  color: #fff;
-}
-
-.soon::before {
-  content: "";
-  position: absolute;
-  bottom: -160px;
-  right: -150px;
-  width: 220px;
-  height: 220px;
-  border: 18px solid var(--flag-yellow);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 1;
+  padding: 340px 0 var(--section-y);
+  background: #fff;
+  color: var(--ink);
 }
 
 .soonPhoto {
   position: absolute;
-  inset: 0;
+  inset: 0 0 auto;
+  height: 400px;
 }
 
 .soonPhoto img {
   object-fit: cover;
-  object-position: 30% 35%;
+  object-position: 30% 20%;
 }
 
-/* Green veil so the white text and buttons stay readable over the photo. */
 .soonPhoto::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: color-mix(in srgb, var(--green) 84%, transparent);
+  background: linear-gradient(180deg, transparent 55%, #fff 100%);
 }
 
 .soonInner {
   position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.soonLogo {
-  display: block;
-  width: 96px;
-  height: auto;
-  margin-bottom: var(--space-ml);
 }
 
 .soonTitle {
   margin: 0;
-  font-size: clamp(38px, 5.4vw, 64px);
-  line-height: 1.06;
-  letter-spacing: -0.015em;
+  max-width: 10em;
+  font-size: clamp(40px, 4.6vw, 72px);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
 }
 
-.soonInner .lead {
-  color: var(--green-tint);
+.soonText {
+  margin: var(--space-m) 0 0;
+  max-width: 30em;
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--muted);
 }
 
 .soonFollow {
   margin: var(--space-xl) 0 0;
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 700;
 }
 
+.soonRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-s) var(--space-ml);
+  margin-top: var(--space-s);
+}
+
 .networks {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
   gap: var(--space-s);
-  width: 100%;
-  max-width: 640px;
-  margin: var(--space-ml) 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .networks a {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-s);
-  min-height: 54px;
-  padding: 0 var(--space-ml);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--green-dark);
-  font-weight: 700;
-  text-decoration: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
   transition: background-color 0.2s;
 }
 
 .networks a:hover {
-  background: var(--green-tint);
-  color: var(--green-dark);
-}
-
-.networks a:focus-visible {
-  outline-color: #fff;
+  background: var(--green);
 }
 
 .networks svg {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
 }
 
 .handle {
-  margin: var(--space-m) 0 0;
-  color: var(--green-tint);
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
 }
 
 /* ---- Footer ---- */
@@ -1454,10 +1431,6 @@
 @media (min-width: 600px) {
   .values {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .networks {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -1767,20 +1740,40 @@
     font-size: 20px;
   }
 
-  .soon::before {
-    bottom: -170px;
-    right: -120px;
-    width: 340px;
-    height: 340px;
-    border-width: 26px;
-  }
-
   .values {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
+  /* Computers: the text on the left, the photo on the right two thirds. */
   .soon {
-    padding: 120px 0;
+    display: flex;
+    align-items: center;
+    min-height: 760px;
+    padding: var(--section-y) 0 var(--space-3xl);
+  }
+
+  .soonPhoto {
+    inset: 0 0 0 38%;
+    height: auto;
+  }
+
+  .soonPhoto img {
+    object-position: 22% 30%;
+  }
+
+  .soonPhoto::after {
+    background: linear-gradient(90deg, #fff 0%, transparent 30%);
+  }
+
+  .soonTitle,
+  .soonText,
+  .soonFollow,
+  .soonRow {
+    max-width: min(30em, 34vw);
+  }
+
+  .soonText {
+    font-size: 19px;
   }
 
   .footerInner {
