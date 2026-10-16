@@ -358,7 +358,6 @@
   width: 54px;
   font-size: 54px;
   background: radial-gradient(circle at 35% 30%, var(--satisfaction-4-light), var(--satisfaction-4) 62%);
-  filter: blur(0.5px);
 }
 
 .token[data-level="5"] {
@@ -368,7 +367,6 @@
   width: 40px;
   font-size: 40px;
   background: radial-gradient(circle at 35% 30%, var(--satisfaction-5-light), var(--satisfaction-5) 62%);
-  filter: blur(1px);
   opacity: 0.85;
 }
 
