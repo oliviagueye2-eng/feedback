@@ -1,4 +1,4 @@
-import { getQuestionnaire, type ListedQuestion, type ListedTopic } from "@/src/domain/admin";
+import { getQuestionnaire, type LevelTopic, type ListedQuestion, type ListedTopic } from "@/src/domain/admin";
 import { getDictionary } from "../../../../_i18n";
 import { FormPreview } from "../../_components/FormPreview";
 import { QuestionnaireFilters } from "../../_components/QuestionnaireFilters";
@@ -68,17 +68,17 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
   ];
   // A sector's lists given only without a service, « Autre démarche » (0053), or
   // only without a type (0070), are marked.
+  const marked = (lists: string[], withoutService: string[] = [], withoutType: string[] = []) =>
+    lists.map((c) => {
+      const marks = [withoutService.includes(c) && t.withoutService, withoutType.includes(c) && t.withoutType];
+      const shown = marks.filter(Boolean);
+      return shown.length ? `${c} (${shown.join(", ")})` : c;
+    });
   const codes = (lists: string[], withoutService: string[] = [], withoutType: string[] = []) =>
-    lists
-      .map((c) => {
-        const marks = [withoutService.includes(c) && t.withoutService, withoutType.includes(c) && t.withoutType];
-        const shown = marks.filter(Boolean);
-        return shown.length ? `${c} (${shown.join(", ")})` : c;
-      })
-      .join(" + ") || null;
+    marked(lists, withoutService, withoutType).join(" + ") || null;
   const levelContent = (level: {
     listCodes: string[];
-    topics: ListedTopic[];
+    topics: LevelTopic[];
     questionListCodes: string[];
     questions: ListedQuestion[];
     withoutServiceListCodes?: string[];
@@ -88,7 +88,13 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
   }): ListGridRow["lists"] => ({
     topics: {
       code: codes(level.listCodes, level.withoutServiceListCodes, level.withoutTypeListCodes),
-      items: level.topics.map((topic) => ({ code: topic.code, extras: [topic.label, topic.isActive, topic.categoryCode, shownIf(topic).join(t.and) || null] })),
+      // A colour per list: each topic takes that of its lists (asked by Olivia, 2026-10-16).
+      parts: marked(level.listCodes, level.withoutServiceListCodes, level.withoutTypeListCodes),
+      items: level.topics.map((topic) => ({
+        code: topic.code,
+        lists: topic.lists.map((c) => level.listCodes.indexOf(c)),
+        extras: [topic.label, topic.isActive, topic.categoryCode, shownIf(topic).join(t.and) || null],
+      })),
     },
     questions: {
       code: codes(level.questionListCodes, level.withoutServiceQuestionListCodes, level.withoutTypeQuestionListCodes),

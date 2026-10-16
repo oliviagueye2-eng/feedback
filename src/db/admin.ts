@@ -612,6 +612,7 @@ const CODES_OF = (level: Level, alias: string, kind: "topic" | "question") => `
  * The topics of the lists `sets` (id, position), each once, in the order of
  * their category, then of topic.position, as on screen 2b (asked by Olivia);
  * inactive ones included. No condition when one of them shows it always (0047).
+ * Each says which of these lists hold it (a colour per list, asked by Olivia, 2026-10-16).
  */
 const TOPICS_OF = (sets: string) => `
   coalesce((SELECT json_agg(json_build_object('code', t.code, 'label', tt.label, 'isActive', t.is_active,
@@ -620,13 +621,22 @@ const TOPICS_OF = (sets: string) => `
                                                 SELECT 1 FROM topic_set_item a
                                                 WHERE a.topic_id = t.id AND a.shown_always
                                                   AND a.topic_set_id IN (SELECT id FROM (${sets}) s))
-                                              THEN '[]'::json ELSE ${TOPIC_SHOWN_IF} END)
+                                              THEN '[]'::json ELSE ${TOPIC_SHOWN_IF} END,
+                                              'lists', (SELECT json_agg(l.code ORDER BY s.position)
+                                                        FROM (${sets}) s
+                                                        JOIN topic_set_item a ON a.topic_set_id = s.id AND a.topic_id = t.id
+                                                        JOIN topic_set l ON l.id = s.id))
                              ORDER BY c.position NULLS LAST, t.position, t.code)
             FROM topic t
             LEFT JOIN topic_translation tt ON tt.topic_id = t.id AND tt.language = 'fr'
             LEFT JOIN evaluation_category c ON c.id = t.category_id
             WHERE t.id IN (SELECT i.topic_id FROM topic_set_item i WHERE i.topic_set_id IN (SELECT id FROM (${sets}) s))),
            '[]'::json)`;
+
+/** A topic of a level, with those of the level's lists that hold it, in their order. */
+export interface LevelTopic extends ListedTopic {
+  lists: string[];
+}
 
 /** A question of a list, in the list's order. */
 export interface ListedQuestion {
@@ -687,7 +697,7 @@ export interface LevelTopics {
   label: string | null;
   /** The level's topic lists, in order (0044: several per level). */
   listCodes: string[];
-  topics: ListedTopic[];
+  topics: LevelTopic[];
   /** Screen 6 (asked by Olivia, 2026-10-08): the level's question lists, in order. */
   questionListCodes: string[];
   questions: ListedQuestion[];
@@ -765,7 +775,7 @@ export interface ServiceTopics {
   code: string;
   label: string | null;
   listCodes: string[];
-  topics: ListedTopic[];
+  topics: LevelTopic[];
   questionListCodes: string[];
   questions: ListedQuestion[];
   /** Active establishments offering it (establishment_offer: its own and its type's, 0073), by name. */

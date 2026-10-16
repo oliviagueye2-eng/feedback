@@ -855,6 +855,71 @@ a.button:hover {
   color: var(--level-service);
 }
 
+/* A colour per list of a row, on the list and on its items (asked by Olivia, 2026-10-16). */
+.listTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 2px 0;
+}
+
+.listTag {
+  border-radius: 4px;
+  padding: 0 6px;
+  line-height: 1.5;
+}
+
+.listItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.listDot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.listColor0 {
+  background: #e4eef8;
+  color: #1d5c9e;
+}
+
+.listColor1 {
+  background: #fdebd8;
+  color: #9a4a00;
+}
+
+.listColor2 {
+  background: #f1e9f8;
+  color: #6b3fa0;
+}
+
+.listColor3 {
+  background: #dcf2f0;
+  color: #0f6b66;
+}
+
+.listColor4 {
+  background: #fbe4ee;
+  color: #a3245c;
+}
+
+.listColor5 {
+  background: #eef2d0;
+  color: #5a6500;
+}
+
+.listDot.listColor0 { background: #1d5c9e; }
+.listDot.listColor1 { background: #c96a10; }
+.listDot.listColor2 { background: #6b3fa0; }
+.listDot.listColor3 { background: #0f8a83; }
+.listDot.listColor4 { background: #a3245c; }
+.listDot.listColor5 { background: #7a8a00; }
+
 /* Questionnaire: its two pages, by level and the overview (2026-10-09). */
 .tabs {
   display: flex;
