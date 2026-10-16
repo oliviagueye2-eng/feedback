@@ -905,6 +905,7 @@ export const fr = {
       always: "toujours",
       noList: "aucune",
       or: " ou ",
+      and: " et ",
       services: "Services",
       establishments: "Établissements",
       withoutService: "sans service",

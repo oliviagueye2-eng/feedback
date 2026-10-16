@@ -697,7 +697,7 @@ describe("feedback", () => {
       questions: ["ACCOUNT_CLAIM_SUBJECT", "ACCOUNT_REFUNDED", "ACCOUNT_CLAIM_DELAY", "REPORTED", "REPORT_WHY"],
     });
     const claimTopics = (await getDetailsScreen("d0e1f2a3-0000-4000-8000-000000000004")).topics;
-    expect(claimTopics.find((t) => t.code === "CASE_TRACKING")).toMatchObject({ gate: null });
+    expect(claimTopics.find((t) => t.code === "CASE_TRACKING")).toMatchObject({ gates: [] });
   });
 
   it("gives a university the topics of the visit chosen and the schools' questions (0015)", async () => {
@@ -790,6 +790,96 @@ describe("feedback", () => {
     expect((await visit("d0e1f2a3-0082-4000-8000-000000000003", auchan!.id, null)).topics).toEqual(expect.arrayContaining(shop));
   });
 
+  it("finds real estate by « loyer »; a sale, a tenant and a landlord get their own topics, the counter's go to « Autre démarche » (0083, 0084)", async () => {
+    const search = await searchEstablishments("loyer");
+    expect(search.matchType).toBe("service");
+    expect(search.results[0]).toMatchObject({ name: "Immobilier (achat, vente, location)", scope: "general" });
+    const estate = search.results[0]!.id;
+    const services = Object.fromEntries((await getEstablishment(estate)).services.map((s) => [s.label, s.id]));
+    expect(Object.keys(services).sort()).toEqual([
+      "Achat ou vente d'un bien immobilier", "Louer un logement (locataire)", "Mettre un bien en location (propriétaire)",
+    ]);
+    const visit = async (feedback: string, serviceId: number | null) => {
+      await upsertFeedback(feedback, { channel: "search", establishmentId: estate, serviceId, language: "fr", visitPeriod: "today" });
+      return {
+        topics: (await getDetailsScreen(feedback)).topics.map((t) => t.code),
+        questions: (await getDetailedQuestionnaire(feedback)).questions.map((q) => q.code),
+      };
+    };
+    // Their own questions, then the common ones: none of the sector's.
+    expect(await visit("e1f2a3b4-0083-4000-8000-000000000001", services["Achat ou vente d'un bien immobilier"]!)).toEqual({
+      topics: ["COMMITMENTS_KEPT", "PROPERTY_PAPERS", "PROPERTY_PRICE", "PROPERTY_FEES"],
+      questions: ["PROPERTY_ROLE", "PROPERTY_KIND", "PROPERTY_PAPER_TYPE", "PROPERTY_INTERMEDIARY", "REPORTED", "REPORT_WHY"],
+    });
+    expect(await visit("e1f2a3b4-0083-4000-8000-000000000002", services["Louer un logement (locataire)"]!)).toEqual({
+      topics: [
+        "RENT_AMOUNT", "DEPOSIT_AND_ADVANCE", "AGENT_COMMISSION", "HOUSING_CONDITION", "LEASE_KEPT_BY_LANDLORD",
+        "DEPOSIT_RETURNED",
+      ],
+      questions: ["RENTAL_PROPERTY_KIND", "PROPERTY_INTERMEDIARY", "REPORTED", "REPORT_WHY"],
+    });
+    expect(await visit("e1f2a3b4-0083-4000-8000-000000000003", services["Mettre un bien en location (propriétaire)"]!)).toEqual({
+      topics: [
+        "RENT_PAID", "UNPAID_RENT_RECOVERY", "AGENT_COMMISSION", "HOUSING_CONDITION_AT_EXIT", "LEASE_KEPT_BY_TENANT",
+        "AGENCY_MANAGEMENT",
+      ],
+      questions: ["RENTAL_PROPERTY_KIND", "PROPERTY_INTERMEDIARY", "REPORTED", "REPORT_WHY"],
+    });
+    // The commission and the agency's management only after an agency or a broker.
+    const gates = Object.fromEntries((await getDetailsScreen("e1f2a3b4-0083-4000-8000-000000000003")).topics
+      .flatMap((t) => t.gates.map((g) => [t.code, `${g.code} ${g.opensWith.join(" ")}`])));
+    expect(gates).toEqual({
+      AGENT_COMMISSION: "PROPERTY_INTERMEDIARY AGENCY BROKER", AGENCY_MANAGEMENT: "PROPERTY_INTERMEDIARY AGENCY BROKER",
+    });
+    expect((await visit("e1f2a3b4-0083-4000-8000-000000000004", null)).topics).toEqual(expect.arrayContaining([
+      "WAIT_TIME", "OPENING_HOURS", "FEES",
+    ]));
+  });
+
+  it("never mixes the answers of two questions opening one topic, and keeps it only after an opening answer to each", async () => {
+    // Refused by the database since 0084 (topic_condition_gate_fkey): forced here, in a transaction
+    // undone at the end, to show that the code does not rely on it.
+    const [estate] = await rows<{ id: string }>("SELECT id FROM establishment WHERE name = 'Immobilier (achat, vente, location)'");
+    const [letting] = await rows<{ id: number }>("SELECT id FROM service WHERE code = 'PROPERTY_LETTING'");
+    const feedback = "e1f2a3b4-0084-4000-8000-000000000001";
+    const saved = async () =>
+      (await rows<{ code: string }>(
+        "SELECT t.code FROM feedback_topic ft JOIN topic t ON t.id = ft.topic_id WHERE ft.feedback_id = $1 ORDER BY t.code",
+        [feedback],
+      )).map((r) => r.code);
+    await db.exec(`
+      BEGIN;
+      ALTER TABLE topic_condition DROP CONSTRAINT topic_condition_gate_fkey;
+      INSERT INTO topic_condition (topic_id, depends_on_question_id, option_id)
+      SELECT t.id, q.id, o.id FROM topic t, question q JOIN answer_option o ON o.question_id = q.id AND o.code = 'YES'
+      WHERE t.code = 'AGENT_COMMISSION' AND q.code = 'PAID_SOMETHING';`);
+    try {
+      await upsertFeedback(feedback, { channel: "search", establishmentId: estate!.id, serviceId: letting!.id, language: "fr", visitPeriod: "today" });
+      const topics = (await getDetailsScreen(feedback)).topics;
+      const gatesOf = (code: string) =>
+        topics.find((t) => t.code === code)!.gates.map((g) => ({ code: g.code, options: g.options.map((o) => o.code), opensWith: g.opensWith }));
+      expect(gatesOf("AGENT_COMMISSION")).toEqual([
+        { code: "PAID_SOMETHING", options: ["YES", "NO"], opensWith: ["YES"] },
+        { code: "PROPERTY_INTERMEDIARY", options: ["AGENCY", "BROKER", "NONE"], opensWith: ["AGENCY", "BROKER"] },
+      ]);
+      expect(gatesOf("AGENCY_MANAGEMENT")).toEqual([
+        { code: "PROPERTY_INTERMEDIARY", options: ["AGENCY", "BROKER", "NONE"], opensWith: ["AGENCY", "BROKER"] },
+      ]);
+      const both = {
+        topics: [{ code: "AGENT_COMMISSION", sentiment: "negative" }, { code: "AGENCY_MANAGEMENT", sentiment: "positive" }],
+      };
+      // An agency, nothing paid: the commission stays closed, as on the screen.
+      await saveTopicGates(feedback, { PROPERTY_INTERMEDIARY: "AGENCY" });
+      await saveTopics(feedback, both);
+      expect(await saved()).toEqual(["AGENCY_MANAGEMENT"]);
+      await saveTopicGates(feedback, { PROPERTY_INTERMEDIARY: "AGENCY", PAID_SOMETHING: "YES" });
+      await saveTopics(feedback, both);
+      expect(await saved()).toEqual(["AGENCY_MANAGEMENT", "AGENT_COMMISSION"]);
+    } finally {
+      await db.exec("ROLLBACK");
+    }
+  });
+
   it("gives the police the topics and questions of the visit chosen: at the station, a check or a call (0010, 0013)", async () => {
     const [police] = await rows<{ id: string }>(
       "SELECT e.id FROM establishment e JOIN organization o ON o.id = e.organization_id WHERE o.code = 'POLICE_NATIONALE'",
@@ -858,14 +948,14 @@ describe("feedback", () => {
 
     // Screen 2b: the file's two topics come with one question, nothing answered yet.
     const topics = (await getDetailsScreen(office)).topics;
-    expect(topics.filter((t) => t.gate?.code === "FILE_SUBMITTED").map((t) => t.code)).toEqual(["PROCESSING_TIME", "CASE_TRACKING"]);
-    expect(topics.find((t) => t.code === "FEES")?.gate).toEqual({
+    expect(topics.filter((t) => t.gates.some((g) => g.code === "FILE_SUBMITTED")).map((t) => t.code)).toEqual(["PROCESSING_TIME", "CASE_TRACKING"]);
+    expect(topics.find((t) => t.code === "FEES")?.gates).toEqual([{
       code: "PAID_SOMETHING",
       label: "Avez-vous payé quelque chose ?",
       options: [{ code: "YES", label: "Oui" }, { code: "NO", label: "Non" }],
       opensWith: ["YES"],
       chosen: null,
-    });
+    }]);
     // Only the questions of the screen (the intervention's is no longer asked, 0012).
     await expect(saveTopicGates(office, { INTERVENTION_AWAITED: "YES" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
 
@@ -894,7 +984,7 @@ describe("feedback", () => {
     await saveQuestionnaire(office, "sector", { RECEIPT_GIVEN: "NO" });
     await saveTopicGates(office, { FILE_SUBMITTED: "YES" });
     await saveTopics(office, { topics: [{ code: "PROCESSING_TIME", sentiment: "negative" }, { code: "FEES", sentiment: "negative" }] });
-    expect((await getDetailsScreen(office)).topics.find((t) => t.code === "FEES")).toMatchObject({ sentiment: null, gate: { chosen: null } });
+    expect((await getDetailsScreen(office)).topics.find((t) => t.code === "FEES")).toMatchObject({ sentiment: null, gates: [{ chosen: null }] });
     await completeFeedback(office);
     const answered = (await rows<{ code: string }>(
       `SELECT q.code FROM answer a JOIN question q ON q.id = a.question_id WHERE a.feedback_id = $1 ORDER BY q.code`,
@@ -909,7 +999,7 @@ describe("feedback", () => {
     const service = Object.fromEntries((await getEstablishment(taxi!.id)).services.map((s) => [s.code, s.id]));
     await upsertFeedback(ride, { channel: "search", establishmentId: taxi!.id, serviceId: service.STREET_TAXI_RIDE!, language: "fr", visitPeriod: "today" });
     await saveAnswer(ride, "OVERALL_SATISFACTION", { option: "DISSATISFIED" });
-    expect((await getDetailsScreen(ride)).topics.find((t) => t.code === "FEES")?.gate).toBeNull();
+    expect((await getDetailsScreen(ride)).topics.find((t) => t.code === "FEES")?.gates).toEqual([]);
     await expect(saveTopicGates(ride, { PAID_SOMETHING: "YES" })).rejects.toMatchObject({ code: "INVALID_INPUT" });
     await saveTopics(ride, { topics: [{ code: "FEES", sentiment: "negative" }] });
     expect((await getDetailsScreen(ride)).topics.filter((t) => t.sentiment).map((t) => t.code)).toEqual(["FEES"]);

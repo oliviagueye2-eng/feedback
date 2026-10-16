@@ -70,7 +70,7 @@ it("shows the form of an establishment, with its sector and type", async () => {
   const q = await getQuestionnaire({ establishment: id, service: "CIVIL_REGISTRY" });
   expect(q.form?.levels).toEqual({ sector: q.sector, type: "TOWN_HALL", service: "CIVIL_REGISTRY" });
   // Asked at screen 2b (it opens « Frais payés »): not asked again at screen 6.
-  expect(q.form?.topics.some((t) => t.gate?.code === "PAID_SOMETHING")).toBe(true);
+  expect(q.form?.topics.some((t) => t.gates.some((g) => g.code === "PAID_SOMETHING"))).toBe(true);
   expect(q.form?.questions.map((x) => x.code)).not.toContain("PAID_SOMETHING");
   expect(q.form?.questions.find((x) => x.code === "RECEIPT_GIVEN")?.conditions).toEqual([
     { question: "Avez-vous payé quelque chose ?", answers: ["Oui"] },

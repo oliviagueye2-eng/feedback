@@ -276,7 +276,7 @@ export async function getQuestionnaire(filter: { sector?: string; type?: string;
   // is shown always there (0047, 0081).
   const shown = [...shownSectors, ...shownTypes, ...shownServices];
   const lists = new Set(shown.flatMap((x) => x.questionListCodes).concat(SHARED_QUESTION_LISTS));
-  const topics = new Set(shown.flatMap((x) => x.topics.filter((t) => t.shownIf).map((t) => t.code)));
+  const topics = new Set(shown.flatMap((x) => x.topics.filter((t) => t.shownIf.length > 0).map((t) => t.code)));
   const kept = (q: db.BankQuestion) => q.lists.some((l) => lists.has(l)) || q.opensTopics.some((t) => topics.has(t));
   // The form shown once the filters name one: an establishment, or a sector
   // (with or without a type), with the service chosen or none.
@@ -354,7 +354,7 @@ async function getForm(levels: feedbacks.FormLevels, bank: db.BankQuestion[]) {
     db.listCategories(),
   ]);
   const categoryLabel = new Map(categories.map((c) => [c.code, c.label]));
-  const askedBefore = new Set(topics.flatMap((t) => (t.gate ? [t.gate.code] : [])));
+  const askedBefore = new Set(topics.flatMap((t) => t.gates.map((g) => g.code)));
   const byCode = new Map(bank.map((q) => [q.code, q]));
   const toForm = (q: feedbacks.DetailedQuestion): FormQuestion => ({
     code: q.code,
@@ -445,7 +445,7 @@ export async function getOverview() {
           code: t.code,
           label: t.label,
           category: t.category,
-          gated: t.gate !== null,
+          gated: t.gates.length > 0,
           lists: form.topicLists[t.code] ?? [],
         })),
       questions: form.questions,

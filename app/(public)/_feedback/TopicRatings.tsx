@@ -42,9 +42,11 @@ const RATING_CLASS: Record<TopicSentiment, string | undefined> = {
  *
  * A topic shown only after an answer (« Frais payés » after « Oui » to « Avez-
  * vous payé quelque chose ? ») comes under its question, asked in the place of
- * the first of its topics ("q:CODE"). The topics stay hidden until that answer
- * is touched, where the browser knows :has(); elsewhere they stay visible and
- * the server ignores them without it.
+ * the first of its topics ("q:CODE"). Each topic stays hidden until one of its
+ * own opening answers is touched, where the browser knows :has(); elsewhere it
+ * stays visible and the server ignores it without it. A topic with several
+ * questions (none today) shows after an opening answer to each, like the
+ * server checks it, under the last of them.
  */
 export function TopicRatings({
   topics,
@@ -68,7 +70,7 @@ export function TopicRatings({
     Object.fromEntries(topics.map((topic) => [topic.code, topic.sentiment])),
   );
   const [answers, setAnswers] = useState<Record<string, string | null>>(() =>
-    Object.fromEntries(topics.flatMap((topic) => (topic.gate ? [[topic.gate.code, topic.gate.chosen]] : []))),
+    Object.fromEntries(topics.flatMap((topic) => topic.gates.map((gate) => [gate.code, gate.chosen]))),
   );
 
   // A click on the answer already chosen clears the topic (or the question).
@@ -76,6 +78,19 @@ export function TopicRatings({
     setChosen((current) => ({ ...current, [code]: current[code] === sentiment ? null : sentiment }));
   const answer = (code: string, option: string) =>
     setAnswers((current) => ({ ...current, [code]: current[code] === option ? null : option }));
+
+  // Each question once, in the place of the first topic it opens; a topic
+  // under the last of its questions there (its anchor).
+  const questions = new Map<string, TopicGate>();
+  for (const gate of topics.flatMap((topic) => topic.gates)) if (!questions.has(gate.code)) questions.set(gate.code, gate);
+  const order = [...questions.keys()];
+  const anchorOf = (topic: TopicChoice) =>
+    topic.gates.reduce<string | null>(
+      (last, gate) => (last === null || order.indexOf(gate.code) > order.indexOf(last) ? gate.code : last),
+      null,
+    );
+  const opened = (code: string, answers: string[]) =>
+    [...new Set(answers)].map((o) => `input[name="q:${code}"][value="${o}"]:checked`).join(", ") || ":not(*)";
 
   const topicRow = (topic: TopicChoice) => {
     const labelId = `topic-${topic.code}`;
@@ -94,7 +109,7 @@ export function TopicRatings({
       </label>
     );
     return (
-      <div key={topic.code} className={styles.topicRow}>
+      <div key={topic.code} className={styles.topicRow} data-gated-topic={topic.gates.length > 0 ? topic.code : undefined}>
         <div className={styles.topicLine} role="radiogroup" aria-labelledby={labelId}>
           <span id={labelId} className={styles.topicLabel}>
             {topic.label}
@@ -121,12 +136,25 @@ export function TopicRatings({
     );
   };
 
+  // Hidden: the block's topics until an answer opens one of them, and each
+  // topic until each of its questions got one of its own opening answers
+  // (its anchor's within the block, the others' anywhere in the form).
+  const visibility = (gate: TopicGate, gated: TopicChoice[]) =>
+    [
+      `[data-gate="${gate.code}"]:not(:has(${opened(gate.code, gated.flatMap((topic) => topic.gates.find((g) => g.code === gate.code)!.opensWith))})) [data-gated] { display: none; }`,
+      ...gated.flatMap((topic) =>
+        topic.gates.map(
+          (g) =>
+            `${g.code === gate.code ? `[data-gate="${gate.code}"]` : "form"}:not(:has(${opened(g.code, g.opensWith)})) [data-gated-topic="${topic.code}"] { display: none; }`,
+        ),
+      ),
+    ].join(" ");
+
   const gateBlock = (gate: TopicGate, gated: TopicChoice[]) => {
     const labelId = `gate-${gate.code}`;
-    const opened = gate.opensWith.map((o) => `input[name="q:${gate.code}"][value="${o}"]:checked`).join(", ");
     return (
       <div key={`gate:${gate.code}`} className={styles.gateGroup} data-gate={gate.code}>
-        <style>{`@supports selector(:has(*)) { [data-gate="${gate.code}"]:not(:has(${opened})) [data-gated] { display: none; } }`}</style>
+        <style>{`@supports selector(:has(*)) { ${visibility(gate, gated)} }`}</style>
         <div className={styles.gateLine} role="radiogroup" aria-labelledby={labelId}>
           <span id={labelId} className={styles.gateLabel}>
             {gate.label}
@@ -156,20 +184,23 @@ export function TopicRatings({
   };
 
   // The title of each category above its first topic (the topics come in
-  // the order of the categories). Each question once, in the place of the
-  // first of its topics, with all of them under it.
+  // the order of the categories).
   const asked = new Set<string>();
   return topics.flatMap((topic, i) => {
-    if (topic.gate && asked.has(topic.gate.code)) return [];
+    const blocks = topic.gates
+      .filter((gate) => !asked.has(gate.code))
+      .map((gate) => {
+        asked.add(gate.code);
+        return gateBlock(questions.get(gate.code)!, topics.filter((other) => anchorOf(other) === gate.code));
+      });
+    if (topic.gates.length > 0 && blocks.length === 0) return [];
     const title =
       topic.category && topic.category !== topics[i - 1]?.category ? (
         <h3 key={`category:${topic.category}`} className={styles.categoryTitle}>
           {topic.category}
         </h3>
       ) : null;
-    if (!topic.gate) return title ? [title, topicRow(topic)] : [topicRow(topic)];
-    asked.add(topic.gate.code);
-    const block = gateBlock(topic.gate, topics.filter((other) => other.gate?.code === topic.gate!.code));
-    return title ? [title, block] : [block];
+    const items = topic.gates.length > 0 ? blocks : [topicRow(topic)];
+    return title ? [title, ...items] : items;
   });
 }

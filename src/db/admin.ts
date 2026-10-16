@@ -552,17 +552,20 @@ export interface ListedTopic {
   label: string | null;
   isActive: boolean;
   categoryCode: string | null;
-  shownIf: TopicShownIf | null;
+  /** One per question (all of them needed); empty when always shown. One at most today (0084). */
+  shownIf: TopicShownIf[];
 }
 
-/** The condition of topic `t`, or null: a topic depends on one question at most. */
+/** The conditions of topic `t`, one per question, by question code. */
 const TOPIC_SHOWN_IF = `
-  (SELECT json_build_object('dependsOn', dq.code, 'options', array_agg(o.code ORDER BY o.position))
-   FROM topic_condition tc
-   JOIN question dq ON dq.id = tc.depends_on_question_id
-   JOIN answer_option o ON o.id = tc.option_id
-   WHERE tc.topic_id = t.id
-   GROUP BY dq.code)`;
+  coalesce((SELECT json_agg(json_build_object('dependsOn', x.code, 'options', x.options) ORDER BY x.code)
+            FROM (SELECT dq.code, array_agg(o.code ORDER BY o.position) AS options
+                  FROM topic_condition tc
+                  JOIN question dq ON dq.id = tc.depends_on_question_id
+                  JOIN answer_option o ON o.id = tc.option_id
+                  WHERE tc.topic_id = t.id
+                  GROUP BY dq.code) x),
+           '[]'::json)`;
 
 /** A level of the questionnaire: its table and its column in the tables of its lists (0044). */
 type Level = "sector" | "establishment_type" | "service";
@@ -588,7 +591,7 @@ const TOPICS_OF = (sets: string) => `
                                                 SELECT 1 FROM topic_set_item a
                                                 WHERE a.topic_id = t.id AND a.shown_always
                                                   AND a.topic_set_id IN (SELECT id FROM (${sets}) s))
-                                              THEN NULL ELSE ${TOPIC_SHOWN_IF} END)
+                                              THEN '[]'::json ELSE ${TOPIC_SHOWN_IF} END)
                              ORDER BY c.position NULLS LAST, t.position, t.code)
             FROM topic t
             LEFT JOIN topic_translation tt ON tt.topic_id = t.id AND tt.language = 'fr'

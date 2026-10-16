@@ -372,14 +372,18 @@ Clé `(question_set_id, question_id)`. Si une question figure dans plusieurs lis
 
 Clé `(question_set_id, question_id, option_id)`. Règle d'affichage et de nettoyage dans `src/domain/questionnaire/conditions.ts` : si la question dont on dépend est sur la même page, la question apparaît dès que la réponse est touchée (CSS `:has()`, sans JavaScript ; sinon elle reste visible avec « (si vous avez répondu « Non ») ») ; à la fin de l'avis, les réponses dont la condition n'est plus remplie sont effacées.
 
-### topic_condition (migration 0011)
-« Ce thème de l'écran 2b ne s'affiche qu'après telle réponse à telle question. » Une ligne par réponse acceptée, une seule question par thème (index unique `(topic_id, depends_on_question_id)`) ; un thème sans ligne s'affiche toujours. Par thème et non par liste : un thème veut dire la même chose partout.
+### topic_condition (migrations 0011, 0084)
+« Ce thème de l'écran 2b ne s'affiche qu'après telle réponse à telle question. » Une ligne par réponse acceptée, une seule question par thème ; un thème sans ligne s'affiche toujours. Par thème et non par liste : un thème veut dire la même chose partout.
 
 | Colonne | Type |
 |---|---|
 | topic_id | fk topic |
-| depends_on_question_id | la question Oui / Non posée à la place du thème |
+| depends_on_question_id | la question posée à la place du thème ; égale à `topic.gate_question_id` (clé `(topic_id, depends_on_question_id)` vers `topic (id, gate_question_id)`, 0084) |
 | option_id | fk answer_option de `depends_on_question_id` (vérifié par la clé) |
+
+Une seule question par thème, autant de réponses que voulu (0084 : « une agence » ou « un courtier » ouvrent la commission). La question est écrite une fois dans `topic.gate_question_id` et chaque ligne doit la recopier : les clés seules le garantissent. Jusqu'à 0084, un index unique `(topic_id, depends_on_question_id)` devait garder une question par thème, mais ne permettait qu'une ligne, donc qu'une réponse.
+
+L'application ne s'appuie pas sur cette limite. Un thème qui dépendrait de plusieurs questions recevrait chacune avec ses propres réponses (`TopicChoice.gates`) et ne s'afficherait qu'après une réponse qui l'ouvre à chacune, à l'écran comme à l'enregistrement (`replaceTopics`), sous la dernière d'entre elles. Chaque thème suit ses propres réponses, même quand plusieurs partagent une question.
 
 Contenu : `PAID_SOMETHING` = Oui ouvre « Frais payés » ; `FILE_SUBMITTED` = Oui ouvre « Délai de traitement du dossier » et « Suivi et transparence du dossier ». L'écran 2b pose la question à la place du premier de ses thèmes et range ses thèmes juste dessous ; la réponse est une `answer` ordinaire. Un thème caché (réponse « Non » ou pas de réponse) n'est pas enregistré (`replaceTopics`). L'écran 6 ne repose pas une question déjà posée à l'écran 2b (`findTopicGateCodes`) ; là où aucun thème ne l'ouvre (contrôle sur le terrain, vie de l'école), « Avez-vous payé quelque chose ? » est posée à l'écran 6 juste avant le reçu. Les questions du reçu (`RECEIPT_GIVEN`, `RECEIPT_OR_INVOICE`), des frais expliqués (`FEES_EXPLAINED`) dépendent de « Oui » au paiement. `INTERVENTION_AWAITED` (« Avez-vous attendu une intervention sur le terrain ? », 0011) a été retirée par 0012 : elle contredisait « De quoi s'agissait-il ? » ; elle reste dans la banque pour les réponses déjà données (`question_condition`).
 
@@ -409,6 +413,7 @@ Thèmes proposés après la question essentielle (écran 2b), sous « Comment é
 | position | smallint | ordre d'affichage : la dizaine suit la catégorie (1-9 Personnel, 11-19 Délais…, 0009) |
 | is_active | boolean | |
 | category_id | smallint fk | catégorie d'évaluation (0009) |
+| gate_question_id | int fk question | la question qui l'ouvre à l'écran 2b, ou rien s'il s'affiche toujours ; ses réponses sont dans `topic_condition` (0084) |
 
 Libellés (dans `topic_translation`) :
 

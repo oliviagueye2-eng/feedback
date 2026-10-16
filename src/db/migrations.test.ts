@@ -99,6 +99,9 @@ describe("reference data", () => {
       "DELIVERY:STAFF_SKILLS", "DELIVERY:COUNTER", "DELIVERY:PREMISES", "DELIVERY:FEES",
       "ELECTRICITY:STAFF_SKILLS", "ELECTRICITY:COUNTER", "ELECTRICITY:PREMISES", "ELECTRICITY:FEES",
       "MOBILE_PAYMENT:MOBILE_PAYMENT", "MOBILE_PAYMENT:STAFF_SKILLS", "MOBILE_PAYMENT:FEES",
+      // 0084: real estate, its services with their own topics.
+      "REAL_ESTATE:REAL_ESTATE", "REAL_ESTATE:STAFF_SKILLS", "REAL_ESTATE:COUNTER", "REAL_ESTATE:PREMISES",
+      "REAL_ESTATE:FEES",
       "SECURITY:SECURITY_REQUEST",
       // 0065: the telecom paths, the TELECOM list gone from the sector.
       "TELECOM:STAFF_SKILLS", "TELECOM:COUNTER", "TELECOM:PREMISES", "TELECOM:FEES", "TELECOM:CUSTOMER_SERVICE",
@@ -244,14 +247,14 @@ describe("reference data", () => {
       questions: [
         "ACCOUNT_CLAIM_SUBJECT", "AGENCY_SUBJECT", "ARRIVAL_MODE", "BANK_SUBJECT", "BOAT_INCIDENT_TYPE", "BUS_INCIDENT_TYPE", "CLASS_SIZE", "CROSSING_INCIDENT", "DAARA_BOARDING", "DELIVERY_KIND", "FIELD_SITUATION",
         "FILE_SUBMITTED", "INTERVENTION_AWAITED", "MATERNITY_VISIT_KIND", "MONEY_CHANNEL", "MONEY_OPERATION_KIND", "ORDER_RECEPTION", "OVERALL_SATISFACTION", "PAID_SOMETHING", "PATIENT",
-        "PHARMACY_VISIT_REASON", "POLICE_VISIT_REASON", "POSTAL_COUNTER_SUBJECT", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "RECOMMEND", "REPORTED", "REPORT_WHY", "RESPONDENT",
+        "PHARMACY_VISIT_REASON", "POLICE_VISIT_REASON", "POSTAL_COUNTER_SUBJECT", "PREPAID_METER", "PRESCHOOL_RESPONDENT", "PROPERTY_INTERMEDIARY", "PROPERTY_KIND", "PROPERTY_PAPER_TYPE", "PROPERTY_ROLE", "RECOMMEND", "RENTAL_PROPERTY_KIND", "REPORTED", "REPORT_WHY", "RESPONDENT",
         "SANITATION_SUBJECT", "SEWER_PROBLEM", "SUPPORT_REASON", "TELECOM_SHOP_SUBJECT", "TELECOM_SUBJECT", "TELECOM_SUPPORT_REASON", "TRAIN_INCIDENT_TYPE", "TRIP_INCIDENT", "TV_SHOP_SUBJECT", "UTILITY_SUBJECT",
       ],
       order: true,
     });
   });
 
-  it("has the bank of 118 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058, 2 of 0062, 2 of 0065, 6 of 0066, 2 of 0068, 1 of 0069, 6 of 0070, 3 of 0071, 3 of 0072, 2 of 0074, 1 of 0075, 1 of 0076, 3 of 0081, 3 of 0082), each written once, every text in French", async () => {
+  it("has the bank of 123 questions (34 of 0004, 5 of 0005, 3 of 0006, 5 of 0010, 3 of 0011, 7 of 0016, 6 of 0017, 1 of 0018, 1 of 0019, 13 of 0025, 1 of 0049, 2 of 0057, 2 of 0058, 2 of 0062, 2 of 0065, 6 of 0066, 2 of 0068, 1 of 0069, 6 of 0070, 3 of 0071, 3 of 0072, 2 of 0074, 1 of 0075, 1 of 0076, 3 of 0081, 3 of 0082, 5 of 0084), each written once, every text in French", async () => {
     const row = await one<{ questions: number; sectors: number; topics: number; texts: number; prompts: number }>(`
       SELECT (SELECT count(*)::int FROM question) AS questions,
              (SELECT count(*)::int FROM sector s LEFT JOIN sector_translation t ON t.sector_id = s.id AND t.language = 'fr'
@@ -265,7 +268,7 @@ describe("reference data", () => {
              AS texts,
              (SELECT count(follow_up_prompt)::int FROM answer_option_translation) AS prompts`);
     // Nothing without its French text; the essential question keeps its 5 follow-up prompts.
-    expect(row).toEqual({ questions: 118, sectors: 0, topics: 0, texts: 0, prompts: 5 });
+    expect(row).toEqual({ questions: 123, sectors: 0, topics: 0, texts: 0, prompts: 5 });
   });
 
   it("attaches each list of questions where it was validated, nothing elsewhere", async () => {
@@ -318,6 +321,8 @@ describe("reference data", () => {
       ACCOUNT_CLAIM: "ACCOUNT_CLAIM",
       // 0071: the hospital's paths (the consultation adds a topic only).
       EMERGENCY: "EMERGENCY", CONSULTATION: null, HOSPITAL_STAY: "HOSPITAL_STAY", MATERNITY: "MATERNITY",
+      // 0083, 0084: real estate, its own questions only.
+      PROPERTY_SALE: "PROPERTY_SALE", PROPERTY_RENTAL: "PROPERTY_RENTAL", PROPERTY_LETTING: "PROPERTY_LETTING",
     });
     // Types with a list of their own (0005), and « Vous êtes » on the education places (0018).
     expect(Object.fromEntries(Object.entries(await attached("establishment_type")).filter(([, list]) => list !== null)))
@@ -457,15 +462,18 @@ describe("reference data", () => {
 });
 
 describe("« Non concerné » and the questions that open a topic (0011)", () => {
-  it("opens eight topics after their answer (the intervention's question removed by 0012, Woyofal's two added by 0064, the birth's two by 0071, the daara's living conditions by 0072), and no longer offers « Je n'ai rien payé »", async () => {
+  it("opens ten topics after their answer (the intervention's question removed by 0012, Woyofal's two added by 0064, the birth's two by 0071, the daara's living conditions by 0072, the intermediary's two by 0084), and no longer offers « Je n'ai rien payé »", async () => {
     const conditions = (await db.query<{ topic: string; question: string; option: string }>(
       `SELECT t.code AS topic, q.code AS question, ao.code AS option
        FROM topic_condition tc
        JOIN topic t ON t.id = tc.topic_id
        JOIN question q ON q.id = tc.depends_on_question_id
        JOIN answer_option ao ON ao.id = tc.option_id
-       ORDER BY t.code`)).rows.map((r) => `${r.topic} ← ${r.question} ${r.option}`);
+       ORDER BY t.code, ao.position`)).rows.map((r) => `${r.topic} ← ${r.question} ${r.option}`);
     expect(conditions).toEqual([
+      // 0084: two answers open each.
+      "AGENCY_MANAGEMENT ← PROPERTY_INTERMEDIARY AGENCY", "AGENCY_MANAGEMENT ← PROPERTY_INTERMEDIARY BROKER",
+      "AGENT_COMMISSION ← PROPERTY_INTERMEDIARY AGENCY", "AGENT_COMMISSION ← PROPERTY_INTERMEDIARY BROKER",
       "BIRTH_SUPPORT ← MATERNITY_VISIT_KIND BIRTH",
       "CASE_TRACKING ← FILE_SUBMITTED YES",
       "CHILD_LIVING_CONDITIONS ← DAARA_BOARDING YES",
@@ -484,6 +492,19 @@ describe("« Non concerné » and the questions that open a topic (0011)", () =>
       "RECEIPT_GIVEN NOTHING_PAID", "RECEIPT_OR_INVOICE NOTHING_PAID", "TELECOM_SUBJECT BILLING", "TELECOM_SUBJECT HOME_INTERNET",
       "TELECOM_SUBJECT MOBILE_MONEY",
     ]);
+  });
+
+  it("lets a topic open with several answers of its own question, never of another one (0084)", async () => {
+    // Each topic with conditions names their question, the same as theirs.
+    expect((await db.query<{ code: string }>(`
+      SELECT t.code FROM topic t
+      WHERE EXISTS (SELECT 1 FROM topic_condition tc WHERE tc.topic_id = t.id) <> (t.gate_question_id IS NOT NULL)
+         OR EXISTS (SELECT 1 FROM topic_condition tc
+                    WHERE tc.topic_id = t.id AND tc.depends_on_question_id <> t.gate_question_id)`)).rows).toEqual([]);
+    await expect(db.exec(`
+      INSERT INTO topic_condition (topic_id, depends_on_question_id, option_id)
+      SELECT t.id, q.id, o.id FROM topic t, question q JOIN answer_option o ON o.question_id = q.id AND o.code = 'YES'
+      WHERE t.code = 'AGENT_COMMISSION' AND q.code = 'PAID_SOMETHING'`)).rejects.toThrow(/topic_condition_gate_fkey/);
   });
 
   it("accepts « Non concerné » as a sentiment, and nothing else", async () => {

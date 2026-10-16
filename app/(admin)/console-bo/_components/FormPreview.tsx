@@ -70,23 +70,16 @@ export async function FormPreview({
         )}
       </span>
     );
-  const gateNotes = Object.fromEntries(
-    topics.flatMap((topic) =>
-      topic.gate
-        ? [
-            [
-              topic.gate.code,
-              <span key={topic.gate.code} className={styles.shownIf}>
-                {shownIf(
-                  topic.gate.label,
-                  topic.gate.options.filter((o) => topic.gate!.opensWith.includes(o.code)).map((o) => o.label),
-                )}
-              </span>,
-            ],
-          ]
-        : [],
-    ),
-  );
+  // When a topic shows: under the topic, since each opens with its own answers.
+  const topicShownIf = (topic: TopicChoice) =>
+    topic.gates.map((gate) => (
+      <span key={`gate:${gate.code}`} className={styles.shownIf}>
+        {shownIf(
+          gate.label,
+          gate.options.filter((o) => gate.opensWith.includes(o.code)).map((o) => o.label),
+        )}
+      </span>
+    ));
 
   const phone = (title: string, content: ReactNode) => (
     <figure className={styles.phoneScreen}>
@@ -171,7 +164,7 @@ export async function FormPreview({
         <style>{`
         .${styles.phone} .${screen.ratings} { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.25fr); gap: 6px; }
         .${styles.phone} .${screen.rating} { min-height: 62px; flex-direction: column; gap: 4px; padding: 8px 4px; white-space: normal; text-align: center; }
-        .${styles.phone} [data-gated] { display: flex !important; }
+        .${styles.phone} [data-gated], .${styles.phone} [data-gated-topic] { display: flex !important; }
       `}</style>
         {phone(
           t.screenTopics,
@@ -191,9 +184,11 @@ export async function FormPreview({
                     otherPlaceholder: details.otherPlaceholder,
                   }}
                   notes={{
-                    gates: gateNotes,
                     topics: Object.fromEntries(
-                      topics.map((topic) => [topic.code, listTags(topicLists[topic.code] ?? [], topic.category)]),
+                      topics.map((topic) => [
+                        topic.code,
+                        [...topicShownIf(topic), listTags(topicLists[topic.code] ?? [], topic.category)],
+                      ]),
                     ),
                   }}
                 />
