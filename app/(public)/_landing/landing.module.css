@@ -152,99 +152,127 @@
     transform 0.6s ease-out;
 }
 
-/* ---- Hero ---- */
+/* ---- Hero: « L'affiche » ---- */
 
+/* A street poster: very large condensed capitals on the left, the phone on the
+   right among the five satisfaction faces, as solid tokens floating at
+   different depths. */
 .hero {
-  background: var(--hero);
-  padding: 44px 0 64px;
+  position: relative;
+  background: #e4ebe6;
+  padding: 36px 0 76px;
   overflow: hidden;
 }
 
+/* The opening screen (IntroSplash) plays first: the hero waits for it. */
+:global(html[data-intro]) .hero *,
+:global(html[data-intro]) .hero *::after {
+  animation-play-state: paused;
+}
+
 .heroInner {
-  display: flex;
-  flex-direction: column;
-  gap: 48px;
-}
-
-.heroLogo {
-  display: block;
-  width: 96px;
-  height: auto;
-  margin-bottom: 22px;
-}
-
-@media (min-width: 900px) {
-  .heroLogo {
-    width: 120px;
-  }
+  display: grid;
+  gap: 8px;
 }
 
 .heroTitle {
   margin: 0;
-  max-width: 13em;
-  font-size: clamp(36px, 5.4vw, 66px);
-  line-height: 1.04;
-  letter-spacing: -0.015em;
+  font-family: var(--font-display), "Arial Narrow", sans-serif;
+  font-weight: 800;
+  font-size: clamp(40px, 12vw, 96px);
+  line-height: 0.88;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+/* Each line rises out of its own slot. */
+.line {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  padding-bottom: 0.16em;
+  margin-bottom: -0.12em;
+}
+
+.line > span {
+  display: inline-block;
+}
+
+/* The last line, in green, underlined with the flag. */
+.line:last-child > span {
+  position: relative;
+  color: var(--green);
+}
+
+.line:last-child > span::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.13em;
+  height: 0.1em;
+  background: linear-gradient(90deg, var(--flag-green) 0 33.3%, var(--flag-yellow) 0 66.6%, var(--flag-red) 0);
+  transform-origin: left;
+}
+
+.heroSectors {
+  margin: 22px 0 0;
+  font-size: 17px;
+  color: var(--muted);
 }
 
 .heroLead {
-  margin: 22px 0 0;
+  margin: 4px 0 0;
   max-width: 30em;
-  font-size: 20px;
-  line-height: 1.45;
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--muted);
 }
 
-/* Right of the hero: a real photo (BRT, Dakar) in a soft rounded shape, a
-   yellow arc from the logo behind it, and the phone in front with the real
-   questionnaire screen. The phone settles in once, on arrival. */
-.phoneStage {
+.heroButton {
+  gap: 10px;
+  margin-top: 24px;
+  padding: 12px 28px;
+  border-color: var(--ink);
+  background: var(--ink);
+  line-height: 1.2;
+}
+
+.heroButton:hover {
+  border-color: var(--green-dark);
+}
+
+.heroButton svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Right of the hero: the phone, tilted, and the tokens around it. */
+.stage {
   position: relative;
-  min-height: 470px;
-}
-
-.phoneStage::before {
-  content: "";
-  position: absolute;
-  top: -18px;
-  right: -40px;
-  width: 260px;
-  height: 260px;
-  border: 22px solid var(--flag-yellow);
-  border-radius: 50%;
-  clip-path: inset(0 0 50% 50%);
-}
-
-.photo {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 78%;
-  height: 360px;
-  overflow: hidden;
-  border-radius: 46% 54% 42% 58% / 40% 38% 62% 60%;
-  background: var(--line);
-}
-
-.photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 40% 50%;
-  display: block;
+  height: 440px;
+  margin-top: 12px;
 }
 
 .phone {
   position: absolute;
-  left: 4%;
-  bottom: 0;
-  width: 200px;
+  z-index: 2;
+  left: 50%;
+  top: 50%;
+  width: 210px;
   aspect-ratio: 390 / 800;
   border: 9px solid var(--ink);
   border-radius: 38px;
   overflow: hidden;
-  background: #fff;
-  box-shadow: 0 32px 60px -30px rgb(19 38 28 / 0.5);
-  transform: rotate(-2deg);
+  background: var(--page);
+  box-shadow: 0 50px 80px -40px rgb(19 38 28 / 0.55);
+  transform: translate(-50%, -50%) rotate(4deg);
+}
+
+/* The screenshot, with the answer and the finger placed on it in % of its size. */
+.screen {
+  position: relative;
 }
 
 .phoneScreen {
@@ -253,24 +281,224 @@
   height: auto;
 }
 
+/* « Très satisfait(e) » once chosen: the row of the screenshot, tinted green
+   and outlined, as in the questionnaire. */
+.chosen {
+  position: absolute;
+  left: 4.7%;
+  top: 18.55%;
+  width: 90.6%;
+  height: 6.4%;
+  border-radius: 6px;
+  background: var(--green-tint);
+  box-shadow: inset 0 0 0 2px var(--green);
+  mix-blend-mode: multiply;
+}
+
+/* The finger that taps it. */
+.tap {
+  position: absolute;
+  left: 62%;
+  top: 21.75%;
+  width: 14%;
+  aspect-ratio: 1;
+  margin: -7% 0 0 -7%;
+  border: 2px solid rgb(255 255 255 / 0.9);
+  border-radius: 50%;
+  background: rgb(19 38 28 / 0.22);
+  opacity: 0;
+}
+
+.token {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 -0.09em 0 rgb(0 0 0 / 0.2),
+    inset 0 0.06em 0 rgb(255 255 255 / 0.25),
+    0 26px 30px -18px rgb(19 38 28 / 0.55);
+}
+
+.token svg {
+  width: 78%;
+  height: 78%;
+}
+
+/* « Très satisfait(e) », the big one in front, which leaps out of the phone. */
+.token[data-level="1"] {
+  z-index: 3;
+  right: 2%;
+  bottom: 6%;
+  width: 104px;
+  font-size: 104px;
+  background: radial-gradient(circle at 35% 30%, #2a9a52, var(--satisfaction-1) 62%);
+}
+
+.token[data-level="2"] {
+  left: 2%;
+  top: 9%;
+  width: 70px;
+  font-size: 70px;
+  background: radial-gradient(circle at 35% 30%, #86bf52, var(--satisfaction-2) 62%);
+}
+
+.token[data-level="3"] {
+  right: 6%;
+  top: 4%;
+  width: 66px;
+  font-size: 66px;
+  background: radial-gradient(circle at 35% 30%, #f0c02a, var(--satisfaction-3) 62%);
+}
+
+.token[data-level="4"] {
+  left: 8%;
+  bottom: 14%;
+  width: 54px;
+  font-size: 54px;
+  background: radial-gradient(circle at 35% 30%, #f08c45, var(--satisfaction-4) 62%);
+  filter: blur(0.5px);
+}
+
+.token[data-level="5"] {
+  z-index: 3;
+  left: 22%;
+  bottom: 3%;
+  width: 40px;
+  font-size: 40px;
+  background: radial-gradient(circle at 35% 30%, #e24245, var(--satisfaction-5) 62%);
+  filter: blur(1px);
+  opacity: 0.85;
+}
+
+/* Without motion, the screen simply shows the answer chosen. */
 @media (prefers-reduced-motion: no-preference) {
+  .line > span {
+    animation: rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .line:nth-child(2) > span {
+    animation-delay: 0.12s;
+  }
+
+  .line:nth-child(3) > span {
+    animation-delay: 0.24s;
+  }
+
+  .line:last-child > span::after {
+    animation: draw 0.8s 0.9s cubic-bezier(0.6, 0, 0.2, 1) both;
+  }
+
   .phone {
-    animation: phone-in 0.9s 0.15s ease-out both;
+    animation: phone-in 1.1s 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .tap {
+    animation: tap 0.7s 2.2s ease-out;
+  }
+
+  .chosen {
+    animation: appear 0.35s 2.45s both;
+  }
+
+  .token {
+    animation: bob 6s ease-in-out infinite;
+  }
+
+  .token[data-level="2"] {
+    animation-delay: -1.5s;
+  }
+
+  .token[data-level="3"] {
+    animation-delay: -3s;
+  }
+
+  .token[data-level="4"] {
+    animation-delay: -4.2s;
+  }
+
+  .token[data-level="5"] {
+    animation-delay: -2.2s;
+  }
+
+  .token[data-level="1"] {
+    animation:
+      leap 0.9s 2.6s cubic-bezier(0.3, 1.5, 0.5, 1) both,
+      bob 6s 3.5s ease-in-out infinite;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(105%);
+  }
+}
+
+@keyframes draw {
+  from {
+    transform: scaleX(0);
   }
 }
 
 @keyframes phone-in {
   from {
     opacity: 0;
-    transform: translateY(28px) rotate(0deg);
+    transform: translate(-50%, -38%) rotate(0deg);
   }
 }
 
-/* ---- The idea ---- */
+@keyframes tap {
+  0% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
 
+  35% {
+    opacity: 1;
+    transform: scale(0.8);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes bob {
+  50% {
+    translate: 0 -14px;
+  }
+}
+
+@keyframes leap {
+  from {
+    opacity: 0;
+    transform: translate(-120px, -150px) scale(0.2);
+  }
+}
+
+/* ---- The idea: « Pourquoi NeexNaqari ? » ---- */
+
+/* Vert nuit, rounded on top, laid over the bottom of the hero. */
 .idea {
-  padding: 72px 0;
-  background: #fff;
+  position: relative;
+  z-index: 1;
+  margin-top: -36px;
+  padding: 64px 0 72px;
+  border-radius: 36px 36px 0 0;
+  background: var(--night);
+  color: #fff;
+}
+
+.idea .label {
+  color: var(--flag-yellow);
 }
 
 .ideaText {
@@ -279,64 +507,170 @@
   margin-top: 24px;
   max-width: 1000px;
   font-size: 18px;
+  line-height: 1.55;
+  color: var(--footer-text);
 }
 
 .ideaText p {
   margin: 0;
 }
 
-/* Your experience, your voice, better services: three steps joined by arrows. */
+/* Your experience, your voice, results: three tokens in relief on a line that
+   draws itself from green to yellow. Phones: top to bottom. */
 .chain {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 34px;
+  position: relative;
+  display: grid;
+  gap: 28px;
   margin: 44px 0 0;
   padding: 0;
   list-style: none;
 }
 
-.chain li {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 8px 22px 8px 8px;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 0 0 1px var(--line-light), 0 10px 24px -18px rgb(19 38 28 / 0.45);
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1.2;
+.chain::before,
+.chain::after {
+  content: "";
+  position: absolute;
+  top: 42px;
+  bottom: 42px;
+  left: 39px;
+  width: 6px;
+  border-radius: 6px;
 }
 
-.chainIcon {
-  display: flex;
+.chain::before {
+  background: rgb(255 255 255 / 0.14);
+}
+
+.chain::after {
+  background: linear-gradient(180deg, var(--flag-green), var(--satisfaction-2) 50%, var(--flag-yellow));
+  transform-origin: top;
+}
+
+.chain li {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 84px 1fr;
   align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  flex-shrink: 0;
+  gap: 18px;
+}
+
+.chainToken {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
-  background: var(--green);
+  background: radial-gradient(circle at 35% 30%, #2a9a52, var(--flag-green) 62%);
+  box-shadow:
+    inset 0 -9px 0 rgb(0 0 0 / 0.22),
+    inset 0 6px 0 rgb(255 255 255 / 0.2),
+    0 26px 30px -16px rgb(0 0 0 / 0.6);
   color: #fff;
 }
 
-.chain li:last-child .chainIcon {
-  background: var(--flag-yellow);
+.chain li:nth-child(2) .chainToken {
+  background: radial-gradient(circle at 35% 30%, #86bf52, var(--satisfaction-2) 62%);
+}
+
+.chain li:nth-child(3) .chainToken {
+  background: radial-gradient(circle at 35% 30%, #ffe066, var(--flag-yellow) 62%);
   color: var(--ink);
 }
 
-.chain li:not(:last-child)::after {
-  content: "";
-  position: absolute;
-  left: 27px;
-  top: calc(100% + 10px);
-  width: 10px;
-  height: 10px;
-  border-right: 2px solid var(--control);
-  border-bottom: 2px solid var(--control);
-  transform: rotate(45deg);
+.chainToken svg {
+  width: 36px;
+  height: 36px;
+  overflow: visible;
+}
+
+.bar {
+  transform-box: fill-box;
+  transform-origin: bottom;
+}
+
+.chainText {
+  max-width: 12em;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .chain::after {
+    animation: draw-down 1.6s 0.4s cubic-bezier(0.6, 0, 0.2, 1) both;
+  }
+
+  .chainToken {
+    animation: pop 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+  }
+
+  .chain li:nth-child(1) .chainToken {
+    animation-delay: 0.3s;
+  }
+
+  .chain li:nth-child(2) .chainToken {
+    animation-delay: 1s;
+  }
+
+  .chain li:nth-child(3) .chainToken {
+    animation-delay: 1.7s;
+  }
+
+  .dot {
+    animation: typing 1.4s ease-in-out infinite;
+  }
+
+  .dot:nth-of-type(2) {
+    animation-delay: 0.2s;
+  }
+
+  .dot:nth-of-type(3) {
+    animation-delay: 0.4s;
+  }
+
+  .bar {
+    animation: grow 2.4s ease-in-out infinite;
+  }
+
+  .bar:nth-of-type(2) {
+    animation-delay: 0.2s;
+  }
+
+  .bar:nth-of-type(3) {
+    animation-delay: 0.4s;
+  }
+}
+
+/* Below the screen, the line waits to be seen before drawing itself. */
+.reveal[data-reveal="waiting"] .chain::after,
+.reveal[data-reveal="waiting"] .chainToken {
+  animation-play-state: paused;
+}
+
+@keyframes draw-down {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+@keyframes typing {
+  30% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes grow {
+  50% {
+    transform: scaleY(0.55);
+  }
 }
 
 /* ---- Public and private ---- */
@@ -727,43 +1061,87 @@
     font-size: 16px;
   }
 
+  /* The hero stays in place while « Pourquoi » slides over it. */
   .hero {
-    padding: 88px 0 104px;
+    position: sticky;
+    /* Under the header (91px); on a short screen, once its bottom is reached
+       (the hero is 764px tall: the 600px stage and its padding). */
+    top: min(91px, 100vh - 764px);
+    padding: 56px 0 108px;
+  }
+
+  /* Every later section passes in front of it, opaque from the start: only
+     its content fades in (Reveal.tsx), so the hero never shows through. */
+  .hero ~ section {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero ~ .reveal[data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .hero ~ .reveal[data-reveal="waiting"] > * {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  .hero ~ .reveal[data-reveal="shown"] > * {
+    transition:
+      opacity 0.6s ease-out,
+      transform 0.6s ease-out;
   }
 
   .heroInner {
-    display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
     align-items: center;
-    gap: 56px;
+    gap: 32px;
+  }
+
+  .heroTitle {
+    font-size: clamp(52px, 7.3vw, 104px);
+  }
+
+  .heroSectors {
+    margin-top: 28px;
   }
 
   .heroLead {
-    font-size: 22px;
+    font-size: 20px;
   }
 
-  .phoneStage {
-    min-height: 560px;
+  .heroButton {
+    display: inline-flex;
+    width: auto;
+    margin-top: 32px;
   }
 
-  .phoneStage::before {
-    width: 320px;
-    height: 320px;
-    right: -60px;
-  }
-
-  .photo {
-    height: 470px;
+  .stage {
+    height: 600px;
+    margin-top: 0;
   }
 
   .phone {
-    left: -4%;
-    width: 250px;
-    border-width: 10px;
-    border-radius: 42px;
+    width: 270px;
+    border-radius: 40px;
   }
 
-  .idea,
+  .token[data-level="1"] {
+    right: -6%;
+    width: 150px;
+    font-size: 150px;
+  }
+
+  .token[data-level="2"] {
+    width: 92px;
+    font-size: 92px;
+  }
+
+  .idea {
+    padding: 96px 0 112px;
+  }
+
   .services,
   .steps {
     padding: 112px 0;
@@ -774,27 +1152,58 @@
     gap: 48px;
   }
 
+  /* Left to right: the line runs between the first and the last token. */
   .chain {
-    flex-direction: row;
-    align-items: center;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
     margin-top: 56px;
   }
 
+  .chain::before,
+  .chain::after {
+    top: 49px;
+    bottom: auto;
+    left: 52px;
+    right: 52px;
+    width: auto;
+    height: 6px;
+  }
+
+  .chain::after {
+    background: linear-gradient(90deg, var(--flag-green), var(--satisfaction-2) 50%, var(--flag-yellow));
+    transform-origin: left;
+    animation-name: draw;
+  }
+
   .chain li {
-    font-size: 21px;
+    grid-template-columns: none;
+    align-items: start;
+    justify-items: start;
   }
 
-  .chain {
-    gap: 56px;
+  .chain li:nth-child(2) {
+    justify-items: center;
+    text-align: center;
   }
 
-  .chain li:not(:last-child)::after {
-    left: calc(100% + 20px);
-    top: 50%;
-    margin-top: -6px;
-    transform: rotate(-45deg);
+  .chain li:nth-child(3) {
+    justify-items: end;
+    text-align: right;
   }
 
+  .chainToken {
+    width: 104px;
+    height: 104px;
+  }
+
+  .chainToken svg {
+    width: 44px;
+    height: 44px;
+  }
+
+  .chainText {
+    font-size: clamp(20px, 1.8vw, 24px);
+  }
 
   .servicesHead {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

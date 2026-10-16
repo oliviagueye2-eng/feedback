@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { Dictionary } from "../../_i18n";
 import styles from "./landing.module.css";
@@ -49,9 +50,9 @@ export function LandingHeader({ t }: { t: Texts }) {
           <a href="#vision" onClick={close}>
             {t.vision}
           </a>
-          <a href="#donner" className={styles.giveLink} onClick={close}>
+          <Link href="/avis" className={styles.giveLink} onClick={close}>
             {t.giveFeedback}
-          </a>
+          </Link>
         </nav>
       </div>
     </header>

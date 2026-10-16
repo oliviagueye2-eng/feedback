@@ -57,20 +57,18 @@ export const fr = {
     skip: "Passer",
   },
 
-  /** The queue ticket under the home page's title. */
+  /** The queue ticket, stamped « Merci » once a feedback is sent. */
   home: {
     ticketLabel: "Ticket usager",
     ticketNumber: "N° 047",
-    title: "C'est votre tour.",
-    duration: "Gratuit, environ 1 minute.",
   },
 
-  /** Home page: the pre-launch landing, kept at launch with the ticket. */
+  /** Home page. */
   landing: {
     meta: {
       title: "NeexNaqari — La plateforme de vos expériences",
       description:
-        "NeexNaqari permet de partager son expérience des services publics et privés et de contribuer à leur amélioration.",
+        "NeexNaqari permet de partager son expérience des services publics et privés au Sénégal et de contribuer à leur amélioration.",
       imageAlt: "NeexNaqari, la plateforme de vos expériences",
     },
     nav: {
@@ -80,9 +78,11 @@ export const fr = {
       closeMenu: "Fermer le menu",
     },
     hero: {
-      title: "Votre expérience peut faire avancer les services.",
-      lead: "Partagez votre expérience des services que vous utilisez et contribuez à leur amélioration.",
-      photoAlt: "Des usagers montent dans un bus Tata à un arrêt de Dakar.",
+      /** One line each: the title is set very large, a line at a time. */
+      titleLines: ["Partagez", "votre", "expérience."],
+      sectors: "Transport, santé, administration, eau, électricité…",
+      lead: "Évaluez les services du quotidien au Sénégal, en quelques clics.",
+      giveFeedback: "Donner mon avis sur un service",
       phoneAlt:
         "Écran de NeexNaqari sur un téléphone : « Êtes-vous satisfait(e) du service reçu ? » pour un trajet en bus de l'AFTU, avec cinq réponses de « Très satisfait(e) » à « Pas du tout satisfait(e) ».",
     },
