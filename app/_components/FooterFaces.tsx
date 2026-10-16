@@ -64,17 +64,11 @@ function start(pit: HTMLDivElement, Matter: typeof import("matter-js")): () => v
   const ctx = canvas.getContext("2d")!;
   const dpr = Math.min(devicePixelRatio || 1, 2);
 
-  // The face colours come from globals.css (--satisfaction-N and its tint).
+  // The face colours come from globals.css (--satisfaction-N).
   const css = getComputedStyle(document.documentElement);
   const colors = Object.fromEntries(
-    LEVELS.map((n) => [
-      n,
-      {
-        line: css.getPropertyValue(`--satisfaction-${n}`).trim(),
-        tint: css.getPropertyValue(`--satisfaction-${n}-tint`).trim(),
-      },
-    ]),
-  ) as Record<Level, { line: string; tint: string }>;
+    LEVELS.map((n) => [n, css.getPropertyValue(`--satisfaction-${n}`).trim()]),
+  ) as Record<Level, string>;
   const mouths = Object.fromEntries(LEVELS.map((n) => [n, new Path2D(MOUTHS[n])])) as Record<Level, Path2D>;
 
   const engine = Engine.create();
@@ -173,32 +167,46 @@ function start(pit: HTMLDivElement, Matter: typeof import("matter-js")): () => v
   pit.addEventListener("touchmove", onTouchMove, { passive: true });
   pit.addEventListener("touchend", onLeave);
 
+  // Each face is drawn once, here, then only copied (rotated) every frame:
+  // the soft shadow would be too slow to redraw 60 times a second on small phones.
+  // Style "plein" (2026-10-16): a disc of the level's colour, the face in white.
+  const SPRITE = 24; // drawing units: the 24 × 24 box of SatisfactionFace
+  const MARGIN = 4; // room for the shadow around the disc
+  const scale = (Math.max(radius * 1.15, 20) / 10) * dpr;
+  const sprites = Object.fromEntries(
+    LEVELS.map((n) => {
+      const sprite = document.createElement("canvas");
+      sprite.width = sprite.height = Math.ceil((SPRITE + 2 * MARGIN) * scale);
+      const g = sprite.getContext("2d")!;
+      g.scale(scale, scale);
+      g.translate(MARGIN, MARGIN);
+      g.shadowColor = "rgb(0 0 0 / 0.35)";
+      g.shadowBlur = 3 * scale;
+      g.fillStyle = colors[n];
+      g.beginPath();
+      g.arc(12, 12, 10, 0, Math.PI * 2);
+      g.fill();
+      g.shadowColor = "transparent";
+      g.fillStyle = g.strokeStyle = "#fff";
+      g.lineWidth = 1.2;
+      g.lineCap = "round";
+      g.lineJoin = "round";
+      g.beginPath();
+      g.arc(8.6, 9.6, 1.1, 0, Math.PI * 2);
+      g.arc(15.4, 9.6, 1.1, 0, Math.PI * 2);
+      g.fill();
+      g.stroke(mouths[n]);
+      return [n, sprite];
+    }),
+  ) as Record<Level, HTMLCanvasElement>;
+
   function draw(face: FaceBody) {
     const r = face.circleRadius ?? radius;
-    const { line, tint } = colors[face.level];
+    const size = (r / 10) * (SPRITE + 2 * MARGIN); // the disc (radius 10) matches the body
     ctx.save();
     ctx.translate(face.position.x, face.position.y);
     ctx.rotate(face.angle);
-    // Same drawing as SatisfactionFace (a 24 × 24 box, circle of radius 10).
-    const s = r / 11;
-    ctx.scale(s, s);
-    ctx.translate(-12, -12);
-    ctx.lineWidth = 1.8;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.fillStyle = tint;
-    ctx.strokeStyle = line;
-    ctx.beginPath();
-    ctx.arc(12, 12, 10, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = line;
-    ctx.beginPath();
-    ctx.arc(8.6, 9.6, 1.3, 0, Math.PI * 2);
-    ctx.arc(15.4, 9.6, 1.3, 0, Math.PI * 2);
-    ctx.fill();
-    if (face.level === 1) ctx.fill(mouths[1]);
-    ctx.stroke(mouths[face.level]);
+    ctx.drawImage(sprites[face.level], -size / 2, -size / 2, size, size);
     ctx.restore();
   }
 
