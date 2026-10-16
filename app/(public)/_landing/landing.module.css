@@ -1382,48 +1382,78 @@
 
 /* ---- Footer ---- */
 
-.footerInner {
+/* Phones: the tagline, the links and the copyright, stacked and compact. */
+.footerTop {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.footerTag {
+  margin: 0 0 var(--space-xs);
+  font-style: italic;
+}
+
+.footerNav,
+.footerLegal {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-l);
+  flex-wrap: wrap;
+  column-gap: var(--space-ml);
 }
 
-.footerBrand em {
-  color: var(--footer-text);
-}
-
-.footerNav {
-  display: flex;
-  flex-direction: column;
-}
-
-.footerNav a {
+.footerNav a,
+.footerLegal a {
   display: flex;
   align-items: center;
   min-height: 44px;
-  color: #fff;
   text-decoration: none;
 }
 
-.footerNav a:hover {
+.footerNav a {
+  color: #fff;
+  font-size: 16px;
+}
+
+.footerLegal a {
+  color: var(--footer-text);
+  font-size: 14px;
+}
+
+.footerNav a:hover,
+.footerLegal a:hover {
   color: #fff;
   text-decoration: underline;
 }
 
-.footerNav a:focus-visible {
+.footerNav a:focus-visible,
+.footerLegal a:focus-visible {
   outline-color: #fff;
 }
 
-.copyright {
-  padding-top: var(--space-ml);
-  border-top: 1px solid rgb(255 255 255 / 0.18);
+/* The name across the whole width, the pit of faces laid over it, down to the
+   footer's bottom edge (cancels its bottom padding). */
+.signature {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  height: calc(21.5vw * 0.8 + 200px);
+  margin: var(--space-xl) 0 -26px;
 }
 
-/* Under the copyright, which already draws the line. */
-.footerLegal {
-  margin-top: -20px;
-  padding-top: 0;
-  border-top: 0;
+/* Two classes: beats the footer's `.site-footer p` (globals.css). */
+.signature > .wordmark {
+  margin: 0;
+  padding: 0 var(--space-s);
+  font: 800 21.5vw/0.8 var(--font-display);
+  letter-spacing: -0.01em;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.signature > .signaturePit {
+  position: absolute;
+  inset: 0;
+  height: auto;
+  margin: 0;
 }
 
 /* ---- Tablets ---- */
@@ -1776,20 +1806,29 @@
     font-size: 19px;
   }
 
-  .footerInner {
-    display: grid;
+  /* Computers: the tagline, then the links on the left and the copyright on the right. */
+  .footerTop {
     grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-    gap: var(--space-xl) 56px;
+    align-items: center;
+    column-gap: 48px;
+    padding-top: var(--space-ml);
   }
 
-  .footerNav {
-    flex-direction: row;
-    gap: var(--space-xl);
-  }
-
-  .copyright,
-  .footerLegal {
+  .footerTag {
     grid-column: 1 / -1;
+  }
+
+  .footerLegal {
+    grid-column: 1;
+  }
+
+  .copyright {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .signature {
+    height: calc(21.5vw * 0.8 + 140px);
+    margin-bottom: -48px;
   }
 }

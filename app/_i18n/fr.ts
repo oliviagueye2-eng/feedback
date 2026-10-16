@@ -163,6 +163,7 @@ export const fr = {
       newTab: "(nouvel onglet)",
     },
     footer: {
+      tagline: "NeexNaqari, la plateforme de vos expériences.",
       home: "Accueil",
       copyright: "© 2026 NeexNaqari. Tous droits réservés.",
       navLabel: "Plan du site",
