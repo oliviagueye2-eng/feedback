@@ -25,12 +25,14 @@ const CHANNELS: readonly Channel[] = ["qr", "search", "link"];
 
 /**
  * Screen 1: creates the feedback, or updates it when the phone sends it again
- * (the answer to the essential question is then cleared).
+ * (the answer to the essential question is then cleared). `isTest`: sent from
+ * a browser in test mode (0085), decided by the caller from its cookie.
  */
 export async function upsertFeedback(
   id: string,
   body: unknown,
   now: Date = new Date(),
+  isTest = false,
 ): Promise<void> {
   requireUuid(id, "id");
   const input = asObject(body);
@@ -56,6 +58,7 @@ export async function upsertFeedback(
     visitPeriod,
     visitMonth: visitPeriod ? computeVisitMonth(visitPeriod, now) : null,
     startedAt,
+    isTest,
   });
   // Back on screen 1 the visit may have changed: the satisfaction is asked again.
   await db.clearEssentialAnswer(id);

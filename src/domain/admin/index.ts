@@ -13,7 +13,7 @@ import { invalidInput, notFound } from "../errors";
 import { isUuid, requireUuid } from "../../lib/validation";
 import { createSessionToken, isRightPassword } from "./session";
 
-export { isValidSessionToken, SESSION_DAYS } from "./session";
+export { createTestModeToken, isValidSessionToken, isValidTestModeToken, SESSION_DAYS, TEST_MODE_DAYS } from "./session";
 export * from "./qrCodes";
 export type {
   AdminAnswer, AdminComment, AdminFeedback, AdminFeedbackRow, AdminTopic, BankCondition, BankOption, BankQuestion, CategoryContent, CommentStatus, EstablishmentComments, FormEstablishment,
@@ -100,10 +100,27 @@ export async function deleteFeedback(id: string) {
   }
 }
 
+/**
+ * Deletes every feedback sent in test mode (asked by Olivia, 2026-10-16), then
+ * recomputes the published results, as for one feedback. Returns how many.
+ */
+export async function deleteTestFeedbacks(): Promise<number> {
+  const deleted = await db.deleteTestFeedbacks();
+  if (deleted > 0) {
+    try {
+      await refreshMonthlyStats();
+    } catch (error) {
+      console.error("Results not recomputed after deleting the test feedbacks (the nightly job will):", error);
+    }
+  }
+  return deleted;
+}
+
 // Establishments ---------------------------------------------------------------
 
 export const listPendingEstablishments = () => db.listPendingEstablishments();
 export const countPendingComments = () => db.countPendingComments();
+export const countTestFeedbacks = () => db.countTestFeedbacks();
 export const countPendingEstablishments = () => db.countPendingEstablishments();
 
 export async function correctEstablishment(
