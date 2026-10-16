@@ -306,7 +306,7 @@ describe("questionnaire", () => {
       withoutTypeListCodes: ["HEALTH", "STAFF_SKILLS", "FEES"],
       withoutTypeQuestionListCodes: ["HEALTH", "PAID_AND_RECEIPT"],
     });
-    expect(health.topics).toContainEqual({ code: "CARE_RECEIVED", label: "Soins reçus", isActive: true, categoryCode: "OUTCOME", shownIf: null });
+    expect(health.topics).toContainEqual({ code: "CARE_RECEIVED", label: "Soins reçus", isActive: true, categoryCode: "OUTCOME", shownIf: [] });
     const airport = q.types.find((t) => t.code === "AIRPORT")!;
     // 0061: no « Guichet » block at the airport.
     expect(airport).toMatchObject({ sectorCode: "TRANSPORT", listCodes: ["STAFF_SKILLS"] });
@@ -377,7 +377,7 @@ describe("questionnaire", () => {
           isActive: true,
           categoryCode,
           // 0011: « Frais » only after « Oui » to « Avez-vous payé quelque chose ? ».
-          shownIf: code === "FEES" ? { dependsOn: "PAID_SOMETHING", options: ["YES"] } : null,
+          shownIf: code === "FEES" ? [{ dependsOn: "PAID_SOMETHING", options: ["YES"] }] : [],
         })),
         questionListCodes: ["MOBILE_PAYMENT"],
         questions: [{ code: "GOAL_ACHIEVED", position: 1, categoryCode: "OUTCOME", conditions: [] }],
@@ -425,7 +425,7 @@ describe("questionnaire", () => {
     ]);
     const delays = categories.find((c) => c.code === "DELAYS")!;
     expect(delays).toMatchObject({ label: "Délais", position: 3 });
-    expect(delays.topics[0]).toEqual({ code: "WAIT_TIME", label: "Temps d'attente", isActive: true, categoryCode: "DELAYS", shownIf: null });
+    expect(delays.topics[0]).toEqual({ code: "WAIT_TIME", label: "Temps d'attente", isActive: true, categoryCode: "DELAYS", shownIf: [] });
     expect(delays.questions).toContain("WAIT_TIME");
   });
 
@@ -433,7 +433,7 @@ describe("questionnaire", () => {
     const { topics } = await getCategoriesAndTopics();
     expect(topics.map((t) => t.categoryCode).slice(0, 1)).toEqual(["OUTCOME"]);
     const fees = topics.find((t) => t.code === "FEES")!;
-    expect(fees).toMatchObject({ isActive: true, shownIf: { dependsOn: "PAID_SOMETHING", options: ["YES"] } });
+    expect(fees).toMatchObject({ isActive: true, shownIf: [{ dependsOn: "PAID_SOMETHING", options: ["YES"] }] });
     expect(fees.lists).toContain("COMMERCE");
     expect(topics.find((t) => t.code === "WAIT_TIME")).toMatchObject({ label: expect.any(String), categoryCode: "DELAYS" });
   });
@@ -452,7 +452,7 @@ describe("questionnaire", () => {
     await db.query(`UPDATE topic SET is_active = false WHERE code = 'CARE_RECEIVED'`);
     try {
       const q = await getQuestionnaire({ sector: "HEALTH" });
-      expect(q.sectors[0]!.topics).toContainEqual({ code: "CARE_RECEIVED", label: "Soins reçus", isActive: false, categoryCode: "OUTCOME", shownIf: null });
+      expect(q.sectors[0]!.topics).toContainEqual({ code: "CARE_RECEIVED", label: "Soins reçus", isActive: false, categoryCode: "OUTCOME", shownIf: [] });
     } finally {
       await db.query(`UPDATE topic SET is_active = true WHERE code = 'CARE_RECEIVED'`);
     }

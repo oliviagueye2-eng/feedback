@@ -293,12 +293,13 @@ export async function deleteComment(feedbackId: string): Promise<void> {
 /** « Bien », « Pas bien » or « Non concerné », for one topic of screen 2b. */
 export type TopicSentiment = "positive" | "negative" | "not_concerned";
 
-/** The yes/no question asked in the place of a topic, which shows it after « Oui ». */
+/** A question asked in the place of a topic, which shows it after some of its answers (« Oui »). */
 export interface TopicGate {
   code: string;
   label: string;
+  /** Every answer of this question, whatever it opens. */
   options: { code: string; label: string }[];
-  /** The answers that show the topic. */
+  /** Those of its answers that show this topic. */
   opensWith: string[];
   /** What this feedback answered, null when nothing. */
   chosen: string | null;
@@ -311,8 +312,12 @@ export interface TopicChoice {
   sentiment: TopicSentiment | null;
   /** Only for "Autre": what the user wrote. */
   otherText: string | null;
-  /** Shown only after an answer to this question; null when always shown. */
-  gate: TopicGate | null;
+  /**
+   * The questions that show it, each after one of its opening answers (all of
+   * them, as replaceTopics checks); empty when always shown. The database
+   * allows one per topic (0084), but nothing here relies on it.
+   */
+  gates: TopicGate[];
   /** French label of its evaluation category (a title above its topics); null when none. */
   category: string | null;
 }
@@ -374,16 +379,20 @@ async function topicChoices(topics: string, params: unknown[]): Promise<TopicCho
        JOIN question_translation qt ON qt.question_id = q.id AND qt.language = 'fr'
        JOIN answer_option ao ON ao.question_id = q.id AND ao.is_active
        JOIN answer_option_translation ot ON ot.answer_option_id = ao.id AND ot.language = 'fr'
-       ORDER BY t.code, ao.position`,
+       ORDER BY t.code, q.code, ao.position`,
       params,
     ),
   ]);
-  const gateOf = new Map<string, TopicGate>();
+  // One row per answer of each question of each topic: grouped by topic, then
+  // by question, so that a question gets its own answers only.
+  const gatesOf = new Map<string, TopicGate[]>();
   for (const row of gates) {
-    let gate = gateOf.get(row.topic);
+    const topicGates = gatesOf.get(row.topic) ?? [];
+    gatesOf.set(row.topic, topicGates);
+    let gate = topicGates.find((g) => g.code === row.code);
     if (!gate) {
       gate = { code: row.code, label: row.label, options: [], opensWith: [], chosen: null };
-      gateOf.set(row.topic, gate);
+      topicGates.push(gate);
     }
     gate.options.push({ code: row.option_code, label: row.option_label });
     if (row.opens) gate.opensWith.push(row.option_code);
@@ -394,7 +403,7 @@ async function topicChoices(topics: string, params: unknown[]): Promise<TopicCho
     label: r.label,
     sentiment: r.sentiment,
     otherText: r.other_text,
-    gate: gateOf.get(r.code) ?? null,
+    gates: gatesOf.get(r.code) ?? [],
     category: r.category,
   }));
 }

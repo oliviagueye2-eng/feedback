@@ -494,11 +494,17 @@ describe("« Non concerné » and the questions that open a topic (0011)", () =>
     ]);
   });
 
-  it("lets a topic open with several answers of one question, never of two questions (0084)", async () => {
+  it("lets a topic open with several answers of its own question, never of another one (0084)", async () => {
+    // Each topic with conditions names their question, the same as theirs.
+    expect((await db.query<{ code: string }>(`
+      SELECT t.code FROM topic t
+      WHERE EXISTS (SELECT 1 FROM topic_condition tc WHERE tc.topic_id = t.id) <> (t.gate_question_id IS NOT NULL)
+         OR EXISTS (SELECT 1 FROM topic_condition tc
+                    WHERE tc.topic_id = t.id AND tc.depends_on_question_id <> t.gate_question_id)`)).rows).toEqual([]);
     await expect(db.exec(`
       INSERT INTO topic_condition (topic_id, depends_on_question_id, option_id)
       SELECT t.id, q.id, o.id FROM topic t, question q JOIN answer_option o ON o.question_id = q.id AND o.code = 'YES'
-      WHERE t.code = 'AGENT_COMMISSION' AND q.code = 'PAID_SOMETHING'`)).rejects.toThrow(/another question/);
+      WHERE t.code = 'AGENT_COMMISSION' AND q.code = 'PAID_SOMETHING'`)).rejects.toThrow(/topic_condition_gate_fkey/);
   });
 
   it("accepts « Non concerné » as a sentiment, and nothing else", async () => {

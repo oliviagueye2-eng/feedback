@@ -33,8 +33,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
   const t = admin.questionnaire;
   // The question whose answers show a topic at screen 2b (topic_condition).
   const topicShownIf = { header: t.topicShownIf, column: "topic_condition", kind: "code" as const, emptyText: t.always };
-  const shownIf = (topic: ListedTopic) =>
-    topic.shownIf && `${topic.shownIf.dependsOn} = ${topic.shownIf.options.join(t.or)}`;
+  const shownIf = (topic: ListedTopic) => topic.shownIf.map((c) => `${c.dependsOn} = ${c.options.join(t.or)}`);
   // Sectors, types and services: their topics (screen 2b), then their questions (screen 6).
   const levelLists: ListGroup[] = [
     {
@@ -89,7 +88,7 @@ export default async function QuestionnairePage({ searchParams }: PageProps<"/co
   }): ListGridRow["lists"] => ({
     topics: {
       code: codes(level.listCodes, level.withoutServiceListCodes, level.withoutTypeListCodes),
-      items: level.topics.map((topic) => ({ code: topic.code, extras: [topic.label, topic.isActive, topic.categoryCode, shownIf(topic)] })),
+      items: level.topics.map((topic) => ({ code: topic.code, extras: [topic.label, topic.isActive, topic.categoryCode, shownIf(topic).join(t.and) || null] })),
     },
     questions: {
       code: codes(level.questionListCodes, level.withoutServiceQuestionListCodes, level.withoutTypeQuestionListCodes),

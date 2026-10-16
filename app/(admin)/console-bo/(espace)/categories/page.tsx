@@ -15,8 +15,7 @@ export default async function CategoriesPage() {
   const t = admin.questionnaire;
   // The question whose answers show a topic at screen 2b (topic_condition).
   const topicShownIf = { header: t.topicShownIf, column: "topic_condition", kind: "code" as const, emptyText: t.always };
-  const shownIf = (topic: ListedTopic) =>
-    topic.shownIf && `${topic.shownIf.dependsOn} = ${topic.shownIf.options.join(t.or)}`;
+  const shownIf = (topic: ListedTopic) => topic.shownIf.map((c) => `${c.dependsOn} = ${c.options.join(t.or)}`);
 
   return (
     <>
@@ -64,7 +63,7 @@ export default async function CategoriesPage() {
           id: c.code,
           values: { code: c.code, label: c.label, position: String(c.position) },
           lists: {
-            topics: { items: c.topics.map((topic) => ({ code: topic.code, extras: [topic.label, topic.isActive, shownIf(topic)] })) },
+            topics: { items: c.topics.map((topic) => ({ code: topic.code, extras: [topic.label, topic.isActive, shownIf(topic).join(t.and) || null] })) },
             questions: { items: c.questions.map((code) => ({ code })) },
           },
         }))}
@@ -98,7 +97,7 @@ export default async function CategoriesPage() {
             position: String(topic.position),
             isActive: topic.isActive,
             categoryCode: topic.categoryCode,
-            shownIf: topic.shownIf ? [shownIf(topic)!] : [],
+            shownIf: shownIf(topic),
             lists: topic.lists,
           },
           lists: {},

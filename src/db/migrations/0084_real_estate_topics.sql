@@ -163,26 +163,28 @@ FROM service s JOIN question_set qs ON qs.code = s.code
 WHERE s.code IN ('PROPERTY_SALE', 'PROPERTY_RENTAL', 'PROPERTY_LETTING');
 
 -- A topic opened by several answers of its question (an agency or a broker).
--- The index of 0011 allowed one answer only, though meant to keep one question
--- per topic, and screen 2b already shows a topic for any of its answers: a
--- trigger now keeps the rule.
+-- The index of 0011 allowed one row per topic, so one answer only, though it
+-- was meant to keep one question per topic (« une ligne par réponse acceptée »).
+-- The topic now names its question (gate_question_id), and each of its rows
+-- must repeat it: one question per topic, as many answers as wanted, kept by
+-- the keys alone. The application does not rely on it (several questions:
+-- the topic shows after an opening answer to each).
+ALTER TABLE topic ADD COLUMN gate_question_id int REFERENCES question (id);
+ALTER TABLE topic ADD CONSTRAINT topic_gate_question_key UNIQUE (id, gate_question_id);
+
+UPDATE topic t SET gate_question_id = tc.depends_on_question_id
+FROM (SELECT DISTINCT topic_id, depends_on_question_id FROM topic_condition) tc
+WHERE tc.topic_id = t.id;
+
 DROP INDEX topic_condition_one_question;
 
-CREATE FUNCTION topic_condition_one_question() RETURNS trigger
-LANGUAGE plpgsql AS $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM topic_condition
-             WHERE topic_id = NEW.topic_id AND depends_on_question_id <> NEW.depends_on_question_id) THEN
-    RAISE EXCEPTION 'topic % already depends on another question', NEW.topic_id;
-  END IF;
-  RETURN NEW;
-END
-$$;
-
-CREATE TRIGGER topic_condition_one_question BEFORE INSERT OR UPDATE ON topic_condition
-FOR EACH ROW EXECUTE FUNCTION topic_condition_one_question();
+ALTER TABLE topic_condition ADD CONSTRAINT topic_condition_gate_fkey
+  FOREIGN KEY (topic_id, depends_on_question_id) REFERENCES topic (id, gate_question_id);
 
 -- The commission and the agency's management open with an intermediary.
+UPDATE topic SET gate_question_id = (SELECT id FROM question WHERE code = 'PROPERTY_INTERMEDIARY')
+WHERE code IN ('AGENT_COMMISSION', 'AGENCY_MANAGEMENT');
+
 INSERT INTO topic_condition (topic_id, depends_on_question_id, option_id)
 SELECT t.id, q.id, o.id
 FROM topic t, question q
