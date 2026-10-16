@@ -121,6 +121,9 @@ export const fr = {
     },
     steps: {
       title: "Partager une expérience devient simple et rapide.",
+      /** Written in the search field of the first ticket. */
+      searchExample: "Distribution d'eau",
+      stamp: "Merci",
       items: [
         { title: "Je choisis", text: "Je sélectionne le service ou l'établissement concerné." },
         {

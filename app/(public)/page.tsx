@@ -5,7 +5,7 @@ import Link from "next/link";
 import { FooterFaces } from "../_components/FooterFaces";
 import { SOCIAL_ACCOUNTS, SocialIcon } from "../_components/SocialLinks";
 import { getDictionary } from "../_i18n";
-import { MOUTHS } from "./_feedback/SatisfactionFace";
+import { MOUTHS, SatisfactionFace } from "./_feedback/SatisfactionFace";
 import { LEGAL_PAGES } from "./_legal/links";
 import { IntroSplash } from "./_intro/IntroSplash";
 import { LandingHeader } from "./_landing/LandingHeader";
@@ -35,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/** Condensed capitals for the hero title only; everything else stays in Atkinson Hyperlegible. */
+/** Condensed capitals for the hero title and the ticket numbers only; everything else stays in Atkinson Hyperlegible. */
 const display = Barlow_Condensed({ weight: "800", subsets: ["latin"], variable: "--font-display" });
 
 /** The five satisfaction faces around the phone, as solid tokens, from « Très satisfait(e) » (1) to « Pas du tout » (5). */
@@ -50,6 +50,34 @@ const SERVICE_PHOTOS = {
   mobilePayment: mobilePaymentPhoto,
   electricity: electricityPhoto,
 } as const;
+
+/** What each ticket shows of the questionnaire: the search, the five faces, the results stamped « Merci ». */
+function ticketScenes(search: string, stamp: string) {
+  return [
+    <span key="search" className={styles.ticketSearch}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-4-4" />
+      </svg>
+      <span className={styles.ticketTyped}>{search}</span>
+    </span>,
+    <span key="faces" className={styles.ticketFaces}>
+      {([1, 2, 3, 4, 5] as const).map((level) => (
+        <span key={level}>
+          <SatisfactionFace level={level} />
+        </span>
+      ))}
+    </span>,
+    <span key="results" className={styles.ticketResults}>
+      <i />
+      <i />
+      <i />
+      <i />
+      <i />
+      <span className={styles.ticketStamp}>{stamp}</span>
+    </span>,
+  ];
+}
 
 /** Icons of « Votre expérience → Votre voix → Des résultats partagés chaque mois », with small moving parts. */
 const CHAIN_ICONS = [
@@ -82,6 +110,7 @@ const CHAIN_ICONS = [
  */
 export default async function HomePage() {
   const { common, header, intro, landing: t, legal } = await getDictionary();
+  const scenes = ticketScenes(t.steps.searchExample, t.steps.stamp);
   const serviceCards: SectorCard[] = (Object.keys(SERVICE_PHOTOS) as (keyof typeof SERVICE_PHOTOS)[]).map((id) => ({
     id,
     ...t.services.cards[id],
@@ -180,20 +209,42 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section id="comment-ca-marche" className={`${styles.steps} ${styles.anchor} ${styles.reveal}`} data-reveal="">
+        {/* « La bande de tickets »: three queue tickets out of a dispenser, each with a glimpse of the questionnaire. */}
+        <section id="comment-ca-marche" className={`${styles.steps} ${styles.anchor} ${styles.reveal} ${display.variable}`} data-reveal="">
           <div className="container">
-            <h2 className={styles.title}>{t.steps.title}</h2>
-            <ol className={styles.stepList}>
-              {t.steps.items.map((step, index) => (
-                <li key={step.title}>
-                  <span className={styles.stepNumber} aria-hidden="true">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <h3>{step.title}</h3>
-                  <p>{step.text}</p>
-                </li>
-              ))}
-            </ol>
+            <div className={styles.stepsTop}>
+              <h2 className={styles.title}>{t.steps.title}</h2>
+              <Link href="/avis" className={`btn ${styles.heroButton} ${styles.stepsButton}`}>
+                {t.hero.giveFeedback}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </Link>
+            </div>
+            <div className={styles.ticketStage}>
+              <div className={styles.dispenser} aria-hidden="true" />
+              <div className={styles.ticketFeed}>
+                <ol className={styles.ticketStrip}>
+                  {t.steps.items.map((step, index) => (
+                    <li key={step.title} className={styles.ticket}>
+                      <span className={styles.ticketHead} aria-hidden="true">
+                        {header.siteName}
+                      </span>
+                      <h3 className={styles.ticketTitle}>
+                        <span className={styles.ticketNumber} aria-hidden="true">
+                          {index + 1}
+                        </span>
+                        {step.title}
+                      </h3>
+                      <p>{step.text}</p>
+                      <div className={styles.ticketScene} aria-hidden="true">
+                        {scenes[index]}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
           </div>
         </section>
 
