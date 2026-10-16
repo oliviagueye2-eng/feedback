@@ -15,7 +15,8 @@ interface Option {
  * keeps the sector and type only if they offer it (and selects its sector
  * when it has only one). An establishment selects its sector and type, and
  * narrows the services to its own; choosing another sector, type or service
- * it does not offer clears it. Plain selects in a GET form: without JavaScript they still work,
+ * it does not offer clears it. Once an establishment or a sector is chosen, no
+ * service reads « Autre démarche », the form it then shows. Plain selects in a GET form: without JavaScript they still work,
  * the server narrows the types on « Afficher ».
  */
 export function QuestionnaireFilters({
@@ -37,7 +38,16 @@ export function QuestionnaireFilters({
   type: string | null;
   service: string | null;
   establishment: string | null;
-  text: { sector: string; type: string; service: string; establishment: string; all: string; noType: string };
+  text: {
+    sector: string;
+    type: string;
+    service: string;
+    establishment: string;
+    all: string;
+    noType: string;
+    otherReason: string;
+    noReason: string;
+  };
 }) {
   const [sector, setSector] = useState(initialSector ?? "");
   const [type, setType] = useState(initialType ?? "");
@@ -148,7 +158,11 @@ export function QuestionnaireFilters({
         <strong>{text.service}</strong>
         <code>service.code</code>
         <select name="service" value={service} onChange={(e) => chooseService(e.target.value)} className={styles.input}>
-          <option value="">{text.all}</option>
+          {/* With an establishment or a sector, no service is the form of « Autre démarche » (or of no reason at all
+              when the establishment offers none), not every service (asked by Olivia, 2026-10-16). */}
+          <option value="">
+            {chosen && chosen.services.length === 0 ? text.noReason : chosen || sector ? text.otherReason : text.all}
+          </option>
           {services
             .filter((sv) =>
               chosen
