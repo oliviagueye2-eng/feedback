@@ -159,7 +159,7 @@
    different depths. */
 .hero {
   position: relative;
-  background: #e4ebe6;
+  background: var(--hero-home);
   padding: 36px 0 76px;
   overflow: hidden;
 }
