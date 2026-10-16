@@ -97,8 +97,27 @@ export const fr = {
     },
     services: {
       title: "Tous les services, toutes les expériences.",
-      lead: "NeexNaqari ne se limite pas à un secteur. La plateforme est pensée pour recueillir les expériences des citoyens et des clients, dans les services publics comme dans les services privés.",
-      photoAlt: "Une usagère à l'accueil d'un centre de santé, face à une employée souriante.",
+      lead: "NeexNaqari ne se limite pas à un secteur : plus d'une vingtaine sont déjà couverts, des services publics aux services privés. La plateforme est pensée pour recueillir les expériences des citoyens et des clients.",
+      /** The photo cards that follow one another, each labelled with its sector (names as in the database). */
+      cards: {
+        transport: { label: "Transport", alt: "Des voyageurs montent dans un bus Tata à Dakar." },
+        administration: { label: "Administration et état civil", alt: "Une usagère arrive devant l'entrée d'une mairie." },
+        bank: {
+          label: "Banques et assurances",
+          alt: "Un homme retire des billets à un distributeur, devant une agence bancaire.",
+        },
+        health: { label: "Santé", alt: "Une usagère à l'accueil d'un centre de santé, face à une employée souriante." },
+        mobilePayment: {
+          label: "Paiement mobile",
+          alt: "Deux téléphones face à face sur le comptoir d'une boutique : l'un affiche un QR code, l'autre la confirmation du paiement.",
+        },
+        electricity: {
+          label: "Électricité",
+          alt: "Le soir, deux jeunes assis devant leur porte lèvent les yeux vers la lampe de rue qui se rallume.",
+        },
+      },
+      /** A toggle: pressed while the cards are paused. */
+      pause: "Mettre l'animation en pause",
     },
     steps: {
       title: "Partager une expérience devient simple et rapide.",
