@@ -673,30 +673,131 @@
   }
 }
 
-/* ---- Public and private ---- */
+/* ---- Public and private: « Tous les services » ---- */
 
 .services {
   padding: var(--section-y) 0;
+  overflow: hidden;
   background: #fff;
 }
 
-.servicesHead {
+.servicesInner {
   display: grid;
-  gap: var(--space-xl);
+  gap: var(--space-2xl);
 }
 
-.servicesPhoto {
+/* A pile of photo cards (ServicesDeck.tsx): the front one, two behind it,
+   a little turned, the one leaving to the left and the rest waiting. */
+.deck {
+  position: relative;
+  width: 88%;
+  max-width: 560px;
+}
+
+.deckPile {
+  position: relative;
+  aspect-ratio: 4 / 3.4;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deckCard {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
-  aspect-ratio: 3 / 2;
-  border-radius: 14px;
+  border-radius: 22px;
   background: var(--line);
+  box-shadow: 0 40px 60px -40px rgb(19 38 28 / 0.6);
+  transition:
+    transform 0.9s cubic-bezier(0.3, 0.7, 0.2, 1),
+    opacity 0.9s;
 }
 
-.servicesPhoto img {
-  width: 100%;
-  height: 100%;
+.deckCard img {
   object-fit: cover;
-  display: block;
+}
+
+.deckCard[data-position="0"] {
+  z-index: 5;
+}
+
+.deckCard[data-position="1"] {
+  z-index: 4;
+  opacity: 0.9;
+  transform: translate(5%, -5%) rotate(4deg) scale(0.94);
+}
+
+.deckCard[data-position="2"] {
+  z-index: 3;
+  opacity: 0.6;
+  transform: translate(9%, -9%) rotate(7deg) scale(0.88);
+}
+
+.deckCard[data-position="gone"] {
+  z-index: 6;
+  opacity: 0;
+  transform: translate(-30%, 12%) rotate(-12deg) scale(0.9);
+}
+
+.deckCard[data-position="waiting"] {
+  z-index: 1;
+  opacity: 0;
+  transform: translate(12%, -12%) rotate(9deg) scale(0.84);
+}
+
+/* The sector's name, the only text on the card. */
+.deckLabel {
+  position: absolute;
+  left: var(--space-m);
+  bottom: var(--space-m);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-s);
+  padding: var(--space-xs) var(--space-ml) var(--space-xs) var(--space-xs);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: 0 14px 30px -12px rgb(0 0 0 / 0.55);
+}
+
+.deckLabel svg {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 7px;
+  border-radius: 50%;
+  background: var(--night);
+  color: #fff;
+}
+
+.deckPause {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-s));
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.deckPause svg {
+  width: 14px;
+  height: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deckCard {
+    transition: none;
+  }
 }
 
 /* ---- How it works ---- */
@@ -1200,10 +1301,26 @@
     font-size: clamp(20px, 1.8vw, 24px);
   }
 
-  .servicesHead {
+  .servicesInner {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: center;
-    gap: 56px;
+    gap: var(--space-3xl);
+  }
+
+  .deck {
+    width: 100%;
+  }
+
+  .deckLabel {
+    left: var(--space-l);
+    bottom: var(--space-l);
+    font-size: 22px;
+  }
+
+  .deckLabel svg {
+    width: 40px;
+    height: 40px;
+    padding: 9px;
   }
 
   .stepList {

@@ -10,8 +10,14 @@ import { LEGAL_PAGES } from "./_legal/links";
 import { IntroSplash } from "./_intro/IntroSplash";
 import { LandingHeader } from "./_landing/LandingHeader";
 import { Reveal } from "./_landing/Reveal";
+import { ServicesDeck, type SectorCard } from "./_landing/ServicesDeck";
+import busPhoto from "../../public/images/lancement-bus-tata.jpg";
 import healthPhoto from "../../public/images/lancement-centre-de-sante.jpg";
 import phoneScreen from "../../public/images/lancement-ecran-satisfaction.png";
+import bankPhoto from "../../public/images/services-banque.jpg";
+import electricityPhoto from "../../public/images/services-electricite.jpg";
+import townHallPhoto from "../../public/images/services-mairie.jpg";
+import mobilePaymentPhoto from "../../public/images/services-paiement-mobile.jpg";
 import stopPhoto from "../../public/images/lancement-telephone-arret.jpg";
 import styles from "./_landing/landing.module.css";
 
@@ -34,6 +40,16 @@ const display = Barlow_Condensed({ weight: "800", subsets: ["latin"], variable: 
 
 /** The five satisfaction faces around the phone, as solid tokens, from « Très satisfait(e) » (1) to « Pas du tout » (5). */
 const TOKEN_LEVELS = [2, 3, 4, 5, 1] as const;
+
+/** « Tous les services »: one photo card per everyday service, in this order. */
+const SERVICE_PHOTOS = {
+  transport: busPhoto,
+  administration: townHallPhoto,
+  bank: bankPhoto,
+  health: healthPhoto,
+  mobilePayment: mobilePaymentPhoto,
+  electricity: electricityPhoto,
+} as const;
 
 /** Icons of « Votre expérience → Votre voix → Des résultats partagés chaque mois », with small moving parts. */
 const CHAIN_ICONS = [
@@ -66,6 +82,11 @@ const CHAIN_ICONS = [
  */
 export default async function HomePage() {
   const { common, header, intro, landing: t, legal } = await getDictionary();
+  const serviceCards: SectorCard[] = (Object.keys(SERVICE_PHOTOS) as (keyof typeof SERVICE_PHOTOS)[]).map((id) => ({
+    id,
+    ...t.services.cards[id],
+    image: SERVICE_PHOTOS[id],
+  }));
 
   return (
     <>
@@ -148,17 +169,14 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* Everyday services as a pile of photo cards that follow one another. */}
         <section className={`${styles.services} ${styles.reveal}`} data-reveal="">
-          <div className="container">
-            <div className={styles.servicesHead}>
-              <div>
-                <h2 className={styles.title}>{t.services.title}</h2>
-                <p className={styles.lead}>{t.services.lead}</p>
-              </div>
-              <div className={styles.servicesPhoto}>
-                <Image src={healthPhoto} alt={t.services.photoAlt} sizes="(min-width: 900px) 520px, 90vw" />
-              </div>
+          <div className={`container ${styles.servicesInner}`}>
+            <div>
+              <h2 className={styles.title}>{t.services.title}</h2>
+              <p className={styles.lead}>{t.services.lead}</p>
             </div>
+            <ServicesDeck cards={serviceCards} pause={t.services.pause} />
           </div>
         </section>
 
