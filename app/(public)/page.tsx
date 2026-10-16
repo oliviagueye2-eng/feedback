@@ -360,28 +360,29 @@ export default async function HomePage() {
         </section>
 
         <section id="reseaux" className={`${styles.soon} ${styles.anchor} ${styles.reveal}`} data-reveal="">
-          {/* Decorative: a passenger on her phone at a bus stop, under a green veil. */}
+          {/* Decorative: a passenger on her phone at a bus stop, fading into the white background. */}
           <div className={styles.soonPhoto} aria-hidden="true">
-            <Image src={stopPhoto} alt="" fill sizes="100vw" />
+            <Image src={stopPhoto} alt="" fill sizes="(min-width: 900px) 62vw, 100vw" />
           </div>
           <div className={`container ${styles.soonInner}`}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- SVG, nothing to optimize */}
-            <img className={styles.soonLogo} src="/brand/logo-blanc.svg" alt="" width={110} height={117} />
             <h2 className={styles.soonTitle}>{t.soon.title}</h2>
-            <p className={styles.lead}>{t.soon.text}</p>
+            <p className={styles.soonText}>{t.soon.text}</p>
             <p className={styles.soonFollow}>{t.soon.follow}</p>
-            <ul className={styles.networks}>
-              {SOCIAL_ACCOUNTS.map(({ network, url }) => (
-                <li key={network}>
-                  <a href={url} target="_blank" rel="noopener noreferrer">
-                    <SocialIcon network={network} />
-                    {t.soon.networks[network]}
-                    <span className="visually-hidden"> {t.soon.newTab}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-            <p className={styles.handle}>{t.soon.handle}</p>
+            <div className={styles.soonRow}>
+              <ul className={styles.networks}>
+                {SOCIAL_ACCOUNTS.map(({ network, url }) => (
+                  <li key={network}>
+                    <a href={url} target="_blank" rel="noopener noreferrer">
+                      <SocialIcon network={network} />
+                      <span className="visually-hidden">
+                        {t.soon.networks[network]} {t.soon.newTab}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              <p className={styles.handle}>{t.soon.handle}</p>
+            </div>
           </div>
         </section>
       </main>
