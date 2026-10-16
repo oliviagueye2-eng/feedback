@@ -1,0 +1,26 @@
+/* The pit of falling faces, at the very bottom of the footer (FooterFaces). */
+.pit {
+  position: relative;
+  height: 260px;
+  margin-top: 8px;
+  /* Down to the very bottom edge: cancels the footer's bottom padding. */
+  margin-bottom: -26px;
+  overflow: hidden;
+  /* The page still scrolls when the finger slides up or down over the faces. */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pit canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (min-width: 900px) {
+  .pit {
+    height: 340px;
+    margin-bottom: -48px;
+  }
+}
