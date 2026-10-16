@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
+import { Barlow_Condensed } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 import { FooterFaces } from "../_components/FooterFaces";
 import { SOCIAL_ACCOUNTS, SocialIcon } from "../_components/SocialLinks";
 import { getDictionary } from "../_i18n";
+import { MOUTHS } from "./_feedback/SatisfactionFace";
 import { LEGAL_PAGES } from "./_legal/links";
 import { IntroSplash } from "./_intro/IntroSplash";
 import { LandingHeader } from "./_landing/LandingHeader";
-import { LandingTicket } from "./_landing/LandingTicket";
 import { Reveal } from "./_landing/Reveal";
-import busPhoto from "../../public/images/lancement-bus-tata.jpg";
 import healthPhoto from "../../public/images/lancement-centre-de-sante.jpg";
 import phoneScreen from "../../public/images/lancement-ecran-satisfaction.png";
 import stopPhoto from "../../public/images/lancement-telephone-arret.jpg";
@@ -29,66 +29,102 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/** Icons of « Votre expérience → Votre voix → Des résultats partagés chaque mois ». */
+/** Condensed capitals for the hero title only; everything else stays in Atkinson Hyperlegible. */
+const display = Barlow_Condensed({ weight: "800", subsets: ["latin"], variable: "--font-display" });
+
+/** The five satisfaction faces around the phone, as solid tokens, from « Très satisfait(e) » (1) to « Pas du tout » (5). */
+const TOKEN_LEVELS = [2, 3, 4, 5, 1] as const;
+
+/** Icons of « Votre expérience → Votre voix → Des résultats partagés chaque mois », with small moving parts. */
 const CHAIN_ICONS = [
   // A person.
-  <svg key="person" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+  <svg key="person" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
     <circle cx="12" cy="8" r="4" />
     <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
   </svg>,
-  // A speech bubble.
-  <svg key="voice" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  // A speech bubble whose dots blink, as when someone is typing.
+  <svg key="voice" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M4 5h16v11H9l-5 4z" />
-    <path d="M9 10.5h.01M12 10.5h.01M15 10.5h.01" />
+    <circle className={styles.dot} cx="9" cy="10.5" r="1" fill="currentColor" stroke="none" />
+    <circle className={styles.dot} cx="12" cy="10.5" r="1" fill="currentColor" stroke="none" />
+    <circle className={styles.dot} cx="15" cy="10.5" r="1" fill="currentColor" stroke="none" />
   </svg>,
-  // Results: three bars.
-  <svg key="results" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-    <path d="M6 20v-6M12 20V8M18 20V4M3 20h18" />
+  // Results: three bars that rise and fall.
+  <svg key="results" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <path className={styles.bar} d="M6 20v-6" />
+    <path className={styles.bar} d="M12 20V8" />
+    <path className={styles.bar} d="M18 20V4" />
+    <path d="M3 20h18" />
   </svg>,
 ];
 
 /**
- * Home page: the pre-launch landing, kept at launch with the queue ticket under
- * the title to start a feedback (Olivia's choice, 2026-10-10). On the very
- * first visit, an opening screen plays first (IntroSplash).
+ * Home page. The hero is « L'affiche » (Olivia's choice, 2026-10-16): a very
+ * large title, one button to the search for a service, and the phone with the
+ * real questionnaire among the five satisfaction faces. On the very first
+ * visit, an opening screen plays first (IntroSplash).
  */
 export default async function HomePage() {
-  const { common, header, home, intro, landing: t, legal } = await getDictionary();
+  const { common, header, intro, landing: t, legal } = await getDictionary();
 
   return (
     <>
       <IntroSplash t={{ ...intro, siteName: header.siteName, tagline: header.tagline }} />
       <LandingHeader t={{ ...t.nav, giveFeedback: common.giveFeedback, siteName: header.siteName, tagline: header.tagline, navLabel: header.navLabel }} />
       <main>
-        {/* Hero: the idea and the ticket on the left; on the right a real photo of an everyday service
-            (a bus stop in Dakar) and, in front of it, the real questionnaire screen. */}
-        <section id="accueil" className={`${styles.hero} ${styles.anchor}`}>
+        {/* Hero: a street poster. One sequence on arrival: the lines rise, the phone
+            arrives, a finger taps « Très satisfait(e) » and its token leaps out. */}
+        <section id="accueil" className={`${styles.hero} ${styles.anchor} ${display.variable}`}>
           <div className={`container ${styles.heroInner}`}>
-            <div className={styles.heroText}>
-              {/* The brand mark, large: the logo is how people will recognise NeexNaqari. */}
-              {/* eslint-disable-next-line @next/next/no-img-element -- SVG, nothing to optimize */}
-              <img className={styles.heroLogo} src="/brand/logo-degrade.svg" alt="" width={120} height={127} />
-              <h1 className={styles.heroTitle}>{t.hero.title}</h1>
+            <div>
+              <h1 className={styles.heroTitle}>
+                {t.hero.titleLines.map((line, index) => (
+                  <span key={line} className={styles.line}>
+                    <span>{line}</span>
+                    {/* Read as one sentence, not three words stuck together. */}
+                    {index < t.hero.titleLines.length - 1 && " "}
+                  </span>
+                ))}
+              </h1>
+              <p className={styles.heroSectors}>{t.hero.sectors}</p>
               <p className={styles.heroLead}>{t.hero.lead}</p>
-              <LandingTicket t={{ ...home, ...common }} />
+              <Link href="/avis" className={`btn ${styles.heroButton}`}>
+                {t.hero.giveFeedback}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </Link>
             </div>
-            <div className={styles.phoneStage}>
-              <div className={styles.photo}>
-                <Image src={busPhoto} alt={t.hero.photoAlt} sizes="(min-width: 900px) 460px, 90vw" priority />
-              </div>
+            <div className={styles.stage}>
+              {TOKEN_LEVELS.map((level) => (
+                <span key={level} className={styles.token} data-level={level} aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="8.6" cy="9.6" r="1.4" fill="#fff" />
+                    <circle cx="15.4" cy="9.6" r="1.4" fill="#fff" />
+                    <path
+                      d={MOUTHS[level]}
+                      fill={level === 1 ? "#fff" : "none"}
+                      stroke="#fff"
+                      strokeWidth="1.9"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+              ))}
               <div className={styles.phone}>
-                <Image
-                  src={phoneScreen}
-                  alt={t.hero.phoneAlt}
-                  sizes="(min-width: 900px) 300px, 250px"
-                  priority
-                  className={styles.phoneScreen}
-                />
+                <div className={styles.screen}>
+                  <Image src={phoneScreen} alt={t.hero.phoneAlt} sizes="(min-width: 900px) 270px, 210px" priority className={styles.phoneScreen} />
+                  {/* The answer « Très satisfait(e) » gets chosen: a tap, then the row lights up. */}
+                  <span className={styles.chosen} aria-hidden="true" />
+                  <span className={styles.tap} aria-hidden="true" />
+                </div>
               </div>
             </div>
           </div>
         </section>
 
+        {/* Dark, rounded on top: on computers it slides over the hero, which stays in place. */}
         <section className={`${styles.idea} ${styles.reveal}`} data-reveal="">
           <div className="container">
             <p className={styles.label}>{t.idea.label}</p>
@@ -98,13 +134,14 @@ export default async function HomePage() {
                 <p key={paragraph}>{paragraph}</p>
               ))}
             </div>
+            {/* Three tokens on a line that draws itself, from green to yellow. */}
             <ol className={styles.chain}>
               {t.idea.chain.map((step, index) => (
                 <li key={step}>
-                  <span className={styles.chainIcon} aria-hidden="true">
+                  <span className={styles.chainToken} aria-hidden="true">
                     {CHAIN_ICONS[index]}
                   </span>
-                  {step}
+                  <span className={styles.chainText}>{step}</span>
                 </li>
               ))}
             </ol>

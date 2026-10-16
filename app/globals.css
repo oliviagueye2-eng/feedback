@@ -20,6 +20,10 @@
   --ticket-line: #9aafa2;
   --track: #dce5df;
   --footer-text: #cfe0d5;
+  /* « Vert nuit »: dark sections that are not the ink (home page, « Pourquoi »). */
+  --night: #0c3a24;
+  /* Background of the home page's hero (« L'affiche »), a little deeper than --hero. */
+  --hero-home: #e4ebe6;
 
   /* Messages */
   --error: #b3261e;
