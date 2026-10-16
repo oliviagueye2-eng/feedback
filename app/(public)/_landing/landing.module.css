@@ -1164,68 +1164,92 @@
   }
 }
 
-/* ---- Vision and values ---- */
+/* ---- Vision and values: « Le drapeau » ----
+   The three lines of the vision are written on the three bands of the flag,
+   painted rather than cut: wavy, soft edges and a white haze (an SVG behind
+   the text). Phones: the bands stack; from 900px they stand side by side.
+   The values follow on ink, as a quiet list. Nothing moves. */
 
 .vision {
-  position: relative;
-  overflow: hidden;
-  padding: 88px 0;
+  padding-bottom: var(--section-y);
   background: var(--ink);
   color: #fff;
 }
 
-/* Two arcs in the logo's colours, in opposite corners. */
-.vision::before,
-.vision::after {
-  content: "";
+.flag {
+  position: relative;
+  display: grid;
+  grid-auto-rows: 1fr;
+  margin: 0;
+}
+
+.flagPaint {
   position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.vision::before {
-  top: -150px;
-  right: -150px;
-  width: 210px;
-  height: 210px;
-  border: 18px solid var(--flag-yellow);
+.flagPaint[data-shape="wide"] {
+  display: none;
 }
 
-.vision::after {
-  bottom: -170px;
-  left: -160px;
-  width: 230px;
-  height: 230px;
-  border: 18px solid var(--flag-green);
+.paintGreen {
+  fill: var(--flag-green);
 }
 
-.vision > div {
+.paintYellow {
+  fill: var(--flag-yellow);
+}
+
+.paintRed {
+  fill: var(--flag-red);
+}
+
+.paintHaze {
+  fill: #fff;
+}
+
+/* Bands of equal size, whatever the length of their line. */
+.band {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 190px;
+  padding: var(--space-xl) var(--space-2xl);
+  text-align: center;
+}
+
+.band:nth-of-type(2) {
+  color: var(--ink);
+}
+
+.bandText {
   position: relative;
   z-index: 1;
+  max-width: 12em;
+  font-size: clamp(26px, 3vw, 44px);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 
-
-.visionLines {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  font-size: clamp(38px, 7vw, 92px);
-  line-height: 1.04;
-  letter-spacing: -0.02em;
-}
-
-.visionLines span:nth-child(2) {
-  color: var(--footer-text);
-}
-
-.visionLines span:nth-child(3) {
-  color: var(--flag-yellow);
+/* The star of the flag, pale behind the text so the words stay first. */
+.flagStar {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 130px;
+  color: var(--flag-green);
+  opacity: 0.18;
+  translate: -50% -50%;
 }
 
 .visionText {
-  margin: var(--space-xl) 0 0;
-  max-width: 36em;
-  font-size: 19px;
+  margin: var(--space-3xl) 0 0;
+  max-width: 34em;
+  font-size: 18px;
   color: var(--footer-text);
 }
 
@@ -1246,22 +1270,13 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
-  padding: var(--space-ml);
-  border-radius: 14px;
-  background: rgb(255 255 255 / 0.06);
-  border-top: 4px solid var(--flag-green);
-}
-
-.values li:nth-child(2) {
-  border-top-color: var(--flag-yellow);
-}
-
-.values li:nth-child(3) {
-  border-top-color: var(--flag-red);
+  padding-top: var(--space-m);
+  border-top: 1px solid rgb(255 255 255 / 0.22);
 }
 
 .values strong {
-  font-size: 18px;
+  font-size: 20px;
+  line-height: 1.25;
 }
 
 .values span {
@@ -1722,24 +1737,34 @@
     font-size: 24px;
   }
 
-  .vision {
-    padding: 136px 0;
+  .flag {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .vision::before {
-    top: -210px;
-    right: -210px;
-    width: 340px;
-    height: 340px;
-    border-width: 26px;
+  .flagPaint[data-shape="wide"] {
+    display: block;
   }
 
-  .vision::after {
-    bottom: -250px;
-    left: -230px;
-    width: 360px;
-    height: 360px;
-    border-width: 26px;
+  .flagPaint[data-shape="tall"] {
+    display: none;
+  }
+
+  .band {
+    min-height: 520px;
+    padding: var(--space-3xl) var(--space-2xl);
+  }
+
+  .bandText {
+    max-width: none;
+  }
+
+  .flagStar {
+    width: 56%;
+    max-width: 240px;
+  }
+
+  .visionText {
+    font-size: 20px;
   }
 
   .soon::before {
