@@ -168,36 +168,76 @@ function start(pit: HTMLDivElement, Matter: typeof import("matter-js")): () => v
   pit.addEventListener("touchend", onLeave);
 
   // Each face is drawn once, here, then only copied (rotated) every frame:
-  // the soft shadow would be too slow to redraw 60 times a second on small phones.
-  // Style "plein" (2026-10-16): a disc of the level's colour, the face in white.
+  // the relief and the soft shadow would be too slow to redraw 60 times a second on small phones.
+  // Same token as the home page hero (2026-10-16): a disc in relief, lit from the top left,
+  // with the face in white at 78 % of the disc.
+  const lights = Object.fromEntries(
+    LEVELS.map((n) => [n, css.getPropertyValue(`--satisfaction-${n}-light`).trim()]),
+  ) as Record<Level, string>;
   const SPRITE = 24; // drawing units: the 24 × 24 box of SatisfactionFace
   const MARGIN = 4; // room for the shadow around the disc
+  const FACE = (20 * 0.78) / SPRITE; // the face's 24 × 24 box fills 78 % of the disc (diameter 20)
   const scale = (Math.max(radius * 1.15, 20) / 10) * dpr;
-  const sprites = Object.fromEntries(
-    LEVELS.map((n) => {
-      const sprite = document.createElement("canvas");
-      sprite.width = sprite.height = Math.ceil((SPRITE + 2 * MARGIN) * scale);
-      const g = sprite.getContext("2d")!;
-      g.scale(scale, scale);
-      g.translate(MARGIN, MARGIN);
-      g.shadowColor = "rgb(0 0 0 / 0.35)";
-      g.shadowBlur = 3 * scale;
-      g.fillStyle = colors[n];
-      g.beginPath();
-      g.arc(12, 12, 10, 0, Math.PI * 2);
-      g.fill();
-      g.shadowColor = "transparent";
-      g.fillStyle = g.strokeStyle = "#fff";
-      g.lineWidth = 1.2;
-      g.lineCap = "round";
-      g.lineJoin = "round";
-      g.beginPath();
-      g.arc(8.6, 9.6, 1.1, 0, Math.PI * 2);
-      g.arc(15.4, 9.6, 1.1, 0, Math.PI * 2);
-      g.fill();
-      g.stroke(mouths[n]);
-      return [n, sprite];
-    }),
+  // Two drawings per level: the disc in relief, which never turns (its light
+  // stays at the top left, as in the hero), and the face, which turns with the body.
+  const sprite = (paint: (g: CanvasRenderingContext2D) => void) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = Math.ceil((SPRITE + 2 * MARGIN) * scale);
+    const g = canvas.getContext("2d")!;
+    g.scale(scale, scale);
+    g.translate(MARGIN, MARGIN);
+    paint(g);
+    return canvas;
+  };
+  const discs = Object.fromEntries(
+    LEVELS.map((n) => [
+      n,
+      sprite((g) => {
+        const disc = new Path2D();
+        disc.arc(12, 12, 10, 0, Math.PI * 2);
+        // The disc, its soft shadow, and the light spot: the hero's « circle at 35% 30% ».
+        const light = g.createRadialGradient(9, 8, 0, 9, 8, 19.1);
+        light.addColorStop(0, lights[n]);
+        light.addColorStop(0.62, colors[n]);
+        light.addColorStop(1, colors[n]);
+        g.shadowColor = "rgb(0 0 0 / 0.35)";
+        g.shadowBlur = 3 * scale;
+        g.fillStyle = light;
+        g.fill(disc);
+        g.shadowColor = "transparent";
+        // Relief: a light rim on top, a darker rim at the bottom (the hero's inset shadows).
+        g.clip(disc);
+        const rim = (dy: number, color: string) => {
+          const edge = new Path2D();
+          edge.rect(0, 0, SPRITE, SPRITE);
+          edge.arc(12, 12 + dy, 10, 0, Math.PI * 2);
+          g.fillStyle = color;
+          g.fill(edge, "evenodd");
+        };
+        rim(1.2, "rgb(255 255 255 / 0.25)");
+        rim(-1.8, "rgb(0 0 0 / 0.2)");
+      }),
+    ]),
+  ) as Record<Level, HTMLCanvasElement>;
+  const faceSprites = Object.fromEntries(
+    LEVELS.map((n) => [
+      n,
+      sprite((g) => {
+        // The face, in white.
+        g.translate(12 - 12 * FACE, 12 - 12 * FACE);
+        g.scale(FACE, FACE);
+        g.fillStyle = g.strokeStyle = "#fff";
+        g.lineWidth = 1.9;
+        g.lineCap = "round";
+        g.lineJoin = "round";
+        g.beginPath();
+        g.arc(8.6, 9.6, 1.4, 0, Math.PI * 2);
+        g.arc(15.4, 9.6, 1.4, 0, Math.PI * 2);
+        g.fill();
+        if (n === 1) g.fill(mouths[n]);
+        g.stroke(mouths[n]);
+      }),
+    ]),
   ) as Record<Level, HTMLCanvasElement>;
 
   function draw(face: FaceBody) {
@@ -205,8 +245,9 @@ function start(pit: HTMLDivElement, Matter: typeof import("matter-js")): () => v
     const size = (r / 10) * (SPRITE + 2 * MARGIN); // the disc (radius 10) matches the body
     ctx.save();
     ctx.translate(face.position.x, face.position.y);
+    ctx.drawImage(discs[face.level], -size / 2, -size / 2, size, size);
     ctx.rotate(face.angle);
-    ctx.drawImage(sprites[face.level], -size / 2, -size / 2, size, size);
+    ctx.drawImage(faceSprites[face.level], -size / 2, -size / 2, size, size);
     ctx.restore();
   }
 
